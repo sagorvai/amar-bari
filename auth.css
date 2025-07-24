@@ -80,6 +80,30 @@
     text-decoration: underline;
 }
 
+/* নতুন স্টাইল: মেসেজ দেখানোর জন্য */
+.error-message {
+    color: #d9534f; /* লাল রঙ */
+    background-color: #f2dede;
+    border: 1px solid #ebccd1;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+}
+
+.success-message {
+    color: #5cb85c; /* সবুজ রঙ */
+    background-color: #dff0d8;
+    border: 1px solid #d6e9c6;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+}
+
+
 /* রেসপনসিভ স্টাইল */
 @media (max-width: 480px) {
     .auth-card {
