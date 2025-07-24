@@ -12,7 +12,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, doc, getDoc, onSnapshot, query, where, FieldValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // গ্লোবাল ভেরিয়েবল হিসেবে Firebase সার্ভিসগুলো এক্সপোর্ট করা
+        // Export Firebase services as global variables for use in script.js
         window.firebaseApp = initializeApp;
         window.firebaseAuth = getAuth;
         window.firebaseSignInAnonymously = signInAnonymously;
@@ -63,7 +63,7 @@
             </div>
 
             <div id="allPropertyGrid" class="property-grid">
-                <!-- জাভাস্ক্রিপ্ট এখানে ডায়নামিকভাবে প্রপার্টি কার্ড যোগ করবে -->
+                <!-- JavaScript will dynamically add property cards here -->
                 <p class="loading-text">সম্পত্তি লোড হচ্ছে...</p>
             </div>
         </section>
