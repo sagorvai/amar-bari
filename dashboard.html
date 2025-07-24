@@ -12,7 +12,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, doc, getDoc, onSnapshot, query, where, FieldValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // গ্লোবাল ভেরিয়েবল হিসেবে Firebase সার্ভিসগুলো এক্সপোর্ট করা
+        // Export Firebase services as global variables for use in script.js
         window.firebaseApp = initializeApp;
         window.firebaseAuth = getAuth;
         window.firebaseSignInAnonymously = signInAnonymously;
@@ -43,7 +43,7 @@
                     <li class="nav-item"><a href="properties.html" class="nav-link">সম্পত্তি খুঁজুন</a></li>
                     <li class="nav-item"><a href="add-property.html" class="nav-link">সম্পত্তি বিক্রি করুন</a></li>
                     <li class="nav-item logged-in-only"><a href="dashboard.html" class="nav-link button-primary">ড্যাশবোর্ড</a></li>
-                    <li class="nav-item logged-out-only"><a href="login.html" class="nav-link button-secondary">লগইন</a></li>
+                    <li class="nav-item logged-out-only"><a href="login.html" class="nav-link button-primary">লগইন</a></li>
                     <li class="nav-item logged-out-only"><a href="register.html" class="nav-link button-secondary">রেজিস্ট্রেশন</a></li>
                     <li class="nav-item logged-in-only"><button id="logoutButton" class="nav-link button-secondary">লগআউট</button></li>
                 </ul>
@@ -62,7 +62,7 @@
             </div>
 
             <div id="myPropertiesList" class="property-list">
-                <!-- জাভাস্ক্রিপ্ট এখানে ডায়নামিকভাবে ব্যবহারকারীর সম্পত্তি যোগ করবে -->
+                <!-- JavaScript will dynamically add user's properties here -->
                 <p class="loading-text">আপনার সম্পত্তি লোড হচ্ছে...</p>
             </div>
         </section>
