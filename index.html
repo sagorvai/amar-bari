@@ -7,6 +7,32 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="auth.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, onSnapshot, query, where, FieldValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // গ্লোবাল ভেরিয়েবল হিসেবে Firebase সার্ভিসগুলো এক্সপোর্ট করা
+        window.firebaseApp = initializeApp;
+        window.firebaseAuth = getAuth;
+        window.firebaseSignInAnonymously = signInAnonymously;
+        window.firebaseSignInWithCustomToken = signInWithCustomToken;
+        window.firebaseCreateUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.firebaseSignInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.firebaseSignOut = signOut;
+        window.firebaseOnAuthStateChanged = onAuthStateChanged;
+        window.firebaseFirestore = getFirestore;
+        window.firebaseCollection = collection;
+        window.firebaseAddDoc = addDoc;
+        window.firebaseGetDocs = getDocs;
+        window.firebaseDoc = doc;
+        window.firebaseGetDoc = getDoc;
+        window.firebaseOnSnapshot = onSnapshot;
+        window.firebaseQuery = query;
+        window.firebaseWhere = where;
+        window.firebaseFieldValue = FieldValue; // FieldValue যোগ করা হয়েছে
+    </script>
 </head>
 <body>
     <header class="header">
@@ -17,11 +43,15 @@
                     <li class="nav-item"><a href="index.html" class="nav-link">হোম</a></li>
                     <li class="nav-item"><a href="properties.html" class="nav-link">সম্পত্তি খুঁজুন</a></li>
                     <li class="nav-item"><a href="add-property.html" class="nav-link">সম্পত্তি বিক্রি করুন</a></li>
-                    <li class="nav-item"><a href="dashboard.html" class="nav-link button-primary">ড্যাশবোর্ড</a></li>
-                    <li class="nav-item"><a href="login.html" class="nav-link button-secondary">লগইন</a></li>
-                    <li class="nav-item"><a href="register.html" class="nav-link button-secondary">রেজিস্ট্রেশন</a></li>
+                    <li class="nav-item logged-in-only"><a href="dashboard.html" class="nav-link button-primary">ড্যাশবোর্ড</a></li>
+                    <li class="nav-item logged-out-only"><a href="login.html" class="nav-link button-primary">লগইন</a></li>
+                    <li class="nav-item logged-out-only"><a href="register.html" class="nav-link button-secondary">রেজিস্ট্রেশন</a></li>
+                    <li class="nav-item logged-in-only"><button id="logoutButton" class="nav-link button-secondary">লগআউট</button></li>
                 </ul>
             </nav>
+            <div id="userInfo" class="user-info">
+                <span id="userIdDisplay" class="user-id-text"></span>
+            </div>
         </div>
     </header>
 
@@ -41,6 +71,7 @@
             <h2 class="section-title">বৈশিষ্ট্যযুক্ত সম্পত্তি</h2>
             <div id="featuredPropertyGrid" class="property-grid">
                 <!-- জাভাস্ক্রিপ্ট এখানে ডায়নামিকভাবে প্রপার্টি কার্ড যোগ করবে -->
+                <p class="loading-text">সম্পত্তি লোড হচ্ছে...</p>
             </div>
         </section>
     </main>
