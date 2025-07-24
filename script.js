@@ -1,191 +1,462 @@
-// script.js - জাভাস্ক্রিপ্ট লজিক
+/* style.css - সাধারণ স্টাইল */
 
-document.addEventListener('DOMContentLoaded', () => {
-    // লগইন ফর্ম হ্যান্ডলিং
-    const loginForm = document.getElementById('loginForm');
-    const loginMessageDiv = document.createElement('div'); // মেসেজ দেখানোর জন্য নতুন div
-    if (loginForm) {
-        loginForm.parentNode.insertBefore(loginMessageDiv, loginForm.nextSibling); // ফর্মের নিচে মেসেজ div যোগ করা
+/* ফন্ট ইম্পোর্ট */
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #f0f2f5; /* হালকা ধূসর ব্যাকগ্রাউন্ড */
+    color: #333;
+    line-height: 1.6;
+}
 
-        loginForm.addEventListener('submit', (event) => {
-            event.preventDefault(); // ফর্ম সাবমিট ডিফল্ট আচরণ বন্ধ করা
-            loginMessageDiv.textContent = ''; // পূর্ববর্তী বার্তা পরিষ্কার করা
-            loginMessageDiv.className = ''; // ক্লাস পরিষ্কার করা
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
 
-            const email = loginForm.email.value.trim(); // অতিরিক্ত স্পেস মুছে ফেলা
-            const password = loginForm.password.value.trim();
+/* ফ্লেক্সবক্স ইউটিলিটি ক্লাস */
+.flex {
+    display: flex;
+}
 
-            if (!email || !password) {
-                loginMessageDiv.textContent = 'অনুগ্রহ করে ইমেইল এবং পাসওয়ার্ড উভয়ই পূরণ করুন।';
-                loginMessageDiv.className = 'error-message';
-                return;
-            }
+.justify-between {
+    justify-content: space-between;
+}
 
-            // ইমেইল ফরম্যাট ভ্যালিডেশন (সাধারণ রেজেক্স)
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                loginMessageDiv.textContent = 'একটি সঠিক ইমেইল ঠিকানা দিন।';
-                loginMessageDiv.className = 'error-message';
-                return;
-            }
+.items-center {
+    align-items: center;
+}
 
-            // এখানে আপনি লগইন লজিক যোগ করতে পারেন
-            // যেমন: API কল, ইনপুট ভ্যালিডেশন ইত্যাদি।
-            console.log('Login Attempt:', { email, password });
+.text-center {
+    text-align: center;
+}
 
-            // আপাতত একটি সফল বার্তা দেখাচ্ছি
-            loginMessageDiv.textContent = 'লগইন চেষ্টা সফল হয়েছে! (ব্যাকএন্ড লজিক যোগ করা হয়নি)';
-            loginMessageDiv.className = 'success-message';
+/* হেডার স্টাইল */
+.header {
+    background-color: #ffffff;
+    padding: 15px 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
 
-            // সফল হলে অন্য পেজে রিডাইরেক্ট করতে পারেন:
-            // setTimeout(() => {
-            //     window.location.href = 'dashboard.html';
-            // }, 2000); // 2 সেকেন্ড পর রিডাইরেক্ট
-        });
+.logo {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #0070f3;
+    text-decoration: none;
+}
+
+.nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 20px;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #555;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #0070f3;
+}
+
+/* বাটন স্টাইল */
+.button-primary {
+    background-color: #0070f3;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    text-decoration: none; /* অ্যাঙ্কর ট্যাগের জন্য */
+    display: inline-block; /* অ্যাঙ্কর ট্যাগের জন্য */
+    text-align: center;
+}
+
+.button-primary:hover {
+    background-color: #005bb5;
+}
+
+.button-secondary {
+    background-color: #e0e0e0;
+    color: #333;
+    padding: 10px 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    text-decoration: none; /* অ্যাঙ্কর ট্যাগের জন্য */
+    display: inline-block; /* অ্যাঙ্কর ট্যাগের জন্য */
+    text-align: center;
+}
+
+.button-secondary:hover {
+    background-color: #d0d0d0;
+    color: #000;
+}
+
+/* নতুন বাটন: ডিলিট বাটন */
+.button-danger {
+    background-color: #dc3545; /* লাল রঙ */
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.button-danger:hover {
+    background-color: #c82333;
+}
+
+
+/* হিরো সেকশন */
+.hero {
+    background-color: #e6f2ff; /* হালকা নীল ব্যাকগ্রাউন্ড */
+    padding: 80px 0;
+    margin-bottom: 40px;
+}
+
+.hero-title {
+    font-size: 3.5em;
+    color: #0070f3;
+    margin-bottom: 20px;
+}
+
+.hero-description {
+    font-size: 1.2em;
+    color: #555;
+    margin-bottom: 40px;
+}
+
+.search-bar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.search-input {
+    flex-grow: 1;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+}
+
+.search-button {
+    padding: 12px 25px;
+    background-color: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.search-button:hover {
+    background-color: #005bb5;
+}
+
+/* বৈশিষ্ট্যযুক্ত সম্পত্তি সেকশন */
+.featured-properties {
+    padding: 40px 0;
+}
+
+.section-title {
+    font-size: 2.5em;
+    color: #333;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.property-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.property-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.property-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.property-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+.property-info {
+    padding: 20px;
+}
+
+.property-title {
+    font-size: 1.5em;
+    color: #0070f3;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.property-location {
+    color: #777;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.property-price {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+/* ফুটার স্টাইল */
+.footer {
+    background-color: #333;
+    color: white;
+    padding: 30px 0;
+    margin-top: 50px;
+}
+
+.footer-link {
+    color: #a0a0a0;
+    text-decoration: none;
+    margin: 0 10px;
+    transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+    color: white;
+}
+
+/* নতুন পেজগুলোর জন্য স্টাইল */
+.main-content {
+    padding-top: 40px; /* হেডার থেকে একটু নিচে নামানোর জন্য */
+}
+
+.search-results-section {
+    padding: 40px 0;
+}
+
+.search-bar-inner {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    max-width: 800px;
+    margin: 0 auto 50px auto; /* নিচে একটু মার্জিন */
+}
+
+/* প্রপার্টি ডিটেইলস পেজ স্টাইল */
+.property-detail-section {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 50px;
+}
+
+.property-detail-title {
+    font-size: 2.8em;
+    color: #0070f3;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.property-detail-image {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.property-detail-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.property-detail-info {
+    font-size: 1.1em;
+    line-height: 1.8;
+}
+
+.detail-label {
+    font-weight: 700;
+    color: #0070f3;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+.detail-value {
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.contact-button {
+    margin-top: 30px;
+    padding: 12px 30px;
+    font-size: 1.1em;
+}
+
+/* ড্যাশবোর্ড স্টাইল */
+.dashboard-section {
+    padding: 40px 0;
+}
+
+.dashboard-actions {
+    margin-bottom: 30px;
+}
+
+.property-list {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.property-item {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.property-item:last-child {
+    border-bottom: none;
+}
+
+.property-list-image {
+    width: 120px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 5px;
+    margin-right: 20px;
+}
+
+.property-list-info {
+    flex-grow: 1;
+}
+
+.property-list-title {
+    font-size: 1.3em;
+    color: #0070f3;
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.property-list-location, .property-list-price {
+    font-size: 0.9em;
+    color: #777;
+    margin-bottom: 5px;
+}
+
+.property-list-price {
+    font-weight: 700;
+    color: #333;
+}
+
+.property-list-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap; /* ছোট স্ক্রিনে বাটনগুলো নিচে নামানোর জন্য */
+}
+
+/* রেসপনসিভনেস */
+@media (max-width: 768px) {
+    .header .nav-list {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
     }
 
-    // রেজিস্ট্রেশন ফর্ম হ্যান্ডলিং
-    const registerForm = document.getElementById('registerForm');
-    const registerMessageDiv = document.createElement('div'); // মেসেজ দেখানোর জন্য নতুন div
-    if (registerForm) {
-        registerForm.parentNode.insertBefore(registerMessageDiv, registerForm.nextSibling); // ফর্মের নিচে মেসেজ div যোগ করা
-
-        registerForm.addEventListener('submit', (event) => {
-            event.preventDefault(); // ফর্ম সাবমিট ডিফল্ট আচরণ বন্ধ করা
-            registerMessageDiv.textContent = ''; // পূর্ববর্তী বার্তা পরিষ্কার করা
-            registerMessageDiv.className = ''; // ক্লাস পরিষ্কার করা
-
-            const name = registerForm.name.value.trim();
-            const email = registerForm.email.value.trim();
-            const password = registerForm.password.value.trim();
-            const confirmPassword = registerForm.confirmPassword.value.trim();
-
-            // প্রাথমিক ভ্যালিডেশন
-            if (!name || !email || !password || !confirmPassword) {
-                registerMessageDiv.textContent = 'অনুগ্রহ করে সকল ঘর পূরণ করুন।';
-                registerMessageDiv.className = 'error-message';
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                registerMessageDiv.textContent = 'পাসওয়ার্ড মিলছে না!';
-                registerMessageDiv.className = 'error-message';
-                return;
-            }
-
-            if (password.length < 6) {
-                registerMessageDiv.textContent = 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!';
-                registerMessageDiv.className = 'error-message';
-                return;
-            }
-
-            // ইমেইল ফরম্যাট ভ্যালিডেশন
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                registerMessageDiv.textContent = 'একটি সঠিক ইমেইল ঠিকানা দিন।';
-                registerMessageDiv.className = 'error-message';
-                return;
-            }
-
-            // এখানে আপনি রেজিস্ট্রেশন লজিক যোগ করতে পারেন
-            // যেমন: API কল, ডেটাবেজে সেভ করা ইত্যাদি।
-            console.log('Registration Attempt:', { name, email, password });
-
-            // আপাতত একটি সফল বার্তা দেখাচ্ছি
-            registerMessageDiv.textContent = 'রেজিস্ট্রেশন চেষ্টা সফল হয়েছে! এখন লগইন করুন। (ব্যাকএন্ড লজিক যোগ করা হয়নি)';
-            registerMessageDiv.className = 'success-message';
-
-            // সফল হলে লগইন পেজে রিডাইরেক্ট করতে পারেন:
-            // setTimeout(() => {
-            //     window.location.href = 'login.html';
-            // }, 2000); // 2 সেকেন্ড পর রিডাইরেক্ট
-        });
+    .header .flex {
+        flex-direction: column;
+        gap: 15px;
     }
 
-    // হোমপেজের অনুসন্ধান বাটন হ্যান্ডলিং
-    const homeSearchButton = document.getElementById('homeSearchButton');
-    const homeSearchInput = document.getElementById('homeSearchInput');
-    if (homeSearchButton && homeSearchInput) {
-        homeSearchButton.addEventListener('click', () => {
-            const searchTerm = homeSearchInput.value.trim();
-            if (searchTerm) {
-                // অনুসন্ধানের শর্ত সহ properties.html এ রিডাইরেক্ট
-                window.location.href = `properties.html?search=${encodeURIComponent(searchTerm)}`;
-            } else {
-                // কোনো শর্ত না থাকলে শুধু properties.html এ রিডাইরেক্ট
-                window.location.href = 'properties.html';
-            }
-        });
+    .hero-title {
+        font-size: 2.5em;
     }
 
-    // প্রপার্টিজ পেজের অনুসন্ধান বাটন হ্যান্ডলিং (যদি থাকে)
-    const propertySearchButton = document.getElementById('propertySearchButton');
-    const propertySearchInput = document.getElementById('propertySearchInput');
-    if (propertySearchButton && propertySearchInput) {
-        propertySearchButton.addEventListener('click', () => {
-            const searchTerm = propertySearchInput.value.trim();
-            if (searchTerm) {
-                // একই পেজে অনুসন্ধানের শর্ত সহ রিফ্রেশ
-                window.location.href = `properties.html?search=${encodeURIComponent(searchTerm)}`;
-            } else {
-                window.location.href = 'properties.html';
-            }
-        });
+    .hero-description {
+        font-size: 1em;
     }
 
-    // প্রপার্টি ডিটেইলস পেজে URL থেকে ID পড়া (যদি থাকে)
-    const urlParams = new URLSearchParams(window.location.search);
-    const propertyId = urlParams.get('id');
-    if (propertyId) {
-        console.log('Property ID:', propertyId);
-        // এখানে আপনি এই ID ব্যবহার করে নির্দিষ্ট সম্পত্তির ডেটা লোড করতে পারেন।
-        // আপাতত ডামি ডেটা দেখানো হচ্ছে property-details.html এ।
+    .search-bar, .search-bar-inner {
+        flex-direction: column;
+        gap: 10px;
     }
 
-    // নতুন সম্পত্তি যোগ করার ফর্ম হ্যান্ডলিং
-    const addPropertyForm = document.getElementById('addPropertyForm');
-    const addPropertyMessageDiv = document.createElement('div'); // মেসেজ দেখানোর জন্য নতুন div
-    if (addPropertyForm) {
-        addPropertyForm.parentNode.insertBefore(addPropertyMessageDiv, addPropertyForm.nextSibling);
-
-        addPropertyForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-            addPropertyMessageDiv.textContent = '';
-            addPropertyMessageDiv.className = '';
-
-            const propertyTitle = addPropertyForm.propertyTitle.value.trim();
-            const propertyLocation = addPropertyForm.propertyLocation.value.trim();
-            const propertyPrice = addPropertyForm.propertyPrice.value.trim();
-            const propertyBedrooms = addPropertyForm.propertyBedrooms.value.trim();
-            const propertyBathrooms = addPropertyForm.propertyBathrooms.value.trim();
-            const propertyArea = addPropertyForm.propertyArea.value.trim();
-            const propertyDescription = addPropertyForm.propertyDescription.value.trim();
-            const propertyImage = addPropertyForm.propertyImage.files[0]; // ফাইল ইনপুট
-
-            if (!propertyTitle || !propertyLocation || !propertyPrice || !propertyDescription) {
-                addPropertyMessageDiv.textContent = 'অনুগ্রহ করে প্রয়োজনীয় সকল ঘর পূরণ করুন (শিরোনাম, অবস্থান, মূল্য, বিবরণ)।';
-                addPropertyMessageDiv.className = 'error-message';
-                return;
-            }
-
-            // এখানে আপনি ডেটা সংগ্রহ করে কনসোলে দেখতে পারেন
-            const newPropertyData = {
-                title: propertyTitle,
-                location: propertyLocation,
-                price: propertyPrice,
-                bedrooms: propertyBedrooms,
-                bathrooms: propertyBathrooms,
-                area: propertyArea,
-                description: propertyDescription,
-                image: propertyImage ? propertyImage.name : 'No image selected' // ছবির ফাইল নাম
-            };
-            console.log('New Property Data:', newPropertyData);
-
-            addPropertyMessageDiv.textContent = 'সম্পত্তি সফলভাবে যোগ করার চেষ্টা করা হয়েছে! (ব্যাকএন্ড লজিক যোগ করা হয়নি)';
-            addPropertyMessageDiv.className = 'success-message';
-
-            // ফর্ম রিসেট করা
-            addPropertyForm.reset();
-        });
+    .search-input, .search-button {
+        width: 100%;
     }
-});
+
+    .property-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .property-detail-title {
+        font-size: 2em;
+    }
+
+    .property-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .property-list-image {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    .property-list-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 2em;
+    }
+    .section-title {
+        font-size: 2em;
+    }
+    .property-detail-title {
+        font-size: 1.8em;
+    }
+    .property-detail-info {
+        font-size: 1em;
+    }
+    .property-list-title {
+        font-size: 1.1em;
+    }
+}
