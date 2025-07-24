@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>আমার বাড়ি - আপনার প্রপার্টি সলিউশন</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="auth.css"> <!-- অথেন্টিকেশন পেজের স্টাইলও এখানে লোড করা হয়েছে, যদি কমন কিছু থাকে -->
+    <link rel="stylesheet" href="auth.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
             <nav class="nav">
                 <ul class="nav-list">
                     <li class="nav-item"><a href="index.html" class="nav-link">হোম</a></li>
-                    <li class="nav-item"><a href="#" class="nav-link">সম্পত্তি খুঁজুন</a></li>
+                    <li class="nav-item"><a href="properties.html" class="nav-link">সম্পত্তি খুঁজুন</a></li> <!-- নতুন লিঙ্ক -->
                     <li class="nav-item"><a href="#" class="nav-link">সম্পত্তি বিক্রি করুন</a></li>
                     <li class="nav-item"><a href="login.html" class="nav-link button-primary">লগইন</a></li>
                     <li class="nav-item"><a href="register.html" class="nav-link button-secondary">রেজিস্ট্রেশন</a></li>
@@ -30,8 +30,8 @@
                 <h1 class="hero-title">আপনার স্বপ্নের বাড়ি খুঁজুন</h1>
                 <p class="hero-description">হাজার হাজার প্রপার্টির মধ্যে থেকে আপনার পছন্দেরটি বেছে নিন।</p>
                 <div class="search-bar">
-                    <input type="text" placeholder="শহর, এলাকা বা প্রপার্টির ধরন..." class="search-input">
-                    <button class="search-button">অনুসন্ধান করুন</button>
+                    <input type="text" id="homeSearchInput" placeholder="শহর, এলাকা বা প্রপার্টির ধরন..." class="search-input">
+                    <button id="homeSearchButton" class="search-button">অনুসন্ধান করুন</button> <!-- বাটন আইডি যোগ করা হয়েছে -->
                 </div>
             </div>
         </section>
@@ -46,7 +46,7 @@
                         <h3 class="property-title">সুন্দর ভিলা</h3>
                         <p class="property-location">ঢাকা, বাংলাদেশ</p>
                         <p class="property-price">৳ ১.৫০ কোটি</p>
-                        <button class="button-primary">বিস্তারিত দেখুন</button>
+                        <a href="property-details.html?id=1" class="button-primary">বিস্তারিত দেখুন</a>
                     </div>
                 </div>
                 <div class="property-card">
@@ -55,7 +55,7 @@
                         <h3 class="property-title">আধুনিক অ্যাপার্টমেন্ট</h3>
                         <p class="property-location">চট্টগ্রাম, বাংলাদেশ</p>
                         <p class="property-price">৳ ৮০ লক্ষ</p>
-                        <button class="button-primary">বিস্তারিত দেখুন</button>
+                        <a href="property-details.html?id=2" class="button-primary">বিস্তারিত দেখুন</a>
                     </div>
                 </div>
                 <div class="property-card">
@@ -64,7 +64,7 @@
                         <h3 class="property-title">কমার্শিয়াল স্পেস</h3>
                         <p class="property-location">খুলনা, বাংলাদেশ</p>
                         <p class="property-price">৳ ২ কোটি</p>
-                        <button class="button-primary">বিস্তারিত দেখুন</button>
+                        <a href="property-details.html?id=3" class="button-primary">বিস্তারিত দেখুন</a>
                     </div>
                 </div>
             </div>
