@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>সম্পত্তি যোগ করুন - আমার বাড়ি</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="auth.css"> <!-- ফর্ম স্টাইলের জন্য auth.css ব্যবহার করা হয়েছে -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container flex justify-between items-center">
+            <a href="index.html" class="logo">আমার বাড়ি</a>
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="index.html" class="nav-link">হোম</a></li>
+                    <li class="nav-item"><a href="properties.html" class="nav-link">সম্পত্তি খুঁজুন</a></li>
+                    <li class="nav-item"><a href="add-property.html" class="nav-link">সম্পত্তি বিক্রি করুন</a></li>
+                    <li class="nav-item"><a href="login.html" class="nav-link button-primary">লগইন</a></li>
+                    <li class="nav-item"><a href="register.html" class="nav-link button-secondary">রেজিস্ট্রেশন</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="auth-container"> <!-- auth-container ক্লাস ব্যবহার করা হয়েছে ফর্মের সেন্টারিং এবং কার্ড স্টাইলের জন্য -->
+        <div class="auth-card">
+            <h1 class="auth-title">নতুন সম্পত্তি যোগ করুন</h1>
+            <form id="addPropertyForm" class="auth-form">
+                <div class="form-group">
+                    <label for="propertyTitle">সম্পত্তির শিরোনাম:</label>
+                    <input type="text" id="propertyTitle" name="propertyTitle" required class="input-field">
+                </div>
+                <div class="form-group">
+                    <label for="propertyLocation">অবস্থান (শহর, এলাকা):</label>
+                    <input type="text" id="propertyLocation" name="propertyLocation" required class="input-field">
+                </div>
+                <div class="form-group">
+                    <label for="propertyPrice">মূল্য (৳):</label>
+                    <input type="number" id="propertyPrice" name="propertyPrice" required class="input-field">
+                </div>
+                <div class="form-group">
+                    <label for="propertyBedrooms">বেডরুমের সংখ্যা:</label>
+                    <input type="number" id="propertyBedrooms" name="propertyBedrooms" class="input-field" min="1">
+                </div>
+                <div class="form-group">
+                    <label for="propertyBathrooms">বাথরুমের সংখ্যা:</label>
+                    <input type="number" id="propertyBathrooms" name="propertyBathrooms" class="input-field" min="1">
+                </div>
+                <div class="form-group">
+                    <label for="propertyArea">আয়তন (বর্গফুট):</label>
+                    <input type="number" id="propertyArea" name="propertyArea" class="input-field" min="1">
+                </div>
+                <div class="form-group">
+                    <label for="propertyDescription">সম্পত্তির বিবরণ:</label>
+                    <textarea id="propertyDescription" name="propertyDescription" rows="5" class="input-field"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="propertyImage">ছবি আপলোড করুন:</label>
+                    <input type="file" id="propertyImage" name="propertyImage" accept="image/*" class="input-field">
+                </div>
+                <button type="submit" class="button-primary auth-button">সম্পত্তি যোগ করুন</button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container text-center">
+            <p>&copy; 2025 আমার বাড়ি। সর্বস্বত্ব সংরক্ষিত।</p>
+            <p>
+                <a href="#" class="footer-link">গোপনীয়তা নীতি</a> |
+                <a href="#" class="footer-link">ব্যবহারের শর্তাবলী</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+  </html>
