@@ -6,6 +6,32 @@
     <title>ড্যাশবোর্ড - আমার বাড়ি</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, onSnapshot, query, where, FieldValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // গ্লোবাল ভেরিয়েবল হিসেবে Firebase সার্ভিসগুলো এক্সপোর্ট করা
+        window.firebaseApp = initializeApp;
+        window.firebaseAuth = getAuth;
+        window.firebaseSignInAnonymously = signInAnonymously;
+        window.firebaseSignInWithCustomToken = signInWithCustomToken;
+        window.firebaseCreateUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.firebaseSignInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.firebaseSignOut = signOut;
+        window.firebaseOnAuthStateChanged = onAuthStateChanged;
+        window.firebaseFirestore = getFirestore;
+        window.firebaseCollection = collection;
+        window.firebaseAddDoc = addDoc;
+        window.firebaseGetDocs = getDocs;
+        window.firebaseDoc = doc;
+        window.firebaseGetDoc = getDoc;
+        window.firebaseOnSnapshot = onSnapshot;
+        window.firebaseQuery = query;
+        window.firebaseWhere = where;
+        window.firebaseFieldValue = FieldValue;
+    </script>
 </head>
 <body>
     <header class="header">
@@ -16,11 +42,15 @@
                     <li class="nav-item"><a href="index.html" class="nav-link">হোম</a></li>
                     <li class="nav-item"><a href="properties.html" class="nav-link">সম্পত্তি খুঁজুন</a></li>
                     <li class="nav-item"><a href="add-property.html" class="nav-link">সম্পত্তি বিক্রি করুন</a></li>
-                    <li class="nav-item"><a href="dashboard.html" class="nav-link button-primary">ড্যাশবোর্ড</a></li> <!-- নতুন ড্যাশবোর্ড লিঙ্ক -->
-                    <li class="nav-item"><a href="login.html" class="nav-link button-secondary">লগইন</a></li>
-                    <li class="nav-item"><a href="register.html" class="nav-link button-secondary">রেজিস্ট্রেশন</a></li>
+                    <li class="nav-item logged-in-only"><a href="dashboard.html" class="nav-link button-primary">ড্যাশবোর্ড</a></li>
+                    <li class="nav-item logged-out-only"><a href="login.html" class="nav-link button-secondary">লগইন</a></li>
+                    <li class="nav-item logged-out-only"><a href="register.html" class="nav-link button-secondary">রেজিস্ট্রেশন</a></li>
+                    <li class="nav-item logged-in-only"><button id="logoutButton" class="nav-link button-secondary">লগআউট</button></li>
                 </ul>
             </nav>
+            <div id="userInfo" class="user-info">
+                <span id="userIdDisplay" class="user-id-text"></span>
+            </div>
         </div>
     </header>
 
@@ -31,34 +61,9 @@
                 <a href="add-property.html" class="button-primary">নতুন সম্পত্তি যোগ করুন</a>
             </div>
 
-            <div class="property-list">
-                <!-- ডামি সম্পত্তি তালিকা -->
-                <div class="property-item">
-                    <img src="https://placehold.co/150x100/E0E0E0/333333?text=Property+A" alt="Property A" class="property-list-image">
-                    <div class="property-list-info">
-                        <h3 class="property-list-title">আমার সুন্দর ভিলা</h3>
-                        <p class="property-list-location">ঢাকা, বাংলাদেশ</p>
-                        <p class="property-list-price">৳ ১.৫০ কোটি</p>
-                    </div>
-                    <div class="property-list-actions">
-                        <a href="property-details.html?id=my-1" class="button-secondary">বিস্তারিত</a>
-                        <button class="button-primary edit-button">সম্পাদনা করুন</button>
-                        <button class="button-danger delete-button">মুছে ফেলুন</button>
-                    </div>
-                </div>
-                <div class="property-item">
-                    <img src="https://placehold.co/150x100/D0D0D0/333333?text=Property+B" alt="Property B" class="property-list-image">
-                    <div class="property-list-info">
-                        <h3 class="property-list-title">আমার আধুনিক অ্যাপার্টমেন্ট</h3>
-                        <p class="property-list-location">চট্টগ্রাম, বাংলাদেশ</p>
-                        <p class="property-list-price">৳ ৮০ লক্ষ</p>
-                    </div>
-                    <div class="property-list-actions">
-                        <a href="property-details.html?id=my-2" class="button-secondary">বিস্তারিত</a>
-                        <button class="button-primary edit-button">সম্পাদনা করুন</button>
-                        <button class="button-danger delete-button">মুছে ফেলুন</button>
-                    </div>
-                </div>
+            <div id="myPropertiesList" class="property-list">
+                <!-- জাভাস্ক্রিপ্ট এখানে ডায়নামিকভাবে ব্যবহারকারীর সম্পত্তি যোগ করবে -->
+                <p class="loading-text">আপনার সম্পত্তি লোড হচ্ছে...</p>
             </div>
         </section>
     </main>
@@ -75,4 +80,4 @@
 
     <script src="script.js"></script>
 </body>
-      </html>
+</html>
