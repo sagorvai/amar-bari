@@ -74,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (password.length < 6) {
-                alert('পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!'); // এখানে alert() ব্যবহার করা হয়েছে, এটি পরে কাস্টম মেসেজ বক্সে পরিবর্তন করা যেতে পারে।
                 registerMessageDiv.textContent = 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!';
                 registerMessageDiv.className = 'error-message';
                 return;
@@ -141,5 +140,52 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Property ID:', propertyId);
         // এখানে আপনি এই ID ব্যবহার করে নির্দিষ্ট সম্পত্তির ডেটা লোড করতে পারেন।
         // আপাতত ডামি ডেটা দেখানো হচ্ছে property-details.html এ।
+    }
+
+    // নতুন সম্পত্তি যোগ করার ফর্ম হ্যান্ডলিং
+    const addPropertyForm = document.getElementById('addPropertyForm');
+    const addPropertyMessageDiv = document.createElement('div'); // মেসেজ দেখানোর জন্য নতুন div
+    if (addPropertyForm) {
+        addPropertyForm.parentNode.insertBefore(addPropertyMessageDiv, addPropertyForm.nextSibling);
+
+        addPropertyForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            addPropertyMessageDiv.textContent = '';
+            addPropertyMessageDiv.className = '';
+
+            const propertyTitle = addPropertyForm.propertyTitle.value.trim();
+            const propertyLocation = addPropertyForm.propertyLocation.value.trim();
+            const propertyPrice = addPropertyForm.propertyPrice.value.trim();
+            const propertyBedrooms = addPropertyForm.propertyBedrooms.value.trim();
+            const propertyBathrooms = addPropertyForm.propertyBathrooms.value.trim();
+            const propertyArea = addPropertyForm.propertyArea.value.trim();
+            const propertyDescription = addPropertyForm.propertyDescription.value.trim();
+            const propertyImage = addPropertyForm.propertyImage.files[0]; // ফাইল ইনপুট
+
+            if (!propertyTitle || !propertyLocation || !propertyPrice || !propertyDescription) {
+                addPropertyMessageDiv.textContent = 'অনুগ্রহ করে প্রয়োজনীয় সকল ঘর পূরণ করুন (শিরোনাম, অবস্থান, মূল্য, বিবরণ)।';
+                addPropertyMessageDiv.className = 'error-message';
+                return;
+            }
+
+            // এখানে আপনি ডেটা সংগ্রহ করে কনসোলে দেখতে পারেন
+            const newPropertyData = {
+                title: propertyTitle,
+                location: propertyLocation,
+                price: propertyPrice,
+                bedrooms: propertyBedrooms,
+                bathrooms: propertyBathrooms,
+                area: propertyArea,
+                description: propertyDescription,
+                image: propertyImage ? propertyImage.name : 'No image selected' // ছবির ফাইল নাম
+            };
+            console.log('New Property Data:', newPropertyData);
+
+            addPropertyMessageDiv.textContent = 'সম্পত্তি সফলভাবে যোগ করার চেষ্টা করা হয়েছে! (ব্যাকএন্ড লজিক যোগ করা হয়নি)';
+            addPropertyMessageDiv.className = 'success-message';
+
+            // ফর্ম রিসেট করা
+            addPropertyForm.reset();
+        });
     }
 });
