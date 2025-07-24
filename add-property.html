@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>সম্পত্তি যোগ করুন - আমার বাড়ি</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="auth.css"> <!-- ফর্ম স্টাইলের জন্য auth.css ব্যবহার করা হয়েছে -->
+    <link rel="stylesheet" href="auth.css"> <!-- Form styles use auth.css -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Firebase SDKs -->
     <script type="module">
@@ -13,7 +13,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, doc, getDoc, onSnapshot, query, where, FieldValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // গ্লোবাল ভেরিয়েবল হিসেবে Firebase সার্ভিসগুলো এক্সপোর্ট করা
+        // Export Firebase services as global variables for use in script.js
         window.firebaseApp = initializeApp;
         window.firebaseAuth = getAuth;
         window.firebaseSignInAnonymously = signInAnonymously;
@@ -55,7 +55,7 @@
         </div>
     </header>
 
-    <main class="auth-container"> <!-- auth-container ক্লাস ব্যবহার করা হয়েছে ফর্মের সেন্টারিং এবং কার্ড স্টাইলের জন্য -->
+    <main class="auth-container"> <!-- auth-container class used for form centering and card style -->
         <div class="auth-card">
             <h1 class="auth-title">নতুন সম্পত্তি যোগ করুন</h1>
             <form id="addPropertyForm" class="auth-form">
