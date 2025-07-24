@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ড্যাশবোর্ড - আমার বাড়ি</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container flex justify-between items-center">
+            <a href="index.html" class="logo">আমার বাড়ি</a>
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="index.html" class="nav-link">হোম</a></li>
+                    <li class="nav-item"><a href="properties.html" class="nav-link">সম্পত্তি খুঁজুন</a></li>
+                    <li class="nav-item"><a href="add-property.html" class="nav-link">সম্পত্তি বিক্রি করুন</a></li>
+                    <li class="nav-item"><a href="dashboard.html" class="nav-link button-primary">ড্যাশবোর্ড</a></li> <!-- নতুন ড্যাশবোর্ড লিঙ্ক -->
+                    <li class="nav-item"><a href="login.html" class="nav-link button-secondary">লগইন</a></li>
+                    <li class="nav-item"><a href="register.html" class="nav-link button-secondary">রেজিস্ট্রেশন</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content container">
+        <section class="dashboard-section">
+            <h1 class="section-title">আমার সম্পত্তি</h1>
+            <div class="dashboard-actions text-center">
+                <a href="add-property.html" class="button-primary">নতুন সম্পত্তি যোগ করুন</a>
+            </div>
+
+            <div class="property-list">
+                <!-- ডামি সম্পত্তি তালিকা -->
+                <div class="property-item">
+                    <img src="https://placehold.co/150x100/E0E0E0/333333?text=Property+A" alt="Property A" class="property-list-image">
+                    <div class="property-list-info">
+                        <h3 class="property-list-title">আমার সুন্দর ভিলা</h3>
+                        <p class="property-list-location">ঢাকা, বাংলাদেশ</p>
+                        <p class="property-list-price">৳ ১.৫০ কোটি</p>
+                    </div>
+                    <div class="property-list-actions">
+                        <a href="property-details.html?id=my-1" class="button-secondary">বিস্তারিত</a>
+                        <button class="button-primary edit-button">সম্পাদনা করুন</button>
+                        <button class="button-danger delete-button">মুছে ফেলুন</button>
+                    </div>
+                </div>
+                <div class="property-item">
+                    <img src="https://placehold.co/150x100/D0D0D0/333333?text=Property+B" alt="Property B" class="property-list-image">
+                    <div class="property-list-info">
+                        <h3 class="property-list-title">আমার আধুনিক অ্যাপার্টমেন্ট</h3>
+                        <p class="property-list-location">চট্টগ্রাম, বাংলাদেশ</p>
+                        <p class="property-list-price">৳ ৮০ লক্ষ</p>
+                    </div>
+                    <div class="property-list-actions">
+                        <a href="property-details.html?id=my-2" class="button-secondary">বিস্তারিত</a>
+                        <button class="button-primary edit-button">সম্পাদনা করুন</button>
+                        <button class="button-danger delete-button">মুছে ফেলুন</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container text-center">
+            <p>&copy; 2025 আমার বাড়ি। সর্বস্বত্ব সংরক্ষিত।</p>
+            <p>
+                <a href="#" class="footer-link">গোপনীয়তা নীতি</a> |
+                <a href="#" class="footer-link">ব্যবহারের শর্তাবলী</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+      </html>
