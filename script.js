@@ -74,7 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (password.length < 6) {
-                registerMessageDiv.textContent = 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।';
+                alert('পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!'); // এখানে alert() ব্যবহার করা হয়েছে, এটি পরে কাস্টম মেসেজ বক্সে পরিবর্তন করা যেতে পারে।
+                registerMessageDiv.textContent = 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!';
                 registerMessageDiv.className = 'error-message';
                 return;
             }
@@ -100,5 +101,45 @@ document.addEventListener('DOMContentLoaded', () => {
             //     window.location.href = 'login.html';
             // }, 2000); // 2 সেকেন্ড পর রিডাইরেক্ট
         });
+    }
+
+    // হোমপেজের অনুসন্ধান বাটন হ্যান্ডলিং
+    const homeSearchButton = document.getElementById('homeSearchButton');
+    const homeSearchInput = document.getElementById('homeSearchInput');
+    if (homeSearchButton && homeSearchInput) {
+        homeSearchButton.addEventListener('click', () => {
+            const searchTerm = homeSearchInput.value.trim();
+            if (searchTerm) {
+                // অনুসন্ধানের শর্ত সহ properties.html এ রিডাইরেক্ট
+                window.location.href = `properties.html?search=${encodeURIComponent(searchTerm)}`;
+            } else {
+                // কোনো শর্ত না থাকলে শুধু properties.html এ রিডাইরেক্ট
+                window.location.href = 'properties.html';
+            }
+        });
+    }
+
+    // প্রপার্টিজ পেজের অনুসন্ধান বাটন হ্যান্ডলিং (যদি থাকে)
+    const propertySearchButton = document.getElementById('propertySearchButton');
+    const propertySearchInput = document.getElementById('propertySearchInput');
+    if (propertySearchButton && propertySearchInput) {
+        propertySearchButton.addEventListener('click', () => {
+            const searchTerm = propertySearchInput.value.trim();
+            if (searchTerm) {
+                // একই পেজে অনুসন্ধানের শর্ত সহ রিফ্রেশ
+                window.location.href = `properties.html?search=${encodeURIComponent(searchTerm)}`;
+            } else {
+                window.location.href = 'properties.html';
+            }
+        });
+    }
+
+    // প্রপার্টি ডিটেইলস পেজে URL থেকে ID পড়া (যদি থাকে)
+    const urlParams = new URLSearchParams(window.location.search);
+    const propertyId = urlParams.get('id');
+    if (propertyId) {
+        console.log('Property ID:', propertyId);
+        // এখানে আপনি এই ID ব্যবহার করে নির্দিষ্ট সম্পত্তির ডেটা লোড করতে পারেন।
+        // আপাতত ডামি ডেটা দেখানো হচ্ছে property-details.html এ।
     }
 });
