@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>লগইন - আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">আমার বাড়ি.কম</h1>
+            <nav class="nav">
+                <a href="index.html">হোম</a>
+                <a href="auth.html">লগইন</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="auth-container">
+            <div id="login-form-container">
+                <h2>লগইন</h2>
+                <input type="text" id="login-mobile" placeholder="মোবাইল নম্বর" required>
+                <input type="password" id="login-password" placeholder="পাসওয়ার্ড" required>
+                <button onclick="login()">লগইন করুন</button>
+                <p class="switch-form">অ্যাকাউন্ট নেই? <a href="#" id="show-register">রেজিস্টার করুন</a></p>
+            </div>
+
+            <div id="register-form-container" style="display:none;">
+                <h2>রেজিস্ট্রেশন</h2>
+                <input type="text" id="register-name" placeholder="আপনার নাম" required>
+                <input type="text" id="register-mobile" placeholder="মোবাইল নম্বর" required>
+                <input type="password" id="register-password" placeholder="পাসওয়ার্ড" required>
+                <button onclick="register()">রেজিস্ট্রেশন করুন</button>
+                <p class="switch-form">ইতিমধ্যে একটি অ্যাকাউন্ট আছে? <a href="#" id="show-login">লগইন করুন</a></p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
+    </footer>
+
+    <script src="auth.js"></script>
+</body>
+</html>
