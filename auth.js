@@ -3,30 +3,32 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // ফর্মের উপাদানগুলো নির্বাচন করা
-const loginForm = document.getElementById('login-form-container');
-const registerForm = document.getElementById('register-form-container');
+const loginFormContainer = document.getElementById('login-form-container');
+const registerFormContainer = document.getElementById('register-form-container');
 const showRegisterLink = document.getElementById('show-register');
 const showLoginLink = document.getElementById('show-login');
+const loginBtn = document.getElementById('login-btn');
+const registerBtn = document.getElementById('register-btn');
 
 // লগইন এবং রেজিস্ট্রেশন ফর্মের মধ্যে পরিবর্তন করার জন্য ইভেন্ট লিসেনার
 document.addEventListener('DOMContentLoaded', function() {
     if (showRegisterLink && showLoginLink) {
         showRegisterLink.addEventListener('click', function(e) {
             e.preventDefault();
-            loginForm.style.display = 'none';
-            registerForm.style.display = 'block';
+            loginFormContainer.style.display = 'none';
+            registerFormContainer.style.display = 'block';
         });
 
         showLoginLink.addEventListener('click', function(e) {
             e.preventDefault();
-            loginForm.style.display = 'block';
-            registerForm.style.display = 'none';
+            loginFormContainer.style.display = 'block';
+            registerFormContainer.style.display = 'none';
         });
     }
 });
 
 // রেজিস্ট্রেশন ফাংশন
-function register() {
+registerBtn.addEventListener('click', function() {
     const name = document.getElementById('register-name').value;
     const mobile = document.getElementById('register-mobile').value;
     const password = document.getElementById('register-password').value;
@@ -36,19 +38,16 @@ function register() {
         return;
     }
 
-    // Firebase-এর Email/Password Authentication ব্যবহার করে নতুন ইউজার তৈরি
     auth.createUserWithEmailAndPassword(mobile + "@amarbariapp.com", password)
         .then((userCredential) => {
-            // রেজিস্ট্রেশন সফল হলে
             const user = userCredential.user;
-            // ব্যবহারকারীর তথ্য Firestore ডেটাবেজে সংরক্ষণ
             db.collection("users").doc(user.uid).set({
                 name: name,
                 mobile: mobile
             })
             .then(() => {
                 alert("রেজিস্ট্রেশন সফল হয়েছে!");
-                window.location.href = "index.html"; // হোমপেজে ফিরে যাওয়া
+                window.location.href = "index.html";
             })
             .catch((error) => {
                 console.error("Firestore ডেটাবেজে ডেটা সংরক্ষণ করতে সমস্যা:", error);
@@ -56,7 +55,6 @@ function register() {
             });
         })
         .catch((error) => {
-            // রেজিস্ট্রেশনে কোনো সমস্যা হলে
             const errorCode = error.code;
             const errorMessage = error.message;
             if (errorCode === 'auth/email-already-in-use') {
@@ -66,10 +64,10 @@ function register() {
             }
             console.error(error);
         });
-}
+});
 
 // লগইন ফাংশন
-function login() {
+loginBtn.addEventListener('click', function() {
     const mobile = document.getElementById('login-mobile').value;
     const password = document.getElementById('login-password').value;
 
@@ -78,11 +76,10 @@ function login() {
         return;
     }
 
-    // Firebase-এর Email/Password Authentication ব্যবহার করে লগইন
     auth.signInWithEmailAndPassword(mobile + "@amarbariapp.com", password)
         .then((userCredential) => {
             alert("লগইন সফল হয়েছে!");
-            window.location.href = "index.html"; // হোমপেজে ফিরে যাওয়া
+            window.location.href = "index.html";
         })
         .catch((error) => {
             const errorCode = error.code;
@@ -94,4 +91,4 @@ function login() {
             }
             console.error(error);
         });
-}
+});
