@@ -6,14 +6,11 @@
     <title>লগইন - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- Firebase SDK - এটি Firebase-কে লোড করবে -->
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
-
-    <!-- আপনার Firebase কনফিগারেশন কোড -->
+    
     <script>
-      // আপনার web app's Firebase configuration
       const firebaseConfig = {
         apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
         authDomain: "amar-bari-website.firebaseapp.com",
@@ -23,8 +20,7 @@
         appId: "1:719084789035:web:f4da765290b351b00a796e",
         measurementId: "G-F3YHTJ4LLV"
       };
-
-      // Initialize Firebase
+      
       const app = firebase.initializeApp(firebaseConfig);
     </script>
 </head>
@@ -46,7 +42,7 @@
                 <h2>লগইন</h2>
                 <input type="text" id="login-mobile" placeholder="মোবাইল নম্বর" required>
                 <input type="password" id="login-password" placeholder="পাসওয়ার্ড" required>
-                <button onclick="login()">লগইন করুন</button>
+                <button id="login-btn">লগইন করুন</button>
                 <p class="switch-form">অ্যাকাউন্ট নেই? <a href="#" id="show-register">রেজিস্টার করুন</a></p>
             </div>
 
@@ -55,7 +51,7 @@
                 <input type="text" id="register-name" placeholder="আপনার নাম" required>
                 <input type="text" id="register-mobile" placeholder="মোবাইল নম্বর" required>
                 <input type="password" id="register-password" placeholder="পাসওয়ার্ড" required>
-                <button onclick="register()">রেজিস্ট্রেশন করুন</button>
+                <button id="register-btn">রেজিস্ট্রেশন করুন</button>
                 <p class="switch-form">ইতিমধ্যে একটি অ্যাকাউন্ট আছে? <a href="#" id="show-login">লগইন করুন</a></p>
             </div>
         </div>
