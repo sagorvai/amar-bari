@@ -6,10 +6,10 @@
     <title>লগইন - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
-    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
     <script>
       const firebaseConfig = {
         apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
@@ -22,10 +22,94 @@
       };
       
       const app = firebase.initializeApp(firebaseConfig);
+      const auth = app.auth(); // Auth রেফারেন্স
+      const db = app.firestore(); // Firestore রেফারেন্স
+      
+      // লগইন এবং রেজিস্ট্রেশন ফর্মের মধ্যে পরিবর্তন করার ফাংশন
+      document.addEventListener('DOMContentLoaded', function() {
+          const loginFormContainer = document.getElementById('login-form-container');
+          const registerFormContainer = document.getElementById('register-form-container');
+          const showRegisterLink = document.getElementById('show-register');
+          const showLoginLink = document.getElementById('show-login');
+          const loginBtn = document.getElementById('login-btn');
+          const registerBtn = document.getElementById('register-btn');
+          
+          if (showRegisterLink && showLoginLink) {
+              showRegisterLink.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  loginFormContainer.style.display = 'none';
+                  registerFormContainer.style.display = 'block';
+              });
+              
+              showLoginLink.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  loginFormContainer.style.display = 'block';
+                  registerFormContainer.style.display = 'none';
+              });
+          }
+          
+          // রেজিস্ট্রেশন ফাংশন
+          registerBtn.addEventListener('click', function() {
+              const name = document.getElementById('register-name').value;
+              const mobile = document.getElementById('register-mobile').value;
+              const password = document.getElementById('register-password').value;
+
+              if (!name || !mobile || !password) {
+                  alert('সকল তথ্য পূরণ করুন।');
+                  return;
+              }
+
+              auth.createUserWithEmailAndPassword(mobile + "@amarbariapp.com", password)
+                  .then((userCredential) => {
+                      const user = userCredential.user;
+                      db.collection("users").doc(user.uid).set({
+                          name: name,
+                          mobile: mobile
+                      })
+                      .then(() => {
+                          alert("রেজিস্ট্রেশন সফল হয়েছে!");
+                          window.location.href = "index.html";
+                      })
+                      .catch((error) => {
+                          alert("রেজিস্ট্রেশন সফল, কিন্তু ডেটা সংরক্ষণ করা যায়নি।");
+                      });
+                  })
+                  .catch((error) => {
+                      if (error.code === 'auth/email-already-in-use') {
+                          alert('এই মোবাইল নম্বরটি ইতিমধ্যে ব্যবহৃত হয়েছে।');
+                      } else {
+                          alert("রেজিস্ট্রেশন ব্যর্থ: " + error.message);
+                      }
+                  });
+          });
+
+          // লগইন ফাংশন
+          loginBtn.addEventListener('click', function() {
+              const mobile = document.getElementById('login-mobile').value;
+              const password = document.getElementById('login-password').value;
+
+              if (!mobile || !password) {
+                  alert('মোবাইল নম্বর এবং পাসওয়ার্ড দিন।');
+                  return;
+              }
+
+              auth.signInWithEmailAndPassword(mobile + "@amarbariapp.com", password)
+                  .then((userCredential) => {
+                      alert("লগইন সফল হয়েছে!");
+                      window.location.href = "index.html";
+                  })
+                  .catch((error) => {
+                      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                          alert('ভুল মোবাইল নম্বর বা পাসওয়ার্ড।');
+                      } else {
+                          alert("লগইন ব্যর্থ: " + error.message);
+                      }
+                  });
+          });
+      });
     </script>
 </head>
 <body>
-
     <header class="header">
         <div class="container">
             <h1 class="logo">আমার বাড়ি.কম</h1>
@@ -62,7 +146,5 @@
             <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
-
-    <script src="auth.js"></script>
 </body>
 </html>
