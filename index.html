@@ -6,14 +6,10 @@
     <title>আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- Firebase SDK - এটি Firebase-কে লোড করবে -->
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
-    
-    <!-- আপনার Firebase কনফিগারেশন কোড -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
     <script>
-      // আপনার web app's Firebase configuration
       const firebaseConfig = {
         apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
         authDomain: "amar-bari-website.firebaseapp.com",
@@ -24,13 +20,35 @@
         measurementId: "G-F3YHTJ4LLV"
       };
       
-      // Initialize Firebase
       const app = firebase.initializeApp(firebaseConfig);
+      const db = app.firestore(); // Firestore রেফারেন্স
+      
+      // এই স্ক্রিপ্টটি Firebase থেকে ডেটা নিয়ে প্রপার্টি কার্ড তৈরি করবে
+      document.addEventListener('DOMContentLoaded', function() {
+          const propertyGrid = document.querySelector('.property-grid');
+          
+          db.collection("properties").get().then((querySnapshot) => {
+              propertyGrid.innerHTML = '';
+              querySnapshot.forEach((doc) => {
+                  const property = doc.data();
+                  const card = document.createElement('div');
+                  card.classList.add('property-card');
+                  card.innerHTML = `
+                      <img src="${property.image}" alt="${property.title}">
+                      <div class="property-card-content">
+                          <h4>${property.title}</h4>
+                          <p class="location">${property.location}</p>
+                          <p class="price">৳ ${property.price}</p>
+                      </div>
+                  `;
+                  propertyGrid.appendChild(card);
+              });
+          });
+      });
     </script>
 </head>
 <body>
 
-    <!-- হেডার -->
     <header class="header">
         <div class="container">
             <h1 class="logo">আমার বাড়ি.কম</h1>
@@ -41,13 +59,11 @@
         </div>
     </header>
 
-    <!-- প্রধান কন্টেন্ট -->
     <main class="main-content">
         <section class="hero-section">
             <div class="container">
                 <h2>আপনার স্বপ্নের বাড়ি খুঁজুন</h2>
                 <p>আমাদের আধুনিক ও নির্ভরযোগ্য অনলাইন প্ল্যাটফর্মে আপনার প্রপার্টি খুঁজে নিন।</p>
-                <!-- সার্চ বার -->
                 <div class="search-bar">
                     <input type="text" placeholder="শহর বা এলাকা...">
                     <select>
@@ -60,24 +76,19 @@
             </div>
         </section>
 
-        <!-- প্রপার্টি কার্ডের সেকশন -->
         <section class="property-list">
             <div class="container">
                 <h3>সাম্প্রতিক প্রপার্টি</h3>
                 <div class="property-grid">
-                    <!-- JavaScript এখানে প্রপার্টি কার্ডগুলো তৈরি করবে -->
-                </div>
+                    </div>
             </div>
         </section>
     </main>
 
-    <!-- ফুটার -->
     <footer class="footer">
         <div class="container">
             <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
-
-    <script src="script.js"></script>
 </body>
-</html>
+    </html>
