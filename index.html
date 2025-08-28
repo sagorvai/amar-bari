@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase SDK - এটি Firebase-কে লোড করবে -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+    
+    <!-- আপনার Firebase কনফিগারেশন কোড -->
+    <script>
+      // আপনার web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b351b00a796e",
+        measurementId: "G-F3YHTJ4LLV"
+      };
+      
+      // Initialize Firebase
+      const app = firebase.initializeApp(firebaseConfig);
+    </script>
+</head>
+<body>
+
+    <!-- হেডার -->
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">আমার বাড়ি.কম</h1>
+            <nav class="nav">
+                <a href="index.html">হোম</a>
+                <a href="auth.html">লগইন</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- প্রধান কন্টেন্ট -->
+    <main class="main-content">
+        <section class="hero-section">
+            <div class="container">
+                <h2>আপনার স্বপ্নের বাড়ি খুঁজুন</h2>
+                <p>আমাদের আধুনিক ও নির্ভরযোগ্য অনলাইন প্ল্যাটফর্মে আপনার প্রপার্টি খুঁজে নিন।</p>
+                <!-- সার্চ বার -->
+                <div class="search-bar">
+                    <input type="text" placeholder="শহর বা এলাকা...">
+                    <select>
+                        <option value="">সকল ক্যাটাগরি</option>
+                        <option value="buy">বিক্রয়</option>
+                        <option value="rent">ভাড়া</option>
+                    </select>
+                    <button>অনুসন্ধান করুন</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- প্রপার্টি কার্ডের সেকশন -->
+        <section class="property-list">
+            <div class="container">
+                <h3>সাম্প্রতিক প্রপার্টি</h3>
+                <div class="property-grid">
+                    <!-- JavaScript এখানে প্রপার্টি কার্ডগুলো তৈরি করবে -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ফুটার -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
