@@ -20,31 +20,7 @@
         measurementId: "G-F3YHTJ4LLV"
       };
       
-      const app = firebase.initializeApp(firebaseConfig);
-      const db = app.firestore(); // Firestore রেফারেন্স
-      
-      // এই স্ক্রিপ্টটি Firebase থেকে ডেটা নিয়ে প্রপার্টি কার্ড তৈরি করবে
-      document.addEventListener('DOMContentLoaded', function() {
-          const propertyGrid = document.querySelector('.property-grid');
-          
-          db.collection("properties").get().then((querySnapshot) => {
-              propertyGrid.innerHTML = '';
-              querySnapshot.forEach((doc) => {
-                  const property = doc.data();
-                  const card = document.createElement('div');
-                  card.classList.add('property-card');
-                  card.innerHTML = `
-                      <img src="${property.image}" alt="${property.title}">
-                      <div class="property-card-content">
-                          <h4>${property.title}</h4>
-                          <p class="location">${property.location}</p>
-                          <p class="price">৳ ${property.price}</p>
-                      </div>
-                  `;
-                  propertyGrid.appendChild(card);
-              });
-          });
-      });
+      firebase.initializeApp(firebaseConfig);
     </script>
 </head>
 <body>
@@ -91,5 +67,7 @@
             <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
+    
+    <script src="index.js"></script>
 </body>
-</html>
+    </html>
