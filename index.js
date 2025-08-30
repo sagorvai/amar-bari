@@ -46,5 +46,4 @@ async function fetchAndDisplayProperties() {
     }
 }
 
-// Call the function when the page loads
 document.addEventListener('DOMContentLoaded', fetchAndDisplayProperties);
