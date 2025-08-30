@@ -33,7 +33,7 @@ async function fetchAndDisplayProperties() {
                 <img src="${imageUrl}" alt="${property.title}">
                 <div class="property-card-content">
                     <h4>${property.title}</h4>
-                    <p class="location">${property.location.upazila}, ${property.location.district}</p>
+                    <p class="location">${property.upazila}, ${property.district}</p>
                     <p class="price">${property.price}</p>
                 </div>
             `;
