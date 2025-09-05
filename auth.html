@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>লগইন - আমার বাড়ি.কম</title>
+    <title>লগইন/সাইনআপ - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <script>
       const firebaseConfig = {
@@ -21,95 +22,11 @@
         measurementId: "G-F3YHTJ4LLV"
       };
       
-      const app = firebase.initializeApp(firebaseConfig);
-      const auth = app.auth(); // Auth রেফারেন্স
-      const db = app.firestore(); // Firestore রেফারেন্স
-      
-      // লগইন এবং রেজিস্ট্রেশন ফর্মের মধ্যে পরিবর্তন করার ফাংশন
-      document.addEventListener('DOMContentLoaded', function() {
-          const loginFormContainer = document.getElementById('login-form-container');
-          const registerFormContainer = document.getElementById('register-form-container');
-          const showRegisterLink = document.getElementById('show-register');
-          const showLoginLink = document.getElementById('show-login');
-          const loginBtn = document.getElementById('login-btn');
-          const registerBtn = document.getElementById('register-btn');
-          
-          if (showRegisterLink && showLoginLink) {
-              showRegisterLink.addEventListener('click', function(e) {
-                  e.preventDefault();
-                  loginFormContainer.style.display = 'none';
-                  registerFormContainer.style.display = 'block';
-              });
-              
-              showLoginLink.addEventListener('click', function(e) {
-                  e.preventDefault();
-                  loginFormContainer.style.display = 'block';
-                  registerFormContainer.style.display = 'none';
-              });
-          }
-          
-          // রেজিস্ট্রেশন ফাংশন
-          registerBtn.addEventListener('click', function() {
-              const name = document.getElementById('register-name').value;
-              const mobile = document.getElementById('register-mobile').value;
-              const password = document.getElementById('register-password').value;
-
-              if (!name || !mobile || !password) {
-                  alert('সকল তথ্য পূরণ করুন।');
-                  return;
-              }
-
-              auth.createUserWithEmailAndPassword(mobile + "@amarbariapp.com", password)
-                  .then((userCredential) => {
-                      const user = userCredential.user;
-                      db.collection("users").doc(user.uid).set({
-                          name: name,
-                          mobile: mobile
-                      })
-                      .then(() => {
-                          alert("রেজিস্ট্রেশন সফল হয়েছে!");
-                          window.location.href = "index.html";
-                      })
-                      .catch((error) => {
-                          alert("রেজিস্ট্রেশন সফল, কিন্তু ডেটা সংরক্ষণ করা যায়নি।");
-                      });
-                  })
-                  .catch((error) => {
-                      if (error.code === 'auth/email-already-in-use') {
-                          alert('এই মোবাইল নম্বরটি ইতিমধ্যে ব্যবহৃত হয়েছে।');
-                      } else {
-                          alert("রেজিস্ট্রেশন ব্যর্থ: " + error.message);
-                      }
-                  });
-          });
-
-          // লগইন ফাংশন
-          loginBtn.addEventListener('click', function() {
-              const mobile = document.getElementById('login-mobile').value;
-              const password = document.getElementById('login-password').value;
-
-              if (!mobile || !password) {
-                  alert('মোবাইল নম্বর এবং পাসওয়ার্ড দিন।');
-                  return;
-              }
-
-              auth.signInWithEmailAndPassword(mobile + "@amarbariapp.com", password)
-                  .then((userCredential) => {
-                      alert("লগইন সফল হয়েছে!");
-                      window.location.href = "index.html";
-                  })
-                  .catch((error) => {
-                      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                          alert('ভুল মোবাইল নম্বর বা পাসওয়ার্ড।');
-                      } else {
-                          alert("লগইন ব্যর্থ: " + error.message);
-                      }
-                  });
-          });
-      });
+      firebase.initializeApp(firebaseConfig);
     </script>
 </head>
 <body>
+
     <header class="header">
         <div class="container">
             <h1 class="logo">আমার বাড়ি.কম</h1>
@@ -123,22 +40,33 @@
 
     <main class="main-content">
         <div class="auth-container">
-            <div id="login-form-container">
-                <h2>লগইন</h2>
-                <input type="text" id="login-mobile" placeholder="মোবাইল নম্বর" required>
-                <input type="password" id="login-password" placeholder="পাসওয়ার্ড" required>
-                <button id="login-btn">লগইন করুন</button>
-                <p class="switch-form">অ্যাকাউন্ট নেই? <a href="#" id="show-register">রেজিস্টার করুন</a></p>
-            </div>
+            <h2 id="auth-title">লগইন করুন</h2>
+            
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="login-email">ইমেইল:</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="input-group">
+                    <label for="login-password">পাসওয়ার্ড:</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit">লগইন করুন</button>
+            </form>
 
-            <div id="register-form-container" style="display:none;">
-                <h2>রেজিস্ট্রেশন</h2>
-                <input type="text" id="register-name" placeholder="আপনার নাম" required>
-                <input type="text" id="register-mobile" placeholder="মোবাইল নম্বর" required>
-                <input type="password" id="register-password" placeholder="পাসওয়ার্ড" required>
-                <button id="register-btn">রেজিস্ট্রেশন করুন</button>
-                <p class="switch-form">ইতিমধ্যে একটি অ্যাকাউন্ট আছে? <a href="#" id="show-login">লগইন করুন</a></p>
-            </div>
+            <form id="signup-form" style="display: none;">
+                <div class="input-group">
+                    <label for="signup-email">ইমেইল:</label>
+                    <input type="email" id="signup-email" required>
+                </div>
+                <div class="input-group">
+                    <label for="signup-password">পাসওয়ার্ড:</label>
+                    <input type="password" id="signup-password" required>
+                </div>
+                <button type="submit">সাইনআপ করুন</button>
+            </form>
+
+            <p class="switch-form"><a href="#" id="switch-link">আপনার কি একটি অ্যাকাউন্ট নেই? সাইনআপ করুন</a></p>
         </div>
     </main>
 
@@ -147,5 +75,8 @@
             <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
+    
+    <script src="auth.js"></script>
+
 </body>
 </html>
