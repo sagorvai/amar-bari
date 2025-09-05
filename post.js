@@ -5,34 +5,15 @@ const auth = firebase.auth();
 
 document.addEventListener('DOMContentLoaded', function() {
     const postCategorySelect = document.getElementById('post-category');
-    const sellFieldsContainer = document.getElementById('sell-fields');
-    const rentFieldsContainer = document.getElementById('rent-fields');
-    const sellTypeSelect = document.getElementById('sell-type');
-    const rentTypeSelect = document.getElementById('rent-type');
     const dynamicFieldsContainer = document.getElementById('dynamic-fields-container');
     const propertyForm = document.getElementById('property-form');
 
-    // Show/hide fields based on category selection
-    postCategorySelect.addEventListener('change', function() {
-        const selectedCategory = postCategorySelect.value;
-        sellFieldsContainer.classList.add('hidden-field');
-        rentFieldsContainer.classList.add('hidden-field');
-        dynamicFieldsContainer.innerHTML = '';
+    // Function to generate dynamic fields
+    function generateDynamicFields(category, type) {
+        let fieldsHTML = '';
 
-        if (selectedCategory === 'বিক্রয়') {
-            sellFieldsContainer.classList.remove('hidden-field');
-        } else if (selectedCategory === 'ভাড়া') {
-            rentFieldsContainer.classList.remove('hidden-field');
-        }
-    });
-
-    // Show/hide dynamic fields based on sell type selection
-    sellTypeSelect.addEventListener('change', function() {
-        const selectedType = sellTypeSelect.value;
-        dynamicFieldsContainer.innerHTML = '';
-        if (!selectedType) return;
-
-        let fieldsHTML = `
+        // Common fields for all types
+        fieldsHTML += `
             <div class="input-group">
                 <label>ছবি (সর্বোচ্চ ৩টি):</label>
                 <input type="file" id="image-upload" accept="image/*" multiple required>
@@ -43,231 +24,188 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        if (selectedType === 'জমি') {
-            fieldsHTML += `
-                <div class="input-group input-inline">
-                    <div>
-                        <label for="area-quantity">জমির পরিমাণ:</label>
-                        <input type="number" id="area-quantity" required>
+        if (category === 'বিক্রয়') {
+            if (type === 'জমি') {
+                fieldsHTML += `
+                    <div class="input-group input-inline">
+                        <div>
+                            <label for="area-quantity">জমির পরিমাণ:</label>
+                            <input type="number" id="area-quantity" required>
+                        </div>
+                        <div>
+                            <label for="area-unit">ইউনিট:</label>
+                            <select id="area-unit">
+                                <option value="শতক">শতক</option>
+                                <option value="একর">একর</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label for="area-unit">ইউনিট:</label>
-                        <select id="area-unit">
-                            <option value="শতক">শতক</option>
-                            <option value="একর">একর</option>
+                    <div class="input-group">
+                        <label for="price">দাম:</label>
+                        <input type="text" id="price" placeholder="যেমন: ১.৫ কোটি" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="rs-dag">আরএস দাগ নম্বর:</label>
+                        <input type="text" id="rs-dag">
+                    </div>
+                    <div class="input-group">
+                        <label for="land-type">জমির ধরন:</label>
+                        <select id="land-type">
+                            <option value="">-- নির্বাচন করুন --</option>
+                            <option value="আবাসিক">আবাসিক</option>
+                            <option value="বিলান">বিলান</option>
+                            <option value="বাস্ত">বাস্ত</option>
+                            <option value="ভিটা">ভিটা</option>
+                            <option value="ডোবা">ডোবা</option>
+                            <option value="পুকুর">পুকুর</option>
                         </select>
                     </div>
-                </div>
-                <div class="input-group input-inline">
-                    <div>
-                        <label for="price-quantity">দাম:</label>
-                        <input type="number" id="price-quantity" required>
+                `;
+            } else if (type === 'বাড়ি') {
+                fieldsHTML += `
+                    <div class="input-group">
+                        <label for="land-area">জমির পরিমাণ:</label>
+                        <input type="text" id="land-area" placeholder="যেমন: ৫ শতক" required>
                     </div>
-                    <div>
-                        <label for="price-unit">ইউনিট:</label>
-                        <select id="price-unit">
-                            <option value="মোট">মোট</option>
-                            <option value="শতক">শতক</option>
-                            <option value="একর">একর</option>
+                    <div class="input-group">
+                        <label for="price">দাম:</label>
+                        <input type="text" id="price" placeholder="যেমন: ১.৫ কোটি" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="rs-dag">আরএস দাগ নম্বর:</label>
+                        <input type="text" id="rs-dag">
+                    </div>
+                    <div class="input-group">
+                        <label for="floors">তলা (ঐচ্ছিক):</label>
+                        <input type="number" id="floors">
+                    </div>
+                    <div class="input-group">
+                        <label for="rooms">রুম সংখ্যা:</label>
+                        <input type="number" id="rooms">
+                    </div>
+                    <div class="input-group">
+                        <label for="bathrooms">বাথরুম:</label>
+                        <input type="number" id="bathrooms">
+                    </div>
+                    <div class="input-group">
+                        <label for="kitchens">কিচেন:</label>
+                        <input type="number" id="kitchens">
+                    </div>
+                `;
+            } else if (type === 'ফ্ল্যাট') {
+                fieldsHTML += `
+                    <div class="input-group">
+                        <label for="size">আয়তন (বর্গফুট):</label>
+                        <input type="number" id="size" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="price">দাম:</label>
+                        <input type="text" id="price" placeholder="যেমন: ৫০ লাখ" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="floor-no">ফ্লোর নং:</label>
+                        <input type="number" id="floor-no">
+                    </div>
+                    <div class="input-group">
+                        <label for="rooms">রুম:</label>
+                        <input type="number" id="rooms">
+                    </div>
+                    <div class="input-group">
+                        <label for="bathrooms">বাথরুম:</label>
+                        <input type="number" id="bathrooms">
+                    </div>
+                    <div class="input-group">
+                        <label for="kitchens">কিচেন:</label>
+                        <input type="number" id="kitchens">
+                    </div>
+                `;
+            } else if (type === 'দোকান' || type === 'কমার্শিয়াল') {
+                fieldsHTML += `
+                    <div class="input-group">
+                        <label for="size">আয়তন (বর্গফুট):</label>
+                        <input type="number" id="size" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="store-count">দোকান সংখ্যা:</label>
+                        <input type="number" id="store-count">
+                    </div>
+                    <div class="input-group">
+                        <label for="price">দাম:</label>
+                        <input type="text" id="price" placeholder="যেমন: ২০ লাখ" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="rs-dag">আরএস দাগ নম্বর:</label>
+                        <input type="text" id="rs-dag">
+                    </div>
+                `;
+            }
+        } else if (category === 'ভাড়া') {
+            if (type === 'বাড়ি' || type === 'ফ্ল্যাট') {
+                fieldsHTML += `
+                    <div class="input-group">
+                        <label for="rent-amount">ভাড়া:</label>
+                        <input type="number" id="rent-amount" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="advance-amount">এডভান্স:</label>
+                        <input type="number" id="advance-amount">
+                    </div>
+                    <div class="input-group">
+                        <label for="size">আয়তন:</label>
+                        <input type="text" id="size" placeholder="যেমন: ১৪৫০ বর্গফুট" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="floors">তলা:</label>
+                        <input type="number" id="floors">
+                    </div>
+                    <div class="input-group">
+                        <label for="rooms">রুম সংখ্যা:</label>
+                        <input type="number" id="rooms">
+                    </div>
+                    <div class="input-group">
+                        <label for="bathrooms">বাথরুম:</label>
+                        <input type="number" id="bathrooms">
+                    </div>
+                    <div class="input-group">
+                        <label for="kitchens">কিচেন:</label>
+                        <input type="number" id="kitchens">
+                    </div>
+                    <div class="input-group">
+                        <label for="rental-type">ভাড়ার ধরন:</label>
+                        <select id="rental-type">
+                            <option value="ফ্যামিলি">ফ্যামিলি</option>
+                            <option value="ব্যাচেলর">ব্যাচেলর</option>
                         </select>
                     </div>
-                </div>
-                <div class="input-group">
-                    <label for="rs-dag">আরএস দাগ নম্বর:</label>
-                    <input type="text" id="rs-dag">
-                </div>
-                <div class="input-group">
-                    <label for="land-type">জমির ধরন:</label>
-                    <select id="land-type">
-                        <option value="">-- নির্বাচন করুন --</option>
-                        <option value="আবাসিক">আবাসিক</option>
-                        <option value="বিলান">বিলান</option>
-                        <option value="বাস্ত">বাস্ত</option>
-                        <option value="ভিটা">ভিটা</option>
-                        <option value="ডোবা">ডোবা</option>
-                        <option value="পুকুর">পুকুর</option>
-                    </select>
-                </div>
-            `;
-        } else if (selectedType === 'বাড়ি') {
-            fieldsHTML += `
-                <div class="input-group">
-                    <label for="land-area">জমির পরিমাণ:</label>
-                    <input type="number" id="land-area">
-                </div>
-                <div class="input-group">
-                    <label for="price">দাম:</label>
-                    <input type="number" id="price" required>
-                </div>
-                <div class="input-group">
-                    <label for="rs-dag">আরএস দাগ নম্বর:</label>
-                    <input type="text" id="rs-dag">
-                </div>
-                <div class="input-group">
-                    <label for="floors">তলা (ঐচ্ছিক):</label>
-                    <input type="number" id="floors">
-                </div>
-                <div class="input-group">
-                    <label for="rooms">রুম সংখ্যা:</label>
-                    <input type="number" id="rooms">
-                </div>
-                <div class="input-group">
-                    <label for="bathrooms">বাথরুম:</label>
-                    <input type="number" id="bathrooms">
-                </div>
-                <div class="input-group">
-                    <label for="kitchens">কিচেন:</label>
-                    <input type="number" id="kitchens">
-                </div>
-            `;
-        } else if (selectedType === 'ফ্ল্যাট') {
-            fieldsHTML += `
-                <div class="input-group input-inline">
-                    <div>
-                        <label for="area-sq-ft">পরিমাণ (বর্গফুট):</label>
-                        <input type="number" id="area-sq-ft">
+                `;
+            } else if (type === 'অফিস' || type === 'দোকান') {
+                fieldsHTML += `
+                    <div class="input-group">
+                        <label for="rent-amount">ভাড়া:</label>
+                        <input type="number" id="rent-amount" required>
                     </div>
-                </div>
-                <div class="input-group input-inline">
-                    <div>
-                        <label for="price-quantity">দাম:</label>
-                        <input type="number" id="price-quantity" required>
+                    <div class="input-group">
+                        <label for="advance-amount">এডভান্স:</label>
+                        <input type="number" id="advance-amount">
                     </div>
-                    <div>
-                        <label for="price-unit">ইউনিট:</label>
-                        <select id="price-unit">
-                            <option value="মোট">মোট</option>
-                            <option value="স্কয়ার ফিট">স্কয়ার ফিট</option>
-                        </select>
+                    <div class="input-group">
+                        <label for="size">আয়তন (বর্গফুট):</label>
+                        <input type="number" id="size" required>
                     </div>
-                </div>
-                <div class="input-group">
-                    <label for="floor-no">ফ্লোর নং:</label>
-                    <input type="number" id="floor-no">
-                </div>
-                <div class="input-group">
-                    <label for="rooms">রুম সংখ্যা:</label>
-                    <input type="number" id="rooms">
-                </div>
-                <div class="input-group">
-                    <label for="bathrooms">বাথরুম:</label>
-                    <input type="number" id="bathrooms">
-                </div>
-                <div class="input-group">
-                    <label for="kitchens">কিচেন:</label>
-                    <input type="number" id="kitchens">
-                </div>
-            `;
-        } else if (selectedType === 'দোকান') {
-            fieldsHTML += `
-                <div class="input-group">
-                    <label for="area-sq-ft">পরিমাণ (বর্গফুট):</label>
-                    <input type="number" id="area-sq-ft">
-                </div>
-                <div class="input-group">
-                    <label for="store-count">দোকান সংখ্যা:</label>
-                    <input type="number" id="store-count">
-                </div>
-                <div class="input-group">
-                    <label for="price">দাম:</label>
-                    <input type="number" id="price" required>
-                </div>
-                <div class="input-group">
-                    <label for="rs-dag">আরএস দাগ নম্বর:</label>
-                    <input type="text" id="rs-dag">
-                </div>
-            `;
+                `;
+            }
         }
-
+        
+        // Location & Description fields (common for all types)
         fieldsHTML += `
+            <div class="input-group">
+                <label for="description">বিবরণ:</label>
+                <textarea id="description" rows="5" placeholder="সম্পূর্ণ বর্ণনা লিখুন"></textarea>
+            </div>
             <div class="input-group">
                 <label for="mouza">মৌজা:</label>
                 <input type="text" id="mouza">
             </div>
-            <div class="input-group">
-                <label for="thana">থানা:</label>
-                <input type="text" id="thana">
-            </div>
-            <div class="input-group input-inline">
-                <div>
-                    <label for="upazila">উপজেলা:</label>
-                    <input type="text" id="upazila" required>
-                </div>
-                <div>
-                    <label for="upazila-type">ধরণ:</label>
-                    <select id="upazila-type">
-                        <option value="উপজেলা">উপজেলা</option>
-                        <option value="সিটি কর্পোরেশন">সিটি কর্পোরেশন</option>
-                    </select>
-                </div>
-            </div>
-            <div class="input-group">
-                <label for="district">জেলা:</label>
-                <input type="text" id="district" required>
-            </div>
-            <div class="input-group">
-                <label for="description">বিবরণ:</label>
-                <textarea id="description" rows="5"></textarea>
-            </div>
-        `;
-
-        dynamicFieldsContainer.innerHTML = fieldsHTML;
-    });
-
-    // Show/hide dynamic fields based on rent type selection
-    rentTypeSelect.addEventListener('change', function() {
-        const selectedType = rentTypeSelect.value;
-        dynamicFieldsContainer.innerHTML = '';
-        if (!selectedType) return;
-
-        let fieldsHTML = `
-            <div class="input-group">
-                <label>ছবি (সর্বোচ্চ ৩টি):</label>
-                <input type="file" id="image-upload" accept="image/*" multiple required>
-            </div>
-            <div class="input-group">
-                <label for="title">শিরোনাম:</label>
-                <input type="text" id="title" required>
-            </div>
-            <div class="input-group">
-                <label for="rent-amount">ভাড়া (টাকা):</label>
-                <input type="number" id="rent-amount" required>
-            </div>
-            <div class="input-group">
-                <label for="advance-amount">এডভান্স (টাকা):</label>
-                <input type="number" id="advance-amount">
-            </div>
-        `;
-
-        if (selectedType === 'বাড়ি' || selectedType === 'ফ্ল্যাট') {
-            fieldsHTML += `
-                <div class="input-group">
-                    <label for="floors">তলা:</label>
-                    <input type="number" id="floors">
-                </div>
-                <div class="input-group">
-                    <label for="rooms">রুম সংখ্যা:</label>
-                    <input type="number" id="rooms">
-                </div>
-                <div class="input-group">
-                    <label for="bathrooms">বাথরুম:</label>
-                    <input type="number" id="bathrooms">
-                </div>
-                <div class="input-group">
-                    <label for="kitchens">কিচেন:</label>
-                    <input type="number" id="kitchens">
-                </div>
-                <div class="input-group">
-                    <label for="rental-type">ভাড়ার ধরন:</label>
-                    <select id="rental-type">
-                        <option value="ফ্যামিলি">ফ্যামিলি</option>
-                        <option value="ব্যাচেলর">ব্যাচেলর</option>
-                    </select>
-                </div>
-            `;
-        }
-
-        fieldsHTML += `
             <div class="input-group">
                 <label for="village">গ্রাম:</label>
                 <input type="text" id="village">
@@ -282,35 +220,74 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="input-group input-inline">
                 <div>
+                    <label for="district">জেলা:</label>
+                    <input type="text" id="district" required>
+                </div>
+                <div>
                     <label for="upazila">উপজেলা:</label>
                     <input type="text" id="upazila" required>
                 </div>
-                <div>
-                    <label for="upazila-type">ধরণ:</label>
-                    <select id="upazila-type">
-                        <option value="উপজেলা">উপজেলা</option>
-                        <option value="সিটি কর্পোরেশন">সিটি কর্পোরেশন</option>
-                    </select>
-                </div>
             </div>
             <div class="input-group">
-                <label for="district">জেলা:</label>
-                <input type="text" id="district" required>
-            </div>
-            <div class="input-group">
-                <label for="description">বিবরণ:</label>
-                <textarea id="description" rows="5"></textarea>
+                <label for="upazila-type">উপজেলা ধরণ:</label>
+                <select id="upazila-type">
+                    <option value="উপজেলা">উপজেলা</option>
+                    <option value="সিটি কর্পোরেশন">সিটি কর্পোরেশন</option>
+                </select>
             </div>
         `;
-
+        
         dynamicFieldsContainer.innerHTML = fieldsHTML;
-    });
+    }
 
+    // Main logic for category and type selection
+    postCategorySelect.addEventListener('change', function() {
+        const selectedCategory = postCategorySelect.value;
+        let typeSelectHTML = '';
+        if (selectedCategory === 'বিক্রয়') {
+            typeSelectHTML = `
+                <div class="input-group">
+                    <label for="post-type">প্রপার্টির ধরন:</label>
+                    <select id="post-type" required>
+                        <option value="">-- নির্বাচন করুন --</option>
+                        <option value="জমি">জমি</option>
+                        <option value="বাড়ি">বাড়ি</option>
+                        <option value="ফ্ল্যাট">ফ্ল্যাট</option>
+                        <option value="দোকান">দোকান</option>
+                        <option value="কমার্শিয়াল">কমার্শিয়াল</option>
+                    </select>
+                </div>
+            `;
+        } else if (selectedCategory === 'ভাড়া') {
+            typeSelectHTML = `
+                <div class="input-group">
+                    <label for="post-type">প্রপার্টির ধরন:</label>
+                    <select id="post-type" required>
+                        <option value="">-- নির্বাচন করুন --</option>
+                        <option value="বাড়ি">বাড়ি</option>
+                        <option value="ফ্ল্যাট">ফ্ল্যাট</option>
+                        <option value="অফিস">অফিস</option>
+                        <option value="দোকান">দোকান</option>
+                    </select>
+                </div>
+            `;
+        }
+        
+        dynamicFieldsContainer.innerHTML = typeSelectHTML;
+
+        const postTypeSelect = document.getElementById('post-type');
+        if (postTypeSelect) {
+            postTypeSelect.addEventListener('change', function() {
+                const selectedType = postTypeSelect.value;
+                generateDynamicFields(selectedCategory, selectedType);
+            });
+        }
+    });
+    
     // Form submission handler
     propertyForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Check if user is authenticated
         const user = auth.currentUser;
         if (!user) {
             alert("প্রপার্টি যোগ করতে আপনাকে অবশ্যই লগইন করতে হবে।");
@@ -324,66 +301,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const postCategory = postCategorySelect.value;
-            const postType = postCategory === 'বিক্রয়' ? sellTypeSelect.value : rentTypeSelect.value;
+            const postType = document.getElementById('post-type').value;
             const title = document.getElementById('title').value;
             const description = document.getElementById('description')?.value || '';
             const phoneNumber = document.getElementById('phone-number').value;
             const googleMapLink = document.getElementById('google-map')?.value || '';
             const images = document.getElementById('image-upload').files;
             
-            // Collect dynamic data
-            let dynamicData = {};
-            if (postCategory === 'বিক্রয়') {
-                if (postType === 'জমি') {
-                    dynamicData = {
-                        area: `${document.getElementById('area-quantity').value} ${document.getElementById('area-unit').value}`,
-                        price: `${document.getElementById('price-quantity').value} ${document.getElementById('price-unit').value}`,
-                        rsDag: document.getElementById('rs-dag').value,
-                        landType: document.getElementById('land-type').value,
-                    };
-                } else if (postType === 'বাড়ি') {
-                    dynamicData = {
-                        landArea: document.getElementById('land-area').value,
-                        price: document.getElementById('price').value,
-                        rsDag: document.getElementById('rs-dag').value,
-                        floors: document.getElementById('floors').value,
-                        rooms: document.getElementById('rooms').value,
-                        bathrooms: document.getElementById('bathrooms').value,
-                        kitchens: document.getElementById('kitchens').value,
-                    };
-                } else if (postType === 'ফ্ল্যাট') {
-                    dynamicData = {
-                        area: document.getElementById('area-sq-ft').value + ' sq ft',
-                        price: `${document.getElementById('price-quantity').value} ${document.getElementById('price-unit').value}`,
-                        floorNo: document.getElementById('floor-no').value,
-                        rooms: document.getElementById('rooms').value,
-                        bathrooms: document.getElementById('bathrooms').value,
-                        kitchens: document.getElementById('kitchens').value,
-                    };
-                } else if (postType === 'দোকান') {
-                    dynamicData = {
-                        area: document.getElementById('area-sq-ft').value + ' sq ft',
-                        storeCount: document.getElementById('store-count').value,
-                        price: document.getElementById('price').value,
-                        rsDag: document.getElementById('rs-dag').value,
-                    };
-                }
-            } else if (postCategory === 'ভাড়া') {
-                dynamicData = {
-                    rentAmount: document.getElementById('rent-amount').value,
-                    advanceAmount: document.getElementById('advance-amount').value,
-                };
-                if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট') {
-                    dynamicData.floors = document.getElementById('floors').value;
-                    dynamicData.rooms = document.getElementById('rooms').value;
-                    dynamicData.bathrooms = document.getElementById('bathrooms').value;
-                    dynamicData.kitchens = document.getElementById('kitchens').value;
-                    dynamicData.rentalType = document.getElementById('rental-type').value;
-                }
-                dynamicData.village = document.getElementById('village').value;
-                dynamicData.wardNo = document.getElementById('ward-no').value;
-            }
-
             // Image Upload to Firebase Storage
             const imageUrls = [];
             for (const imageFile of images) {
@@ -394,26 +318,65 @@ document.addEventListener('DOMContentLoaded', function() {
                 imageUrls.push(imageUrl);
             }
 
-            // Final property data object
             const propertyData = {
                 category: postCategory,
                 type: postType,
                 title: title,
                 images: imageUrls,
-                description: description,
                 phoneNumber: phoneNumber,
                 googleMapLink: googleMapLink,
+                description: description,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                ...dynamicData, // Spread dynamic data into the main object
+                userUid: user.uid,
                 location: {
+                    district: document.getElementById('district').value,
+                    upazila: document.getElementById('upazila').value,
+                    upazilaType: document.getElementById('upazila-type')?.value || 'উপজেলা',
                     mouza: document.getElementById('mouza')?.value || '',
+                    village: document.getElementById('village')?.value || '',
+                    wardNo: document.getElementById('ward-no')?.value || '',
                     thana: document.getElementById('thana')?.value || '',
-                    upazila: document.getElementById('upazila')?.value || '',
-                    upazilaType: document.getElementById('upazila-type')?.value || '',
-                    district: document.getElementById('district')?.value || '',
-                },
-                userUid: user.uid // Save the user's UID to identify who posted
+                }
             };
+
+            // Add fields based on type
+            if (postCategory === 'বিক্রয়') {
+                propertyData.price = document.getElementById('price')?.value;
+                if (postType === 'জমি') {
+                    propertyData.size = `${document.getElementById('area-quantity').value} ${document.getElementById('area-unit').value}`;
+                    propertyData.landType = document.getElementById('land-type')?.value;
+                    propertyData.rsDag = document.getElementById('rs-dag')?.value;
+                } else if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট') {
+                    propertyData.size = document.getElementById('size')?.value;
+                    propertyData.rooms = document.getElementById('rooms')?.value;
+                    propertyData.bathrooms = document.getElementById('bathrooms')?.value;
+                    if (postType === 'বাড়ি') {
+                        propertyData.rsDag = document.getElementById('rs-dag')?.value;
+                        propertyData.floors = document.getElementById('floors')?.value;
+                        propertyData.kitchens = document.getElementById('kitchens')?.value;
+                    } else if (postType === 'ফ্ল্যাট') {
+                        propertyData.floorNo = document.getElementById('floor-no')?.value;
+                        propertyData.kitchens = document.getElementById('kitchens')?.value;
+                    }
+                } else if (postType === 'দোকান' || postType === 'কমার্শিয়াল') {
+                    propertyData.size = document.getElementById('size')?.value;
+                    propertyData.storeCount = document.getElementById('store-count')?.value;
+                    propertyData.rsDag = document.getElementById('rs-dag')?.value;
+                }
+            } else if (postCategory === 'ভাড়া') {
+                propertyData.rentAmount = document.getElementById('rent-amount')?.value;
+                propertyData.advanceAmount = document.getElementById('advance-amount')?.value;
+                if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট') {
+                    propertyData.size = document.getElementById('size')?.value;
+                    propertyData.floors = document.getElementById('floors')?.value;
+                    propertyData.rooms = document.getElementById('rooms')?.value;
+                    propertyData.bathrooms = document.getElementById('bathrooms')?.value;
+                    propertyData.kitchens = document.getElementById('kitchens')?.value;
+                    propertyData.rentalType = document.getElementById('rental-type')?.value;
+                } else if (postType === 'অফিস' || postType === 'দোকান') {
+                    propertyData.size = document.getElementById('size')?.value;
+                }
+            }
             
             // Add data to Firestore
             await db.collection("properties").add(propertyData);
@@ -429,36 +392,33 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.textContent = 'সাবমিট করুন';
         }
     });
+});
 
-    // Check auth state for UI updates
-    auth.onAuthStateChanged(user => {
-        const postLink = document.getElementById('post-link');
-        const loginLink = document.getElementById('login-link');
-        if (user) {
-            // User is signed in
-            if (postLink) postLink.style.display = 'inline-block';
-            if (loginLink) {
-                loginLink.textContent = 'লগআউট';
-                loginLink.href = '#';
-                loginLink.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    await auth.signOut();
-                    alert('সফলভাবে লগআউট করা হয়েছে!');
-                    window.location.href = 'index.html';
-                });
-            }
-        } else {
-            // User is signed out
-            if (postLink) postLink.style.display = 'none';
-            if (loginLink) {
-                loginLink.textContent = 'লগইন';
-                loginLink.href = 'auth.html';
-            }
-            // Redirect if not logged in
-            if (window.location.pathname.endsWith('post.html')) {
-                alert("প্রপার্টি যোগ করতে আপনাকে অবশ্যই লগইন করতে হবে।");
-                window.location.href = 'auth.html';
-            }
+// Check auth state for UI updates
+auth.onAuthStateChanged(user => {
+    const postLink = document.getElementById('post-link');
+    const loginLink = document.getElementById('login-link');
+    if (user) {
+        if (postLink) postLink.style.display = 'inline-block';
+        if (loginLink) {
+            loginLink.textContent = 'লগআউট';
+            loginLink.href = '#';
+            loginLink.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await auth.signOut();
+                alert('সফলভাবে লগআউট করা হয়েছে!');
+                window.location.href = 'index.html';
+            });
         }
-    });
+    } else {
+        if (postLink) postLink.style.display = 'none';
+        if (loginLink) {
+            loginLink.textContent = 'লগইন';
+            loginLink.href = 'auth.html';
+        }
+        if (window.location.pathname.endsWith('post.html')) {
+            alert("প্রপার্টি যোগ করতে আপনাকে অবশ্যই লগইন করতে হবে।");
+            window.location.href = 'auth.html';
+        }
+    }
 });
