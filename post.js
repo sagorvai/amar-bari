@@ -1,6 +1,7 @@
 // Firebase SDKs
 const db = firebase.firestore();
 const storage = firebase.storage();
+const auth = firebase.auth();
 
 document.addEventListener('DOMContentLoaded', function() {
     const postCategorySelect = document.getElementById('post-category');
@@ -309,7 +310,14 @@ document.addEventListener('DOMContentLoaded', function() {
     propertyForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Show loading state or disable button
+        // Check if user is authenticated
+        const user = auth.currentUser;
+        if (!user) {
+            alert("প্রপার্টি যোগ করতে আপনাকে অবশ্যই লগইন করতে হবে।");
+            window.location.href = 'auth.html';
+            return;
+        }
+
         const submitBtn = document.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
         submitBtn.textContent = 'সাবমিট হচ্ছে...';
@@ -318,12 +326,65 @@ document.addEventListener('DOMContentLoaded', function() {
             const postCategory = postCategorySelect.value;
             const postType = postCategory === 'বিক্রয়' ? sellTypeSelect.value : rentTypeSelect.value;
             const title = document.getElementById('title').value;
-            const description = document.getElementById('description').value;
+            const description = document.getElementById('description')?.value || '';
             const phoneNumber = document.getElementById('phone-number').value;
-            const googleMapLink = document.getElementById('google-map').value;
+            const googleMapLink = document.getElementById('google-map')?.value || '';
             const images = document.getElementById('image-upload').files;
+            
+            // Collect dynamic data
+            let dynamicData = {};
+            if (postCategory === 'বিক্রয়') {
+                if (postType === 'জমি') {
+                    dynamicData = {
+                        area: `${document.getElementById('area-quantity').value} ${document.getElementById('area-unit').value}`,
+                        price: `${document.getElementById('price-quantity').value} ${document.getElementById('price-unit').value}`,
+                        rsDag: document.getElementById('rs-dag').value,
+                        landType: document.getElementById('land-type').value,
+                    };
+                } else if (postType === 'বাড়ি') {
+                    dynamicData = {
+                        landArea: document.getElementById('land-area').value,
+                        price: document.getElementById('price').value,
+                        rsDag: document.getElementById('rs-dag').value,
+                        floors: document.getElementById('floors').value,
+                        rooms: document.getElementById('rooms').value,
+                        bathrooms: document.getElementById('bathrooms').value,
+                        kitchens: document.getElementById('kitchens').value,
+                    };
+                } else if (postType === 'ফ্ল্যাট') {
+                    dynamicData = {
+                        area: document.getElementById('area-sq-ft').value + ' sq ft',
+                        price: `${document.getElementById('price-quantity').value} ${document.getElementById('price-unit').value}`,
+                        floorNo: document.getElementById('floor-no').value,
+                        rooms: document.getElementById('rooms').value,
+                        bathrooms: document.getElementById('bathrooms').value,
+                        kitchens: document.getElementById('kitchens').value,
+                    };
+                } else if (postType === 'দোকান') {
+                    dynamicData = {
+                        area: document.getElementById('area-sq-ft').value + ' sq ft',
+                        storeCount: document.getElementById('store-count').value,
+                        price: document.getElementById('price').value,
+                        rsDag: document.getElementById('rs-dag').value,
+                    };
+                }
+            } else if (postCategory === 'ভাড়া') {
+                dynamicData = {
+                    rentAmount: document.getElementById('rent-amount').value,
+                    advanceAmount: document.getElementById('advance-amount').value,
+                };
+                if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট') {
+                    dynamicData.floors = document.getElementById('floors').value;
+                    dynamicData.rooms = document.getElementById('rooms').value;
+                    dynamicData.bathrooms = document.getElementById('bathrooms').value;
+                    dynamicData.kitchens = document.getElementById('kitchens').value;
+                    dynamicData.rentalType = document.getElementById('rental-type').value;
+                }
+                dynamicData.village = document.getElementById('village').value;
+                dynamicData.wardNo = document.getElementById('ward-no').value;
+            }
 
-            // Upload multiple images to Firebase Storage
+            // Image Upload to Firebase Storage
             const imageUrls = [];
             for (const imageFile of images) {
                 const storageRef = storage.ref();
@@ -333,8 +394,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 imageUrls.push(imageUrl);
             }
 
-            // Create property data object
-            let propertyData = {
+            // Final property data object
+            const propertyData = {
                 category: postCategory,
                 type: postType,
                 title: title,
@@ -342,69 +403,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 description: description,
                 phoneNumber: phoneNumber,
                 googleMapLink: googleMapLink,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                ...dynamicData, // Spread dynamic data into the main object
+                location: {
+                    mouza: document.getElementById('mouza')?.value || '',
+                    thana: document.getElementById('thana')?.value || '',
+                    upazila: document.getElementById('upazila')?.value || '',
+                    upazilaType: document.getElementById('upazila-type')?.value || '',
+                    district: document.getElementById('district')?.value || '',
+                },
+                userUid: user.uid // Save the user's UID to identify who posted
             };
-
-            // Collect dynamic data based on selected category and type
-            if (postCategory === 'বিক্রয়') {
-                if (postType === 'জমি') {
-                    propertyData.area = document.getElementById('area-quantity').value + ' ' + document.getElementById('area-unit').value;
-                    propertyData.price = document.getElementById('price-quantity').value + ' ' + document.getElementById('price-unit').value;
-                    propertyData.rsDag = document.getElementById('rs-dag').value;
-                    propertyData.landType = document.getElementById('land-type').value;
-                } else if (postType === 'বাড়ি') {
-                    propertyData.landArea = document.getElementById('land-area').value;
-                    propertyData.price = document.getElementById('price').value;
-                    propertyData.rsDag = document.getElementById('rs-dag').value;
-                    propertyData.floors = document.getElementById('floors').value;
-                    propertyData.rooms = document.getElementById('rooms').value;
-                    propertyData.bathrooms = document.getElementById('bathrooms').value;
-                    propertyData.kitchens = document.getElementById('kitchens').value;
-                } else if (postType === 'ফ্ল্যাট') {
-                    propertyData.area = document.getElementById('area-sq-ft').value + ' sq ft';
-                    propertyData.price = document.getElementById('price-quantity').value + ' ' + document.getElementById('price-unit').value;
-                    propertyData.floorNo = document.getElementById('floor-no').value;
-                    propertyData.rooms = document.getElementById('rooms').value;
-                    propertyData.bathrooms = document.getElementById('bathrooms').value;
-                    propertyData.kitchens = document.getElementById('kitchens').value;
-                } else if (postType === 'দোকান') {
-                    propertyData.area = document.getElementById('area-sq-ft').value + ' sq ft';
-                    propertyData.storeCount = document.getElementById('store-count').value;
-                    propertyData.price = document.getElementById('price').value;
-                    propertyData.rsDag = document.getElementById('rs-dag').value;
-                }
-            } else if (postCategory === 'ভাড়া') {
-                propertyData.rentAmount = document.getElementById('rent-amount').value;
-                propertyData.advanceAmount = document.getElementById('advance-amount').value;
-                if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট') {
-                    propertyData.floors = document.getElementById('floors').value;
-                    propertyData.rooms = document.getElementById('rooms').value;
-                    propertyData.bathrooms = document.getElementById('bathrooms').value;
-                    propertyData.kitchens = document.getElementById('kitchens').value;
-                    propertyData.rentalType = document.getElementById('rental-type').value;
-                }
-            }
             
-            // Location details are always collected
-            propertyData.mouza = document.getElementById('mouza').value;
-            propertyData.thana = document.getElementById('thana').value;
-            propertyData.upazila = document.getElementById('upazila').value;
-            propertyData.upazilaType = document.getElementById('upazila-type').value;
-            propertyData.district = document.getElementById('district').value;
-            propertyData.village = document.getElementById('village')?.value || '';
-            propertyData.wardNo = document.getElementById('ward-no')?.value || '';
-
             // Add data to Firestore
             await db.collection("properties").add(propertyData);
 
             alert("প্রপার্টি সফলভাবে আপলোড করা হয়েছে!");
             propertyForm.reset();
+
         } catch (error) {
             console.error("ডেটা আপলোড করতে সমস্যা হয়েছে: ", error);
             alert("প্রপার্টি আপলোড ব্যর্থ হয়েছে।");
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = 'সাবমিট করুন';
+        }
+    });
+
+    // Check auth state for UI updates
+    auth.onAuthStateChanged(user => {
+        const postLink = document.getElementById('post-link');
+        const loginLink = document.getElementById('login-link');
+        if (user) {
+            // User is signed in
+            if (postLink) postLink.style.display = 'inline-block';
+            if (loginLink) {
+                loginLink.textContent = 'লগআউট';
+                loginLink.href = '#';
+                loginLink.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await auth.signOut();
+                    alert('সফলভাবে লগআউট করা হয়েছে!');
+                    window.location.href = 'index.html';
+                });
+            }
+        } else {
+            // User is signed out
+            if (postLink) postLink.style.display = 'none';
+            if (loginLink) {
+                loginLink.textContent = 'লগইন';
+                loginLink.href = 'auth.html';
+            }
+            // Redirect if not logged in
+            if (window.location.pathname.endsWith('post.html')) {
+                alert("প্রপার্টি যোগ করতে আপনাকে অবশ্যই লগইন করতে হবে।");
+                window.location.href = 'auth.html';
+            }
         }
     });
 });
