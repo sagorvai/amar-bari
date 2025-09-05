@@ -41,50 +41,52 @@
     <main class="main-content">
         <div class="post-container">
             <h2>আপনার প্রপার্টি যোগ করুন</h2>
-            <form id="post-form">
+            <form id="property-form">
                 <div class="input-group">
-                    <label for="category">পোস্টের ক্যাটাগরি:</label>
-                    <select id="category" required>
+                    <label for="post-category">পোস্টের ক্যাটাগরি:</label>
+                    <select id="post-category" required>
+                        <option value="">-- নির্বাচন করুন --</option>
                         <option value="বিক্রয়">বিক্রয়</option>
-                        <option value="ভাড়া">ভাড়া</option>
+                        <option value="ভাড়া">ভাড়া</option>
                     </select>
                 </div>
-                <div class="input-group">
-                    <label for="type">প্রপার্টির ধরন:</label>
-                    <select id="type" required>
-                        <option value="বাড়ি">বাড়ি</option>
-                        <option value="ফ্ল্যাট">ফ্ল্যাট</option>
-                        <option value="জমি">জমি</option>
-                        <option value="কমার্শিয়াল">কমার্শিয়াল</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="title">শিরোনাম:</label>
-                    <input type="text" id="title" placeholder="সংক্ষিপ্ত ও আকর্ষণীয় শিরোনাম লিখুন" required>
-                </div>
-                <div class="input-group">
-                    <label for="price">মূল্য:</label>
-                    <input type="text" id="price" placeholder="যেমন: ৳ ১.৫ কোটি বা ৳ ২৫,০০০/মাস" required>
-                </div>
-                <div class="input-group">
-                    <label for="description">বর্ণনা:</label>
-                    <textarea id="description" rows="5" placeholder="সম্পূর্ণ বর্ণনা লিখুন" required></textarea>
-                </div>
-                
-                <div class="input-inline">
+
+                <div id="sell-fields" class="hidden-field">
                     <div class="input-group">
-                        <label for="district">জেলা:</label>
-                        <input type="text" id="district" placeholder="যেমন: ঢাকা" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="upazila">উপজেলা:</label>
-                        <input type="text" id="upazila" placeholder="যেমন: ধানমন্ডি" required>
+                        <label for="sell-type">বিক্রয়ের ধরন:</label>
+                        <select id="sell-type">
+                            <option value="">-- নির্বাচন করুন --</option>
+                            <option value="জমি">জমি</option>
+                            <option value="বাড়ি">বাড়ি</option>
+                            <option value="ফ্ল্যাট">ফ্ল্যাট</option>
+                            <option value="দোকান">দোকান</option>
+                        </select>
                     </div>
                 </div>
 
+                <div id="rent-fields" class="hidden-field">
+                    <div class="input-group">
+                        <label for="rent-type">ভাড়ার ধরন:</label>
+                        <select id="rent-type">
+                            <option value="">-- নির্বাচন করুন --</option>
+                            <option value="বাড়ি">বাড়ি</option>
+                            <option value="ফ্ল্যাট">ফ্ল্যাট</option>
+                            <option value="অফিস">অফিস</option>
+                            <option value="দোকান">দোকান</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="dynamic-fields-container">
+                    </div>
+
                 <div class="input-group">
-                    <label for="image">ছবির ফাইল:</label>
-                    <input type="file" id="image" accept="image/*" multiple required>
+                    <label for="phone-number">যোগাযোগের মোবাইল নাম্বার:</label>
+                    <input type="tel" id="phone-number" required>
+                </div>
+                <div class="input-group">
+                    <label for="google-map">Google Map লিঙ্ক (ঐচ্ছিক):</label>
+                    <input type="url" id="google-map" placeholder="Google Maps থেকে লিঙ্ক পেস্ট করুন">
                 </div>
 
                 <button type="submit">সাবমিট করুন</button>
@@ -97,9 +99,8 @@
             <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
-
-    <script src="index.js"></script>
+    
     <script src="post.js"></script>
 
 </body>
-        </html>
+    </html>
