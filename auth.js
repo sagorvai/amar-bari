@@ -42,7 +42,6 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 await auth.signInWithEmailAndPassword(email, password);
                 alert('সফলভাবে লগইন করা হয়েছে!');
-                // Redirect to homepage after successful login
                 window.location.href = 'index.html'; 
             } catch (error) {
                 console.error("লগইন ব্যর্থ হয়েছে:", error);
@@ -60,7 +59,6 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 await auth.createUserWithEmailAndPassword(email, password);
                 alert('সফলভাবে সাইনআপ করা হয়েছে!');
-                // Redirect to login page or homepage after successful signup
                 window.location.href = 'index.html';
             } catch (error) {
                 console.error("সাইনআপ ব্যর্থ হয়েছে:", error);
