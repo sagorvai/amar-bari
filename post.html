@@ -5,93 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>প্রপার্টি যোগ করুন - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .post-container {
-            max-width: 650px;
-            margin: 50px auto;
-            background: #fff;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .post-container h2 {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            color: #28a745;
-        }
-        .input-group {
-            margin-bottom: 1rem;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .input-group input[type="text"],
-        .input-group input[type="number"],
-        .input-group textarea,
-        .input-group select,
-        .input-group input[type="file"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .input-group textarea {
-            resize: vertical;
-        }
-        .input-inline {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .input-inline input, .input-inline select {
-            flex: 1;
-        }
-        .hidden-field {
-            display: none;
-        }
-        .post-container button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 4px;
-            background-color: #28a745;
-            color: #fff;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .post-container button:hover {
-            background-color: #218838;
-        }
-    </style>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-    
+
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
-            authDomain: "amar-bari-website.firebaseapp.com",
-            projectId: "amar-bari-website",
-            storageBucket: "amar-bari-website.firebasestorage.app",
-            messagingSenderId: "719084789035",
-            appId: "1:719084789035:web:f4da765290b351b00a796e",
-            measurementId: "G-F3YHTJ4LLV"
-        };
-        firebase.initializeApp(firebaseConfig);
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b351b00a796e",
+        measurementId: "G-F3YHTJ4LLV"
+      };
+      
+      firebase.initializeApp(firebaseConfig);
     </script>
 </head>
 <body>
+
     <header class="header">
         <div class="container">
             <h1 class="logo">আমার বাড়ি.কম</h1>
             <nav class="nav">
                 <a href="index.html">হোম</a>
-                <a href="auth.html">লগইন</a>
+                <a href="post.html" id="post-link">প্রপার্টি যোগ করুন</a>
+                <a href="auth.html" id="login-link">লগইন</a>
             </nav>
         </div>
     </header>
@@ -99,65 +41,65 @@
     <main class="main-content">
         <div class="post-container">
             <h2>আপনার প্রপার্টি যোগ করুন</h2>
-            <form id="property-form">
+            <form id="post-form">
                 <div class="input-group">
-                    <label for="post-category">পোস্টের ক্যাটাগরি:</label>
-                    <select id="post-category" required>
-                        <option value="">-- নির্বাচন করুন --</option>
+                    <label for="category">পোস্টের ক্যাটাগরি:</label>
+                    <select id="category" required>
                         <option value="বিক্রয়">বিক্রয়</option>
-                        <option value="ভাড়া">ভাড়া</option>
+                        <option value="ভাড়া">ভাড়া</option>
                     </select>
                 </div>
-
-                <div id="sell-fields" class="hidden-field">
+                <div class="input-group">
+                    <label for="type">প্রপার্টির ধরন:</label>
+                    <select id="type" required>
+                        <option value="বাড়ি">বাড়ি</option>
+                        <option value="ফ্ল্যাট">ফ্ল্যাট</option>
+                        <option value="জমি">জমি</option>
+                        <option value="কমার্শিয়াল">কমার্শিয়াল</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="title">শিরোনাম:</label>
+                    <input type="text" id="title" placeholder="সংক্ষিপ্ত ও আকর্ষণীয় শিরোনাম লিখুন" required>
+                </div>
+                <div class="input-group">
+                    <label for="price">মূল্য:</label>
+                    <input type="text" id="price" placeholder="যেমন: ৳ ১.৫ কোটি বা ৳ ২৫,০০০/মাস" required>
+                </div>
+                <div class="input-group">
+                    <label for="description">বর্ণনা:</label>
+                    <textarea id="description" rows="5" placeholder="সম্পূর্ণ বর্ণনা লিখুন" required></textarea>
+                </div>
+                
+                <div class="input-inline">
                     <div class="input-group">
-                        <label for="sell-type">বিক্রয়ের ধরন:</label>
-                        <select id="sell-type">
-                            <option value="">-- নির্বাচন করুন --</option>
-                            <option value="জমি">জমি</option>
-                            <option value="বাড়ি">বাড়ি</option>
-                            <option value="ফ্ল্যাট">ফ্ল্যাট</option>
-                            <option value="দোকান">দোকান</option>
-                        </select>
+                        <label for="district">জেলা:</label>
+                        <input type="text" id="district" placeholder="যেমন: ঢাকা" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="upazila">উপজেলা:</label>
+                        <input type="text" id="upazila" placeholder="যেমন: ধানমন্ডি" required>
                     </div>
                 </div>
 
-                <div id="rent-fields" class="hidden-field">
-                    <div class="input-group">
-                        <label for="rent-type">ভাড়ার ধরন:</label>
-                        <select id="rent-type">
-                            <option value="">-- নির্বাচন করুন --</option>
-                            <option value="বাড়ি">বাড়ি</option>
-                            <option value="ফ্ল্যাট">ফ্ল্যাট</option>
-                            <option value="দোকান">দোকান</option>
-                        </select>
-                    </div>
+                <div class="input-group">
+                    <label for="image">ছবির ফাইল:</label>
+                    <input type="file" id="image" accept="image/*" multiple required>
                 </div>
 
-                <div id="dynamic-fields-container"></div>
-                
-                <div class="input-group">
-                    <label for="phone-number">ফোন নম্বর:</label>
-                    <input type="text" id="phone-number" required>
-                </div>
-                
-                <div class="input-group">
-                    <label for="google-map">গুগল ম্যাপ লোকেশন (লিংক):</label>
-                    <input type="text" id="google-map">
-                </div>
-
-                <div class="input-group">
-                    <button type="submit">সাবমিট করুন</button>
-                </div>
+                <button type="submit">সাবমিট করুন</button>
             </form>
         </div>
     </main>
-    
+
     <footer class="footer">
         <div class="container">
             <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
+
+    <script src="index.js"></script>
     <script src="post.js"></script>
+
 </body>
-</html>
+        </html>
