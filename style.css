@@ -1,33 +1,23 @@
-/* সাধারণ স্টাইল */
-* {
-    box-sizing: border-box;
+/* General Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     margin: 0;
     padding: 0;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
-    background-color: #f4f4f4;
+    background-color: #f4f7f6;
     color: #333;
 }
 
 .container {
-    max-width: 1100px;
-    margin: auto;
-    overflow: hidden;
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 0 20px;
 }
 
-/* হেডার এবং ন্যাভিগেশন */
+/* Header & Navigation */
 .header {
-    background: #fff;
-    color: #333;
+    background-color: #ffffff;
     padding: 1rem 0;
-    border-bottom: #ddd 1px solid;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .header .container {
@@ -37,119 +27,101 @@ body {
 }
 
 .logo {
-    font-size: 2rem;
+    margin: 0;
+    font-size: 1.8rem;
+    color: #2c3e50;
     font-weight: bold;
-    color: #28a745;
 }
 
 .nav a {
-    color: #333;
     text-decoration: none;
-    font-weight: bold;
+    color: #555;
+    font-weight: 500;
     margin-left: 20px;
     transition: color 0.3s ease;
 }
 
 .nav a:hover {
-    color: #28a745;
+    color: #2980b9;
 }
 
-/* প্রধান কন্টেন্ট এবং হিরো সেকশন */
-.main-content {
-    padding: 2rem 0;
-}
-
+/* Hero Section */
 .hero-section {
-    background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://via.placeholder.com/1500x800.png?text=Amar+Bari');
-    background-size: cover;
-    background-position: center;
+    background: #34495e;
+    color: #ffffff;
     text-align: center;
-    padding: 6rem 2rem;
-    margin-bottom: 2rem;
-    border-radius: 10px;
-    color: #fff;
+    padding: 50px 20px;
 }
 
 .hero-section h2 {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
 }
 
 .hero-section p {
     font-size: 1.2rem;
-    max-width: 600px;
-    margin: auto;
+    margin-bottom: 30px;
 }
 
-/* আধুনিক ও স্টাইলিশ সার্চ বার */
 .search-bar {
     display: flex;
     justify-content: center;
-    align-items: center;
     gap: 10px;
-    margin-top: 2rem;
-    padding: 15px;
-    background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 50px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-.search-bar input,
-.search-bar select,
-.search-bar button {
-    padding: 12px 20px;
+.search-bar input, .search-bar select {
+    padding: 12px;
+    border-radius: 5px;
     border: none;
-    background: transparent;
     font-size: 1rem;
-    color: #333;
-    outline: none;
-}
-
-.search-bar select {
-    cursor: pointer;
-    background-color: transparent;
-}
-
-.search-bar input::placeholder {
-    color: #888;
 }
 
 .search-bar button {
-    background-color: #28a745;
-    color: #fff;
-    border-radius: 50px;
+    padding: 12px 25px;
+    border-radius: 5px;
+    border: none;
+    background-color: #2ecc71;
+    color: #ffffff;
+    font-size: 1rem;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
 
 .search-bar button:hover {
-    background-color: #218838;
+    background-color: #27ae60;
 }
 
-/* প্রপার্টি লিস্ট এবং কার্ড */
+/* Property List */
+.property-list {
+    padding: 40px 0;
+}
+
 .property-list h3 {
-    font-size: 2rem;
-    margin-bottom: 2rem;
-    color: #555;
     text-align: center;
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 30px;
 }
 
 .property-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
 }
 
 .property-card {
-    background: #fff;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-decoration: none;
+    color: #333;
 }
 
 .property-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 .property-card img {
@@ -159,133 +131,85 @@ body {
 }
 
 .property-card-content {
-    padding: 1rem;
+    padding: 15px;
 }
 
-.property-card-content h4 {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-    color: #28a745;
-}
-
-.property-card-content .location {
-    color: #777;
-    margin-bottom: 10px;
-}
-
-.property-card-content .price {
-    font-weight: bold;
+.property-card h4 {
+    margin: 0 0 10px;
     font-size: 1.2rem;
-    color: #333;
+    color: #2c3e50;
 }
 
-/* ফুটার */
-.footer {
-    background: #333;
-    color: #fff;
-    text-align: center;
-    padding: 2rem 0;
-    margin-top: 2rem;
+.property-card .location {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin-bottom: 5px;
 }
 
-/* Auth Page Style */
-.auth-container {
-    max-width: 400px;
+.property-card .price {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #e74c3c;
+}
+
+/* Auth & Post Pages */
+.auth-container, .post-container {
+    max-width: 500px;
     margin: 50px auto;
-    background: #fff;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-.auth-container h2 {
+
+.auth-container h2, .post-container h2 {
     text-align: center;
-    margin-bottom: 1.5rem;
-    color: #28a745;
+    color: #2c3e50;
+    margin-bottom: 25px;
 }
-.auth-container input[type="text"],
-.auth-container input[type="password"] {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-.auth-container button {
+
+.auth-container input, .auth-container button, .post-container input, .post-container select, .post-container textarea, .post-container button {
     width: 100%;
     padding: 12px;
-    border: none;
-    border-radius: 4px;
-    background-color: #28a745;
-    color: #fff;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    box-sizing: border-box;
     font-size: 1rem;
+}
+
+.auth-container button, .post-container button {
+    background-color: #2ecc71;
+    color: #ffffff;
+    border: none;
     cursor: pointer;
+    font-size: 1.1rem;
     transition: background-color 0.3s ease;
 }
-.auth-container button:hover {
-    background-color: #218838;
+
+.auth-container button:hover, .post-container button:hover {
+    background-color: #27ae60;
 }
-.auth-container .switch-form {
+
+.switch-form {
     text-align: center;
-    margin-top: 1rem;
+    margin-top: 15px;
 }
-.auth-container .switch-form a {
-    color: #28a745;
+
+.switch-form a {
+    color: #3498db;
     text-decoration: none;
 }
 
-/* মোবাইল রেসপনসিভনেস */
-@media (max-width: 768px) {
-    .header .container {
-        flex-direction: column;
-        text-align: center;
-    }
+/* Footer */
+.footer {
+    background-color: #2c3e50;
+    color: #bdc3c7;
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 50px;
+}
 
-    .nav {
-        float: none;
-        margin-top: 10px;
-        width: 100%;
-    }
-
-    .nav a {
-        margin: 0 10px;
-        display: inline-block;
-    }
-
-    .hero-section {
-        padding: 4rem 1rem;
-    }
-
-    .hero-section h2 {
-        font-size: 2rem;
-    }
-
-    .hero-section p {
-        font-size: 1rem;
-    }
-
-    .search-bar {
-        flex-direction: column;
-        width: 100%;
-        margin-top: 1rem;
-        border-radius: 10px;
-        box-shadow: none;
-        background-color: rgba(255, 255, 255, 0.7);
-    }
-
-    .search-bar input,
-    .search-bar select,
-    .search-bar button {
-        width: 90%;
-        margin-bottom: 10px;
-        border-radius: 5px;
-    }
-    
-    .property-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .property-card {
-        width: 100%;
-        margin: 0;
-    }
+.footer p {
+    margin: 0;
 }
