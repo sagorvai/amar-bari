@@ -43,7 +43,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to generate the specific fields based on category and type
     function generateSpecificFields(category, type) {
         let fieldsHTML = '';
-
+        const specificFieldsContainer = document.getElementById('specific-fields-container');
+        if (!specificFieldsContainer) return;
+        
         // All properties need these fields
         fieldsHTML += `
             <div class="input-group">
@@ -267,11 +269,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        // Update the specific fields container, replacing old content
-        const specificFieldsContainer = document.getElementById('specific-fields-container');
-        if (specificFieldsContainer) {
-            specificFieldsContainer.innerHTML = fieldsHTML;
-        }
+        specificFieldsContainer.innerHTML = fieldsHTML;
     }
 
     // Main logic for category selection
@@ -291,7 +289,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const user = auth.currentUser;
         if (!user) {
             alert("প্রপার্টি যোগ করতে আপনাকে অবশ্যই লগইন করতে হবে।");
-            window.location.href = 'auth.html';
             return;
         }
 
@@ -318,6 +315,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     const imageUrl = await imageRef.getDownloadURL();
                     imageUrls.push(imageUrl);
                 }
+            } else {
+                alert("অনুগ্রহ করে কমপক্ষে একটি ছবি আপলোড করুন।");
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'সাবমিট করুন';
+                return;
             }
             
             const propertyData = {
@@ -343,14 +345,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Add fields based on type
             if (postCategory === 'বিক্রয়') {
+                propertyData.price = document.getElementById('price')?.value || document.getElementById('price-flat')?.value || document.getElementById('price-store')?.value;
                 if (postType === 'জমি') {
                     propertyData.size = `${document.getElementById('area-quantity')?.value} ${document.getElementById('area-unit')?.value}`;
-                    propertyData.price = document.getElementById('price')?.value;
                     propertyData.landType = document.getElementById('land-type')?.value;
                     propertyData.rsDag = document.getElementById('rs-dag')?.value;
                 } else if (postType === 'বাড়ি') {
                     propertyData.landArea = document.getElementById('land-area')?.value;
-                    propertyData.price = document.getElementById('price')?.value;
                     propertyData.rsDag = document.getElementById('rs-dag')?.value;
                     propertyData.floors = document.getElementById('floors')?.value;
                     propertyData.rooms = document.getElementById('rooms')?.value;
@@ -358,7 +359,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     propertyData.kitchens = document.getElementById('kitchens')?.value;
                 } else if (postType === 'ফ্ল্যাট') {
                     propertyData.size = document.getElementById('size-sq-ft')?.value;
-                    propertyData.price = document.getElementById('price-flat')?.value;
                     propertyData.floorNo = document.getElementById('floor-no')?.value;
                     propertyData.rooms = document.getElementById('rooms')?.value;
                     propertyData.bathrooms = document.getElementById('bathrooms')?.value;
@@ -366,21 +366,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (postType === 'দোকান' || postType === 'কমার্শিয়াল') {
                     propertyData.size = document.getElementById('size-sq-ft')?.value;
                     propertyData.storeCount = document.getElementById('store-count')?.value;
-                    propertyData.price = document.getElementById('price-store')?.value;
                     propertyData.rsDag = document.getElementById('rs-dag')?.value;
                 }
             } else if (postCategory === 'ভাড়া') {
                 propertyData.rentAmount = document.getElementById('rent-amount')?.value;
                 propertyData.advanceAmount = document.getElementById('advance-amount')?.value;
-                if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট') {
+                if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট' || postType === 'অফিস' || postType === 'দোকান') {
                     propertyData.size = document.getElementById('size-sq-ft')?.value;
-                    propertyData.floors = document.getElementById('floors')?.value;
-                    propertyData.rooms = document.getElementById('rooms')?.value;
-                    propertyData.bathrooms = document.getElementById('bathrooms')?.value;
-                    propertyData.kitchens = document.getElementById('kitchens')?.value;
-                    propertyData.rentalType = document.getElementById('rental-type')?.value;
-                } else if (postType === 'অফিস' || postType === 'দোকান') {
-                    propertyData.size = document.getElementById('size-sq-ft')?.value;
+                    if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট') {
+                        propertyData.floors = document.getElementById('floors')?.value;
+                        propertyData.rooms = document.getElementById('rooms')?.value;
+                        propertyData.bathrooms = document.getElementById('bathrooms')?.value;
+                        propertyData.kitchens = document.getElementById('kitchens')?.value;
+                        propertyData.rentalType = document.getElementById('rental-type')?.value;
+                    }
                 }
             }
             
@@ -388,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             alert("প্রপার্টি সফলভাবে আপলোড করা হয়েছে!");
             propertyForm.reset();
-            dynamicFieldsContainer.innerHTML = ''; // Clear fields after submission
+            dynamicFieldsContainer.innerHTML = ''; // Clear dynamic fields after submission
 
         } catch (error) {
             console.error("ডেটা আপলোড করতে সমস্যা হয়েছে: ", error);
@@ -396,35 +395,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = 'সাবমিট করুন';
-        }
-    });
-
-    // Check auth state for UI updates
-    auth.onAuthStateChanged(user => {
-        const postLink = document.getElementById('post-link');
-        const loginLink = document.getElementById('login-link');
-        if (user) {
-            if (postLink) postLink.style.display = 'inline-block';
-            if (loginLink) {
-                loginLink.textContent = 'লগআউট';
-                loginLink.href = '#';
-                loginLink.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    await auth.signOut();
-                    alert('সফলভাবে লগআউট করা হয়েছে!');
-                    window.location.href = 'index.html';
-                });
-            }
-        } else {
-            if (postLink) postLink.style.display = 'none';
-            if (loginLink) {
-                loginLink.textContent = 'লগইন';
-                loginLink.href = 'auth.html';
-            }
-            if (window.location.pathname.endsWith('post.html')) {
-                alert("প্রপার্টি যোগ করতে আপনাকে অবশ্যই লগইন করতে হবে।");
-                window.location.href = 'auth.html';
-            }
         }
     });
 });
