@@ -1,68 +1,50 @@
-// Initialize Firebase
-const firestore = firebase.firestore();
-const auth = firebase.auth();
+// Firebase SDKs
+const db = firebase.firestore();
 
 document.addEventListener('DOMContentLoaded', function() {
-    const propertiesList = document.getElementById('properties-list');
-    const postLink = document.getElementById('post-link');
-    const loginLink = document.getElementById('login-link');
+    // Function to fetch and display properties
+    async function fetchAndDisplayProperties() {
+        try {
+            const propertyGrid = document.querySelector('.property-grid');
+            if (!propertyGrid) return;
+            
+            const propertiesSnapshot = await db.collection("properties").orderBy("timestamp", "desc").get();
+            
+            propertyGrid.innerHTML = ''; 
 
-    // Handle UI changes on auth state change
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            if (postLink) postLink.style.display = 'inline-block';
-            if (loginLink) {
-                loginLink.textContent = 'লগআউট';
-                loginLink.href = '#';
-                loginLink.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    await auth.signOut();
-                    alert('সফলভাবে লগআউট করা হয়েছে!');
-                    window.location.href = 'index.html';
-                });
+            if (propertiesSnapshot.empty) {
+                propertyGrid.innerHTML = '<p>কোনো প্রপার্টি পাওয়া যায়নি।</p>';
+                return;
             }
-        } else {
-            if (postLink) postLink.style.display = 'none';
-            if (loginLink) {
-                loginLink.textContent = 'লগইন';
-                loginLink.href = 'auth.html';
+
+            propertiesSnapshot.forEach(doc => {
+                const property = doc.data();
+                const card = document.createElement('div');
+                card.classList.add('property-card');
+                
+                const imageUrl = property.images && property.images.length > 0 
+                                 ? property.images[0] 
+                                 : 'https://via.placeholder.com/300x200?text=No+Image';
+
+                card.innerHTML = `
+                    <img src="${imageUrl}" alt="${property.title}">
+                    <div class="property-card-content">
+                        <h4>${property.title}</h4>
+                        <p class="location">${property.location?.upazila || ''}, ${property.location?.district || ''}</p>
+                        <p class="price">${property.price || property.rentAmount || ''}</p>
+                    </div>
+                `;
+                propertyGrid.appendChild(card);
+            });
+
+        } catch (error) {
+            console.error("Error fetching properties:", error);
+            const propertyGrid = document.querySelector('.property-grid');
+            if (propertyGrid) {
+                propertyGrid.innerHTML = '<p>প্রপার্টি লোড করতে সমস্যা হয়েছে।</p>';
             }
         }
-    });
-
-    // Fetch and display properties from Firestore
-    function fetchProperties() {
-        if (!propertiesList) return;
-
-        firestore.collection('properties')
-            .orderBy('timestamp', 'desc')
-            .onSnapshot(snapshot => {
-                let properties = [];
-                snapshot.forEach(doc => {
-                    properties.push({ id: doc.id, ...doc.data() });
-                });
-                
-                // Clear the list before adding new properties
-                propertiesList.innerHTML = '';
-                
-                if (properties.length === 0) {
-                    propertiesList.innerHTML = '<p>কোনো প্রপার্টি পাওয়া যায়নি।</p>';
-                } else {
-                    properties.forEach(property => {
-                        const propertyCard = document.createElement('div');
-                        propertyCard.className = 'property-card';
-                        propertyCard.innerHTML = `
-                            <img src="${property.imageUrls[0]}" alt="${property.category}">
-                            <h3>${property.category === 'বিক্রয়' ? 'বিক্রয়' : 'ভাড়া'} - ${property['house-location'] || property['land-location']}</h3>
-                            <p>মূল্য: ${property.price || property['rent-amount']}</p>
-                            <p>যোগাযোগ: ${property.contactNumber}</p>
-                            ${property.googleMapLink ? `<p><a href="${property.googleMapLink}" target="_blank">Google Map এ দেখুন</a></p>` : ''}
-                        `;
-                        propertiesList.appendChild(propertyCard);
-                    });
-                }
-            });
     }
 
-    fetchProperties();
+    fetchAndDisplayProperties();
 });
