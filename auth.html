@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>লগইন/সাইনআপ - আমার বাড়ি.কম</title>
+    <title>লগইন / রেজিস্টার - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <script>
@@ -26,47 +26,32 @@
     </script>
 </head>
 <body>
-
     <header class="header">
         <div class="container">
             <h1 class="logo">আমার বাড়ি.কম</h1>
             <nav class="nav">
                 <a href="index.html">হোম</a>
-                <a href="post.html">প্রপার্টি যোগ করুন</a>
-                <a href="auth.html">লগইন</a>
+                <a href="post.html" id="post-link">প্রপার্টি যোগ করুন</a>
+                <a href="auth.html" id="login-link">লগইন</a>
             </nav>
         </div>
     </header>
 
     <main class="main-content">
         <div class="auth-container">
-            <h2 id="auth-title">লগইন করুন</h2>
-            
-            <form id="login-form">
+            <h2 id="auth-title">অ্যাকাউন্ট তৈরি করুন</h2>
+            <form id="auth-form">
                 <div class="input-group">
-                    <label for="login-email">ইমেইল:</label>
-                    <input type="email" id="login-email" required>
+                    <label for="email">ইমেল:</label>
+                    <input type="email" id="email" required>
                 </div>
                 <div class="input-group">
-                    <label for="login-password">পাসওয়ার্ড:</label>
-                    <input type="password" id="login-password" required>
+                    <label for="password">পাসওয়ার্ড:</label>
+                    <input type="password" id="password" required>
                 </div>
-                <button type="submit">লগইন করুন</button>
+                <button type="submit">রেজিস্টার করুন</button>
             </form>
-
-            <form id="signup-form" style="display: none;">
-                <div class="input-group">
-                    <label for="signup-email">ইমেইল:</label>
-                    <input type="email" id="signup-email" required>
-                </div>
-                <div class="input-group">
-                    <label for="signup-password">পাসওয়ার্ড:</label>
-                    <input type="password" id="signup-password" required>
-                </div>
-                <button type="submit">সাইনআপ করুন</button>
-            </form>
-
-            <p class="switch-form"><a href="#" id="switch-link">আপনার কি একটি অ্যাকাউন্ট নেই? সাইনআপ করুন</a></p>
+            <p>আপনার কি একটি অ্যাকাউন্ট আছে? <a href="#" id="switch-auth">লগইন করুন</a></p>
         </div>
     </main>
 
@@ -77,6 +62,5 @@
     </footer>
     
     <script src="auth.js"></script>
-
 </body>
 </html>
