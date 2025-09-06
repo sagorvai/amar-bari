@@ -2,69 +2,77 @@
 const auth = firebase.auth();
 
 document.addEventListener('DOMContentLoaded', function() {
-    const loginForm = document.getElementById('login-form');
-    const signupForm = document.getElementById('signup-form');
-    const switchLink = document.getElementById('switch-link');
-    const authTitle = document.getElementById('auth-title');
+    const authForm = document.getElementById('auth-form');
+    const authTitle = document.querySelector('.auth-container h2');
+    const authButton = document.querySelector('#auth-form button');
+    const switchAuthLink = document.getElementById('switch-auth');
+    let isLogin = false;
 
-    // Show login form by default
-    if (loginForm) {
-        loginForm.style.display = 'block';
-    }
-    if (signupForm) {
-        signupForm.style.display = 'none';
-    }
-
-    // Switch between login and signup forms
-    if (switchLink) {
-        switchLink.addEventListener('click', function(e) {
+    // Toggle between login and register forms
+    if(switchAuthLink) {
+        switchAuthLink.addEventListener('click', function(e) {
             e.preventDefault();
-            if (loginForm.style.display === 'block') {
-                loginForm.style.display = 'none';
-                signupForm.style.display = 'block';
-                authTitle.textContent = 'সাইনআপ করুন';
-                switchLink.textContent = 'আপনার কি একটি অ্যাকাউন্ট আছে? লগইন করুন';
-            } else {
-                loginForm.style.display = 'block';
-                signupForm.style.display = 'none';
+            isLogin = !isLogin;
+            if (isLogin) {
                 authTitle.textContent = 'লগইন করুন';
-                switchLink.textContent = 'আপনার কি একটি অ্যাকাউন্ট নেই? সাইনআপ করুন';
+                authButton.textContent = 'লগইন করুন';
+                switchAuthLink.textContent = 'অ্যাকাউন্ট তৈরি করুন';
+            } else {
+                authTitle.textContent = 'অ্যাকাউন্ট তৈরি করুন';
+                authButton.textContent = 'রেজিস্টার করুন';
+                switchAuthLink.textContent = 'লগইন করুন';
             }
         });
     }
 
-    // Handle user login
-    if (loginForm) {
-        loginForm.addEventListener('submit', async function(e) {
+    // Handle form submission
+    if(authForm) {
+        authForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const email = loginForm['email'].value;
-            const password = loginForm['password'].value;
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
             try {
-                await auth.signInWithEmailAndPassword(email, password);
-                alert('সফলভাবে লগইন করা হয়েছে!');
-                window.location.href = 'index.html'; 
+                if (isLogin) {
+                    // Login existing user
+                    await auth.signInWithEmailAndPassword(email, password);
+                    alert('সফলভাবে লগইন করা হয়েছে!');
+                } else {
+                    // Register new user
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    alert('অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!');
+                }
+                window.location.href = 'index.html'; // Redirect to home page
             } catch (error) {
-                console.error("লগইন ব্যর্থ হয়েছে:", error);
-                alert("লগইন ব্যর্থ হয়েছে: " + error.message);
+                console.error("Authentication Error: ", error);
+                alert("অ্যাকাউন্ট তৈরি বা লগইন ব্যর্থ হয়েছে। ত্রুটি: " + error.message);
             }
         });
     }
 
-    // Handle user signup
-    if (signupForm) {
-        signupForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const email = signupForm['email'].value;
-            const password = signupForm['password'].value;
-            try {
-                await auth.createUserWithEmailAndPassword(email, password);
-                alert('সফলভাবে সাইনআপ করা হয়েছে!');
-                window.location.href = 'index.html';
-            } catch (error) {
-                console.error("সাইনআপ ব্যর্থ হয়েছে:", error);
-                alert("সাইনআপ ব্যর্থ হয়েছে: " + error.message);
+    // Handle UI changes on auth state change
+    auth.onAuthStateChanged(user => {
+        const postLink = document.getElementById('post-link');
+        const loginLink = document.getElementById('login-link');
+        if (user) {
+            if (postLink) postLink.style.display = 'inline-block';
+            if (loginLink) {
+                loginLink.textContent = 'লগআউট';
+                loginLink.href = '#';
+                loginLink.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await auth.signOut();
+                    alert('সফলভাবে লগআউট করা হয়েছে!');
+                    window.location.href = 'index.html';
+                });
             }
-        });
-    }
-
+        } else {
+            if (postLink) postLink.style.display = 'none';
+            if (loginLink) {
+                loginLink.textContent = 'লগইন';
+                loginLink.href = 'auth.html';
+            }
+        }
+    });
 });
