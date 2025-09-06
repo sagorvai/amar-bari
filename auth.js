@@ -3,35 +3,35 @@ const auth = firebase.auth();
 
 document.addEventListener('DOMContentLoaded', function() {
     const authForm = document.getElementById('auth-form');
-    const authTitle = document.querySelector('.auth-container h2');
-    const authButton = document.querySelector('#auth-form button');
+    const authTitle = document.getElementById('auth-title');
+    const authButton = authForm ? authForm.querySelector('button[type="submit"]') : null;
     const switchAuthLink = document.getElementById('switch-auth');
     let isLogin = false;
 
     // Toggle between login and register forms
-    if(switchAuthLink) {
+    if (switchAuthLink) {
         switchAuthLink.addEventListener('click', function(e) {
             e.preventDefault();
             isLogin = !isLogin;
             if (isLogin) {
                 authTitle.textContent = 'লগইন করুন';
-                authButton.textContent = 'লগইন করুন';
+                if (authButton) authButton.textContent = 'লগইন করুন';
                 switchAuthLink.textContent = 'অ্যাকাউন্ট তৈরি করুন';
             } else {
                 authTitle.textContent = 'অ্যাকাউন্ট তৈরি করুন';
-                authButton.textContent = 'রেজিস্টার করুন';
+                if (authButton) authButton.textContent = 'রেজিস্টার করুন';
                 switchAuthLink.textContent = 'লগইন করুন';
             }
         });
     }
 
     // Handle form submission
-    if(authForm) {
+    if (authForm) {
         authForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const email = document.getElementById('email')?.value;
+            const password = document.getElementById('password')?.value;
 
             try {
                 if (isLogin) {
