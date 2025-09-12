@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const propertyForm = document.getElementById('property-form');
     const submitBtn = document.querySelector('#property-form button[type="submit"]');
 
-    // Function to generate and display the main property type dropdown based on category
     function generateTypeDropdown(category) {
         let typeSelectHTML = '';
         let options = [];
@@ -40,13 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Function to generate specific fields based on property type
     function generateSpecificFields(category, postType) {
         const specificFieldsContainer = document.getElementById('specific-fields-container');
-        let fieldsHTML = '';
-
-        // Common fields for all types
-        fieldsHTML += `
+        let fieldsHTML = `
             <div class="input-group">
                 <label for="property-title">প্রপার্টির শিরোনাম:</label>
                 <input type="text" id="property-title" placeholder="যেমন: ধানমন্ডি ১০ এ সুন্দর ফ্ল্যাট" required>
@@ -59,14 +54,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <label for="property-images">ছবি আপলোড করুন:</label>
                 <input type="file" id="property-images" accept="image/*" multiple required>
             </div>
-            <div class="input-group">
-                <label for="price">মূল্য:</label>
-                <input type="number" id="price" placeholder="প্রপার্টির মূল্য লিখুন" required>
-            </div>
-            <div class="input-group">
-                <label for="area-sq-ft">জমির পরিমাণ/আয়তন (বর্গফুট):</label>
-                <input type="number" id="area-sq-ft" required>
-            </div>
+        `;
+
+        // Common location fields for all types
+        fieldsHTML += `
             <div class="input-group input-inline">
                 <div>
                     <label for="mouza">মৌজা:</label>
@@ -93,9 +84,30 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        // Specific fields based on category and type
         if (category === 'বিক্রয়') {
-            // No extra fields for sale
+            if (postType !== 'জমি') {
+                 fieldsHTML += `
+                    <div class="input-group">
+                        <label for="price">মূল্য:</label>
+                        <input type="number" id="price" placeholder="প্রপার্টির মূল্য লিখুন" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="area-sq-ft">জমির পরিমাণ/আয়তন (বর্গফুট):</label>
+                        <input type="number" id="area-sq-ft" required>
+                    </div>
+                `;
+            } else { // For 'জমি' only
+                fieldsHTML += `
+                    <div class="input-group">
+                        <label for="price">মূল্য:</label>
+                        <input type="number" id="price" placeholder="প্রপার্টির মূল্য লিখুন" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="area-sq-ft">জমির পরিমাণ (বর্গফুট):</label>
+                        <input type="number" id="area-sq-ft" required>
+                    </div>
+                `;
+            }
         } else if (category === 'ভাড়া') {
             fieldsHTML += `
                 <div class="input-group">
@@ -107,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="number" id="advance-amount" placeholder="অ্যাডভান্সের পরিমাণ" required>
                 </div>
             `;
-            if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট' || postType === 'অফিস') {
+            if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট' || postType === 'অফিস' || postType === 'দোকান') {
                 fieldsHTML += `
                     <div class="input-group">
                         <label for="size-sq-ft">আয়তন (বর্গফুট):</label>
@@ -169,7 +181,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Upload images to Firebase Storage
             const imageUrls = [];
             for (const image of propertyImages) {
                 const storageRef = storage.ref(`property_images/${Date.now()}_${image.name}`);
@@ -178,45 +189,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 imageUrls.push(imageUrl);
             }
 
-            // Collect all form data
             const postCategory = document.getElementById('post-category').value;
             const postType = document.getElementById('post-type')?.value;
             const title = document.getElementById('property-title')?.value;
             const description = document.getElementById('property-description')?.value;
             const phoneNumber = document.getElementById('phone-number')?.value;
             const googleMapLink = document.getElementById('google-map')?.value;
-            const price = document.getElementById('price')?.value;
-            const areaSqFt = document.getElementById('area-sq-ft')?.value;
-
-            // Prepare dynamic data object
-            let dynamicData = {};
-            if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট') {
-                dynamicData = {
-                    floors: document.getElementById('floors')?.value,
-                    rooms: document.getElementById('rooms')?.value,
-                    bathrooms: document.getElementById('bathrooms')?.value,
-                    kitchens: document.getElementById('kitchens')?.value,
-                    rentalType: document.getElementById('rental-type')?.value,
-                };
-            }
-            if (postCategory === 'ভাড়া') {
-                dynamicData.rentAmount = document.getElementById('rent-amount')?.value;
-                dynamicData.advanceAmount = document.getElementById('advance-amount')?.value;
-            }
-
-            // Final property data object
-            const propertyData = {
+            
+            let propertyData = {
                 category: postCategory,
                 type: postType,
                 title: title,
                 images: imageUrls,
                 description: description,
-                price: price,
-                size: areaSqFt,
                 phoneNumber: phoneNumber,
                 googleMapLink: googleMapLink,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                ...dynamicData,
                 location: {
                     mouza: document.getElementById('mouza')?.value,
                     thana: document.getElementById('thana')?.value,
@@ -226,11 +214,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             };
 
+            // Collect dynamic data based on type
+            if (postCategory === 'বিক্রয়') {
+                propertyData.price = document.getElementById('price')?.value;
+                propertyData.areaSqFt = document.getElementById('area-sq-ft')?.value;
+            } else if (postCategory === 'ভাড়া') {
+                propertyData.rentAmount = document.getElementById('rent-amount')?.value;
+                propertyData.advanceAmount = document.getElementById('advance-amount')?.value;
+                if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট' || postType === 'অফিস' || postType === 'দোকান') {
+                    propertyData.size = document.getElementById('size-sq-ft')?.value;
+                }
+                if (postType === 'বাড়ি' || postType === 'ফ্ল্যাট') {
+                    propertyData.floors = document.getElementById('floors')?.value;
+                    propertyData.rooms = document.getElementById('rooms')?.value;
+                    propertyData.bathrooms = document.getElementById('bathrooms')?.value;
+                    propertyData.kitchens = document.getElementById('kitchens')?.value;
+                    propertyData.rentalType = document.getElementById('rental-type')?.value;
+                }
+            }
+
             await db.collection("properties").add(propertyData);
 
             alert("প্রপার্টি সফলভাবে আপলোড করা হয়েছে!");
             propertyForm.reset();
-            dynamicFieldsContainer.innerHTML = ''; // Clear dynamic fields after submission
+            dynamicFieldsContainer.innerHTML = ''; 
 
         } catch (error) {
             console.error("ডেটা আপলোড করতে সমস্যা হয়েছে: ", error);
