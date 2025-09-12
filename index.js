@@ -10,11 +10,15 @@ const postLink = document.getElementById('post-link');
 async function fetchAndDisplayProperties() {
     try {
         const propertyGrid = document.querySelector('.property-grid');
-        if (!propertyGrid) return;
+        if (!propertyGrid) {
+            console.error("Error: '.property-grid' element not found.");
+            return;
+        }
 
         // --- ডামি ডেটা শুরু (এই অংশটি পরবর্তীতে মুছে ফেলা হবে) ---
         const dummyProperties = [
             {
+                id: 'dummy1',
                 category: 'বিক্রয়',
                 type: 'বাড়ি',
                 title: 'শান্তিনগরে আধুনিক ডিজাইনের বাড়ি',
@@ -27,6 +31,7 @@ async function fetchAndDisplayProperties() {
                 timestamp: new Date().getTime(),
             },
             {
+                id: 'dummy2',
                 category: 'ভাড়া',
                 type: 'ফ্লাট',
                 title: 'গুলশানে ২ রুমের ফ্লাট ভাড়া',
@@ -39,6 +44,7 @@ async function fetchAndDisplayProperties() {
                 timestamp: new Date().getTime() - 1000,
             },
             {
+                id: 'dummy3',
                 category: 'বিক্রয়',
                 type: 'জমি',
                 title: 'খুলনায় বাণিজ্যিক প্লট',
@@ -51,6 +57,7 @@ async function fetchAndDisplayProperties() {
                 timestamp: new Date().getTime() - 2000,
             },
             {
+                id: 'dummy4',
                 category: 'ভাড়া',
                 type: 'দোকান',
                 title: 'ধানমন্ডিতে ভালো লোকেশনের দোকান',
