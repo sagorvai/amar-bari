@@ -8,13 +8,14 @@ const postLink = document.getElementById('post-link');
 
 // Function to fetch and display properties
 async function fetchAndDisplayProperties() {
+    console.log("Attempting to load dummy properties...");
     try {
         const propertyGrid = document.querySelector('.property-grid');
         if (!propertyGrid) {
-            console.error("Error: '.property-grid' element not found.");
+            console.error("Error: '.property-grid' element not found. Please check your index.html file.");
             return;
         }
-
+        
         // --- ডামি ডেটা শুরু (এই অংশটি পরবর্তীতে মুছে ফেলা হবে) ---
         const dummyProperties = [
             {
@@ -76,6 +77,7 @@ async function fetchAndDisplayProperties() {
 
         if (dummyProperties.length === 0) {
             propertyGrid.innerHTML = '<p>কোনো প্রপার্টি পাওয়া যায়নি।</p>';
+            console.log("No dummy data to display.");
             return;
         }
 
@@ -97,6 +99,7 @@ async function fetchAndDisplayProperties() {
             `;
             propertyGrid.appendChild(card);
         });
+        console.log("Dummy properties rendered successfully.");
 
     } catch (error) {
         console.error("Error fetching properties:", error);
