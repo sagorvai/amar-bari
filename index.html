@@ -21,46 +21,70 @@
         appId: "1:719084789035:web:f4da765290b351b00a796e",
         measurementId: "G-F3YHTJ4LLV"
       };
-      
       firebase.initializeApp(firebaseConfig);
     </script>
 </head>
 <body>
     <header class="header">
-        <div class="container">
+        <div class="header-container">
             <h1 class="logo">আমার বাড়ি.কম</h1>
+            <div class="search-container">
+                <input type="text" placeholder="শহর বা এলাকা...">
+                <button>অনুসন্ধান করুন</button>
+            </div>
             <nav class="nav">
                 <a href="index.html">হোম</a>
                 <a href="post.html" id="post-link" style="display: none;">প্রপার্টি যোগ করুন</a>
                 <a href="auth.html" id="login-link">লগইন</a>
             </nav>
         </div>
+        <div class="category-tabs">
+            <button class="tab-button active">বিক্রয়</button>
+            <button class="tab-button">ভাড়া</button>
+        </div>
     </header>
 
-    <main class="main-content">
-        <section class="hero-section">
-            <div class="container">
-                <h2>আপনার স্বপ্নের বাড়ি খুঁজুন</h2>
-                <p>আমাদের আধুনিক ও নির্ভরযোগ্য অনলাইন প্ল্যাটফর্মে আপনার প্রপার্টি খুঁজে নিন।</p>
-                <div class="search-bar">
-                    <input type="text" placeholder="শহর বা এলাকা...">
-                    <select>
-                        <option value="">সকল ক্যাটাগরি</option>
-                        <option value="buy">বিক্রয়</option>
-                        <option value="rent">ভাড়া</option>
-                    </select>
-                    <button>অনুসন্ধান করুন</button>
-                </div>
+    <main class="main-content-grid">
+        <aside class="sidebar left-sidebar">
+            <div class="sidebar-block">
+                <h4>সকল কার্যক্রম</h4>
+                <ul>
+                    <li><a href="#">জমি</a></li>
+                    <li><a href="#">বাড়ি</a></li>
+                    <li><a href="#">ফ্লাট</a></li>
+                    <li><a href="#">দোকান</a></li>
+                    <li><a href="#">সম্পর্কিত তথ্যাদি</a></li>
+                    <li><a href="#">বিজ্ঞাপন দিন</a></li>
+                    <li><a href="#">যোগাযোগ</a></li>
+                </ul>
             </div>
+        </aside>
+
+        <section class="main-content">
+            <div class="property-list-header">
+                <h3>সাম্প্রতিক প্রপার্টি</h3>
+            </div>
+            <div class="property-grid">
+                </div>
         </section>
 
-        <section class="property-list">
-            <div class="container">
-                <h3>সাম্প্রতিক প্রপার্টি</h3>
-                <div class="property-grid">
-                    </div>
+        <aside class="sidebar right-sidebar">
+            <div class="sidebar-block profile-block">
+                <h4>ব্যবহারকারীর প্রোফাইল</h4>
+                <div class="profile-info">
+                    <img src="https://via.placeholder.com/100" alt="Profile Picture" class="profile-pic">
+                    <h5>ব্যবহারকারীর নাম</h5>
+                    <p>মোবাইল: <span id="user-phone">০১৯xxxxxx৮৯</span></p>
+                    <p>পেশা: <span id="user-profession">গৃহিনী</span></p>
+                    <p>জেলা: <span id="user-district">বরিশাল</span></p>
+                </div>
             </div>
-        </section>
+
+            <div class="sidebar-block my-properties-block">
+                <h4>আমার প্রপার্টিসমূহ</h4>
+                <p>এখানে আপনার আপলোড করা প্রপার্টিগুলো দেখানো হবে।</p>
+            </div>
+        </aside>
     </main>
 
     <footer class="footer">
