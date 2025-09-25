@@ -6,8 +6,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const signupForm = document.getElementById('signup-form');
     const switchLink = document.getElementById('switch-link');
     const authTitle = document.getElementById('auth-title');
+    
+    // New UI elements
+    const menuToggle = document.getElementById('menu-toggle');
+    const sideMenu = document.getElementById('side-menu');
+    const profileLink = document.getElementById('profile-link');
     const postLink = document.getElementById('post-link');
-    const loginLink = document.getElementById('login-link');
+    const logoutLink = document.getElementById('logout-link');
 
     // Show login form by default, hide signup
     if (loginForm && signupForm) {
@@ -70,24 +75,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auth state change handler for all pages
     auth.onAuthStateChanged(user => {
         if (user) {
-            if (postLink) postLink.style.display = 'inline-block';
-            if (loginLink) {
-                loginLink.textContent = 'লগআউট';
-                loginLink.href = '#';
-                loginLink.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    await auth.signOut();
-                    alert('সফলভাবে লগআউট করা হয়েছে!');
-                    window.location.href = 'index.html';
-                });
+            // User is logged in
+            if (profileLink) {
+                profileLink.href = '#';
+                profileLink.innerHTML = `<i class="fas fa-user-circle"></i> প্রোফাইল`;
             }
+            if (logoutLink) logoutLink.style.display = 'block';
         } else {
-            if (postLink) postLink.style.display = 'none';
-            if (loginLink) {
-                loginLink.textContent = 'লগইন';
-                loginLink.href = 'auth.html';
+            // User is logged out
+            if (profileLink) {
+                profileLink.href = 'auth.html';
+                profileLink.innerHTML = `<i class="fas fa-user-circle"></i> লগইন`;
             }
+            if (logoutLink) logoutLink.style.display = 'none';
         }
     });
+
+    // Menu toggle
+    if (menuToggle && sideMenu) {
+        menuToggle.addEventListener('click', () => {
+            sideMenu.classList.toggle('open');
+        });
+    }
 
 });
