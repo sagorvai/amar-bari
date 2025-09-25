@@ -21,21 +21,29 @@
         appId: "1:719084789035:web:f4da765290b351b00a796e",
         measurementId: "G-F3YHTJ4LLV"
       };
-      
       firebase.initializeApp(firebaseConfig);
     </script>
 </head>
 <body>
     <header class="header">
         <div class="container">
-            <h1 class="logo">আমার বাড়ি.কম</h1>
-            <nav class="nav">
-                <a href="index.html">হোম</a>
-                <a href="post.html" id="post-link">প্রপার্টি যোগ করুন</a>
-                <a href="auth.html" id="login-link">লগইন</a>
-            </nav>
+            <a href="index.html" class="logo">আমার বাড়ি.কম</a>
+            <div class="header-right">
+                <a href="auth.html" id="profile-link" class="profile-link">
+                    <i class="fas fa-user-circle"></i> লগইন
+                </a>
+                <button class="menu-toggle" id="menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
         </div>
     </header>
+
+    <div class="side-menu" id="side-menu">
+        <a href="index.html">হোম</a>
+        <a href="post.html" id="post-link">প্রপার্টি যোগ করুন</a>
+        <a href="#" id="logout-link" style="display:none;">লগআউট</a>
+    </div>
 
     <main class="main-content">
         <div class="post-container">
@@ -51,7 +59,7 @@
                 </div>
                 
                 <div id="dynamic-fields-container">
-                    </div>
+                </div>
 
                 <div class="input-group">
                     <label for="phone-number">যোগাযোগের মোবাইল নাম্বার:</label>
