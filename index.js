@@ -3,8 +3,11 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // UI elements
-const loginLink = document.getElementById('login-link');
+const menuToggle = document.getElementById('menu-toggle');
+const sideMenu = document.getElementById('side-menu');
+const profileLink = document.getElementById('profile-link');
 const postLink = document.getElementById('post-link');
+const logoutLink = document.getElementById('logout-link');
 
 // Function to fetch and display properties
 async function fetchAndDisplayProperties() {
@@ -42,54 +45,18 @@ async function fetchAndDisplayProperties() {
                     upazila: 'গুলশান',
                     district: 'ঢাকা',
                 },
-                timestamp: new Date().getTime() - 1000,
-            },
-            {
-                id: 'dummy3',
-                category: 'বিক্রয়',
-                type: 'জমি',
-                title: 'খুলনায় বাণিজ্যিক প্লট',
-                images: ['https://via.placeholder.com/300x200?text=Land+for+Sale'],
-                price: '৫০ লক্ষ টাকা/শতক',
-                location: {
-                    upazila: 'সোনাডাঙ্গা',
-                    district: 'খুলনা',
-                },
-                timestamp: new Date().getTime() - 2000,
-            },
-            {
-                id: 'dummy4',
-                category: 'ভাড়া',
-                type: 'দোকান',
-                title: 'ধানমন্ডিতে ভালো লোকেশনের দোকান',
-                images: ['https://via.placeholder.com/300x200?text=Shop+for+Rent'],
-                rentAmount: '৳১২,০০০/মাস',
-                location: {
-                    upazila: 'ধানমন্ডি',
-                    district: 'ঢাকা',
-                },
-                timestamp: new Date().getTime() - 3000,
+                timestamp: new Date().getTime() - 86400000,
             }
         ];
         // --- ডামি ডেটা শেষ ---
 
+        // Display dummy data
         propertyGrid.innerHTML = '';
-
-        if (dummyProperties.length === 0) {
-            propertyGrid.innerHTML = '<p>কোনো প্রপার্টি পাওয়া যায়নি।</p>';
-            return;
-        }
-
         dummyProperties.forEach(property => {
             const card = document.createElement('div');
-            card.classList.add('property-card');
-
-            const imageUrl = property.images && property.images.length > 0
-                ? property.images[0]
-                : 'https://via.placeholder.com/300x200?text=No+Image';
-
+            card.className = 'property-card';
             card.innerHTML = `
-                <img src="${imageUrl}" alt="${property.title}">
+                <img src="${property.images[0]}" alt="${property.title}">
                 <div class="property-card-content">
                     <h4>${property.title}</h4>
                     <p class="location">${property.location?.upazila || ''}, ${property.location?.district || ''}</p>
@@ -111,24 +78,27 @@ async function fetchAndDisplayProperties() {
 // Handle user authentication state changes
 auth.onAuthStateChanged(user => {
     if (user) {
-        if (postLink) postLink.style.display = 'inline-block';
-        if (loginLink) {
-            loginLink.textContent = 'লগআউট';
-            loginLink.href = '#';
-            loginLink.addEventListener('click', async (e) => {
-                e.preventDefault();
-                await auth.signOut();
-                alert('সফলভাবে লগআউট করা হয়েছে!');
-                window.location.reload();
-            });
+        // User is logged in
+        if (profileLink) {
+            profileLink.href = '#';
+            profileLink.innerHTML = `<i class="fas fa-user-circle"></i> প্রোফাইল`;
         }
+        if (logoutLink) logoutLink.style.display = 'block';
     } else {
-        if (postLink) postLink.style.display = 'none';
-        if (loginLink) {
-            loginLink.textContent = 'লগইন';
-            loginLink.href = 'auth.html';
+        // User is logged out
+        if (profileLink) {
+            profileLink.href = 'auth.html';
+            profileLink.innerHTML = `<i class="fas fa-user-circle"></i> লগইন`;
         }
+        if (logoutLink) logoutLink.style.display = 'none';
     }
 });
+
+// Menu toggle
+if (menuToggle && sideMenu) {
+    menuToggle.addEventListener('click', () => {
+        sideMenu.classList.toggle('open');
+    });
+}
 
 document.addEventListener('DOMContentLoaded', fetchAndDisplayProperties);
