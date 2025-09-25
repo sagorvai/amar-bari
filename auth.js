@@ -75,17 +75,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auth state change handler for all pages
     auth.onAuthStateChanged(user => {
         if (user) {
-            // User is logged in
             if (profileLink) {
                 profileLink.href = '#';
-                profileLink.innerHTML = `<i class="fas fa-user-circle"></i> প্রোফাইল`;
             }
-            if (logoutLink) logoutLink.style.display = 'block';
+            if (logoutLink) {
+                logoutLink.style.display = 'block';
+                logoutLink.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await auth.signOut();
+                    alert('সফলভাবে লগআউট করা হয়েছে!');
+                    window.location.href = 'index.html';
+                });
+            }
         } else {
-            // User is logged out
             if (profileLink) {
                 profileLink.href = 'auth.html';
-                profileLink.innerHTML = `<i class="fas fa-user-circle"></i> লগইন`;
             }
             if (logoutLink) logoutLink.style.display = 'none';
         }
