@@ -1,27 +1,23 @@
-/* সকল উপাদানের জন্য ফন্টের রিসেট এবং বক্স মডেল সেট করা */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif; /* বাংলা ফন্টের জন্য আলাদাভাবে সেট করা যেতে পারে */
-}
-
-body {
-    background-color: #f4f4f4; /* হালকা ধূসর ব্যাকগ্রাউন্ড */
-    padding-top: 100px; /* হেডার ফিক্সড হওয়ায় কন্টেন্টকে নিচে নামানো */
-}
-
 /* ====================================
-   ১. হেডার অংশ
+   মোবাইল-ফার্স্ট হেডার এবং লেআউট ওভাররাইডস
    ==================================== */
+body {
+    /* Fixed header এর জন্য কন্টেন্টকে নিচে নামানো */
+    padding-top: 100px; 
+    /* অন্যান্য CSS কোডগুলো এখানে থাকবে... */
+}
+
+/* old .header and .hero-section styles will be ignored for mobile view */
+
+/* ১. নতুন মোবাইল হেডার অংশ */
 .main-header {
     width: 100%;
     position: fixed; /* হেডার সবসময় দৃশ্যমান রাখার জন্য */
     top: 0;
     left: 0;
-    background-color: #fff; /* সাদা ব্যাকগ্রাউন্ড */
+    background-color: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    z-index: 100; /* অন্য কন্টেন্টের উপরে রাখার জন্য */
+    z-index: 100;
 }
 
 .header-top {
@@ -29,7 +25,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 10px 15px;
-    background-color: #2e8b57; /* আপনার ছবিতে দেখা সবুজ রং */
+    background-color: #2e8b57; /* সবুজ রং */
     color: white;
 }
 
@@ -50,15 +46,15 @@ body {
     font-size: 28px;
 }
 
-/* ====================================
-   ২. সাব হেডার (নেভিগেশন ও সার্চ)
-   ==================================== */
+/* ২. সাব হেডার (নেভিগেশন ও সার্চ) */
 .sub-header {
     display: flex;
     align-items: center;
     padding: 8px 15px;
     background-color: #fff;
     border-bottom: 1px solid #ddd;
+    overflow-x: auto;
+    white-space: nowrap;
 }
 
 .nav-button {
@@ -69,11 +65,10 @@ body {
     font-weight: 500;
     padding: 5px 10px;
     cursor: pointer;
-    transition: color 0.2s;
-    white-space: nowrap; /* টেক্সট যাতে না ভাঙে */
+    white-space: nowrap; 
 }
 
-.nav-button:hover, .nav-button.active {
+.nav-button.active {
     color: #2e8b57; /* সবুজ হাইলাইট */
     border-bottom: 2px solid #2e8b57;
 }
@@ -81,11 +76,12 @@ body {
 /* সার্চবার ডিজাইন */
 .search-container {
     display: flex;
-    flex-grow: 1; /* বাকি জায়গা নেবে */
+    flex-grow: 1;
     margin-left: 10px;
     background-color: #f0f0f0;
     border-radius: 20px;
     overflow: hidden;
+    max-width: 250px; /* মোবাইল স্ক্রিনের জন্য সীমিত করা হলো */
 }
 
 .search-input {
@@ -98,7 +94,7 @@ body {
 }
 
 .search-icon-button {
-    background-color: #2e8b57; /* সবুজ রং */
+    background-color: #2e8b57;
     border: none;
     color: white;
     padding: 0 10px;
@@ -112,24 +108,22 @@ body {
     font-size: 20px;
 }
 
-/* ====================================
-   ৩. সাইড মেনু
-   ==================================== */
+/* ৩. সাইড মেনু এবং ওভারলে */
 .sidebar {
     position: fixed;
     top: 0;
-    left: -280px; /* শুরুতে স্ক্রিনের বাইরে লুকানো */
+    left: -280px; 
     width: 280px;
     height: 100%;
     background-color: white;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-    z-index: 110; /* হেডারের উপরে থাকবে */
+    z-index: 110; 
     transition: left 0.3s ease;
     padding-top: 20px;
 }
 
 .sidebar.active {
-    left: 0; /* মেনু দৃশ্যমান করার জন্য */
+    left: 0; 
 }
 
 .sidebar-nav {
@@ -145,12 +139,6 @@ body {
     border-bottom: 1px solid #eee;
 }
 
-.sidebar-item:hover {
-    background-color: #f0f0f0;
-    color: #2e8b57;
-}
-
-/* সাইডবার খোলার পর ব্যাকগ্রাউন্ড অন্ধকার করার জন্য */
 .overlay {
     position: fixed;
     top: 0;
@@ -159,22 +147,102 @@ body {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 105;
-    display: none; /* শুরুতে লুকানো */
+    display: none; 
 }
 
 .overlay.active {
     display: block;
 }
 
-/* ====================================
-   ৪. মূল কন্টেন্ট
-   ==================================== */
-.content {
+/* ৪. প্রপার্টি গ্রিড ও কার্ডের স্টাইল */
+.property-grid {
+    display: flex;
+    flex-direction: column; /* মোবাইল-এর জন্য এক কলামে */
+    gap: 15px; 
+    padding-top: 15px; /* কন্টেন্ট এর উপরের দিকে প্যাডিং */
+    padding-bottom: 50px;
+}
+
+.property-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.property-image-container {
+    position: relative;
+}
+
+.property-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.property-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #2e8b57; /* বিক্রয় ট্যাগ সবুজ */
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    z-index: 5;
+}
+
+.property-tag.rent-tag {
+    background-color: #ff8c00; /* ভাড়ার ট্যাগ কমলা */
+}
+
+.property-card-content {
     padding: 15px;
 }
 
-.placeholder-text {
-    text-align: center;
-    color: #999;
-    padding: 50px 0;
+.property-card-content h4 {
+    font-size: 1.15rem;
+    margin-bottom: 5px;
 }
+
+.property-card-content .location {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin-bottom: 10px;
+    /* icon is added via JS, so no need for ::before */
+}
+
+.property-card-content .price {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #2e8b57;
+    margin-bottom: 10px;
+}
+
+.property-info {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    color: #666;
+    flex-wrap: wrap; 
+}
+
+.property-info span {
+    display: flex;
+    align-items: center;
+}
+
+.property-info .material-icons {
+    font-size: 16px;
+    margin-right: 4px;
+    color: #2e8b57;
+}
+
+/* Media Query Adjustment (Mobile) - Added the mobile-specific media query */
+@media (max-width: 768px) {
+    /* container padding adjustment */
+    .container {
+        padding: 0 15px;
+    }
+                               }
