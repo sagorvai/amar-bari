@@ -3,12 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>আমার বাড়ি. কম</title>
+    <title>আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b351b00a796e",
+        measurementId: "G-F3YHTJ4LLV"
+      };
+      
+      firebase.initializeApp(firebaseConfig);
+    </script>
 </head>
 <body>
-
+    
     <header class="main-header">
         <div class="header-top">
             <button class="menu-button" id="menuButton">
@@ -17,7 +36,7 @@
             
             <div class="site-title">আমার বাড়ি. কম</div>
             
-            <button class="profile-button" id="profileButton">
+            <button class="profile-button" id="profileButton" style="display: none;">
                 <i class="material-icons">person</i>
             </button>
         </div>
@@ -28,8 +47,8 @@
             <button class="nav-button" id="rentButton">ভাড়া</button>
             
             <div class="search-container">
-                <input type="text" placeholder="খুঁজুন..." class="search-input">
-                <button class="search-icon-button">
+                <input type="text" placeholder="খুঁজুন..." class="search-input" id="globalSearchInput">
+                <button class="search-icon-button" id="searchIconButton">
                     <i class="material-icons">search</i>
                 </button>
             </div>
@@ -38,18 +57,29 @@
 
     <div class="sidebar" id="sidebar">
         <nav class="sidebar-nav">
-            <a href="#" class="sidebar-item">হোম</a>
-            <a href="#" class="sidebar-item">প্রোপার্টি যুক্ত করুন</a>
+            <a href="index.html" class="sidebar-item">হোম</a>
+            <a href="post.html" class="sidebar-item" id="post-link" style="display: none;">প্রপার্টি যুক্ত করুন</a>
             <a href="#" class="sidebar-item">পরামর্শ</a>
             <a href="#" class="sidebar-item">এবাউট</a>
             <a href="#" class="sidebar-item">যোগাযোগ</a>
+            <a href="auth.html" class="sidebar-item" id="login-link-sidebar">লগইন</a>
         </nav>
     </div>
+    
+    <div class="overlay" id="overlay"></div>
 
-    <main class="content">
-        <p class="placeholder-text">পোস্টগুলো এখানে দৃশ্যমান হবে (বিক্রয়/ভাড়া/ম্যাপ অনুযায়ী)</p>
-        </main>
+    <main class="main-content">
+        <div class="property-grid container"> 
+            </div>
+    </main>
 
-    <div class="overlay" id="overlay"></div> <script src="script.js"></script>
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
+    </footer>
+    
+    <script src="auth.js"></script>
+    <script src="index.js"></script>
 </body>
-</html>
+                    </html>
