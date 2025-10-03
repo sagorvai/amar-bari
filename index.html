@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>আমার বাড়ি.কম - প্রপার্টি অনুসন্ধান</title>
+    
+    <link rel="stylesheet" href="style.css"> 
+    
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+</head>
+<body>
+    
+    <div id="sidebar" class="sidebar">
+        <a href="index.html">হোম</a>
+        <a href="#" id="post-link">প্রপার্টি যোগ করুন</a> 
+        <a href="auth.html" id="login-link">লগইন</a>
+    </div>
+    <div id="overlay" class="overlay"></div>
+
+    <header class="header">
+        <div class="container header-top"> 
+            <button id="menuButton" class="menu-button">
+                <i class="material-icons">menu</i>
+            </button>
+            <h1 class="logo">আমার বাড়ি.কম</h1>
+            <nav class="nav">
+                <a href="index.html">হোম</a>
+                <a href="#" id="post-link-desktop">প্রপার্টি যোগ করুন</a>
+                <a href="auth.html" id="login-link-desktop">লগইন</a>
+            </nav>
+        </div>
+        
+        <div class="sub-header">
+            <div class="container sub-header-container">
+                <nav class="nav-filters">
+                    <a href="#" class="nav-button" id="mapButton">ম্যাপ</a>
+                    <a href="#" class="nav-button active" id="sellButton">বিক্রয়</a>
+                    <a href="#" class="nav-button" id="rentButton">ভাড়া</a>
+                </nav>
+                <div class="search-box">
+                    <input type="text" id="globalSearchInput" placeholder="শহর বা এলাকা খুঁজুন..." aria-label="অনুসন্ধান">
+                    <button id="searchIconButton">
+                        <i class="material-icons">search</i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="property-list">
+            <div class="container">
+                <h2>সাম্প্রতিক প্রপার্টি</h2>
+                <div class="property-grid">
+                    <p class="placeholder-text" style="text-align:center; padding: 50px 0; color: #999;">বিক্রয়ের জন্য প্রপার্টি লোড হচ্ছে...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
+    </footer>
+    
+    <script src="script.js"></script> 
+</body>
+</html>
