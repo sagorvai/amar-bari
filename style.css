@@ -1,8 +1,11 @@
-/* ====================================
-   ডিজাইন ফিক্স: মোবাইল হেডার এবং সাব-হেডারের জন্য নতুন স্টাইল
-   ==================================== */
+/*
+ * এই কোডটি আপনার style (3).css ফাইলের শেষে যোগ করুন। 
+ * এটি নতুন হেডার, সাইডবার এবং সাব-হেডারের জন্য প্রয়োজনীয় ডিজাইন যোগ করবে।
+ */
 
-/* Header - হেডার সবসময় উপরে রাখার জন্য */
+/* ====================================
+   ১. প্রধান হেডার ফিক্স ও মোবাইল লেআউট
+   ==================================== */
 .header {
     background-color: #ffffff;
     padding: 0; 
@@ -25,9 +28,10 @@
 .logo {
     margin: 0;
     font-size: 1.5rem;
-    color: white; /* লোগোর রং সাদা করা হলো */
+    color: white; 
 }
 
+/* মোবাইলে মেনু বাটন দেখাবে */
 .menu-button {
     background: none;
     border: none;
@@ -39,25 +43,33 @@
     font-size: 28px;
 }
 
-/* ডেস্কটপে মূল নেভিগেশন দেখাবে, মোবাইলে লোগোর পাশে লুকানো */
+/* ডেস্কটপে নেভিগেশন দেখাবে, মোবাইলে লুকানো */
 .nav {
     display: none; 
 }
 
 @media (min-width: 768px) {
     .menu-button {
-        display: none; /* মেনু বাটন ডেস্কটপে লুকানো */
+        display: none; 
     }
     .nav {
         display: flex; /* ডেস্কটপে নেভিগেশন দেখাবে */
+        gap: 20px;
+    }
+    .nav a {
+        color: white; /* নেভিগেশন লিঙ্কগুলোর রং সাদা */
+        font-weight: 500;
+        margin: 0;
     }
     .header-top {
-        padding: 10px 0; /* ডেস্কটপ কন্টেইনার প্যাডিং */
+        padding: 10px 0; 
     }
 }
 
 
-/* সাব হেডার (নেভিগেশন ও সার্চ) */
+/* ====================================
+   ২. সাব হেডার (বিক্রয়/ভাড়া বাটন ও সার্চ)
+   ==================================== */
 .sub-header {
     padding: 10px 0;
     background-color: #f4f7f6; /* হালকা ব্যাকগ্রাউন্ড */
@@ -103,6 +115,7 @@
     border: 1px solid #ddd;
     border-radius: 5px;
     overflow: hidden;
+    background-color: white;
 }
 
 .search-box input {
@@ -121,7 +134,23 @@
     cursor: pointer;
 }
 
-/* সাইডবার স্টাইল (মোবাইলের মেনু) */
+@media (min-width: 768px) {
+    .sub-header-container {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .nav-filters {
+        width: auto;
+    }
+    .search-box {
+        width: 400px;
+    }
+}
+
+/* ====================================
+   ৩. সাইডবার (মোবাইল মেনু)
+   ==================================== */
 .sidebar {
     position: fixed;
     top: 0;
@@ -161,21 +190,4 @@
 
 .overlay.active {
     display: block;
-}
-
-/* ডেস্কটপ ওভাররাইডস */
-@media (min-width: 768px) {
-    .sub-header-container {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .nav-filters {
-        width: auto;
-    }
-    
-    .search-box {
-        width: 400px;
-    }
-}
+   }
