@@ -4,7 +4,7 @@
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// UI elements - এগুলোকে DOMContentLoaded-এর বাইরে রাখা হয়েছে যাতে সব ফাংশন অ্যাক্সেস করতে পারে
+// UI elements - এই উপাদানগুলো DOMContentLoaded-এর বাইরে রাখা হলো
 const menuButton = document.getElementById('menuButton');
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
@@ -21,6 +21,7 @@ const loginLinkSidebar = document.getElementById('login-link-sidebar'); // sideb
 
 // --- ডামি ডেটা (কার্যকারিতা পরীক্ষার জন্য) ---
 const dummyProperties = [
+    // আপনার ফাইল থেকে নেওয়া ডামি ডেটা...
     { id: 'dummy1', category: 'বিক্রয়', type: 'বাড়ি', title: 'শান্তিনগরে আধুনিক ডিজাইনের বাড়ি', images: ['https://via.placeholder.com/350x250?text=House+for+Sale'], price: '৳ ১,৫০,০০,০০০', location: { upazila: 'মতিঝিল', district: 'ঢাকা' }, rooms: 3, bathrooms: 2 },
     { id: 'dummy2', category: 'ভাড়া', type: 'ফ্লাট', title: 'গুলশানে ২ রুমের ফ্লাট ভাড়া', images: ['https://via.placeholder.com/350x250?text=Flat+for+Rent'], rentAmount: '৳ ২৫,০০০/মাস', location: { upazila: 'গুলশান', district: 'ঢাকা' }, rooms: 2, bathrooms: 1 },
     { id: 'dummy3', category: 'বিক্রয়', type: 'জমি', title: 'খুলনায় বাণিজ্যিক প্লট', images: ['https://via.placeholder.com/350x250?text=Land+for+Sale'], price: '৳ ৫০,০০,০০০ /শতক', location: { upazila: 'সোনাডাঙ্গা', district: 'খুলনা' }, rooms: null, bathrooms: null },
@@ -29,9 +30,10 @@ const dummyProperties = [
 // ------------------------------------
 
 
+/**
+ * প্রপার্টি ডেটা কার্ড আকারে ডিসপ্লে করার ফাংশন
+ */
 function displayProperties(properties) {
-    // [displayProperties ফাংশনের কোড আগের মতোই থাকবে, শুধু ডামি ডেটা দিয়ে কার্ড তৈরি করবে]
-    //... (এখানে কার্ড জেনারেশন লজিক)...
     if (!propertyGrid) return;
     propertyGrid.innerHTML = '';
 
@@ -39,7 +41,7 @@ function displayProperties(properties) {
         propertyGrid.innerHTML = '<p class="placeholder-text" style="text-align:center; padding: 50px 0; color: #999;">এই ফিল্টারে কোনো প্রপার্টি পাওয়া যায়নি।</p>';
         return;
     }
-    // ... (কার্ড তৈরির লজিক) ...
+
     properties.forEach(property => {
         const card = document.createElement('div');
         card.classList.add('property-card');
@@ -80,7 +82,11 @@ function displayProperties(properties) {
 }
 
 
+/**
+ * প্রপার্টি ডেটা ফিল্টার এবং ডিসপ্লে করার ফাংশন
+ */
 function fetchAndDisplayProperties(category = 'বিক্রয়', searchTerm = '') {
+    
     if (category === 'ম্যাপ') {
         if(propertyGrid) {
             propertyGrid.innerHTML = '<p class="placeholder-text" style="text-align:center; padding: 50px 0; color: #999;">সাইটের সকল পোস্টগুলো এখন Google Map আকারে দৃশ্যমান হবে। (কার্যকরী ম্যাপের জন্য আরো কোড প্রয়োজন)</p>';
@@ -88,18 +94,24 @@ function fetchAndDisplayProperties(category = 'বিক্রয়', searchTer
         return;
     }
     
+    // ১. ডেটা ফিল্টারিং
     let filteredProperties = dummyProperties.filter(property => {
+        // ক্যাটাগরি ফিল্টার
         const categoryMatch = property.category === category;
+
+        // সার্চ টার্ম ফিল্টার (টাইটেল বা অবস্থান দিয়ে অনুসন্ধান)
         const searchLower = searchTerm.toLowerCase();
         const titleMatch = property.title.toLowerCase().includes(searchLower);
         const locationMatch = `${property.location?.upazila || ''}, ${property.location?.district || ''}`.toLowerCase().includes(searchLower);
+
         return categoryMatch && (titleMatch || locationMatch);
     });
     
+    // ২. ডেটা ডিসপ্লে
     displayProperties(filteredProperties);
 }
 
-// লগআউট হ্যান্ডেলার
+// লগআউট হ্যান্ডেলার (auth.js থেকে নিয়ে আসা হয়েছে)
 const handleLogout = async (e) => {
     e.preventDefault();
     await auth.signOut();
@@ -144,7 +156,7 @@ function setupUIEventListeners() {
                     fetchAndDisplayProperties(category, currentSearchTerm);
                 }
                 
-                // সাইডবার বন্ধ করা
+                // সাইডবার বন্ধ করা 
                 if(sidebar) {
                     sidebar.classList.remove('active');
                     overlay.classList.remove('active');
@@ -171,7 +183,8 @@ function setupUIEventListeners() {
     };
 
     if (globalSearchInput) {
-        globalSearchInput.addEventListener('input', performSearch);
+        // ইনপুট বাটন কাজ না করলে, এখানে keyup ইভেন্টটি ব্যবহার করে দেখতে পারেন
+        globalSearchInput.addEventListener('keyup', performSearch);
     }
     if (searchIconButton) {
         searchIconButton.addEventListener('click', performSearch);
@@ -201,10 +214,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (loginLink) {
                 loginLink.textContent = 'লগআউট';
                 loginLink.href = '#';
-                loginLink.removeEventListener('click', handleLogout); // ডুপ্লিকেট সরানো
+                loginLink.removeEventListener('click', handleLogout); 
                 loginLink.addEventListener('click', handleLogout);
             }
-            if (loginLinkSidebar) { // সাইডবার লিঙ্ক আপডেট
+            if (loginLinkSidebar) { 
                 loginLinkSidebar.textContent = 'লগআউট';
                 loginLinkSidebar.href = '#';
                 loginLinkSidebar.removeEventListener('click', handleLogout);
@@ -218,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginLink.href = 'auth.html';
                 loginLink.removeEventListener('click', handleLogout); 
             }
-            if (loginLinkSidebar) { // সাইডবার লিঙ্ক আপডেট
+            if (loginLinkSidebar) { 
                 loginLinkSidebar.textContent = 'লগইন';
                 loginLinkSidebar.href = 'auth.html';
                 loginLinkSidebar.removeEventListener('click', handleLogout);
