@@ -6,7 +6,7 @@ body {
     background-color: #f4f7f6;
     color: #333;
     /* ফিক্সড হেডার থাকার কারণে কন্টেন্টকে নিচে নামানো */
-    padding-top: 100px; 
+    padding-top: 110px; 
 }
 
 .container {
@@ -31,7 +31,7 @@ a {
     background-color: #ffffff;
     border-bottom: 1px solid #e0e0e0;
     z-index: 100;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .header-top {
@@ -39,7 +39,7 @@ a {
     justify-content: space-between;
     align-items: center;
     padding: 10px 15px; 
-    background-color: #2c3e50; /* গাঢ় নীল/ধূসর ব্যাকগ্রাউন্ড */
+    background-color: #2c3e50; /* Dark Blue/Gray */
     color: white;
 }
 
@@ -50,13 +50,12 @@ a {
     font-weight: bold;
 }
 
-/* মোবাইল মেনু বাটন */
 .menu-button {
     background: none;
     border: none;
     color: white;
     cursor: pointer;
-    display: block; /* মোবাইলে দেখাবে */
+    display: block; 
     padding: 0;
 }
 
@@ -64,7 +63,6 @@ a {
     font-size: 28px;
 }
 
-/* ডেস্কটপ নেভিগেশন (শুরুতে লুকানো) */
 .nav {
     display: none; 
     gap: 20px;
@@ -73,11 +71,6 @@ a {
 .nav a {
     color: white; 
     font-weight: 500;
-    transition: color 0.3s;
-}
-
-.nav a:hover {
-    color: #2ecc71; /* সবুজ রং-এ হোভার */
 }
 
 /* ডেস্কটপ ভিউ */
@@ -86,7 +79,7 @@ a {
         display: none; 
     }
     .nav {
-        display: flex; /* ডেস্কটপে নেভিগেশন দেখাবে */
+        display: flex;
     }
     .header-top {
         padding: 10px 0; 
@@ -99,57 +92,66 @@ a {
    ==================================== */
 .sub-header {
     padding: 10px 0;
-    background-color: #f4f7f6; /* হালকা ব্যাকগ্রাউন্ড */
+    background-color: #f7f7f7; /* হালকা ধূসর ব্যাকগ্রাউন্ড */
 }
 
 .sub-header-container {
     display: flex;
-    flex-direction: column; /* মোবাইলের জন্য উল্লম্ব বিন্যাস */
-    gap: 10px;
+    flex-direction: column; 
+    gap: 15px;
     padding: 0 15px;
 }
 
-/* ফিল্টার বাটন */
+/* --- ফিল্টার বাটন গ্রুপ (Segmented Control) --- */
 .nav-filters {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    gap: 5px;
+    gap: 0; 
+    border: 1px solid #ddd;
+    border-radius: 5px; /* মোবাইলের জন্য হালকা গোলাকার */
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .nav-filters .nav-button {
     flex: 1;
     text-align: center;
-    padding: 8px 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    padding: 10px 0;
+    border: none; 
+    border-right: 1px solid #ddd; /* বাটন ডিভাইডার */
+    border-radius: 0;
     color: #555;
     background-color: white;
     font-weight: 500;
-    transition: background-color 0.3s, color 0.3s;
-    font-size: 0.9rem;
+    transition: background-color 0.2s, color 0.2s;
+    font-size: 0.95rem;
+}
+
+.nav-filters .nav-button:last-child {
+    border-right: none; 
 }
 
 .nav-filters .nav-button.active {
     background-color: #2ecc71; /* সবুজ অ্যাকটিভ কালার */
     color: white;
-    border-color: #2ecc71;
     font-weight: bold;
 }
 
-/* সার্চ বক্স স্টাইল */
+/* --- সার্চ বক্স স্টাইল (Pill Shape) --- */
 .search-box {
     display: flex;
     width: 100%;
     border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 5px; /* মোবাইলের জন্য হালকা গোলাকার */
     overflow: hidden;
     background-color: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); 
 }
 
 .search-box input {
     flex-grow: 1;
-    padding: 10px;
+    padding: 12px;
     border: none;
     outline: none;
     font-size: 1rem;
@@ -159,7 +161,7 @@ a {
     background-color: #2ecc71;
     color: white;
     border: none;
-    padding: 10px 15px;
+    padding: 12px 18px;
     cursor: pointer;
     transition: background-color 0.3s;
 }
@@ -168,27 +170,51 @@ a {
     background-color: #27ae60;
 }
 
-/* ডেস্কটপে সাব-হেডার */
-@media (min-width: 768px) {
+/* ডেস্কটপ ভিউ: বিন্যাস ও গোলাকার ডিজাইন */
+@media (min-width: 992px) { 
+    .sub-header {
+        padding: 15px 0; /* ডেস্কটপে আরও স্পেস */
+    }
+    
     .sub-header-container {
         flex-direction: row;
-        justify-content: space-between;
+        justify-content: flex-start; /* বামে এলাইন */
         align-items: center;
         padding: 0 20px;
+        gap: 30px; /* ফিল্টার ও সার্চের মধ্যে দূরত্ব */
     }
+    
+    /* ফিল্টার বাটন - গোলাকার */
     .nav-filters {
         width: auto;
-        gap: 15px;
+        flex: 0 0 auto;
+        border-radius: 25px; /* পুরোপুরি গোলাকার */
     }
+    
+    .nav-filters .nav-button {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+    
+    /* সার্চ বক্স - গোলাকার */
     .search-box {
-        width: 350px;
+        width: 100%;
+        max-width: 550px;
+        border-radius: 25px; /* পুরোপুরি গোলাকার */
+        transition: box-shadow 0.3s;
+    }
+    
+    .search-box:hover {
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
     }
 }
 
 
 /* ====================================
-   ৩. সাইডবার (মোবাইল মেনু)
+   ৩. সাইডবার, প্রপার্টি গ্রিড ও অন্যান্য স্টাইল
+   (আগের কোড থেকে যা প্রয়োজনীয়)
    ==================================== */
+
 .sidebar {
     position: fixed;
     top: 0;
@@ -212,11 +238,6 @@ a {
     color: #ecf0f1;
     display: block;
     border-bottom: 1px solid #4a627a;
-    transition: background-color 0.3s;
-}
-
-.sidebar a:hover {
-    background-color: #4a627a;
 }
 
 .overlay {
@@ -233,11 +254,6 @@ a {
 .overlay.active {
     display: block;
 }
-
-
-/* ====================================
-   ৪. প্রপার্টি গ্রিড স্টাইল (আপনার আগের কোড থেকে)
-   ==================================== */
 
 .property-list h2 {
     text-align: center;
@@ -280,7 +296,7 @@ a {
     position: absolute;
     top: 10px;
     left: 10px;
-    background-color: #2e8b57; /* বিক্রয় ট্যাগ সবুজ */
+    background-color: #2ecc71; /* বিক্রয় ট্যাগ সবুজ */
     color: white;
     padding: 5px 10px;
     border-radius: 4px;
@@ -343,11 +359,10 @@ a {
     color: #3498db;
 }
 
-/* Footer */
 .footer {
     background-color: #2c3e50;
     color: #bdc3c7;
     text-align: center;
     padding: 20px 0;
     margin-top: 50px;
-}
+            }
