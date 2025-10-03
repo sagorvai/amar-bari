@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css"> 
-    
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -33,26 +32,19 @@
         <a href="index.html">হোম</a>
         <a href="post.html" id="post-link" style="display: none;">প্রপার্টি যোগ করুন</a>
         <a href="auth.html" id="login-link-sidebar">লগইন</a>
-        <div class="sidebar-filter-section">
-            <h4>ক্যাটাগরি</h4>
-            <a href="#" class="nav-button" id="sellButton">বিক্রয়</a>
-            <a href="#" class="nav-button" id="rentButton">ভাড়া</a>
-            <a href="#" class="nav-button" id="mapButton">ম্যাপ</a>
-        </div>
     </div>
     <div id="overlay" class="overlay"></div>
 
     <header class="header">
-        <div class="container header-content">
+        <div class="container header-top"> 
             <button id="menuButton" class="menu-button">
                 <i class="material-icons">menu</i>
             </button>
             <h1 class="logo">আমার বাড়ি.কম</h1>
-            <span class="profile-icon">
-                <i class="material-icons">account_circle</i>
-            </span>
-            
-            </div>
+            <nav class="nav">
+                <a href="index.html">হোম</a>
+                <a href="post.html" id="post-link">প্রপার্টি যোগ করুন</a> <a href="auth.html" id="login-link">লগইন</a> </nav>
+        </div>
         
         <div class="sub-header">
             <div class="container sub-header-container">
@@ -62,7 +54,7 @@
                     <a href="#" class="nav-button" id="rentButton">ভাড়া</a>
                 </nav>
                 <div class="search-box">
-                    <input type="text" id="globalSearchInput" placeholder="খুঁজুন..." aria-label="অনুসন্ধান">
+                    <input type="text" id="globalSearchInput" placeholder="শহর বা এলাকা খুঁজুন..." aria-label="অনুসন্ধান">
                     <button id="searchIconButton">
                         <i class="material-icons">search</i>
                     </button>
@@ -74,9 +66,9 @@
     <main class="main-content">
         <section class="property-list">
             <div class="container">
+                <h3>সাম্প্রতিক প্রপার্টি</h3>
                 <div class="property-grid">
-                    পোস্টগুলো এখানে দৃশ্যমান হবে (বিক্রয়/ভাড়া/ম্যাপ অনুযায়ী)
-                </div>
+                    </div>
             </div>
         </section>
     </main>
@@ -90,4 +82,4 @@
     <script src="auth.js"></script> 
     <script src="index.js"></script>
 </body>
-    </html>
+                        </html>
