@@ -6,17 +6,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const signupForm = document.getElementById('signup-form');
     const switchLink = document.getElementById('switch-link');
     const authTitle = document.getElementById('auth-title');
-    const postLink = document.getElementById('post-link');
-    const loginLink = document.getElementById('login-link');
+    
+    // index.html থেকে আসা উপাদানগুলো (যদি auth.html এ লোড করা হয়)
+    const postLink = document.getElementById('post-link'); 
+    const loginLink = document.getElementById('login-link'); 
 
     // Show login form by default, hide signup
     if (loginForm && signupForm) {
+        // শুরুতে লগইন ফর্ম দেখাবে
         loginForm.style.display = 'block';
         signupForm.style.display = 'none';
+        authTitle.textContent = 'লগইন করুন'; // শিরোনাম নিশ্চিত করা হলো
     }
 
-    // Switch between login and signup forms
-    if (switchLink) {
+    // লগইন ও সাইনআপ ফর্মের মধ্যে পরিবর্তন (Switch between forms)
+    if (switchLink && loginForm && signupForm) {
         switchLink.addEventListener('click', function(e) {
             e.preventDefault();
             if (loginForm.style.display === 'block') {
@@ -33,59 +37,113 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Handle user login
+    // =====================================
+    // ১. ইউজার লগইন হ্যান্ডেলিং (Handle user login)
+    // =====================================
     if (loginForm) {
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const email = loginForm['login-email'].value;
+            
+            // ইনপুট ফিল্ডের ID: login-email এবং login-password ব্যবহার করা হলো
+            const email = loginForm['login-email'].value; 
             const password = loginForm['login-password'].value;
+            
             try {
+                // Firebase-এর লগইন ফাংশন
                 await auth.signInWithEmailAndPassword(email, password);
+                
+                // সফল হলে
                 alert('সফলভাবে লগইন করা হয়েছে!');
-                window.location.href = 'index.html';
+                window.location.href = 'index.html'; // হোম পেজে রিডাইরেক্ট
+                
             } catch (error) {
+                // ব্যর্থ হলে ত্রুটি হ্যান্ডেলিং
                 console.error("লগইন ব্যর্থ হয়েছে:", error);
-                alert("লগইন ব্যর্থ হয়েছে: " + error.message);
+                
+                let errorMessage = "লগইন ব্যর্থ হয়েছে।";
+
+                // Firebase Error Code অনুযায়ী মেসেজ পরিবর্তন
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorMessage = "ইমেইল বা পাসওয়ার্ড ভুল দিয়েছেন।";
+                } else if (error.code === 'auth/invalid-email') {
+                     errorMessage = "ইমেইল অ্যাড্রেসটি সঠিক নয়।";
+                } else if (error.code === 'auth/user-disabled') {
+                     errorMessage = "এই অ্যাকাউন্টটি নিষ্ক্রিয় করা হয়েছে।";
+                } else {
+                     errorMessage = `লগইন ব্যর্থ হয়েছে। (${error.message})`;
+                }
+
+                alert(errorMessage);
             }
         });
     }
 
-    // Handle user signup
+    // =====================================
+    // ২. ইউজার সাইনআপ/রেজিস্ট্রেশন হ্যান্ডেলিং (Handle user signup)
+    // =====================================
     if (signupForm) {
         signupForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // ইনপুট ফিল্ডের ID: signup-email এবং signup-password ব্যবহার করা হলো
             const email = signupForm['signup-email'].value;
             const password = signupForm['signup-password'].value;
+            
             try {
+                // Firebase-এর সাইনআপ ফাংশন
                 await auth.createUserWithEmailAndPassword(email, password);
-                alert('সফলভাবে সাইনআপ করা হয়েছে!');
-                window.location.href = 'index.html';
+                
+                // সফল হলে
+                alert('সফলভাবে সাইনআপ করা হয়েছে! আপনি এখন লগইন আছেন।');
+                window.location.href = 'index.html'; // হোম পেজে রিডাইরেক্ট
+                
             } catch (error) {
+                // ব্যর্থ হলে ত্রুটি হ্যান্ডেলিং
                 console.error("সাইনআপ ব্যর্থ হয়েছে:", error);
-                alert("সাইনআপ ব্যর্থ হয়েছে: " + error.message);
+                
+                let errorMessage = "সাইনআপ ব্যর্থ হয়েছে।";
+                
+                // Firebase Error Code অনুযায়ী মেসেজ পরিবর্তন
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = "এই ইমেইলটি দিয়ে ইতোমধ্যে একটি অ্যাকাউন্ট খোলা হয়েছে।";
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = "পাসওয়ার্ডটি খুব দুর্বল। কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড ব্যবহার করুন।";
+                } else {
+                    errorMessage = `সাইনআপ ব্যর্থ হয়েছে। (${error.message})`;
+                }
+                
+                alert(errorMessage);
             }
         });
     }
     
-    // Auth state change handler for all pages
+    // =====================================
+    // ৩. অথেন্টিকেশন স্টেট পরিবর্তন (Auth state change handler)
+    // =====================================
+    // এই অংশটি index.html এবং post.html উভয় পেজেই লগইন স্ট্যাটাস বজায় রাখবে।
     auth.onAuthStateChanged(user => {
         if (user) {
+            // ইউজার লগইন থাকলে
             if (postLink) postLink.style.display = 'inline-block';
             if (loginLink) {
                 loginLink.textContent = 'লগআউট';
                 loginLink.href = '#';
-                loginLink.addEventListener('click', async (e) => {
+                
+                // লগআউট ইভেন্ট হ্যান্ডেলার সেট করা
+                loginLink.onclick = async (e) => {
                     e.preventDefault();
                     await auth.signOut();
                     alert('সফলভাবে লগআউট করা হয়েছে!');
                     window.location.href = 'index.html';
-                });
+                };
             }
         } else {
+            // ইউজার লগইন না থাকলে
             if (postLink) postLink.style.display = 'none';
             if (loginLink) {
                 loginLink.textContent = 'লগইন';
                 loginLink.href = 'auth.html';
+                loginLink.onclick = null; // লগইন লিঙ্কে ক্লিক করলে auth.html এ যাবে
             }
         }
     });
