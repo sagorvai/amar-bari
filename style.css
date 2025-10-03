@@ -1,0 +1,353 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+    color: #333;
+    /* ফিক্সড হেডার থাকার কারণে কন্টেন্টকে নিচে নামানো */
+    padding-top: 100px; 
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ====================================
+   ১. ফিক্সড হেডার ও নেভিগেশন
+   ==================================== */
+.header {
+    width: 100%;
+    position: fixed; 
+    top: 0;
+    left: 0;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px; 
+    background-color: #2c3e50; /* গাঢ় নীল/ধূসর ব্যাকগ্রাউন্ড */
+    color: white;
+}
+
+.logo {
+    margin: 0;
+    font-size: 1.5rem;
+    color: white; 
+    font-weight: bold;
+}
+
+/* মোবাইল মেনু বাটন */
+.menu-button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: block; /* মোবাইলে দেখাবে */
+    padding: 0;
+}
+
+.menu-button i {
+    font-size: 28px;
+}
+
+/* ডেস্কটপ নেভিগেশন (শুরুতে লুকানো) */
+.nav {
+    display: none; 
+    gap: 20px;
+}
+
+.nav a {
+    color: white; 
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav a:hover {
+    color: #2ecc71; /* সবুজ রং-এ হোভার */
+}
+
+/* ডেস্কটপ ভিউ */
+@media (min-width: 768px) {
+    .menu-button {
+        display: none; 
+    }
+    .nav {
+        display: flex; /* ডেস্কটপে নেভিগেশন দেখাবে */
+    }
+    .header-top {
+        padding: 10px 0; 
+    }
+}
+
+
+/* ====================================
+   ২. সাব হেডার (স্ক্রিনশটের মূল ডিজাইন)
+   ==================================== */
+.sub-header {
+    padding: 10px 0;
+    background-color: #f4f7f6; /* হালকা ব্যাকগ্রাউন্ড */
+}
+
+.sub-header-container {
+    display: flex;
+    flex-direction: column; /* মোবাইলের জন্য উল্লম্ব বিন্যাস */
+    gap: 10px;
+    padding: 0 15px;
+}
+
+/* ফিল্টার বাটন */
+.nav-filters {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 5px;
+}
+
+.nav-filters .nav-button {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    color: #555;
+    background-color: white;
+    font-weight: 500;
+    transition: background-color 0.3s, color 0.3s;
+    font-size: 0.9rem;
+}
+
+.nav-filters .nav-button.active {
+    background-color: #2ecc71; /* সবুজ অ্যাকটিভ কালার */
+    color: white;
+    border-color: #2ecc71;
+    font-weight: bold;
+}
+
+/* সার্চ বক্স স্টাইল */
+.search-box {
+    display: flex;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    overflow: hidden;
+    background-color: white;
+}
+
+.search-box input {
+    flex-grow: 1;
+    padding: 10px;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+}
+
+.search-box button {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.search-box button:hover {
+    background-color: #27ae60;
+}
+
+/* ডেস্কটপে সাব-হেডার */
+@media (min-width: 768px) {
+    .sub-header-container {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+    }
+    .nav-filters {
+        width: auto;
+        gap: 15px;
+    }
+    .search-box {
+        width: 350px;
+    }
+}
+
+
+/* ====================================
+   ৩. সাইডবার (মোবাইল মেনু)
+   ==================================== */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -250px; 
+    width: 250px;
+    height: 100%;
+    background-color: #34495e;
+    padding-top: 60px;
+    transition: left 0.3s ease;
+    z-index: 101;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.sidebar.active {
+    left: 0; 
+}
+
+.sidebar a {
+    padding: 15px;
+    font-size: 1.1rem;
+    color: #ecf0f1;
+    display: block;
+    border-bottom: 1px solid #4a627a;
+    transition: background-color 0.3s;
+}
+
+.sidebar a:hover {
+    background-color: #4a627a;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    display: none;
+}
+
+.overlay.active {
+    display: block;
+}
+
+
+/* ====================================
+   ৪. প্রপার্টি গ্রিড স্টাইল (আপনার আগের কোড থেকে)
+   ==================================== */
+
+.property-list h2 {
+    text-align: center;
+    margin: 30px 0 20px;
+    color: #2c3e50;
+    font-size: 1.8rem;
+}
+
+.property-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    padding: 20px 0;
+}
+
+.property-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.property-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.property-image-container {
+    position: relative;
+}
+
+.property-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.property-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #2e8b57; /* বিক্রয় ট্যাগ সবুজ */
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    z-index: 5;
+}
+
+.property-tag.rent-tag {
+    background-color: #ff8c00; /* ভাড়ার ট্যাগ কমলা */
+}
+
+.property-card-content {
+    padding: 15px;
+}
+
+.property-card-content h4 {
+    font-size: 1.15rem;
+    margin-bottom: 5px;
+}
+
+.property-card-content .location {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.property-card-content .location i {
+    font-size: 16px;
+    margin-right: 5px;
+    color: #7f8c8d;
+}
+
+.property-card-content .price {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.property-info {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    color: #555;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+.property-info span {
+    display: flex;
+    align-items: center;
+}
+
+.property-info i {
+    font-size: 16px;
+    margin-right: 5px;
+    color: #3498db;
+}
+
+/* Footer */
+.footer {
+    background-color: #2c3e50;
+    color: #bdc3c7;
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 50px;
+}
