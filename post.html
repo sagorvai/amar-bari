@@ -36,12 +36,14 @@
             <button class="profile-button" id="profileButton" style="display:none;"><i class="material-icons">account_circle</i></button>
         </div>
         
-        <nav class="sub-header container sub-header-container">
-            <button class="nav-button" id="mapButton" style="display: none;">ম্যাপ</button>
-            <button class="nav-button active" id="sellButton" style="display: none;">বিক্রয়</button>
-            <button class="nav-button" id="rentButton" style="display: none;">ভাড়া</button>
+        <nav class="sub-header container sub-header-container" style="display:none;">
+            <div class="nav-filters">
+                <button class="nav-button" id="mapButton">ম্যাপ</button>
+                <button class="nav-button active" id="sellButton">বিক্রয়</button>
+                <button class="nav-button" id="rentButton">ভাড়া</button>
+            </div>
             
-            <div class="search-container" style="display: none;">
+            <div class="search-container">
                 <input type="text" placeholder="খুঁজুন..." class="search-input" id="globalSearchInput">
                 <button class="search-icon-button" id="searchIconButton">
                     <i class="material-icons">search</i>
@@ -100,7 +102,7 @@
         </div>
     </footer>
     
-    <script src="post.js"></script>
+    <script src="post.js"></script> 
     <script>
         // পোস্ট পেইজের জন্য শুধুমাত্র সাইডবার কার্যকারিতা
         document.addEventListener('DOMContentLoaded', () => {
@@ -126,4 +128,4 @@
         });
     </script>
 </body>
-    </html>
+                        </html>
