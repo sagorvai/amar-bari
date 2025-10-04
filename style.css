@@ -1,18 +1,39 @@
 /* ====================================
-   মোবাইল-ফার্স্ট হেডার এবং লেআউট ওভাররাইডস
+   ১. বেসিক এবং সাধারণ স্টাইল
    ==================================== */
 body {
-    /* Fixed header এর জন্য কন্টেন্টকে নিচে নামানো */
+    /* ফ্রন্ট: একটি আধুনিক, পাঠযোগ্য সিস্টেম ফন্ট ব্যবহার করা হলো */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6; /* হালকা ধূসর ব্যাকগ্রাউন্ড */
+    color: #333;
+    /* ফিক্সড হেডারের জন্য কন্টেন্টকে নিচে নামানো */
     padding-top: 100px; 
-    /* অন্যান্য CSS কোডগুলো এখানে থাকবে... */
 }
 
-/* old .header and .hero-section styles will be ignored for mobile view */
+a {
+    text-decoration: none;
+    color: inherit;
+}
 
-/* ১. নতুন মোবাইল হেডার অংশ */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px; /* ছোট স্ক্রিনের জন্য প্যাডিং */
+}
+
+/* মেইন কন্টেন্ট এলাকা: ফুটার নিচে রাখতে সাহায্য করবে */
+.main-content {
+    min-height: calc(100vh - 170px); /* হেডার ও ফুটারের জন্য জায়গা রাখা */
+}
+
+/* ====================================
+   ২. ফিক্সড হেডার এবং নেভিগেশন (index.html)
+   ==================================== */
 .main-header {
     width: 100%;
-    position: fixed; /* হেডার সবসময় দৃশ্যমান রাখার জন্য */
+    position: fixed;
     top: 0;
     left: 0;
     background-color: #fff;
@@ -20,6 +41,7 @@ body {
     z-index: 100;
 }
 
+/* সবুজ টপ বার */
 .header-top {
     display: flex;
     justify-content: space-between;
@@ -44,86 +66,106 @@ body {
 
 .menu-button i, .profile-button i {
     font-size: 28px;
+    vertical-align: middle;
 }
 
-/* ২. সাব হেডার (নেভিগেশন ও সার্চ) */
+/* সাব হেডার (বিক্রয়, ভাড়া, ম্যাপ বাটন) */
 .sub-header {
+    background-color: #ffffff;
+    padding: 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.sub-header-container {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    padding: 8px 15px;
-    background-color: #fff;
-    border-bottom: 1px solid #ddd;
-    overflow-x: auto;
-    white-space: nowrap;
+    gap: 10px;
+    flex-wrap: wrap; /* ছোট স্ক্রিনে প্রয়োজন হতে পারে */
+}
+
+.nav-filters {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
 }
 
 .nav-button {
-    background: none;
-    border: none;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
     color: #555;
-    font-size: 1rem;
-    font-weight: 500;
-    padding: 5px 10px;
-    cursor: pointer;
-    white-space: nowrap; 
+    background-color: #f9f9f9;
+    transition: all 0.2s;
+}
+
+.nav-button:hover {
+    background-color: #eee;
 }
 
 .nav-button.active {
-    color: #2e8b57; /* সবুজ হাইলাইট */
-    border-bottom: 2px solid #2e8b57;
+    background-color: #2ecc71;
+    color: white;
+    border-color: #2ecc71;
+    font-weight: 500;
 }
 
-/* সার্চবার ডিজাইন */
+/* সার্চ বক্স স্টাইল */
 .search-container {
     display: flex;
+    align-items: center;
     flex-grow: 1;
-    margin-left: 10px;
-    background-color: #f0f0f0;
-    border-radius: 20px;
+    max-width: 300px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
     overflow: hidden;
-    max-width: 250px; /* মোবাইল স্ক্রিনের জন্য সীমিত করা হলো */
 }
 
 .search-input {
-    flex-grow: 1;
     border: none;
-    padding: 8px 12px;
-    font-size: 1rem;
-    background-color: transparent;
+    padding: 8px 10px;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 0.9rem;
+}
+
+.search-input:focus {
     outline: none;
 }
 
 .search-icon-button {
-    background-color: #2e8b57;
-    border: none;
+    background-color: #3498db;
     color: white;
-    padding: 0 10px;
+    border: none;
+    padding: 8px 10px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    transition: background-color 0.2s;
 }
 
-.search-icon-button i {
-    font-size: 20px;
+.search-icon-button:hover {
+    background-color: #2980b9;
 }
 
-/* ৩. সাইড মেনু এবং ওভারলে */
+/* ====================================
+   ৩. সাইডবার এবং ওভারলে (মোবাইল মেনু)
+   ==================================== */
+
 .sidebar {
     position: fixed;
     top: 0;
-    left: -280px; 
-    width: 280px;
+    left: -250px; /* শুরুতে স্ক্রিনের বাইরে */
+    width: 250px;
     height: 100%;
-    background-color: white;
+    background-color: #2c3e50; 
+    padding-top: 60px;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-    z-index: 110; 
-    transition: left 0.3s ease;
-    padding-top: 20px;
+    transition: left 0.3s ease-in-out;
+    z-index: 101;
 }
 
 .sidebar.active {
-    left: 0; 
+    left: 0;
 }
 
 .sidebar-nav {
@@ -133,10 +175,14 @@ body {
 
 .sidebar-item {
     padding: 15px 20px;
-    text-decoration: none;
-    color: #333;
-    font-size: 1.1rem;
-    border-bottom: 1px solid #eee;
+    color: #ecf0f1;
+    font-size: 1rem;
+    border-bottom: 1px solid #34495e;
+    transition: background-color 0.2s;
+}
+
+.sidebar-item:hover {
+    background-color: #34495e;
 }
 
 .overlay {
@@ -145,22 +191,28 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 105;
-    display: none; 
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s;
 }
 
 .overlay.active {
     display: block;
+    opacity: 1;
 }
 
-/* ৪. প্রপার্টি গ্রিড ও কার্ডের স্টাইল */
+/* ====================================
+   ৪. প্রপার্টি কার্ড গ্রিড (index.html)
+   ==================================== */
+
 .property-grid {
-    display: flex;
-    flex-direction: column; /* মোবাইল-এর জন্য এক কলামে */
-    gap: 15px; 
-    padding-top: 15px; /* কন্টেন্ট এর উপরের দিকে প্যাডিং */
-    padding-bottom: 50px;
+    /* রেসপনসিভ গ্রিড: ছোট স্ক্রিনে একটি, বড় স্ক্রিনে একাধিক */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    padding: 30px 0;
 }
 
 .property-card {
@@ -168,6 +220,13 @@ body {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.property-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
 .property-image-container {
@@ -180,6 +239,7 @@ body {
     object-fit: cover;
 }
 
+/* বিক্রয়/ভাড়া ট্যাগ স্টাইল */
 .property-tag {
     position: absolute;
     top: 10px;
@@ -204,81 +264,46 @@ body {
 .property-card-content h4 {
     font-size: 1.15rem;
     margin-bottom: 5px;
+    color: #2c3e50;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* শিরোনাম লম্বা হলে ellipsis যোগ করা */
 }
 
 .property-card-content .location {
     font-size: 0.9rem;
     color: #7f8c8d;
     margin-bottom: 10px;
-    /* icon is added via JS, so no need for ::before */
 }
 
 .property-card-content .price {
     font-size: 1.3rem;
     font-weight: bold;
-    color: #2e8b57;
-    margin-bottom: 10px;
+    color: #2ecc71; /* সবুজ দাম */
 }
 
-.property-info {
-    display: flex;
-    gap: 15px;
-    font-size: 0.9rem;
-    color: #666;
-    flex-wrap: wrap; 
-}
 
-.property-info span {
-    display: flex;
-    align-items: center;
-}
-
-.property-info .material-icons {
-    font-size: 16px;
-    margin-right: 4px;
-    color: #2e8b57;
-}
-
-/* Media Query Adjustment (Mobile) - Added the mobile-specific media query */
-@media (max-width: 768px) {
-    /* container padding adjustment */
-    .container {
-        padding: 0 15px;
-    }
-}
 /* ====================================
-   ১. পোস্ট এবং অথেন্টিকেশন পেজের সাধারণ লেআউট 
+   ৫. ফর্ম এবং Auth স্টাইল (post.html, auth.html)
    ==================================== */
-.main-content {
-    /* হেডার ও ফুটারের মাঝে যথেষ্ট দূরত্ব নিশ্চিত করা */
-    padding: 20px 0;
-    min-height: calc(100vh - 180px); /* ফুটার উপরে রাখার জন্য */
-}
 
-/* ফর্ম কন্টেইনার স্টাইল */
-.post-container {
+.post-container, .auth-container {
     max-width: 500px;
     margin: 30px auto;
     padding: 25px;
     background-color: #ffffff;
     border-radius: 8px;
-    /* একটি হালকা শ্যাডো যোগ করা হলো */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.post-container h2 {
+.post-container h2, .auth-container h2 {
     text-align: center;
     color: #2c3e50;
     margin-bottom: 25px;
     font-size: 1.6rem;
-    /* একটি সবুজ আন্ডারলাইন যোগ করা হলো */
     border-bottom: 2px solid #2ecc71; 
     padding-bottom: 5px;
 }
-
-/* ====================================
-   ২. ইনপুট ফিল্ড এবং ডায়নামিক অংশের স্টাইল 
-   ==================================== */
 
 /* ইনপুট গ্রুপ স্টাইল */
 .input-group {
@@ -293,20 +318,14 @@ body {
     font-size: 0.95rem;
 }
 
-.input-group input[type="text"],
-.input-group input[type="email"],
-.input-group input[type="password"],
-.input-group input[type="number"],
-.input-group input[type="tel"],
-.input-group input[type="url"],
-.input-group input[type="file"],
+.input-group input:not([type="file"]),
 .input-group select,
 .input-group textarea {
     width: 100%;
     padding: 12px;
     border-radius: 5px;
     border: 1px solid #ddd;
-    box-sizing: border-box; /* padding সহ width 100% রাখা */
+    box-sizing: border-box;
     font-size: 1rem;
     transition: border-color 0.3s;
 }
@@ -314,11 +333,11 @@ body {
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
-    border-color: #2ecc71; /* ফোকাসে সবুজ রং */
+    border-color: #2ecc71;
     outline: none;
 }
 
-/* একাধিক ইনপুট যখন এক লাইনে থাকে (যেমন: রুম/বাথরুম) */
+/* ইনলাইন ইনপুট (যেমন: জেলা/উপজেলা) */
 .input-inline {
     display: flex;
     gap: 15px;
@@ -330,22 +349,8 @@ body {
     margin-bottom: 0; 
 }
 
-/* ডায়নামিক ফিল্ডস লোড হওয়ার আগে যে মেসেজ দেখায় */
-.placeholder-text {
-    text-align: center;
-    padding: 20px;
-    border: 1px dashed #ccc;
-    border-radius: 5px;
-    color: #7f8c8d;
-    margin-top: 10px;
-    margin-bottom: 20px;
-}
-
-/* ====================================
-   ৩. বাটন স্টাইল 
-   ==================================== */
-
-.post-container button[type="submit"] {
+/* বাটন স্টাইল */
+.post-container button[type="submit"], .auth-container button[type="submit"] {
     width: 100%;
     padding: 12px;
     margin-top: 20px;
@@ -359,7 +364,7 @@ body {
     transition: background-color 0.3s ease;
 }
 
-.post-container button[type="submit"]:hover {
+.post-container button[type="submit"]:hover, .auth-container button[type="submit"]:hover {
     background-color: #27ae60;
 }
 
@@ -367,3 +372,39 @@ body {
     background-color: #95a5a6;
     cursor: not-allowed;
 }
+
+/* ডায়নামিক ফিল্ডের প্লেসহোল্ডার */
+.placeholder-text {
+    text-align: center;
+    padding: 20px;
+    border: 1px dashed #ccc;
+    border-radius: 5px;
+    color: #7f8c8d;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+/* Auth পেজের লগইন/সাইনআপ পরিবর্তন লিংক */
+.switch-form {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.9rem;
+}
+
+.switch-form a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+
+/* ====================================
+   ৬. ফুটার
+   ==================================== */
+.footer {
+    background-color: #2c3e50; 
+    color: #bdc3c7;
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 50px;
+   }
