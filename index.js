@@ -3,8 +3,7 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // UI elements
-const loginLink = document.getElementById('login-link');
-const postLink = document.getElementById('post-link');
+const postLink = document.getElementById('post-link'); // index.html এর সাইডবার থেকে
 const menuButton = document.getElementById('menuButton');
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
@@ -12,6 +11,7 @@ const profileButton = document.getElementById('profileButton');
 const navButtons = document.querySelectorAll('.sub-header .nav-button');
 const globalSearchInput = document.getElementById('globalSearchInput');
 const propertyGrid = document.querySelector('.property-grid');
+const loginLinkSidebar = document.getElementById('login-link-sidebar'); // সাইডবার লগইন লিঙ্ক
 
 // --- ডামি ডেটা (কার্যকারিতা পরীক্ষার জন্য) ---
 const dummyProperties = [
@@ -41,216 +41,144 @@ const dummyProperties = [
             upazila: 'গুলশান',
             district: 'ঢাকা',
         },
-        rooms: 2,
-        bathrooms: 1,
-        timestamp: new Date().getTime() - 1000,
-    },
-    {
-        id: 'dummy3',
-        category: 'বিক্রয়',
-        type: 'জমি',
-        title: 'খুলনায় বাণিজ্যিক প্লট',
-        images: ['https://via.placeholder.com/350x250?text=Land+for+Sale'],
-        price: '৳ ৫০,০০,০০০ /শতক',
-        location: {
-            upazila: 'সোনাডাঙ্গা',
-            district: 'খুলনা',
-        },
-        rooms: null,
-        bathrooms: null,
-        timestamp: new Date().getTime() - 2000,
-    },
-    {
-        id: 'dummy4',
-        category: 'ভাড়া',
-        type: 'দোকান',
-        title: 'ধানমন্ডিতে ভালো লোকেশনের দোকান',
-        images: ['https://via.placeholder.com/350x250?text=Shop+for+Rent'],
-        rentAmount: '৳ ১২,০০০/মাস',
-        location: {
-            upazila: 'ধানমন্ডি',
-            district: 'ঢাকা',
-        },
-        rooms: null,
-        bathrooms: null,
-        timestamp: new Date().getTime() - 3000,
+        rooms: 2, 
+        bathrooms: 1, 
+        timestamp: new Date().getTime() - 86400000,
     }
 ];
-// ------------------------------------
 
-/**
- * প্রপার্টি ডেটা কার্ড আকারে ডিসপ্লে করার ফাংশন
- */
-function displayProperties(properties) {
+// ফাংশন: প্রপার্টি লোড ও ডিসপ্লে
+async function fetchAndDisplayProperties(category = 'বিক্রয়', searchTerm = '') {
     if (!propertyGrid) return;
-    propertyGrid.innerHTML = '';
+    propertyGrid.innerHTML = '<h3>প্রপার্টি লোড হচ্ছে...</h3>';
+    
+    // ডামি ডেটা ফিল্টারিং (সার্চ ও ক্যাটাগরি)
+    let filteredProperties = dummyProperties.filter(p => {
+        const categoryMatch = p.category === category;
+        const searchMatch = !searchTerm || 
+                            p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            p.location.upazila.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            p.location.district.toLowerCase().includes(searchTerm.toLowerCase());
+        return categoryMatch && searchMatch;
+    });
 
-    if (properties.length === 0) {
-        propertyGrid.innerHTML = '<p class="placeholder-text" style="text-align:center; padding: 50px 0; color: #999;">কোনো প্রপার্টি পাওয়া যায়নি।</p>';
+    // ডামি ডেটা দিয়ে কার্ড তৈরি
+    if (filteredProperties.length === 0) {
+        propertyGrid.innerHTML = '<p>এই ক্যাটাগরিতে কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।</p>';
         return;
     }
 
-    properties.forEach(property => {
-        const card = document.createElement('div');
-        card.classList.add('property-card');
-
-        const imageUrl = property.images && property.images.length > 0
-            ? property.images[0]
-            : 'https://via.placeholder.com/350x250?text=No+Image';
-            
-        // রুম/বাথরুমের তথ্য তৈরি করা
-        const roomInfo = property.rooms ? `<span><i class="material-icons">bed</i> ${property.rooms} বেড</span>` : '';
-        const bathroomInfo = property.bathrooms ? `<span><i class="material-icons">bathtub</i> ${property.bathrooms} বাথ</span>` : '';
-        
-        const priceDisplay = property.price || property.rentAmount || '';
-        const tag = property.category === 'বিক্রয়' ? 'বিক্রয়ের জন্য' : 'ভাড়ার জন্য';
-        const tagClass = property.category === 'ভাড়া' ? 'rent-tag' : '';
-
-
-        card.innerHTML = `
+    const cardsHTML = filteredProperties.map(property => `
+        <div class="property-card" data-id="${property.id}">
             <div class="property-image-container">
-                <img src="${imageUrl}" alt="${property.title}" class="property-image">
-                <span class="property-tag ${tagClass}">${tag}</span>
+                <img src="${property.images[0]}" alt="${property.title}">
+                <span class="property-tag ${property.category === 'ভাড়া' ? 'rent-tag' : ''}">${property.category}</span>
             </div>
             <div class="property-card-content">
                 <h4>${property.title}</h4>
-                <p class="location">
-                    <i class="material-icons" style="font-size: 16px; margin-right: 5px; color: #7f8c8d;">location_on</i>
-                    ${property.location?.upazila || ''}, ${property.location?.district || ''}
-                </p>
-                <p class="price">${priceDisplay}</p>
-                <div class="property-info">
-                    ${roomInfo}
-                    ${bathroomInfo}
-                </div>
+                <p class="location"><i class="material-icons" style="font-size: 16px;">location_on</i> ${property.location.upazila}, ${property.location.district}</p>
+                <p class="price">${property.price || property.rentAmount}</p>
             </div>
-        `;
-        
-        propertyGrid.appendChild(card);
-    });
+        </div>
+    `).join('');
+
+    propertyGrid.innerHTML = cardsHTML;
 }
 
-/**
- * প্রপার্টি ডেটা ফিল্টার এবং ডিসপ্লে করার ফাংশন
- */
-function fetchAndDisplayProperties(category = 'বিক্রয়', searchTerm = '') {
+// ফাংশন: লগআউট হ্যান্ডেল
+const handleLogout = async () => {
+    try {
+        await auth.signOut();
+        alert('সফলভাবে লগআউট করা হয়েছে!');
+        window.location.reload();
+    } catch (error) {
+        console.error("লগআউট ব্যর্থ হয়েছে:", error);
+        alert("লগআউট ব্যর্থ হয়েছে।");
+    }
+};
+
+// ফাংশন: UI ইভেন্ট লিসেনার সেটআপ
+function setupUIEventListeners() {
     
-    // ১. ডেটা ফিল্টারিং
-    let filteredProperties = dummyProperties.filter(property => {
-        // ক্যাটাগরি ফিল্টার
-        const categoryMatch = property.category === category;
+    // ১. সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
+    if (menuButton) {
+        menuButton.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+    }
 
-        // সার্চ টার্ম ফিল্টার (টাইটেল বা অবস্থান দিয়ে অনুসন্ধান)
-        const searchLower = searchTerm.toLowerCase();
-        const titleMatch = property.title.toLowerCase().includes(searchLower);
-        const locationMatch = `${property.location?.upazila || ''}, ${property.location?.district || ''}`.toLowerCase().includes(searchLower);
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
 
-        return categoryMatch && (titleMatch || locationMatch);
-    });
-    
-    // ২. ডেটা ডিসপ্লে
-    displayProperties(filteredProperties);
-}
-
-// ===================================
-// ইভেন্ট লিসেনার্স
-// ===================================
-
-document.addEventListener('DOMContentLoaded', () => {
-    // প্রাথমিক লোড: শুরুতে 'বিক্রয়' ক্যাটাগরি দেখাবে
-    fetchAndDisplayProperties('বিক্রয়', '');
-
-    // ১. মোবাইল হেডার ইউআই লজিক (সাইডবার টগল)
-    menuButton.addEventListener('click', () => {
-        sidebar.classList.toggle('active');
-        overlay.classList.toggle('active');
-    });
-
-    overlay.addEventListener('click', () => {
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-    });
-
-    // ২. সাব-হেডার নেভিগেশন (বিক্রয়/ভাড়া ফিল্টারিং)
+    // ২. সাব-হেডারের বাটনগুলোর কার্যকারিতা (ম্যাপ, বিক্রয়, ভাড়া)
     navButtons.forEach(button => {
         button.addEventListener('click', () => {
-            
-            // অ্যাকটিভ ক্লাস পরিবর্তন
             navButtons.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
 
-            const category = button.id === 'sellButton' ? 'বিক্রয়' : 
-                             button.id === 'rentButton' ? 'ভাড়া' : null;
+            const actionType = button.id.replace('Button', ''); // map, sell, rent
             
-            if (category) {
-                // নতুন ফিল্টার প্রয়োগ
-                const currentSearchTerm = globalSearchInput.value;
-                fetchAndDisplayProperties(category, currentSearchTerm);
-            }
-            // ম্যাপ বাটনের জন্য আলাদা লজিক
-            if (button.id === 'mapButton') {
-                propertyGrid.innerHTML = '<p class="placeholder-text" style="text-align:center; padding: 50px 0; color: #999;">সকল পোস্টগুলো এখন Google Map আকারে দৃশ্যমান হবে। (কার্যকরী ম্যাপের জন্য আরো কোড প্রয়োজন)</p>';
+            if (actionType === 'map') {
+                propertyGrid.innerHTML = '<div class="placeholder-text">সাইটের সকল পোস্টগুলো এখন Google Map আকারে দৃশ্যমান হবে।</div>';
+            } else if (actionType === 'sell') {
+                fetchAndDisplayProperties('বিক্রয়', globalSearchInput.value);
+            } else if (actionType === 'rent') {
+                fetchAndDisplayProperties('ভাড়া', globalSearchInput.value);
             }
         });
     });
     
-    // ৩. সার্চ কার্যকারিতা (টাইপিং এবং বাটন ক্লিক উভয় ক্ষেত্রেই কাজ করবে)
-    const performSearch = () => {
-        const activeCategory = document.querySelector('.sub-header .nav-button.active');
-        let currentCategory = 'বিক্রয়'; 
-        
-        if (activeCategory && activeCategory.id === 'rentButton') {
-            currentCategory = 'ভাড়া';
-        }
-
-        const searchTerm = globalSearchInput.value;
-        fetchAndDisplayProperties(currentCategory, searchTerm);
-    };
-
-    // সার্চ ইনপুট এবং বাটন ইভেন্ট
-    globalSearchInput.addEventListener('input', performSearch);
-    document.getElementById('searchIconButton').addEventListener('click', performSearch);
+    // ৩. সার্চ ফাংশন
+    const searchIconButton = document.getElementById('searchIconButton');
+    if (searchIconButton) {
+        searchIconButton.addEventListener('click', () => {
+            const activeCategory = document.querySelector('.sub-header .nav-button.active')?.id === 'rentButton' ? 'ভাড়া' : 'বিক্রয়';
+            fetchAndDisplayProperties(activeCategory, globalSearchInput.value);
+        });
+    }
+}
 
 
-    // ৪. Auth State Change Handler (লগইন/লগআউট অবস্থা)
-    const handleLogout = async (e) => {
-        e.preventDefault();
-        try {
-            await auth.signOut();
-            alert('সফলভাবে লগআউট করা হয়েছে!');
-            window.location.reload();
-        } catch (error) {
-            console.error("লগআউট ব্যর্থ হয়েছে:", error);
-            alert("লগআউট ব্যর্থ হয়েছে।");
-        }
-    };
+// ===================================
+// ডোম লোড ও Auth স্টেট হ্যান্ডেলিং
+// ===================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // সকল ইভেন্ট লিসেনার সেটআপ করা হলো
+    setupUIEventListeners();
     
-    auth.onAuthStateChanged(user => {
-        const loginLinkSidebar = document.getElementById('login-link-sidebar');
+    // প্রাথমিক লোড: শুরুতে 'বিক্রয়' ক্যাটাগরি দেখাবে
+    fetchAndDisplayProperties('বিক্রয়', '');
+    document.getElementById('sellButton')?.classList.add('active'); // নিশ্চিত করা হলো
 
+    // Auth State Change Handler
+    auth.onAuthStateChanged(user => {
         if (user) {
-            if (postLink) postLink.style.display = 'block';
-            if (profileButton) profileButton.style.display = 'inline-block'; 
+            // লগইন থাকলে
+            if (postLink) postLink.style.display = 'flex'; // flex/inline-flex ব্যবহার করা ভালো
+            if (profileButton) profileButton.style.display = 'inline-block';
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
                 loginLinkSidebar.href = '#';
+                
+                // লগআউট লিসেনার সেট করা
                 loginLinkSidebar.removeEventListener('click', handleLogout);
                 loginLinkSidebar.addEventListener('click', handleLogout);
             }
         } else {
+            // লগইন না থাকলে
             if (postLink) postLink.style.display = 'none';
             if (profileButton) profileButton.style.display = 'none';
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগইন';
                 loginLinkSidebar.href = 'auth.html';
-                loginLinkSidebar.removeEventListener('click', handleLogout);
+                loginLinkSidebar.removeEventListener('click', handleLogout); 
             }
         }
     });
-
-    // নিশ্চিত করুন শুরুতে 'বিক্রয়' বাটন সক্রিয় থাকে
-    const initialSellButton = document.getElementById('sellButton');
-    if (initialSellButton && !document.querySelector('.sub-header .nav-button.active')) {
-        initialSellButton.classList.add('active');
-    }
 });
