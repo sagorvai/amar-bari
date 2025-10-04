@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -22,29 +23,24 @@
         appId: "1:719084789035:web:f4da765290b351b00a796e",
         measurementId: "G-F3YHTJ4LLV"
       };
-      
       firebase.initializeApp(firebaseConfig);
     </script>
 </head>
 <body>
     
     <header class="main-header">
-        <div class="header-top">
-            <button class="menu-button" id="menuButton">
-                <i class="material-icons">menu</i>
-            </button>
-            
-            <div class="site-title">আমার বাড়ি. কম</div>
-            
-            <button class="profile-button" id="profileButton" style="display: none;">
-                <i class="material-icons">person</i>
-            </button>
+        <div class="header-top container">
+            <button class="menu-button" id="menuButton"><i class="material-icons">menu</i></button>
+            <h1 class="site-title"><a href="index.html">আমার বাড়ি.কম</a></h1>
+            <button class="profile-button" id="profileButton" style="display:none;"><i class="material-icons">account_circle</i></button>
         </div>
-
-        <nav class="sub-header">
-            <button class="nav-button" id="mapButton">ম্যাপ</button>
-            <button class="nav-button active" id="sellButton">বিক্রয়</button>
-            <button class="nav-button" id="rentButton">ভাড়া</button>
+        
+        <nav class="sub-header container sub-header-container">
+            <div class="nav-filters">
+                <button class="nav-button" id="mapButton">ম্যাপ</button>
+                <button class="nav-button" id="sellButton">বিক্রয়</button>
+                <button class="nav-button" id="rentButton">ভাড়া</button>
+            </div>
             
             <div class="search-container">
                 <input type="text" placeholder="খুঁজুন..." class="search-input" id="globalSearchInput">
@@ -57,12 +53,12 @@
 
     <div class="sidebar" id="sidebar">
         <nav class="sidebar-nav">
-            <a href="index.html" class="sidebar-item">হোম</a>
-            <a href="post.html" class="sidebar-item" id="post-link" style="display: none;">প্রপার্টি যুক্ত করুন</a>
-            <a href="#" class="sidebar-item">পরামর্শ</a>
-            <a href="#" class="sidebar-item">এবাউট</a>
-            <a href="#" class="sidebar-item">যোগাযোগ</a>
-            <a href="auth.html" class="sidebar-item" id="login-link-sidebar">লগইন</a>
+            <a href="index.html" class="sidebar-item"><i class="material-icons">home</i> হোম</a>
+            <a href="post.html" class="sidebar-item" id="post-link" style="display: none;"><i class="material-icons">add_home</i> প্রপার্টি যুক্ত করুন</a>
+            <a href="#" class="sidebar-item"><i class="material-icons">help_outline</i> পরামর্শ</a>
+            <a href="#" class="sidebar-item"><i class="material-icons">info_outline</i> এবাউট</a>
+            <a href="#" class="sidebar-item"><i class="material-icons">contact_support</i> যোগাযোগ</a>
+            <a href="auth.html" class="sidebar-item" id="login-link-sidebar"><i class="material-icons">login</i> লগইন</a>
         </nav>
     </div>
     
@@ -79,7 +75,6 @@
         </div>
     </footer>
     
-    <script src="auth.js"></script>
     <script src="index.js"></script>
-</body>
-    </html>
+    </body>
+                </html>
