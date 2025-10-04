@@ -29,7 +29,7 @@ a {
 }
 
 /* ====================================
-   ২. ফিক্সড হেডার এবং নেভিগেশন (index.html)
+   ২. ফিক্সড হেডার এবং নেভিগেশন (index.html ও post.html)
    ==================================== */
 .main-header {
     width: 100%;
@@ -69,7 +69,7 @@ a {
     vertical-align: middle;
 }
 
-/* সাব হেডার (বিক্রয়, ভাড়া, ম্যাপ বাটন) */
+/* সাব হেডার (বিক্রয়, ভাড়া, ম্যাপ বাটন, সার্চবার) - ছোট এবং এক লাইনে করার স্টাইল */
 .sub-header {
     background-color: #ffffff;
     padding: 8px 0;
@@ -80,21 +80,23 @@ a {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap; /* ছোট স্ক্রিনে প্রয়োজন হতে পারে */
+    gap: 5px; /* গ্যাপ কমানো হলো */
+    padding: 0 10px; /* ডানে-বামে একটু প্যাডিং কমানো হলো */
+    flex-wrap: nowrap; /* ছোট স্ক্রিনে যাতে না ভাঙে */
 }
 
 .nav-filters {
     display: flex;
-    gap: 5px;
+    gap: 3px; /* গ্যাপ কমানো হলো */
     flex-shrink: 0;
 }
 
+/* নেভিগেশন বাটনগুলোর সাইজ কমানো */
 .nav-button {
-    padding: 8px 12px;
+    padding: 6px 10px; /* প্যাডিং কমানো হলো */
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* ফন্ট সাইজ কমানো হলো */
     color: #555;
     background-color: #f9f9f9;
     transition: all 0.2s;
@@ -116,7 +118,7 @@ a {
     display: flex;
     align-items: center;
     flex-grow: 1;
-    max-width: 300px;
+    max-width: 250px; /* সর্বোচ্চ চওড়া কমানো হলো */
     border: 1px solid #ddd;
     border-radius: 4px;
     overflow: hidden;
@@ -124,10 +126,10 @@ a {
 
 .search-input {
     border: none;
-    padding: 8px 10px;
+    padding: 6px 8px; /* ইনপুট প্যাডিং কমানো হলো */
     width: 100%;
     box-sizing: border-box;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .search-input:focus {
@@ -138,7 +140,7 @@ a {
     background-color: #3498db;
     color: white;
     border: none;
-    padding: 8px 10px;
+    padding: 6px 8px; /* বাটন প্যাডিং কমানো হলো */
     cursor: pointer;
     transition: background-color 0.2s;
 }
@@ -147,14 +149,15 @@ a {
     background-color: #2980b9;
 }
 
+
 /* ====================================
-   ৩. সাইডবার এবং ওভারলে (মোবাইল মেনু)
+   ৩. সাইডবার এবং ওভারলে (আইকন সহ)
    ==================================== */
 
 .sidebar {
     position: fixed;
     top: 0;
-    left: -250px; /* শুরুতে স্ক্রিনের বাইরে */
+    left: -250px; 
     width: 250px;
     height: 100%;
     background-color: #2c3e50; 
@@ -173,12 +176,20 @@ a {
     flex-direction: column;
 }
 
+/* সাইডবার আইটেমে আইকন এবং লেখা এক লাইনে আনতে */
 .sidebar-item {
+    display: flex;
+    align-items: center;
     padding: 15px 20px;
     color: #ecf0f1;
     font-size: 1rem;
     border-bottom: 1px solid #34495e;
     transition: background-color 0.2s;
+}
+
+.sidebar-item i {
+    margin-right: 10px; /* আইকনের পরে স্পেস যোগ করা হলো */
+    font-size: 20px;
 }
 
 .sidebar-item:hover {
@@ -208,7 +219,6 @@ a {
    ==================================== */
 
 .property-grid {
-    /* রেসপনসিভ গ্রিড: ছোট স্ক্রিনে একটি, বড় স্ক্রিনে একাধিক */
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 25px;
@@ -244,7 +254,7 @@ a {
     position: absolute;
     top: 10px;
     left: 10px;
-    background-color: #2e8b57; /* বিক্রয় ট্যাগ সবুজ */
+    background-color: #2e8b57; 
     color: white;
     padding: 5px 10px;
     border-radius: 4px;
@@ -254,7 +264,7 @@ a {
 }
 
 .property-tag.rent-tag {
-    background-color: #ff8c00; /* ভাড়ার ট্যাগ কমলা */
+    background-color: #ff8c00; 
 }
 
 .property-card-content {
@@ -267,7 +277,7 @@ a {
     color: #2c3e50;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* শিরোনাম লম্বা হলে ellipsis যোগ করা */
+    text-overflow: ellipsis; 
 }
 
 .property-card-content .location {
@@ -279,7 +289,7 @@ a {
 .property-card-content .price {
     font-size: 1.3rem;
     font-weight: bold;
-    color: #2ecc71; /* সবুজ দাম */
+    color: #2ecc71; 
 }
 
 
@@ -337,7 +347,7 @@ a {
     outline: none;
 }
 
-/* ইনলাইন ইনপুট (যেমন: জেলা/উপজেলা) */
+/* ইনলাইন ইনপুট */
 .input-inline {
     display: flex;
     gap: 15px;
@@ -354,7 +364,7 @@ a {
     width: 100%;
     padding: 12px;
     margin-top: 20px;
-    background-color: #2ecc71; /* সবুজ অ্যাকসেন্ট */
+    background-color: #2ecc71; 
     color: #ffffff;
     border: none;
     border-radius: 5px;
