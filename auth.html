@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>লগইন/সাইনআপ - আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b351b00a796e",
+        measurementId: "G-F3YHTJ4LLV"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
+</head>
+<body>
+    
+    <header class="main-header">
+        <div class="header-top container">
+            <button class="menu-button" id="menuButton"><i class="material-icons">menu</i></button>
+            <h1 class="site-title"><a href="index.html">আমার বাড়ি.কম</a></h1>
+            <button class="profile-button" id="profileButton" style="display:none;"><i class="material-icons">account_circle</i></button>
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <nav class="sidebar-nav">
+            <a href="index.html" class="sidebar-item"><i class="material-icons">home</i> হোম</a>
+            <a href="post.html" class="sidebar-item" id="post-link" style="display: none;"><i class="material-icons">add_home</i> প্রপার্টি যুক্ত করুন</a>
+            <a href="#" class="sidebar-item"><i class="material-icons">help_outline</i> পরামর্শ</a>
+            <a href="#" class="sidebar-item"><i class="material-icons">info_outline</i> এবাউট</a>
+            <a href="#" class="sidebar-item"><i class="material-icons">contact_support</i> যোগাযোগ</a>
+            <a href="auth.html" class="sidebar-item" id="login-link-sidebar"><i class="material-icons">login</i> লগইন</a>
+        </nav>
+    </div>
+    
+    <div class="overlay" id="overlay"></div>
+
+    <main class="main-content">
+        <div class="auth-container">
+            <h2 id="auth-title">লগইন করুন</h2>
+            
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="login-email">ইমেইল:</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="input-group">
+                    <label for="login-password">পাসওয়ার্ড:</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit">লগইন করুন</button>
+            </form>
+
+            <form id="signup-form" style="display: none;">
+                <div class="input-group">
+                    <label for="signup-email">ইমেইল:</label>
+                    <input type="email" id="signup-email" required>
+                </div>
+                <div class="input-group">
+                    <label for="signup-password">পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর):</label>
+                    <input type="password" id="signup-password" required>
+                </div>
+                <button type="submit">সাইনআপ করুন</button>
+            </form>
+
+            <p class="switch-form"><a href="#" id="switch-link">আপনার কি একটি অ্যাকাউন্ট নেই? সাইনআপ করুন</a></p>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
+    </footer>
+    
+    <script src="auth.js"></script> 
+    <script>
+        // Auth পেইজের জন্য শুধুমাত্র সাইডবার কার্যকারিতা
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
+            if (menuButton) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+            }
+
+            // ওভারলেতে ক্লিক করলে সাইড মেনু বন্ধ হবে
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+    </script>
+</body>
+      </html>
