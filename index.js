@@ -3,7 +3,7 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // UI elements
-const postLink = document.getElementById('post-link'); // index.html এর সাইডবার থেকে
+const postLink = document.getElementById('post-link'); // সাইডবার প্রপার্টি লিঙ্ক
 const menuButton = document.getElementById('menuButton');
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
@@ -12,6 +12,7 @@ const navButtons = document.querySelectorAll('.sub-header .nav-button');
 const globalSearchInput = document.getElementById('globalSearchInput');
 const propertyGrid = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar'); // সাইডবার লগইন লিঙ্ক
+
 
 // --- ডামি ডেটা (কার্যকারিতা পরীক্ষার জন্য) ---
 const dummyProperties = [
@@ -160,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
     auth.onAuthStateChanged(user => {
         if (user) {
             // লগইন থাকলে
-            if (postLink) postLink.style.display = 'flex'; // flex/inline-flex ব্যবহার করা ভালো
+            if (postLink) postLink.style.display = 'flex'; // 'flex' ব্যবহার করা হলো যাতে আইকন ঠিকমতো আসে
             if (profileButton) profileButton.style.display = 'inline-block';
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
