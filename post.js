@@ -7,16 +7,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const postCategorySelect = document.getElementById('post-category');
     const dynamicFieldsContainer = document.getElementById('dynamic-fields-container');
     const propertyForm = document.getElementById('property-form');
-    const submitBtn = document.getElementById('submit-button');
+    // আপনার কোডে submitBtn এভাবে সংজ্ঞায়িত ছিল:
+    const submitBtn = document.querySelector('#property-form button[type="submit"]');
+
 
     // =====================================
     // ১. ডায়নামিক ইনপুট ফিল্ড তৈরি
     // =====================================
     
-    // ক্যাটাগরি পরিবর্তনের ইভেন্ট লিসেনার
     if (postCategorySelect) {
         postCategorySelect.addEventListener('change', () => {
             const category = postCategorySelect.value;
+            // ক্যাটাগরি পরিবর্তন হলে কন্টেইনার পরিষ্কার করা 
             dynamicFieldsContainer.innerHTML = '';
             if (category) {
                 generateTypeDropdown(category);
@@ -57,14 +59,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // নির্দিষ্ট ফিল্ড (দাম, রুম) তৈরি
+    // নির্দিষ্ট ফিল্ড (দাম, রুম, পরিমাপ) তৈরি
     function generateSpecificFields(category, type) {
         const specificFieldsContainer = document.getElementById('specific-fields-container');
         specificFieldsContainer.innerHTML = '';
 
         let fieldsHTML = '';
         if (category === 'বিক্রয়') {
-            // বিক্রয়ের জন্য দাম
             fieldsHTML += `
                 <div class="input-group">
                     <label for="price">বিক্রয় মূল্য:</label>
@@ -72,7 +73,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         } else if (category === 'ভাড়া') {
-            // ভাড়ার জন্য মাসিক ভাড়া
             fieldsHTML += `
                 <div class="input-group">
                     <label for="rent-amount">মাসিক ভাড়া:</label>
@@ -116,9 +116,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // =====================================
     async function uploadImages(files) {
         const imageUrls = [];
+        if (!auth.currentUser) throw new Error("লগইন করা নেই, ইমেজ আপলোড সম্ভব নয়।");
+        
         for (const file of files) {
             const storageRef = storage.ref();
-            // ইমেজ স্টোরেজ পাথ: properties/{userID}/{timestamp}_{filename}
             const imageRef = storageRef.child(`properties/${auth.currentUser.uid}/${Date.now()}_${file.name}`);
             
             try {
@@ -140,7 +141,6 @@ document.addEventListener('DOMContentLoaded', function() {
     propertyForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // ১. নিশ্চিত করা যে ইউজার লগইন করেছেন
         if (!auth.currentUser) {
             alert('প্রপার্টি যোগ করার জন্য আপনাকে অবশ্যই লগইন করতে হবে!');
             window.location.href = 'auth.html';
@@ -151,21 +151,19 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.textContent = 'সাবমিট হচ্ছে...';
         
         try {
-            // ২. ইমেজ ফাইলগুলো সংগ্রহ
             const imageFiles = document.getElementById('image-upload').files;
             if (imageFiles.length === 0 || imageFiles.length > 5) {
                 alert('অনুগ্রহ করে কমপক্ষে একটি এবং সর্বোচ্চ ৫টি ছবি আপলোড করুন।');
                 return;
             }
             
-            // ৩. ইমেজ আপলোড ও URL সংগ্রহ
             const imageUrls = await uploadImages(imageFiles);
 
-            // ৪. ডেটা অবজেক্ট তৈরি
             const category = postCategorySelect.value;
             const propertyType = document.getElementById('post-type')?.value;
+            
+            // ডেটা সংগ্রহের জন্য সকল ID নিশ্চিত করা হলো
             const propertyData = {
-                // সাধারণ ফিল্ড
                 userId: auth.currentUser.uid,
                 category: category,
                 type: propertyType,
@@ -181,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             };
             
-            // ৫. ডায়নামিক ফিল্ড যুক্ত করা
+            // ডায়নামিক ফিল্ড যুক্ত করা (আপনার কোড অনুযায়ী)
             if (category === 'বিক্রয়') {
                 propertyData.price = document.getElementById('price')?.value;
             } else if (category === 'ভাড়া') {
@@ -189,22 +187,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (propertyType === 'বাড়ি' || propertyType === 'ফ্লাট') {
-                propertyData.rooms = parseInt(document.getElementById('rooms')?.value);
-                propertyData.bathrooms = parseInt(document.getElementById('bathrooms')?.value);
+                // Number() ব্যবহার করা হলো যাতে Firestore এ Number হিসেবে সেভ হয়
+                propertyData.rooms = Number(document.getElementById('rooms')?.value); 
+                propertyData.bathrooms = Number(document.getElementById('bathrooms')?.value);
             }
             
             if (propertyType === 'জমি') {
                 propertyData.landArea = document.getElementById('land-area')?.value;
             }
 
-
-            // ৬. Firestore এ ডেটা সংরক্ষণ
+            // Firestore এ ডেটা সংরক্ষণ
             await db.collection("properties").add(propertyData);
 
             alert("প্রপার্টি সফলভাবে আপলোড করা হয়েছে!");
             propertyForm.reset();
-            dynamicFieldsContainer.innerHTML = '<p class="placeholder-text">উপরে ক্যাটাগরি নির্বাচন করুন।</p>'; // ফর্ম রিসেট
-            window.location.href = 'index.html'; // হোমে ফেরত
+            dynamicFieldsContainer.innerHTML = '<p class="placeholder-text">উপরে ক্যাটাগরি নির্বাচন করুন।</p>'; 
+            // window.location.href = 'index.html'; // চাইলে হোমে ফেরত পাঠানো যেতে পারে
 
         } catch (error) {
             console.error("ডেটা আপলোড করতে সমস্যা হয়েছে: ", error);
@@ -217,41 +215,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // =====================================
-    // ৪. Auth State Handler (নেভিগেশন বার আপডেট)
+    // ৪. Auth State Handler (আপনার JS ফাইল থেকে নেওয়া)
     // =====================================
-    // এই অংশটি নিশ্চিত করবে যে ইউজার লগইন করেছেন কিনা এবং লগআউট অপশন দেখাবে।
     auth.onAuthStateChanged(user => {
         const postLink = document.getElementById('post-link');
         const loginLink = document.getElementById('login-link');
         
         if (user) {
-            // লগইন থাকলে
             if (postLink) postLink.style.display = 'inline-block';
             if (loginLink) {
                 loginLink.textContent = 'লগআউট';
                 loginLink.href = '#';
                 
-                // লগআউট হ্যান্ডেলার
-                loginLink.onclick = async (e) => {
+                loginLink.addEventListener('click', async (e) => {
                     e.preventDefault();
                     await auth.signOut();
                     alert('সফলভাবে লগআউট করা হয়েছে!');
                     window.location.href = 'index.html';
-                };
+                });
             }
         } else {
-            // লগইন না থাকলে, post.html এ প্রবেশ আটকানো
             if (postLink) postLink.style.display = 'none';
             if (loginLink) {
                 loginLink.textContent = 'লগইন';
                 loginLink.href = 'auth.html';
-                loginLink.onclick = null;
-            }
-            // যদি কেউ সরাসরি post.html এ প্রবেশ করতে চায়, তাকে auth.html এ পাঠানো হবে
-            if (!window.location.href.includes('auth.html') && !window.location.href.includes('index.html')) {
-                 // alert('প্রপার্টি যোগ করার জন্য প্রথমে লগইন করুন।');
-                 // window.location.href = 'auth.html';
-                 // উপরের দুটি লাইন যোগ করার মাধ্যমে অপ্রয়োজনীয় ইউজারকে লগইন পেজে যেতে বাধ্য করা যায়।
             }
         }
     });
