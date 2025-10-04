@@ -25,7 +25,6 @@
         measurementId: "G-F3YHTJ4LLV"
       };
       
-      // Firebase অ্যাপ ইনিশিয়ালাইজ করা
       if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
       }
@@ -39,7 +38,7 @@
             <a href="index.html" class="logo">আমার বাড়ি.কম</a>
             <nav class="nav">
                 <a href="index.html">হোম</a>
-                <a href="post.html" id="post-link">প্রপার্টি যোগ করুন</a> 
+                <a href="post.html" id="post-link" style="display: none;">প্রপার্টি যোগ করুন</a> 
                 <a href="auth.html" id="login-link">লগইন</a>
             </nav>
         </div>
@@ -74,11 +73,6 @@
                         <textarea id="property-description" rows="5" placeholder="প্রপার্টির বৈশিষ্ট্য, সুবিধা এবং যোগাযোগের সময় লিখুন।" required></textarea>
                     </div>
                     
-                    <div class="input-group">
-                        <label for="image-upload">প্রপার্টির ছবি আপলোড করুন (সর্বোচ্চ ৫টি):</label>
-                        <input type="file" id="image-upload" accept="image/*" multiple required>
-                    </div>
-                    
                     <div class="input-inline">
                         <div class="input-group">
                             <label for="location-district">জেলা:</label>
@@ -88,6 +82,11 @@
                             <label for="location-upazila">উপজেলা/এলাকা:</label>
                             <input type="text" id="location-upazila" placeholder="যেমন: গুলশান" required>
                         </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="image-upload">প্রপার্টির ছবি আপলোড করুন (সর্বোচ্চ ৫টি):</label>
+                        <input type="file" id="image-upload" accept="image/*" multiple required>
                     </div>
                     
                     <div class="input-group">
@@ -115,4 +114,4 @@
     
     <script src="post.js"></script> 
 </body>
-</html>
+                                                           </html>
