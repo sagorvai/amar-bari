@@ -9,12 +9,7 @@ body {
     background-color: #f4f7f6; /* হালকা ধূসর ব্যাকগ্রাউন্ড */
     color: #333;
     /* ফিক্সড হেডারের জন্য কন্টেন্টকে নিচে নামানো */
-    padding-top: 100px; /* হেডার হাইট অনুযায়ী কন্টেন্টকে নিচে নামানো হলো */
-}
-
-/* **সংশোধন #৩: সকল উপাদানের জন্য box-sizing: border-box সেট করা হলো (প্যাডিং/বর্ডার জনিত সমস্যা এড়াতে)** */
-* {
-    box-sizing: border-box;
+    padding-top: 100px; 
 }
 
 a {
@@ -25,8 +20,7 @@ a {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    /* **সংশোধন #২: প্যাডিং কমানো হলো, যাতে কন্টেন্ট কেটে না যায়** */
-    padding: 0 10px; 
+    padding: 0 10px; /* ছোট স্ক্রিনের জন্য প্যাডিং কমানো হলো (আগে ছিলো 15px) */
 }
 
 /* মেইন কন্টেন্ট এলাকা: ফুটার নিচে রাখতে সাহায্য করবে */
@@ -47,12 +41,11 @@ a {
     z-index: 100;
 }
 
-/* টপ হেডার (মেনু, টাইটেল, প্রোফাইল) */
 .header-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 15px;
+    padding: 10px 10px; /* প্যাডিং কমানো হলো (আগে ছিলো 10px 15px) */
     background-color: #2e8b57; /* সবুজ রং */
     color: white;
 }
@@ -62,117 +55,121 @@ a {
     font-weight: bold;
 }
 
-.menu-button, .profile-icon {
+.menu-button, .profile-button {
     background: none;
     border: none;
     color: white;
     cursor: pointer;
     padding: 5px;
-    display: flex;
-    align-items: center;
-}
-.profile-icon i {
-    font-size: 28px;
+    display: inline-block; /* প্রোফাইল আইকনের জন্য */
 }
 
-.menu-button i {
+.menu-button i, .profile-button i {
     font-size: 28px;
+    vertical-align: middle;
 }
 
-/* নেভিগেশন বাটন রো (ম্যাপ, বিক্রয়, ভাড়া, সার্চ) */
+/* ২. সাব হেডার (নেভিগেশন ও সার্চ) */
+.sub-header {
+    background-color: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px 0;
+}
+
 .sub-header-container {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    /* **সংশোধন #২: প্যাডিং কমানো হলো, যাতে কন্টেন্ট কেটে না যায়** */
-    padding: 8px 5px;
-    background-color: #f4f7f6;
-    gap: 5px; 
+    flex-wrap: wrap;
+    gap: 10px; /* স্পেস ঠিক করা */
 }
 
 .nav-filters {
     display: flex;
-    align-items: center;
-    flex-wrap: nowrap; /* এক লাইনে থাকবে */
-    overflow-x: hidden; /* স্লাইড সম্পূর্ণরূপে বন্ধ */
-    /* **সংশোধন #২: উপাদানের মধ্যে ব্যবধান তৈরি করা হলো এবং মার্জিন কমানো হলো** */
-    gap: 3px; 
-    flex-shrink: 0; /* ফিল্টার বাটনগুলো সংকুচিত হবে না */
+    flex-grow: 1;
+    justify-content: flex-start;
+    gap: 5px;
 }
 
-.nav-filters .nav-button {
-    /* **সংশোধন #২: প্যাডিং কমানো হলো** */
-    padding: 6px 8px; 
-    font-size: 0.9rem;
+.nav-button {
+    background-color: #f4f7f6;
+    border: 1px solid #ddd;
+    color: #555;
+    padding: 8px 12px;
     border-radius: 20px;
-    border: 1px solid #ccc;
-    background-color: white;
     cursor: pointer;
-    transition: background-color 0.3s;
-    white-space: nowrap; /* টেক্সট যেন না ভাঙে */
-    flex-shrink: 0; /* বাটনগুলো ছোট হবে না */
+    font-weight: 500;
+    transition: background-color 0.3s, color 0.3s;
+    font-size: 0.9rem;
+    white-space: nowrap; /* বাটন লেখা না ভাঙার জন্য */
 }
 
-.nav-filters .nav-button.active {
+.nav-button.active {
     background-color: #2ecc71;
     color: white;
     border-color: #2ecc71;
 }
 
-/* সার্চ কন্টেইনার */
+.nav-button:hover:not(.active) {
+    background-color: #e0e0e0;
+}
+
+/* সার্চ বক্স স্টাইল */
 .search-container {
     display: flex;
-    align-items: center;
-    background-color: #fff;
-    border-radius: 20px;
+    flex-grow: 2;
+    max-width: 300px;
     border: 1px solid #ddd;
-    /* **সংশোধন #২: প্যাডিং কমানো হলো** */
-    padding: 0 5px;
-    flex-grow: 1; /* সার্চবারকে বাকি পুরো জায়গা নিতে দেওয়া হলো */
-    min-width: 50px; /* ছোট স্ক্রিনেও একটি মিনিমাম সাইজ রাখবে */
+    border-radius: 20px;
+    overflow: hidden;
+    background-color: #fff;
 }
 
 .search-input {
-    border: none;
-    outline: none;
-    padding: 8px 5px;
     flex-grow: 1;
+    border: none;
+    padding: 8px 15px;
     font-size: 0.9rem;
-    background: transparent;
+    outline: none;
 }
 
 .search-icon-button {
-    background: none;
+    background-color: #2ecc71;
     border: none;
-    color: #2e8b57;
+    color: white;
+    padding: 8px 10px;
     cursor: pointer;
-    padding: 5px;
-    display: flex;
-    align-items: center;
-    margin-left: 5px;
+    transition: background-color 0.3s ease;
 }
+
+.search-icon-button:hover {
+    background-color: #27ae60;
+}
+
 .search-icon-button i {
-    font-size: 20px;
+    font-size: 18px;
+    vertical-align: middle;
 }
 
 /* ====================================
-   ৩. সাইডবার (মোবাইল মেনু)
+   ৩. সাইডবার স্টাইল
    ==================================== */
 .sidebar {
     position: fixed;
     top: 0;
-    left: -250px; /* শুরুতে স্ক্রিনের বাইরে */
-    width: 250px;
+    left: -280px; /* অফ-স্ক্রিন */
+    width: 280px;
     height: 100%;
-    background-color: #34495e;
-    color: white;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-    z-index: 150;
+    background-color: #ffffff;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 200;
     transition: left 0.3s ease;
-    padding-top: 60px; /* হেডার এর নিচে শুরু */
+    overflow-y: auto;
+    padding-top: 50px; /* হেডারের জন্য জায়গা */
 }
 
 .sidebar.active {
-    left: 0;
+    left: 0; /* অন-স্ক্রিন */
 }
 
 .overlay {
@@ -182,7 +179,7 @@ a {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 140;
+    z-index: 150;
     display: none;
 }
 
@@ -193,45 +190,45 @@ a {
 .sidebar-nav {
     display: flex;
     flex-direction: column;
-    padding: 10px 0;
 }
 
 .sidebar-item {
-    /* **সংশোধন #১: এটিই সাইডবার মেনুর সাধারণ স্টাইল, কোনো সবুজ ব্যাকগ্রাউন্ড নেই** */
-    padding: 15px 20px;
-    display: flex; 
+    display: flex; /* আইকন এবং লেখাকে পাশাপাশি আনার জন্য */
     align-items: center;
-    gap: 10px;
-    color: white;
-    text-decoration: none;
-    font-size: 1.1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 15px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.3s ease;
 }
-
-/* **সংশোধন #১: যেহেতু প্রপার্টি যুক্ত করুন-এর কোনো আলাদা ব্যাকগ্রাউন্ড ক্লাস নেই, তাই ডিফল্টভাবেই সবুজ ব্যাকগ্রাউন্ড অপসারণ নিশ্চিত হলো। যদি কোনো কারণে জাভাস্ক্রিপ্ট 'active' ক্লাস যুক্ত করে, তবে সেই স্টাইল সরাতে হবে (নিচের মতো)** */
-/* .sidebar-item#post-link.active {
-    background-color: transparent; 
-} */
-
-.sidebar-item i {
-    font-size: 24px;
-}
-/* **সংশোধন #১: লগইন/লগআউট আইকনের রঙ নিশ্চিত করা হলো** */
-.sidebar-item i.material-icons {
-    color: white;
-}
-
 
 .sidebar-item:hover {
-    background-color: #2c3e50;
+    background-color: #f0f0f0;
+}
+
+/* সাইডবার আইটেমের ভিতরের আইকনের স্টাইল (Login/Logout, Property) */
+.sidebar-item i.material-icons {
+    margin-right: 10px;
+    font-size: 20px;
+    color: #7f8c8d; /* আইকনের রঙ একটু ধূসর করা হলো */
+    width: 24px; /* টেক্সট অ্যালাইনমেন্ট ঠিক রাখার জন্য */
+}
+
+/* অ্যাকটিভ আইটেমের জন্য সবুজ ব্যাকগ্রাউন্ড */
+.sidebar-nav a.active {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.sidebar-nav a.active i.material-icons {
+    color: white;
 }
 
 /* ====================================
-   ৪. প্রপার্টি গ্রিড এবং কার্ড
+   ৪. প্রপার্টি গ্রিড স্টাইল
    ==================================== */
 .property-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
     padding: 20px 0;
 }
@@ -241,6 +238,12 @@ a {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.property-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .property-image-container {
@@ -277,36 +280,47 @@ a {
 .property-card-content h4 {
     font-size: 1.15rem;
     margin-bottom: 5px;
+    font-weight: 600;
 }
 
 .property-card-content .location {
     font-size: 0.9rem;
     color: #7f8c8d;
     margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.property-card-content .location i {
+    font-size: 16px;
+    margin-right: 5px;
 }
 
 .property-card-content .price {
     font-size: 1.3rem;
-    color: #2c3e50;
     font-weight: bold;
+    color: #2c3e50;
+    margin-top: 5px;
 }
 
+
 /* ====================================
-   ৫. ফর্ম এবং লগইন/সাইনআপ স্টাইল 
+   ৫. ফর্ম এবং বাটন স্টাইল (auth.html এবং post.html এর জন্য)
    ==================================== */
 .auth-container, .post-container {
     max-width: 500px;
-    margin: 50px auto;
+    margin: 40px auto;
     padding: 30px;
     background-color: #ffffff;
-    border-radius: 10px;
+    border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .auth-container h2, .post-container h2 {
     text-align: center;
     color: #2c3e50;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
 }
 
 .input-group {
@@ -320,11 +334,11 @@ a {
     color: #555;
 }
 
-.input-group input[type="text"],
 .input-group input[type="email"],
 .input-group input[type="password"],
-.input-group input[type="tel"],
+.input-group input[type="text"],
 .input-group input[type="number"],
+.input-group input[type="tel"],
 .input-group input[type="url"],
 .input-group select,
 .input-group textarea {
@@ -334,6 +348,7 @@ a {
     border: 1px solid #ddd;
     box-sizing: border-box;
     font-size: 1rem;
+    font-family: inherit; /* ফন্ট ইনহেরিট করার জন্য */
 }
 
 .input-group input:focus,
@@ -386,9 +401,11 @@ a {
     border: 1px dashed #ccc;
     border-radius: 5px;
     color: #7f8c8d;
-    margin-top: 30px;
+    margin-top: 20px;
 }
 
+
+/* Auth ফর্মের নিচের লিঙ্ক */
 .switch-form {
     text-align: center;
     margin-top: 15px;
@@ -397,10 +414,15 @@ a {
 .switch-form a {
     color: #3498db;
     text-decoration: none;
+    font-weight: 500;
+}
+
+.switch-form a:hover {
+    text-decoration: underline;
 }
 
 /* ====================================
-   ৬. ফুটার
+   ৬. ফুটার স্টাইল
    ==================================== */
 .footer {
     background-color: #2c3e50;
@@ -408,8 +430,25 @@ a {
     text-align: center;
     padding: 20px 0;
     margin-top: 50px;
+    border-top: 5px solid #2ecc71;
 }
 
 .footer p {
     margin: 0;
-   }
+    font-size: 0.9rem;
+}
+
+/* ====================================
+   ৭. রেসপনসিভ স্টাইল (বড় স্ক্রিনের জন্য)
+   ==================================== */
+@media (min-width: 768px) {
+    /* বড় স্ক্রিনে সার্চ কন্টেইনার যেন নেভিগেশন বাটনের পাশে জায়গা করে নিতে পারে */
+    .sub-header-container {
+        gap: 20px;
+    }
+    
+    .search-container {
+        flex-grow: 0; /* বড় স্ক্রিনে ছোট রাখা */
+        max-width: 350px;
+    }
+       }
