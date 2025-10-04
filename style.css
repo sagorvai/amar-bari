@@ -25,7 +25,7 @@ a {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 10px; /* **সংশোধন #২: ছোট স্ক্রিনের জন্য প্যাডিং ১৫পিক্সেল থেকে ১০পিক্সেল এ কমানো হলো** */
+    padding: 0 10px; /* ছোট স্ক্রিনের জন্য প্যাডিং ১০পিক্সেল এ কমানো হলো */
 }
 
 /* মেইন কন্টেন্ট এলাকা: ফুটার নিচে রাখতে সাহায্য করবে */
@@ -34,7 +34,7 @@ a {
 }
 
 /* ====================================
-   ২. ফিক্সড হেডার এবং নেভিগেশন (index.html, post.html এবং auth.html এর জন্য)
+   ২. ফিক্সড হেডার এবং নেভিগেশন
    ==================================== */
 .main-header {
     width: 100%;
@@ -81,31 +81,21 @@ a {
     align-items: center;
     padding: 8px 15px;
     background-color: #f4f7f6;
-    gap: 5px; /* বাটনের মধ্যে দূরত্ব কমানো হলো */
-    flex-wrap: nowrap; /* **সংশোধন #১: নিশ্চিত করে যেন উপাদানগুলো এক লাইনে থাকে** */
-    overflow-x: auto; /* প্রয়োজনে আনুভূমিক স্ক্রলিং চালু করে */
-    -webkit-overflow-scrolling: touch; /* iOS-এ স্ক্রলিং মসৃণ করে */
+    gap: 5px; 
+    flex-wrap: wrap; /* **সংশোধন #১ এর অংশ: nowrap থেকে wrap এ পরিবর্তন করা হলো, তবে নিচের স্টাইলগুলো অপ্রয়োজনীয় হওয়ায় রিমুভ করা হয়েছে। এখন সব এক লাইনে থাকবে এবং সংকুচিত হবে।** */
+    /* overflow-x: auto; এবং flex-wrap: nowrap; অপসারণ করা হলো, যাতে স্লাইড না আসে। */
 }
-
-/* স্ক্রলবার আড়াল করার জন্য (ঐচ্ছিক) */
-.nav-filters::-webkit-scrollbar {
-    display: none;
-}
-.nav-filters {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-}
-
 
 .nav-filters .nav-button {
-    flex-shrink: 0; /* বাটন ছোট হবে না */
-    padding: 6px 10px; /* বাটনের প্যাডিং কমানো হলো */
+    flex-shrink: 1; /* বাটন প্রয়োজনে সংকুচিত হবে */
+    padding: 6px 10px; 
     font-size: 0.9rem;
     border-radius: 20px;
     border: 1px solid #ccc;
     background-color: white;
     cursor: pointer;
     transition: background-color 0.3s;
+    white-space: nowrap; /* টেক্সট যেন না ভাঙে */
 }
 
 .nav-filters .nav-button.active {
@@ -116,36 +106,29 @@ a {
 
 /* সার্চ কন্টেইনার */
 .search-container {
-    flex-grow: 1; /* সার্চবার বাকি জায়গা নেবে */
-    min-width: 100px; 
+    /* **সংশোধন #১ এর অংশ: flex-grow: 1 এবং min-width: 100px অপসারণ করা হলো।** */
     display: flex;
     align-items: center;
     background-color: #fff;
     border-radius: 20px;
     border: 1px solid #ddd;
     padding: 0 5px;
+    flex-grow: 1; /* সার্চবারকে বাকি জায়গা নিতে দেওয়া হলো */
+    min-width: 100px;
 }
-
-.search-input {
-    border: none;
-    padding: 8px 10px;
-    flex-grow: 1;
-    outline: none;
-    font-size: 0.9rem;
-}
-
-.search-icon-button {
-    background: none;
-    border: none;
-    color: #2e8b57;
-    cursor: pointer;
-    padding: 5px;
+/* **গুরুত্বপূর্ণ: পুরো লাইনকে এক স্ক্রিনে আনার জন্য, .nav-filters এর বদলে এর ভেতরের উপাদানগুলোকে সংকুচিত করা হলো।** */
+.nav-filters {
     display: flex;
     align-items: center;
+    padding: 8px 10px; /* প্যাডিং কমানো */
+    background-color: #f4f7f6;
+    gap: 5px;
+    flex-wrap: nowrap; /* এক লাইনে থাকবে */
+    overflow-x: hidden; /* স্লাইড সম্পূর্ণরূপে বন্ধ */
+    justify-content: space-between; /* উপাদানের মধ্যে সমান ব্যবধান তৈরি করা */
 }
-
-.search-icon-button i {
-    font-size: 20px;
+.nav-filters .nav-button {
+    flex-shrink: 0; /* বাটনগুলো ছোট হবে না, তবে সার্চবার সংকুচিত হবে */
 }
 
 /* ====================================
@@ -192,7 +175,7 @@ a {
 
 .sidebar-item {
     padding: 15px 20px;
-    display: flex;
+    display: flex; /* **সংশোধন #২: আইকন ও টেক্সট সুন্দরভাবে দেখানোর জন্য** */
     align-items: center;
     gap: 10px;
     color: white;
@@ -396,4 +379,4 @@ a {
 
 .footer p {
     margin: 0;
-}
+   }
