@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>প্রপার্টি যোগ করুন - আমার বাড়ি.কম</title>
+    
+    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <script>
+      // আপনার firebaseConfig অবজেক্টটি এখানে হুবহু রাখুন
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b351b00a796e",
+        measurementId: "G-F3YHTJ4LLV"
+      };
+      
+      // Firebase অ্যাপ ইনিশিয়ালাইজ করা
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
+    
+</head>
+<body>
+
+    <header class="header">
+        <div class="container header-top">
+            <a href="index.html" class="logo">আমার বাড়ি.কম</a>
+            <nav class="nav">
+                <a href="index.html">হোম</a>
+                <a href="post.html" id="post-link">প্রপার্টি যোগ করুন</a> 
+                <a href="auth.html" id="login-link">লগইন</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="post-container">
+                <h2>আপনার প্রপার্টি যোগ করুন</h2>
+                <form id="property-form">
+                    
+                    <div class="input-group">
+                        <label for="post-category">পোস্টের ক্যাটাগরি:</label>
+                        <select id="post-category" required>
+                            <option value="">-- নির্বাচন করুন --</option>
+                            <option value="বিক্রয়">বিক্রয়</option>
+                            <option value="ভাড়া">ভাড়া</option>
+                        </select>
+                    </div>
+                    
+                    <div id="dynamic-fields-container">
+                        <p class="placeholder-text">উপরে ক্যাটাগরি নির্বাচন করুন।</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="property-title">পোস্টের শিরোনাম:</label>
+                        <input type="text" id="property-title" placeholder="যেমন: শান্তিনগরে আধুনিক ডিজাইনের বাড়ি" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="property-description">প্রপার্টির বিস্তারিত বর্ণনা:</label>
+                        <textarea id="property-description" rows="5" placeholder="প্রপার্টির বৈশিষ্ট্য, সুবিধা এবং যোগাযোগের সময় লিখুন।" required></textarea>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="image-upload">প্রপার্টির ছবি আপলোড করুন (সর্বোচ্চ ৫টি):</label>
+                        <input type="file" id="image-upload" accept="image/*" multiple required>
+                    </div>
+                    
+                    <div class="input-inline">
+                        <div class="input-group">
+                            <label for="location-district">জেলা:</label>
+                            <input type="text" id="location-district" placeholder="যেমন: ঢাকা" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="location-upazila">উপজেলা/এলাকা:</label>
+                            <input type="text" id="location-upazila" placeholder="যেমন: গুলশান" required>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="phone-number">যোগাযোগের মোবাইল নাম্বার:</label>
+                        <input type="tel" id="phone-number" placeholder="০১৭০০-০০০০০০" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="google-map">Google Map লিঙ্ক (ঐচ্ছিক):</label>
+                        <input type="url" id="google-map" placeholder="Google Maps থেকে লিঙ্ক পেস্ট করুন">
+                    </div>
+
+                    <button type="submit" id="submit-button">সাবমিট করুন</button>
+                    
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
+    </footer>
+    
+    <script src="post.js"></script> 
+</body>
+</html>
