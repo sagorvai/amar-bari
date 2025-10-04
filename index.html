@@ -23,24 +23,25 @@
         appId: "1:719084789035:web:f4da765290b351b00a796e",
         measurementId: "G-F3YHTJ4LLV"
       };
-      firebase.initializeApp(firebaseConfig);
+      // Firebase initialization must be done before the main JS files load
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
     </script>
 </head>
 <body>
-    
+
     <header class="main-header">
         <div class="header-top container">
             <button class="menu-button" id="menuButton"><i class="material-icons">menu</i></button>
-            <h1 class="site-title"><a href="index.html">আমার বাড়ি.কম</a></h1>
-            <button class="profile-button" id="profileButton" style="display:none;"><i class="material-icons">account_circle</i></button>
+            <h1 class="site-title">আমার বাড়ি.কম</h1>
+            <button class="profile-button" id="profileButton" style="display: none;"><i class="material-icons">account_circle</i></button>
         </div>
         
-        <nav class="sub-header container sub-header-container">
-            <div class="nav-filters">
-                <button class="nav-button" id="mapButton">ম্যাপ</button>
-                <button class="nav-button" id="sellButton">বিক্রয়</button>
-                <button class="nav-button" id="rentButton">ভাড়া</button>
-            </div>
+        <nav class="nav-filters container">
+            <button class="nav-button" id="mapButton">ম্যাপ</button>
+            <button class="nav-button active" id="sellButton">বিক্রয়</button>
+            <button class="nav-button" id="rentButton">ভাড়া</button>
             
             <div class="search-container">
                 <input type="text" placeholder="খুঁজুন..." class="search-input" id="globalSearchInput">
@@ -53,11 +54,13 @@
 
     <div class="sidebar" id="sidebar">
         <nav class="sidebar-nav">
-            <a href="index.html" class="sidebar-item"><i class="material-icons">home</i> হোম</a>
+            <a href="index.html" class="sidebar-item" id="home-link-sidebar"><i class="material-icons">home</i> হোম</a>
             <a href="post.html" class="sidebar-item" id="post-link" style="display: none;"><i class="material-icons">add_home</i> প্রপার্টি যুক্ত করুন</a>
-            <a href="#" class="sidebar-item"><i class="material-icons">help_outline</i> পরামর্শ</a>
-            <a href="#" class="sidebar-item"><i class="material-icons">info_outline</i> এবাউট</a>
-            <a href="#" class="sidebar-item"><i class="material-icons">contact_support</i> যোগাযোগ</a>
+            
+            <a href="#" class="sidebar-item" id="tips-link-sidebar"><i class="material-icons">help_outline</i> পরামর্শ</a>
+            <a href="#" class="sidebar-item" id="about-link-sidebar"><i class="material-icons">info_outline</i> এবাউট</a>
+            <a href="#" class="sidebar-item" id="contact-link-sidebar"><i class="material-icons">contact_support</i> যোগাযোগ</a>
+            
             <a href="auth.html" class="sidebar-item" id="login-link-sidebar"><i class="material-icons">login</i> লগইন</a>
         </nav>
     </div>
@@ -65,8 +68,87 @@
     <div class="overlay" id="overlay"></div>
 
     <main class="main-content">
-        <div class="property-grid container"> 
+        <div class="property-grid container" id="property-grid-container"> 
             </div>
+
+        <section id="about-section" class="container content-section" style="display: none;">
+            <h2>আমার বাড়ি.কম - স্বপ্ন পূরণের পথ</h2>
+            
+            <div class="about-card mission">
+                <h3>আমাদের লক্ষ্য</h3>
+                <p>আমাদের প্রধান লক্ষ্য হলো বাংলাদেশের রিয়েল এস্টেট শিল্পে স্বচ্ছতা ও সরলতা নিয়ে আসা। আমরা প্রপার্টি ক্রেতা, বিক্রেতা এবং ভাড়াটিয়াদের জন্য একটি নির্ভরযোগ্য, নিরাপদ এবং আধুনিক প্ল্যাটফর্ম তৈরি করতে প্রতিশ্রুতিবদ্ধ। আপনার স্বপ্নের বাড়ি খোঁজা বা আপনার সম্পত্তি বিক্রি করা—সবকিছুই হবে সহজ ও দ্রুত।</p>
+            </div>
+            
+            <div class="about-card values">
+                <h3>আমাদের বিশেষত্ব</h3>
+                <ul>
+                    <li>**নির্ভরযোগ্য ডেটা:** প্রতিটি পোস্টের সঠিক তথ্য নিশ্চিত করা।</li>
+                    <li>**সহজ নেভিগেশন:** আপনার পছন্দের এলাকা ও ক্যাটাগরি অনুযায়ী দ্রুত অনুসন্ধান।</li>
+                    <li>**নিরাপত্তা:** ব্যবহারকারীদের তথ্যের গোপনীয়তা বজায় রাখা।</li>
+                    <li>**সম্প্রদায়:** সকল ব্যবহারকারীকে একসাথে নিয়ে একটি শক্তিশালী নেটওয়ার্ক তৈরি করা।</li>
+                </ul>
+            </div>
+            
+            <div class="about-card founder">
+                <h3>আমাদের যাত্রা</h3>
+                <p>২০২৪ সালে আমরা এই প্ল্যাটফর্মের যাত্রা শুরু করি। লক্ষ্য ছিল প্রযুক্তির মাধ্যমে বাংলাদেশের প্রপার্টি কেনা-বেচার সনাতন পদ্ধতিতে পরিবর্তন আনা এবং সাধারণ মানুষের জন্য প্রক্রিয়াটিকে সহজলভ্য করে তোলা।</p>
+            </div>
+        </section>
+        
+        <section id="tips-section" class="container content-section" style="display: none;">
+            <h2>গুরুত্বপূর্ণ পরামর্শ</h2>
+            <div class="tip-card-grid">
+                <div class="tip-card">
+                    <h3>১. প্রপার্টির টাইটেল স্পষ্ট রাখুন</h3>
+                    <p>আপনার প্রপার্টির টাইটেল যেন আকর্ষণীয় হয় এবং প্রপার্টির মূল বৈশিষ্ট্য (যেমন: ৩ রুম, উত্তরা) তুলে ধরে, তা নিশ্চিত করুন।</p>
+                </div>
+                <div class="tip-card">
+                    <h3>২. ভালো ছবি ব্যবহার করুন</h3>
+                    <p>উচ্চ মানের ছবি ব্যবহার করুন। দিনের আলোয় ছবি তুলুন এবং কমপক্ষে ৩ থেকে ৫টি ভিন্ন দিকের ছবি দিন। এটি ক্রেতাদের আগ্রহ বাড়ায়।</p>
+                </div>
+                <div class="tip-card">
+                    <h3>৩. সব তথ্য সঠিক দিন</h3>
+                    <p>ভাড়া বা দামের পরিমাণ, ঠিকানা এবং রুমের সংখ্যা ভুল দেবেন না। সঠিক তথ্য দিলে ক্রেতারা আপনাকে বিশ্বাস করবে।</p>
+                </div>
+                <div class="tip-card">
+                    <h3>৪. কাগজপত্র পরীক্ষা করুন</h3>
+                    <p>ক্রেতা হিসেবে যেকোনো চুক্তি সই করার আগে প্রপার্টির সকল আইনি কাগজপত্র (দলিল, খতিয়ান) একজন বিশেষজ্ঞের মাধ্যমে পরীক্ষা করিয়ে নিন।</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact-section" class="container content-section" style="display: none;">
+            <h2>আমাদের সাথে যোগাযোগ</h2>
+            <p>আপনার যেকোনো প্রশ্ন, জিজ্ঞাসা বা সহায়তার জন্য সরাসরি আমাদের সাথে যোগাযোগ করতে পারেন। আমরা দ্রুত আপনার প্রশ্নের উত্তর দেব।</p>
+
+            <div class="contact-card-grid">
+                <div class="contact-card phone">
+                    <i class="material-icons">call</i>
+                    <h3>বিক্রয় ও ভাড়া সংক্রান্ত</h3>
+                    <p>+88 **01753903854**</p>
+                    <p>(সকাল ১০টা - সন্ধ্যা ৬টা)</p>
+                </div>
+                <div class="contact-card phone">
+                    <i class="material-icons">call</i>
+                    <h3>কারিগরী সহায়তা</h3>
+                    <p>+88 **01951912031**</p>
+                    <p>(সকাল ১০টা - সন্ধ্যা ৬টা)</p>
+                </div>
+                <div class="contact-card email">
+                    <i class="material-icons">email</i>
+                    <h3>ইমেইল করুন</h3>
+                    <p>support@amarbari.com</p>
+                </div>
+            </div>
+            
+            <p class="follow-us">সামাজিক মাধ্যমে আমাদের অনুসরণ করুন:</p>
+            <div class="social-links">
+                <a href="#"><img src="https://via.placeholder.com/30x30?text=F" alt="Facebook"></a>
+                <a href="#"><img src="https://via.placeholder.com/30x30?text=Y" alt="Youtube"></a>
+                <a href="#"><img src="https://via.placeholder.com/30x30?text=I" alt="Instagram"></a>
+            </div>
+        </section>
+
     </main>
 
     <footer class="footer">
@@ -76,5 +158,6 @@
     </footer>
     
     <script src="index.js"></script>
+
 </body>
-    </html>
+        </html>
