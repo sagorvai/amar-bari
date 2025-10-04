@@ -12,6 +12,11 @@ body {
     padding-top: 100px; /* হেডার হাইট অনুযায়ী কন্টেন্টকে নিচে নামানো হলো */
 }
 
+/* **সংশোধন #৩: সকল উপাদানের জন্য box-sizing: border-box সেট করা হলো (প্যাডিং/বর্ডার জনিত সমস্যা এড়াতে)** */
+* {
+    box-sizing: border-box;
+}
+
 a {
     text-decoration: none;
     color: inherit;
@@ -20,7 +25,7 @@ a {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 15px; /* ছোট স্ক্রিনের জন্য প্যাডিং (আপনার চাহিদা অনুযায়ী এটি ঠিক রাখা হলো) */
+    padding: 0 10px; /* **সংশোধন #২: ছোট স্ক্রিনের জন্য প্যাডিং ১৫পিক্সেল থেকে ১০পিক্সেল এ কমানো হলো** */
 }
 
 /* মেইন কন্টেন্ট এলাকা: ফুটার নিচে রাখতে সাহায্য করবে */
@@ -74,16 +79,27 @@ a {
 .nav-filters {
     display: flex;
     align-items: center;
-    padding: 8px 15px; /* **প্যাডিং কমানো হলো (Fix #2)** */
+    padding: 8px 15px;
     background-color: #f4f7f6;
     gap: 5px; /* বাটনের মধ্যে দূরত্ব কমানো হলো */
-    flex-wrap: nowrap; /* **CRITICAL FIX #1: উপাদানগুলো এক লাইনে থাকবে** */
-    overflow-x: auto; /* যদি স্ক্রিনের বাইরে চলে যায় তবে স্ক্রল করা যাবে */
+    flex-wrap: nowrap; /* **সংশোধন #১: নিশ্চিত করে যেন উপাদানগুলো এক লাইনে থাকে** */
+    overflow-x: auto; /* প্রয়োজনে আনুভূমিক স্ক্রলিং চালু করে */
+    -webkit-overflow-scrolling: touch; /* iOS-এ স্ক্রলিং মসৃণ করে */
 }
+
+/* স্ক্রলবার আড়াল করার জন্য (ঐচ্ছিক) */
+.nav-filters::-webkit-scrollbar {
+    display: none;
+}
+.nav-filters {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
 
 .nav-filters .nav-button {
     flex-shrink: 0; /* বাটন ছোট হবে না */
-    padding: 6px 10px; /* **বাটনের প্যাডিং কমানো হলো** */
+    padding: 6px 10px; /* বাটনের প্যাডিং কমানো হলো */
     font-size: 0.9rem;
     border-radius: 20px;
     border: 1px solid #ccc;
@@ -380,4 +396,4 @@ a {
 
 .footer p {
     margin: 0;
-   }
+}
