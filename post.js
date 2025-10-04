@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const postCategorySelect = document.getElementById('post-category');
     const dynamicFieldsContainer = document.getElementById('dynamic-fields-container');
     const propertyForm = document.getElementById('property-form');
-    // আপনার কোডে submitBtn এভাবে সংজ্ঞায়িত ছিল:
     const submitBtn = document.querySelector('#property-form button[type="submit"]');
 
 
@@ -18,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (postCategorySelect) {
         postCategorySelect.addEventListener('change', () => {
             const category = postCategorySelect.value;
-            // ক্যাটাগরি পরিবর্তন হলে কন্টেইনার পরিষ্কার করা 
             dynamicFieldsContainer.innerHTML = '';
             if (category) {
                 generateTypeDropdown(category);
@@ -179,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             };
             
-            // ডায়নামিক ফিল্ড যুক্ত করা (আপনার কোড অনুযায়ী)
+            // ডায়নামিক ফিল্ড যুক্ত করা 
             if (category === 'বিক্রয়') {
                 propertyData.price = document.getElementById('price')?.value;
             } else if (category === 'ভাড়া') {
@@ -187,7 +185,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (propertyType === 'বাড়ি' || propertyType === 'ফ্লাট') {
-                // Number() ব্যবহার করা হলো যাতে Firestore এ Number হিসেবে সেভ হয়
                 propertyData.rooms = Number(document.getElementById('rooms')?.value); 
                 propertyData.bathrooms = Number(document.getElementById('bathrooms')?.value);
             }
@@ -215,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // =====================================
-    // ৪. Auth State Handler (আপনার JS ফাইল থেকে নেওয়া)
+    // ৪. Auth State Handler (নেভিগেশন বার আপডেট)
     // =====================================
     auth.onAuthStateChanged(user => {
         const postLink = document.getElementById('post-link');
@@ -227,18 +224,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 loginLink.textContent = 'লগআউট';
                 loginLink.href = '#';
                 
-                loginLink.addEventListener('click', async (e) => {
+                loginLink.onclick = async (e) => {
                     e.preventDefault();
                     await auth.signOut();
                     alert('সফলভাবে লগআউট করা হয়েছে!');
                     window.location.href = 'index.html';
-                });
+                };
             }
         } else {
             if (postLink) postLink.style.display = 'none';
             if (loginLink) {
                 loginLink.textContent = 'লগইন';
                 loginLink.href = 'auth.html';
+                loginLink.onclick = null;
             }
         }
     });
