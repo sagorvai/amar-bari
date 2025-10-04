@@ -59,10 +59,6 @@
                         </select>
                     </div>
                     
-                    <div id="dynamic-fields-container">
-                        <p class="placeholder-text">উপরে ক্যাটাগরি নির্বাচন করুন।</p>
-                    </div>
-                    
                     <div class="input-group">
                         <label for="property-title">পোস্টের শিরোনাম:</label>
                         <input type="text" id="property-title" placeholder="যেমন: শান্তিনগরে আধুনিক ডিজাইনের বাড়ি" required>
@@ -71,6 +67,11 @@
                     <div class="input-group">
                         <label for="property-description">প্রপার্টির বিস্তারিত বর্ণনা:</label>
                         <textarea id="property-description" rows="5" placeholder="প্রপার্টির বৈশিষ্ট্য, সুবিধা এবং যোগাযোগের সময় লিখুন।" required></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="image-upload">প্রপার্টির ছবি আপলোড করুন (সর্বোচ্চ ৫টি):</label>
+                        <input type="file" id="image-upload" accept="image/*" multiple required>
                     </div>
                     
                     <div class="input-inline">
@@ -83,12 +84,11 @@
                             <input type="text" id="location-upazila" placeholder="যেমন: গুলশান" required>
                         </div>
                     </div>
-
-                    <div class="input-group">
-                        <label for="image-upload">প্রপার্টির ছবি আপলোড করুন (সর্বোচ্চ ৫টি):</label>
-                        <input type="file" id="image-upload" accept="image/*" multiple required>
-                    </div>
                     
+                    <div id="dynamic-fields-container">
+                        <p class="placeholder-text">উপরে ক্যাটাগরি নির্বাচন করুন।</p>
+                    </div>
+
                     <div class="input-group">
                         <label for="phone-number">যোগাযোগের মোবাইল নাম্বার:</label>
                         <input type="tel" id="phone-number" placeholder="০১৭০০-০০০০০০" required>
@@ -114,4 +114,4 @@
     
     <script src="post.js"></script> 
 </body>
-                                                           </html>
+    </html>
