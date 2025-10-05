@@ -132,8 +132,8 @@ a {
    ==================================== */
 .sidebar {
     position: fixed;
-    left: -280px; /* লুকানো অবস্থা */
     top: 0;
+    left: -280px; /* লুকানো অবস্থা */
     width: 260px;
     height: 100%;
     background-color: #2c3e50; /* গাঢ় নীল ব্যাকগ্রাউন্ড */
@@ -191,7 +191,7 @@ a {
     color: #ffffff;
 }
 
-/* প্রপার্টি যুক্ত করুন লিঙ্ক থেকে সবুজ ব্যাকগ্রাউন্ড সরানো হলো */
+/* 'প্রপার্টি যুক্ত করুন' লিঙ্ক থেকে সবুজ ব্যাকগ্রাউন্ড সরানো হলো */
 #post-link {
     background-color: transparent; 
     color: #ecf0f1; 
@@ -200,13 +200,12 @@ a {
     background-color: #34495e; 
 }
 
-/* লগইন/লগআউট লিঙ্ক এর জন্য কাস্টম স্টাইল এবং আইকন */
+/* লগইন/লগআউট লিঙ্ক এর জন্য কাস্টম স্টাইল এবং আইকন যোগ করা হলো (HTML এ i ট্যাগ যোগ করতে হবে) */
 #login-link-sidebar {
     border-top: 1px solid #34495e;
     margin-top: 10px;
     font-weight: bold;
 }
-/* লগইন/লগআউট লিঙ্কে আইকন যোগ করা হলো (HTML এ i ট্যাগ যোগ করতে হবে) */
 #login-link-sidebar i { 
     font-size: 24px;
     margin-right: 15px; 
@@ -506,14 +505,14 @@ a {
    ৮. অন্যান্য ফর্ম এবং ফুটার স্টাইল - সংশোধিত
    ==================================== */
 
-/* ইনপুট গ্রুপ স্টাইল (post.html ও auth.html এর জন্য) */
+/* ইনপুট গ্রুপ স্টাইল (post.html ও auth.html এর জন্য) - মার্জিত ডিজাইনের জন্য পরিবর্তন */
 .input-group {
-    margin-bottom: 12px; /* প্যাডিং কমানো হয়েছে */
+    margin-bottom: 12px; /* ১৫পিক্সেল থেকে কমানো হয়েছে */
 }
 
 .input-group label {
     display: block;
-    margin-bottom: 4px; /* প্যাডিং কমানো হয়েছে */
+    margin-bottom: 4px; /* ৫পিক্সেল থেকে কমানো হয়েছে */
     font-weight: 500;
     color: #34495e;
 }
@@ -527,7 +526,7 @@ a {
 .input-group select,
 .input-group textarea {
     width: 100%;
-    padding: 10px; /* প্যাডিং ১২পিক্সেল থেকে ১০পিক্সেল করা হলো */
+    padding: 10px; /* ১২পিক্সেল থেকে ১০পিক্সেল করা হলো */
     border-radius: 5px;
     border: 1px solid #ddd;
     box-sizing: border-box;
@@ -543,9 +542,9 @@ a {
 
 /* ইনলাইন ইনপুট */
 .input-inline {
-    gap: 10px; /* গ্যাপ কমানো হয়েছে */
     display: flex;
-    margin-bottom: 12px; /* মার্জিন কমানো হয়েছে */
+    gap: 10px; /* ১৫পিক্সেল থেকে কমানো হয়েছে */
+    margin-bottom: 12px; /* ১৫পিক্সেল থেকে কমানো হয়েছে */
 }
 
 .input-inline .input-group {
@@ -553,17 +552,17 @@ a {
     margin-bottom: 0; 
 }
 
-/* বাটন স্টাইল */
+/* বাটন স্টাইল - 'সাবমিট করুন' বাটন ছোট করা হয়েছে */
 .post-container button[type="submit"], .auth-container button[type="submit"] {
     width: 100%;
-    padding: 10px; /* প্যাডিং ১২পিক্সেল থেকে ১০পিক্সেল করা হলো */
-    margin-top: 15px; /* মার্জিন কমানো হয়েছে */
+    padding: 10px; /* ১২পিক্সেল থেকে ১০পিক্সেল করা হলো */
+    margin-top: 15px; /* ২০পিক্সেল থেকে কমানো হয়েছে */
     background-color: #2ecc71; 
     color: #ffffff;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 1rem; /* ফন্ট সাইজ কমানো হলো */
+    font-size: 1rem; /* ১.১রিম থেকে কমানো হলো */
     font-weight: bold;
     transition: background-color 0.3s ease;
 }
@@ -590,7 +589,7 @@ a {
     margin: 0;
 }
 
-/* অতিরিক্ত ছোট স্ক্রিনের জন্য সামঞ্জস্য - প্যাডিং কমানো হয়েছে */
+/* অতিরিক্ত ছোট স্ক্রিনের জন্য সামঞ্জস্য - সাইড প্যাডিং কমানো হলো */
 @media (max-width: 600px) {
     /* কন্টেইনারের সাইড প্যাডিং কমানো হলো */
     .container {
@@ -636,4 +635,4 @@ a {
     .property-card-content {
         padding: 10px; /* কার্ডের ভেতরের প্যাডিং কমানো হলো */
     }
-   }
+}
