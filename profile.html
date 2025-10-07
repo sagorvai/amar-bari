@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>আমার প্রোফাইল - আমার বাড়ি.কম</title>
+    <title>প্রোফাইল ড্যাশবোর্ড - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
@@ -14,108 +14,268 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <script>
-      // আপনার firebaseConfig এখানে থাকবে (auth.html, index.html এর অনুরূপ)
+      // **আপনার বিদ্যমান Firebase কনফিগারেশন** (auth.html, index.html থেকে নেওয়া)
       const firebaseConfig = {
         apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
         authDomain: "amar-bari-website.firebaseapp.com",
         projectId: "amar-bari-website",
         storageBucket: "amar-bari-website.firebasestorage.app",
         messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765290b351..."
+        appId: "1:719084789035:web:f4da765290b351221f7d56"
       };
       
-      // Firebase অ্যাপ্লিকেশন ইনিশিয়ালাইজ করা
+      // Firebase অ্যাপ ইনিশিয়ালাইজ করা
       if (!firebase.apps.length) {
           firebase.initializeApp(firebaseConfig);
       }
     </script>
+
+    <style>
+        /* প্রোফাইল পেজের জন্য নির্দিষ্ট স্টাইল */
+        .profile-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        /* ১. প্রোফাইল হেডার কার্ড */
+        .profile-header-card {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #ecf0f1;
+            border-radius: 6px;
+        }
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 20px;
+            border: 3px solid #3498db;
+        }
+        .profile-info h2 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+        .profile-info p {
+            margin: 0;
+            color: #7f8c8d;
+        }
+
+        /* ২. ট্যাব নেভিগেশন */
+        .tab-nav {
+            display: flex;
+            border-bottom: 2px solid #bdc3c7;
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            font-size: 16px;
+            color: #34495e;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-button.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+            font-weight: 600;
+        }
+
+        /* ট্যাব কন্টেন্ট */
+        .tab-content-item {
+            display: none;
+        }
+        .tab-content-item.active {
+            display: block;
+        }
+        
+        /* প্রপার্টি কার্ড স্টাইল (index.css থেকে ধার করা) */
+        .property-card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f9f9f9;
+        }
+        .property-card-details h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+        .property-card-details p {
+            margin: 0 0 5px 0;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        .property-card-actions button {
+            margin-left: 10px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .property-card-actions .edit-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        .property-card-actions .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .property-card-actions .edit-btn:hover { background-color: #2980b9; }
+        .property-card-actions .delete-btn:hover { background-color: #c0392b; }
+
+        /* ফর্ম স্টাইল (post.css থেকে ধার করা) */
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .input-group input, .input-group textarea, .input-group button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .input-group button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .input-group button:hover {
+            background-color: #27ae60;
+        }
+        .empty-message {
+            text-align: center;
+            padding: 30px;
+            background-color: #f7f7f7;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .empty-message a {
+            display: inline-block;
+            margin-top: 15px;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
-    
     <header class="main-header">
         <div class="header-top container">
-            <a href="index.html" class="logo">আমার বাড়ি.কম</a>
-            <div class="header-actions">
-                <a href="profile.html" class="profile-button" id="profileButton">
+            <a href="index.html" class="logo">
+                <img src="images/logo-placeholder.png" alt="আমার বাড়ি.কম লোগো" width="40">
+                <h1>আমার বাড়ি.কম</h1>
+            </a>
+            <nav class="nav-links">
+                <a href="profile.html" id="profileButton" class="nav-button profile-btn" style="display: none;">
                     <i class="material-icons">account_circle</i> প্রোফাইল
                 </a>
-                <button class="menu-button" id="menuButton">
+                <button id="menuButton" class="menu-button">
                     <i class="material-icons">menu</i>
                 </button>
-            </div>
+            </nav>
         </div>
-        </header>
+    </header>
 
-    <nav class="sidebar" id="sidebar">
-        <ul>
-            <li><a href="index.html" id="home-link-sidebar"><i class="material-icons">home</i> হোম</a></li>
-            <li><a href="post.html" id="post-link"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a></li>
-            <li><a href="profile.html" class="active"><i class="material-icons">account_circle</i> আমার প্রোফাইল</a></li> 
-            <li><a href="auth.html" id="login-link-sidebar"><i class="material-icons">login</i> লগইন</a></li>
-            <li class="separator"></li>
-            <li><a href="#about-section"><i class="material-icons">info</i> আমার বাড়ি সম্পর্কে</a></li>
-            <li><a href="#tips-section"><i class="material-icons">lightbulb</i> টিপস ও পরামর্শ</a></li>
-            <li><a href="#contact-section"><i class="material-icons">phone</i> যোগাযোগ</a></li>
-        </ul>
-    </nav>
+    <div class="sidebar" id="sidebar">
+        <nav class="sidebar-nav">
+            <a href="index.html" id="home-link-sidebar" class="sidebar-link active"><i class="material-icons">home</i> হোম</a>
+            <a href="post.html" id="post-link" class="sidebar-link"><i class="material-icons">add_circle</i> প্রপার্টি পোস্ট করুন</a>
+            <a href="tips.html" id="tips-link-sidebar" class="sidebar-link"><i class="material-icons">lightbulb</i> প্রপার্টি টিপস</a>
+            <a href="about.html" id="about-link-sidebar" class="sidebar-link"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html" id="contact-link-sidebar" class="sidebar-link"><i class="material-icons">mail</i> যোগাযোগ</a>
+            <div class="sidebar-divider"></div>
+            <a href="auth.html" id="login-link-sidebar" class="sidebar-link"><i class="material-icons">login</i> লগইন</a>
+        </nav>
+    </div>
     <div class="overlay" id="overlay"></div>
 
     <main class="main-content container">
-        <h2 class="section-title">আমার প্রোফাইল</h2>
-        <p id="auth-status" class="auth-message"></p>
+        <div class="profile-container">
+            <h2 style="color: #3498db; margin-top: 0;">ব্যবহারকারীর ড্যাশবোর্ড</h2>
 
-        <div class="profile-header-card">
-            <img id="profile-pic-display" src="https://via.placeholder.com/150?text=Profile" alt="প্রোফাইল ছবি" class="profile-avatar">
-            <h3 id="profile-name-display">ব্যবহারকারীর নাম</h3>
-            <p id="profile-email-display" class="profile-email-text"></p>
-        </div>
-
-        <div class="tab-navigation">
-            <button class="tab-button active" data-tab="profile-info">ব্যক্তিগত তথ্য</button>
-            <button class="tab-button" data-tab="my-properties">আমার প্রপার্টিগুলো</button>
-            <button class="tab-button" data-tab="saved-properties">সেভ করা প্রপার্টি</button>
-        </div>
-        
-        <div class="tab-content active" id="profile-info">
-            <form id="profile-update-form" class="form-container">
-                <h3 class="subsection-title">প্রোফাইল আপডেট</h3>
-                <div class="input-group">
-                    <label for="profile-name">নাম:</label>
-                    <input type="text" id="profile-name" required>
+            <div class="profile-header-card">
+                <img id="user-avatar" class="profile-avatar" src="images/default-avatar.png" alt="প্রোফাইল ছবি">
+                <div class="profile-info">
+                    <h2 id="display-name">লোড হচ্ছে...</h2>
+                    <p id="user-email">ইমেইল: লোড হচ্ছে...</p>
+                    <p id="user-phone">ফোন: যুক্ত করা হয়নি</p>
                 </div>
-                <div class="input-group">
-                    <label for="profile-phone">মোবাইল নম্বর:</label>
-                    <input type="tel" id="profile-phone" placeholder="উদাহরণ: ০১৭-xxxxxxxx" pattern="[0-9]{11}" required>
-                </div>
-                <div class="input-group">
-                    <label for="profile-bio">সংক্ষিপ্ত পরিচয় (Bio):</label>
-                    <textarea id="profile-bio" rows="4" placeholder="আপনি একজন রিয়েল এস্টেট এজেন্ট, মালিক বা সাধারণ ক্রেতা - সংক্ষেপে লিখুন।"></textarea>
-                </div>
-                <div class="input-group">
-                    <label for="profile-pic-input">প্রোফাইল ছবি পরিবর্তন:</label>
-                    <input type="file" id="profile-pic-input" accept="image/*">
-                </div>
-                <button type="submit" id="update-profile-btn">প্রোফাইল আপডেট করুন</button>
-            </form>
-            
-            <button id="password-reset-btn" class="secondary-btn">পাসওয়ার্ড রিসেট ইমেইল পাঠান</button>
-            
-        </div>
-
-        <div class="tab-content" id="my-properties">
-            <h3 class="subsection-title">পোস্ট করা প্রপার্টি</h3>
-            <div class="property-grid" id="my-properties-grid">
-                <p id="no-properties-message">আপনি এখনো কোনো প্রপার্টি পোস্ট করেননি।</p>
             </div>
-        </div>
-
-        <div class="tab-content" id="saved-properties">
-            <h3 class="subsection-title">সেভ করা প্রপার্টি</h3>
-            <div class="property-grid" id="saved-properties-grid">
-                <p>ফিচারটি এখনো সম্পূর্ণ হয়নি। আপনার সেভ করা প্রপার্টি এখানে দেখতে পাবেন।</p>
+            
+            <div class="tab-nav">
+                <button class="tab-button active" data-tab="properties">আমার প্রপার্টিজ</button>
+                <button class="tab-button" data-tab="edit">প্রোফাইল এডিট</button>
+                <button class="tab-button" data-tab="security">পাসওয়ার্ড/নিরাপত্তা</button>
             </div>
-        </div>
 
+            <div id="properties-tab" class="tab-content-item active">
+                <div id="my-properties-list">
+                    </div>
+                <div id="empty-properties-message" class="empty-message" style="display: none;">
+                    <p>আপনার কোনো প্রপার্টি পোস্ট করা হয়নি।</p>
+                    <a href="post.html">এখন একটি পোস্ট করুন</a>
+                </div>
+            </div>
+
+            <div id="edit-tab" class="tab-content-item">
+                <form id="edit-profile-form">
+                    <div class="input-group">
+                        <label for="edit-full-name">পুরো নাম:</label>
+                        <input type="text" id="edit-full-name" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-phone-number">ফোন নম্বর:</label>
+                        <input type="tel" id="edit-phone-number">
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-address">ঠিকানা (ঐচ্ছিক):</label>
+                        <textarea id="edit-address" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="edit-profile-picture">প্রোফাইল ছবি আপলোড:</label>
+                        <input type="file" id="edit-profile-picture" accept="image/*">
+                    </div>
+                    
+                    <button type="submit" id="update-profile-btn">আপডেট করুন</button>
+                </form>
+            </div>
+
+            <div id="security-tab" class="tab-content-item">
+                <h3>পাসওয়ার্ড পরিবর্তন</h3>
+                <div class="input-group">
+                    <p>নিরাপত্তার জন্য, আমরা পাসওয়ার্ড রিসেট ইমেইল ফাংশন ব্যবহার করার পরামর্শ দিচ্ছি। এটি আপনার অ্যাকাউন্টে একটি রিসেট লিঙ্ক পাঠাবে।</p>
+                    <button type="button" id="send-reset-email-btn">পাসওয়ার্ড রিসেট ইমেইল পাঠান</button>
+                </div>
+                
+                <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
+                
+                <h3>অ্যাকাউন্ট নিয়ন্ত্রণ</h3>
+                <div class="input-group">
+                    <button type="button" id="logout-btn" style="background-color: #e74c3c;">লগআউট করুন</button>
+                </div>
+            </div>
+
+        </div>
     </main>
 
     <footer class="footer">
@@ -125,29 +285,5 @@
     </footer>
     
     <script src="profile.js"></script> 
-    <script>
-        // প্রোফাইল পেইজের জন্য শুধুমাত্র সাইডবার কার্যকারিতা (আপনার অন্যান্য ফাইলের মত)
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuButton = document.getElementById('menuButton');
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            
-            // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
-            if (menuButton) {
-                menuButton.addEventListener('click', () => {
-                    sidebar.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                });
-            }
-
-            // ওভারলেতে ক্লিক করলে সাইড মেনু বন্ধ হবে
-            if (overlay) {
-                overlay.addEventListener('click', () => {
-                    sidebar.classList.remove('active');
-                    overlay.classList.remove('active');
-                });
-            }
-        });
-    </script>
 </body>
-</html>
+    </html>
