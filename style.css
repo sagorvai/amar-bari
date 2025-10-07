@@ -54,16 +54,20 @@ a {
     box-sizing: border-box;
 }
 
+/* ✅ ১ নং সংশোধন: মেনু বাটন এবং সাইটের নাম গ্রুপ */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* মেনু আইকন এবং লোগো টাইটেলের মধ্যে দূরত্ব */
+}
+
 .logo-title {
     display: flex;
     align-items: center;
     color: #2ecc71; /* লোগো কালার */
     font-size: 20px;
     font-weight: 700;
-    white-space: nowrap; /* ছোট স্ক্রিনে টেক্সট ভাঙা বন্ধ করতে */
-    /* মেনু বাটন এবং অ্যাকশন বাটনগুলির মধ্যে লোগোকে মাঝখানে রাখতে সাহায্য করবে */
-    flex-grow: 0; 
-    flex-shrink: 0;
+    white-space: nowrap; 
 }
 
 .logo-icon {
@@ -580,13 +584,19 @@ h2 {
         padding: 0 8px; 
     }
 
+    /* ১ নং সংশোধন: লোগো টেক্সট ছোট স্ক্রিনে দৃশ্যমান রাখতে */
     .logo-title span {
-        /* ছোট স্ক্রিনে লোগো টেক্সট লুকানো */
-        display: none; 
+        display: inline; 
+        font-size: 16px; 
+        font-weight: 600;
     }
     
     .logo-title .logo-icon {
-        font-size: 28px;
+        font-size: 24px;
+    }
+    
+    .header-left {
+        gap: 5px; /* ছোট স্ক্রিনে দূরত্ব কমানো */
     }
 
     .desktop-only {
