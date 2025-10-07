@@ -1,4 +1,4 @@
-/* ====================================
+/* =====================================
    ১. বেসিক এবং সাধারণ স্টাইল
    ==================================== */
 body {
@@ -28,8 +28,9 @@ a {
     min-height: calc(100vh - 170px); /* হেডার ও ফুটারের জন্য জায়গা রাখা */
 }
 
-/* ====================================
-   ২. ফিক্সড হেডার এবং নেভিগেশন
+
+/* =====================================
+   ২. ফিক্সড হেডার এবং নেভিগেশন (পরিবর্তিত)
    ==================================== */
 .main-header {
     width: 100%;
@@ -41,94 +42,142 @@ a {
     z-index: 100;
 }
 
-/* টপ হেডার (মেনু, টাইটেল, প্রোফাইল) */
 .header-top {
+    /* Flexbox ব্যবহার করা হলো */
+    display: flex; 
+    /* লোগোকে মাঝখানে এবং অন্য উপাদানগুলিকে দুই প্রান্তে ঠেলে দেবে */
+    justify-content: space-between; 
+    /* উল্লম্বভাবে (vertically) সব উপাদানকে মাঝখানে আনবে */
+    align-items: center; 
+    height: 60px; /* হেডারের উচ্চতা নির্দিষ্ট করা হলো */
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+.logo-title {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 10px 15px;
-    background-color: #2e8b57; /* সবুজ রং */
-    color: white;
+    color: #2ecc71; /* লোগো কালার */
+    font-size: 20px;
+    font-weight: 700;
+    white-space: nowrap; /* ছোট স্ক্রিনে টেক্সট ভাঙা বন্ধ করতে */
+    /* মেনু বাটন এবং অ্যাকশন বাটনগুলির মধ্যে লোগোকে মাঝখানে রাখতে সাহায্য করবে */
+    flex-grow: 0; 
+    flex-shrink: 0;
 }
 
-.site-title {
-    font-size: 1.25rem;
-    font-weight: bold;
-    margin: 0;
+.logo-icon {
+    font-size: 24px;
+    margin-right: 5px;
 }
 
-.menu-button, .profile-button {
-    background: none;
-    border: none;
-    color: white;
+/* অ্যাকশন বাটন গ্রুপ - মেনু ও প্রোফাইল বাটন ডান দিকে */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* আইকন এবং পোস্ট বাটনের মধ্যে দূরত্ব */
+}
+
+/* মেনু এবং প্রোফাইল আইকনের সাধারণ স্টাইল */
+.menu-icon,
+.profile-icon {
     cursor: pointer;
-    padding: 5px;
+    font-size: 28px; /* আইকনের আকার */
+    color: #333;
+    transition: color 0.2s;
 }
 
-.menu-button i, .profile-button i {
-    font-size: 28px;
+.menu-icon:hover,
+.profile-icon:hover {
+    color: #2ecc71;
 }
 
-/* নেভিগেশন ফিল্টার এবং সার্চ বার */
+/* প্রপার্টি যোগ করার বাটন স্টাইল */
+.post-button {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background-color: #2ecc71;
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.post-button:hover {
+    background-color: #27ae60;
+}
+
+.post-button .material-icons {
+    font-size: 20px;
+    margin-right: 5px;
+}
+
+/* সার্চ বার স্টাইল */
+.search-bar {
+    display: flex;
+    padding: 5px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.search-bar input {
+    flex-grow: 1;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px 0 0 5px;
+    font-size: 14px;
+}
+
+.search-bar button {
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.search-bar button:hover {
+    background-color: #2980b9;
+}
+
+/* নেভিগেশন ফিল্টার */
 .nav-filters {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 15px;
+    justify-content: center;
+    padding: 10px 15px;
     gap: 10px;
+    border-bottom: 1px solid #eee;
 }
 
 .nav-filters .nav-button {
     background: none;
     border: none;
-    padding: 8px 10px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
+    padding: 8px 15px;
+    font-size: 15px;
+    font-weight: 600;
     color: #555;
-    transition: all 0.2s ease;
-    flex-shrink: 0; /* ছোট স্ক্রিনে সঙ্কুচিত হওয়া রোধ */
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+
+.nav-filters .nav-button:hover {
+    background-color: #ecf0f1;
 }
 
 .nav-filters .nav-button.active {
-    color: #2e8b57;
-    border-bottom: 2px solid #2e8b57;
-    font-weight: bold;
+    background-color: #2ecc71;
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(46, 204, 113, 0.3);
 }
 
-/* সার্চ কন্টেইনার */
-.search-container {
-    display: flex;
-    align-items: center;
-    flex-grow: 1; 
-    margin-left: 15px;
-    background-color: #f0f0f0;
-    border-radius: 20px;
-    padding: 0 5px;
-}
 
-.search-input {
-    border: none;
-    background: none;
-    padding: 8px 10px;
-    font-size: 0.9rem;
-    width: 100%;
-    outline: none;
-}
-
-.search-icon-button {
-    background: none;
-    border: none;
-    color: #555;
-    cursor: pointer;
-    padding: 5px;
-}
-.search-icon-button i {
-    font-size: 20px;
-}
-
-/* ====================================
-   ৩. সাইডবার (Off-Canvas Menu) - সংশোধিত
+/* =====================================
+   ৩. সাইডবার স্টাইল
    ==================================== */
 .sidebar {
     position: fixed;
@@ -136,19 +185,60 @@ a {
     left: -280px; /* লুকানো অবস্থা */
     width: 260px;
     height: 100%;
-    background-color: #2c3e50; /* গাঢ় নীল ব্যাকগ্রাউন্ড */
-    color: white;
-    padding-top: 100px; /* হেডার এর নিচে থেকে শুরু */
-    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
+    background-color: #2c3e50; /* গাঢ় ব্যাকগ্রাউন্ড */
+    color: #ecf0f1;
+    padding-top: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    z-index: 200;
     transition: left 0.3s ease;
-    z-index: 150;
-    overflow-y: auto;
 }
 
 .sidebar.active {
     left: 0; /* দৃশ্যমান অবস্থা */
 }
 
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar a {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    color: #ecf0f1;
+    transition: background-color 0.2s, color 0.2s;
+    font-size: 16px;
+}
+
+.sidebar a:hover {
+    background-color: #34495e; /* হোভারে গাঢ় রঙ */
+    color: #2ecc71;
+}
+
+.sidebar a .material-icons {
+    margin-right: 10px;
+    font-size: 20px;
+}
+
+/* সাইডবার লোগো স্টাইল */
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #2ecc71;
+    border-bottom: 1px solid #34495e;
+}
+
+.sidebar-logo:hover {
+    background-color: transparent;
+    color: #2ecc71;
+}
+
+/* ওভারলে */
 .overlay {
     position: fixed;
     top: 0;
@@ -156,7 +246,7 @@ a {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 140;
+    z-index: 150;
     display: none;
 }
 
@@ -164,419 +254,283 @@ a {
     display: block;
 }
 
-.sidebar-nav {
-    display: flex;
-    flex-direction: column;
-    padding: 20px 0;
-}
-
-.sidebar-item {
-    padding: 15px 20px;
-    color: #ecf0f1;
-    text-decoration: none;
-    font-size: 1.1rem;
-    border-bottom: 1px solid #34495e;
-    display: flex;
-    align-items: center;
-    transition: background-color 0.2s;
-}
-
-.sidebar-item i {
-    margin-right: 15px;
-    font-size: 24px;
-}
-
-.sidebar-item:hover {
-    background-color: #34495e;
-    color: #ffffff;
-}
-
-/* 'প্রপার্টি যুক্ত করুন' লিঙ্ক থেকে সবুজ ব্যাকগ্রাউন্ড সরানো হলো */
-#post-link {
-    background-color: transparent; 
-    color: #ecf0f1; 
-}
-#post-link:hover {
-    background-color: #34495e; 
-}
-
-/* লগইন/লগআউট লিঙ্ক এর জন্য কাস্টম স্টাইল এবং আইকন যোগ করা হলো (HTML এ i ট্যাগ যোগ করতে হবে) */
-#login-link-sidebar {
-    border-top: 1px solid #34495e;
-    margin-top: 10px;
-    font-weight: bold;
-}
-#login-link-sidebar i { 
-    font-size: 24px;
-    margin-right: 15px; 
-}
-
-/* ====================================
-   ৪. প্রপার্টি গ্রিড এবং কার্ড
+/* =====================================
+   ৪. প্রপার্টি গ্রিড ও কার্ড স্টাইল
    ==================================== */
 .property-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-    padding: 20px 0;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
 }
 
 .property-card {
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    border-radius: 10px;
     overflow: hidden;
-    transition: transform 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .property-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
 }
 
-.property-image-container {
-    position: relative;
-}
-
-.property-card img {
+.property-image {
     width: 100%;
     height: 200px;
-    object-fit: cover;
+    background-size: cover;
+    background-position: center;
 }
 
-.property-tag {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background-color: #2e8b57; /* বিক্রয় ট্যাগ সবুজ */
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    z-index: 5;
-}
-
-.property-tag.rent-tag {
-    background-color: #ff8c00; /* ভাড়ার ট্যাগ কমলা */
-}
-
-.property-card-content {
+.property-info {
     padding: 15px;
 }
 
-.property-card-content h4 {
-    font-size: 1.15rem;
-    margin-bottom: 5px;
-    color: #2c3e50;
+.category-tag {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
 }
 
-.property-card-content .location {
-    font-size: 0.9rem;
-    color: #7f8c8d;
+.category-tag.sell {
+    background-color: #e74c3c; /* বিক্রয় - লাল */
+}
+
+.category-tag.rent {
+    background-color: #f39c12; /* ভাড়া - কমলা */
+}
+
+.property-info h3 {
+    margin: 5px 0 10px 0;
+    font-size: 18px;
+    color: #333;
+    line-height: 1.3;
+}
+
+.property-info .price {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2ecc71;
     margin-bottom: 10px;
+}
+
+.property-info .location {
+    font-size: 14px;
+    color: #777;
+    margin-bottom: 15px;
     display: flex;
     align-items: center;
 }
-.property-card-content .location i {
+
+.property-info .location .material-icons {
     font-size: 16px;
     margin-right: 5px;
+    color: #777;
 }
 
-.property-card-content .price {
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: #e74c3c; /* লালচে দাম */
-    margin-bottom: 10px;
-}
-
-.property-features {
+.property-card .details {
     display: flex;
-    gap: 15px;
-    margin-top: 10px;
-    color: #7f8c8d;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #555;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
 }
-.property-features span {
+
+.property-card .details span {
     display: flex;
     align-items: center;
-    font-size: 0.9rem;
 }
-.property-features i {
+
+.property-card .details .material-icons {
     font-size: 16px;
-    margin-right: 4px;
+    margin-right: 3px;
+    color: #3498db;
 }
 
-.placeholder-text {
-    grid-column: 1 / -1; /* গ্রিড জুড়ে ছড়িয়ে দিতে */
+/* নো রেজাল্ট মেসেজ স্টাইল */
+.loading-message, .no-results-message {
+    grid-column: 1 / -1;
     text-align: center;
-    padding: 40px;
-    border: 1px dashed #ccc;
-    border-radius: 8px;
-    color: #7f8c8d;
-    margin: 20px 0;
-    font-size: 1.1rem;
+    padding: 50px 0;
+    font-size: 18px;
+    color: #777;
 }
 
-/* ====================================
-   ৫. এবাউট সেকশন
+/* =====================================
+   ৫. অন্য সেকশন স্টাইল (টিপস, অ্যাবাউট, কন্টাক্ট)
    ==================================== */
-#about-section {
-    padding: 30px 20px;
-    margin-top: 20px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-#about-section h2 {
-    color: #2c3e50;
-    font-size: 2rem;
-    text-align: center;
-    margin-bottom: 30px;
-    border-bottom: 3px solid #3498db;
+h2 {
+    color: #2ecc71;
+    border-bottom: 2px solid #eee;
     padding-bottom: 10px;
+    margin-top: 40px;
+    margin-bottom: 20px;
 }
 
-.about-card {
-    background-color: #f9f9f9;
-    padding: 25px;
-    margin-bottom: 25px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    transition: transform 0.3s ease;
-}
-
-.about-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-}
-
-.about-card h3 {
-    color: #2e8b57; 
-    font-size: 1.5rem;
-    margin-top: 0;
-    margin-bottom: 15px;
-}
-
-.about-card p {
-    color: #555;
-    line-height: 1.7;
-}
-
-.about-card ul {
-    list-style: none;
-    padding: 0;
-}
-
-.about-card li {
-    background-color: #ecf0f1;
-    padding: 10px 15px;
-    border-radius: 5px;
-    margin-bottom: 8px;
-    border-left: 4px solid #3498db;
-    color: #34495e;
-}
-
-/* ====================================
-   ৬. পরামর্শ সেকশন (Tips)
-   ==================================== */
-#tips-section {
-    padding: 30px 20px;
-    margin-top: 20px;
-}
-
-#tips-section h2 {
-    text-align: center;
-    color: #e67e22; /* কমলা রং */
-    margin-bottom: 30px;
-}
-
-.tip-card-grid {
+/* টিপস এবং কন্টাক্ট কার্ডের জন্য গ্রিড */
+.tip-card-grid, .contact-card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
-}
-
-.tip-card {
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 8px;
-    border-left: 5px solid #e67e22;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.tip-card h3 {
-    color: #2c3e50;
-    margin-top: 0;
-    font-size: 1.3rem;
-}
-
-.tip-card p {
-    color: #555;
-    line-height: 1.6;
-    margin-bottom: 0;
-}
-
-/* ====================================
-   ৭. যোগাযোগ সেকশন (Contact)
-   ==================================== */
-#contact-section {
-    padding: 30px 20px;
-    margin-top: 20px;
-}
-
-#contact-section h2 {
-    text-align: center;
-    color: #3498db; /* নীল রং */
     margin-bottom: 30px;
 }
 
-.contact-card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.contact-card {
-    background-color: #ffffff;
+.tip-card, .contact-card {
+    background-color: #fff;
     padding: 20px;
     border-radius: 8px;
-    text-align: center;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-}
-.contact-card:hover {
-    transform: translateY(-3px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.contact-card i {
-    font-size: 40px;
+.tip-card h3, .contact-card h3 {
     color: #3498db;
+    font-size: 18px;
+    margin-top: 0;
+    border-bottom: 1px dashed #eee;
+    padding-bottom: 10px;
     margin-bottom: 10px;
 }
 
-.contact-card h3 {
-    color: #2c3e50;
-    margin-top: 5px;
-    font-size: 1.2rem;
-}
-
-.contact-card p {
-    color: #555;
-    font-size: 1.1rem;
-    font-weight: 500;
-}
-
-.contact-card.phone i {
-    color: #2e8b57;
-}
-
-.contact-card.email i {
-    color: #e74c3c;
+.contact-card .material-icons {
+    font-size: 30px;
+    color: #2ecc71;
+    margin-bottom: 10px;
 }
 
 .social-links {
-    text-align: center;
     margin-top: 20px;
-}
-
-.social-links a {
-    display: inline-block;
-    margin: 0 10px;
-    border-radius: 50%;
-    overflow: hidden;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
 }
 
 .social-links img {
-    width: 35px;
-    height: 35px;
-    display: block;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
 }
 
-.follow-us {
-    text-align: center;
-    font-weight: bold;
-    margin-top: 40px;
-    color: #34495e;
-}
-
-/* ====================================
-   ৮. অন্যান্য ফর্ম এবং ফুটার স্টাইল - সংশোধিত
+/* =====================================
+   ৬. ফর্ম স্টাইল (অন্যান্য পেইজের জন্য)
    ==================================== */
+.form-container {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
 
-/* ইনপুট গ্রুপ স্টাইল (post.html ও auth.html এর জন্য) - মার্জিত ডিজাইনের জন্য পরিবর্তন */
+.form-container h2 {
+    text-align: center;
+    color: #333;
+    border-bottom: none;
+}
+
 .input-group {
-    margin-bottom: 12px; /* ১৫পিক্সেল থেকে কমানো হয়েছে */
+    margin-bottom: 20px;
 }
 
 .input-group label {
     display: block;
-    margin-bottom: 4px; /* ৫পিক্সেল থেকে কমানো হয়েছে */
-    font-weight: 500;
-    color: #34495e;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #555;
 }
 
-.input-group input[type="text"],
 .input-group input[type="email"],
 .input-group input[type="password"],
+.input-group input[type="text"],
+.input-group input[type="number"],
 .input-group input[type="tel"],
 .input-group input[type="url"],
-.input-group input[type="number"],
 .input-group select,
 .input-group textarea {
     width: 100%;
-    padding: 10px; /* ১২পিক্সেল থেকে ১০পিক্সেল করা হলো */
+    padding: 10px;
+    border: 1px solid #ccc;
     border-radius: 5px;
-    border: 1px solid #ddd;
     box-sizing: border-box;
-    font-size: 0.95rem; /* ফন্ট সাইজ সামান্য কমানো হলো */
+    font-size: 16px;
+    font-family: inherit;
 }
 
-.input-group input:focus,
-.input-group select:focus,
-.input-group textarea:focus {
-    border-color: #2ecc71;
-    outline: none;
-}
-
-/* ইনলাইন ইনপুট */
-.input-inline {
-    display: flex;
-    gap: 10px; /* ১৫পিক্সেল থেকে কমানো হয়েছে */
-    margin-bottom: 12px; /* ১৫পিক্সেল থেকে কমানো হয়েছে */
-}
-
-.input-inline .input-group {
-    flex: 1;
-    margin-bottom: 0; 
-}
-
-/* বাটন স্টাইল - 'সাবমিট করুন' বাটন ছোট করা হয়েছে */
-.post-container button[type="submit"], .auth-container button[type="submit"] {
+.form-container button[type="submit"],
+.form-container button[type="button"] {
     width: 100%;
-    padding: 10px; /* ১২পিক্সেল থেকে ১০পিক্সেল করা হলো */
-    margin-top: 15px; /* ২০পিক্সেল থেকে কমানো হয়েছে */
-    background-color: #2ecc71; 
-    color: #ffffff;
+    padding: 12px;
     border: none;
     border-radius: 5px;
+    background-color: #3498db;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
     cursor: pointer;
-    font-size: 1rem; /* ১.১রিম থেকে কমানো হলো */
-    font-weight: bold;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.2s;
 }
 
-.post-container button[type="submit"]:hover, .auth-container button[type="submit"]:hover {
-    background-color: #27ae60;
+.form-container button[type="submit"]:hover,
+.form-container button[type="button"]:hover {
+    background-color: #2980b9;
 }
 
-.post-container button[type="submit"]:disabled {
+.form-container button[type="submit"]:disabled {
     background-color: #95a5a6;
     cursor: not-allowed;
 }
 
-/* ফুটার */
+/* অন্যান্য ফর্ম স্টাইল */
+.switch-form {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.switch-form a {
+    color: #2ecc71;
+    font-weight: 600;
+}
+
+/* প্রোফাইল ট্যাব স্টাইল (profile.html-এর জন্য) */
+.tab-navigation {
+    display: flex;
+    justify-content: flex-start;
+    border-bottom: 2px solid #eee;
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    background: none;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    color: #777;
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, border-bottom-color 0.2s;
+}
+
+.tab-button.active {
+    color: #2ecc71;
+    border-bottom-color: #2ecc71;
+}
+
+.tab-content-item {
+    padding: 10px 0;
+}
+
+/* =====================================
+   ৭. ফুটার
+   ==================================== */
 .footer {
     background-color: #2c3e50;
     color: #bdc3c7;
@@ -589,18 +543,22 @@ a {
     margin: 0;
 }
 
-/* অতিরিক্ত ছোট স্ক্রিনের জন্য সামঞ্জস্য - সাইড প্যাডিং কমানো হলো */
+/* =====================================
+   ৮. রেসপনসিভনেস (Responsive Design)
+   ==================================== */
+
+/* অতিরিক্ত ছোট স্ক্রিনের জন্য সামঞ্জস্য (৬০০পিক্সেলের নিচে) */
 @media (max-width: 600px) {
     /* কন্টেইনারের সাইড প্যাডিং কমানো হলো */
     .container {
-        padding: 0 8px; /* ১৫পিক্সেল থেকে ৮পিক্সেল করা হলো */
+        padding: 0 8px; 
     }
     
     .property-grid {
         grid-template-columns: 1fr;
     }
     
-    .contact-card-grid, .tip-card-grid {
+    .tip-card-grid, .contact-card-grid {
         grid-template-columns: 1fr;
     }
 
@@ -609,30 +567,52 @@ a {
         /* নেভ-ফিল্টারের প্যাডিং কমানো হলো */
         padding: 5px 8px; 
     }
-    .header-top {
-        padding: 10px 8px; /* হেডার-টপের প্যাডিং কমানো হলো */
-    }
-
+    
     .nav-filters .nav-button {
         /* বাটন প্যাডিং সামান্য কমানো হলো */
-        padding: 8px 6px; 
-        flex-grow: 1;
-        width: auto;
-    }
-    
-    .search-container {
-        width: 100%;
-        margin-left: 0;
-        margin-top: 10px;
-        /* সার্চ কন্টেইনারের প্যাডিং কমানো হলো */
-        padding: 0 3px; 
+        padding: 6px 10px;
+        font-size: 14px;
     }
 
-    /* সেকশন প্যাডিং কমানো হলো */
-    #about-section, #tips-section, #contact-section {
-        padding: 30px 10px; 
+    /* হেডার পরিবর্তন */
+    .header-top {
+        height: 50px; /* হেডারের উচ্চতা কমানো হলো */
+        padding: 0 8px; 
     }
-    .property-card-content {
-        padding: 10px; /* কার্ডের ভেতরের প্যাডিং কমানো হলো */
+
+    .logo-title span {
+        /* ছোট স্ক্রিনে লোগো টেক্সট লুকানো */
+        display: none; 
     }
-}
+    
+    .logo-title .logo-icon {
+        font-size: 28px;
+    }
+
+    .desktop-only {
+        /* ছোট স্ক্রিনে 'প্রপার্টি যোগ করুন' টেক্সট লুকানো হলো */
+        display: none !important; 
+    }
+    
+    .post-button {
+        /* শুধুমাত্র আইকন দেখানোর জন্য প্যাডিং ঠিক করা */
+        padding: 6px; 
+        border-radius: 50%; /* গোল বাটন */
+    }
+    
+    .post-button .material-icons {
+        margin-right: 0;
+    }
+
+    .search-bar {
+        padding: 5px 8px;
+    }
+    .search-bar input {
+        font-size: 13px;
+    }
+
+    /* ফিক্সড হেডারের জন্য কন্টেন্টকে নিচে নামানো */
+    body {
+        padding-top: 150px; /* হেডার ৩ লাইনের জন্য জায়গা রাখা হলো */
+    }
+   }
