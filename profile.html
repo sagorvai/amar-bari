@@ -45,7 +45,7 @@
                 <i class="material-icons profile-icon" id="profileButton">person</i>
             </div>
         </div>
-        </header>
+    </header>
 
     <div class="sidebar" id="sidebar">
         <nav>
@@ -53,15 +53,12 @@
                 <i class="material-icons">home</i> 
                 <span>আমার বাড়ি.কম</span>
             </a>
-            
             <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
             <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
             <a href="#" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
             <a href="#" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
             <a href="#" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            
             <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
         </nav>
     </div>
 
@@ -77,20 +74,22 @@
                     <h3 id="display-name">নাম লোড হচ্ছে...</h3>
                     <p><i class="material-icons">email</i> <span id="user-email">ইমেইল লোড হচ্ছে...</span></p>
                     <p><i class="material-icons">phone</i> <span id="user-phone">ফোন নম্বর: (নেই)</span></p>
-                    <div style="margin-top: 15px;">
-                        <button type="button" id="logout-btn" style="background-color: #e74c3c; width: auto; padding: 8px 15px;">লগআউট করুন</button>
+                    
+                    <div style="margin-top: 20px;">
+                        <button type="button" id="edit-profile-show-btn" class="button-primary" style="width: auto; padding: 8px 15px; margin-right: 10px;">
+                            প্রোফাইল সম্পাদনা
+                        </button>
+                        
+                        <button type="button" id="logout-btn" style="background-color: #e74c3c; width: auto; padding: 8px 15px;">
+                            লগআউট করুন
+                        </button>
                     </div>
                 </div>
             </div>
 
             <hr style="margin: 30px 0;">
 
-            <div class="tab-navigation">
-                <button class="tab-button active" data-tab="profile-tab">প্রোফাইল সম্পাদনা</button>
-                <button class="tab-button" data-tab="my-posts-tab">আমার পোস্ট</button>
-            </div>
-
-            <div id="profile-tab" class="tab-content-item active">
+            <div id="edit-profile-section" style="display: none; margin-bottom: 40px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff;">
                 <h3>প্রোফাইল তথ্য আপডেট</h3>
                 <form id="edit-profile-form">
                     <div class="input-group">
@@ -111,18 +110,18 @@
                         <input type="file" id="edit-profile-picture" accept="image/*">
                     </div>
                     
-                    <button type="submit" id="update-profile-btn">আপডেট করুন</button>
+                    <button type="submit" id="update-profile-btn">আপডেট সংরক্ষণ করুন</button>
+                    <button type="button" id="edit-profile-hide-btn" style="background-color: #95a5a6; margin-top: 10px;">বাতিল করুন</button>
                 </form>
             </div>
 
-            <div id="my-posts-tab" class="tab-content-item" style="display: none;">
-                <h3>আমার আপলোড করা প্রপার্টিগুলো</h3>
-                
-                <div id="my-properties-list" class="property-grid" style="margin-top: 20px;">
-                    </div>
 
-                <p id="empty-properties-message" class="no-results-message" style="display: none; grid-column: 1 / -1;">আপনি এখনও কোনো প্রপার্টি আপলোড করেননি।</p>
-            </div>
+            <h3>আমার আপলোড করা প্রপার্টিগুলো</h3>
+            
+            <div id="my-properties-list" class="property-grid" style="margin-top: 20px;">
+                </div>
+
+            <p id="empty-properties-message" class="no-results-message" style="display: none; grid-column: 1 / -1;">আপনি এখনও কোনো প্রপার্টি আপলোড করেননি।</p>
 
         </div>
     </main>
@@ -135,4 +134,4 @@
     
     <script src="profile.js"></script> 
 </body>
-                        </html>
+                                  </html>
