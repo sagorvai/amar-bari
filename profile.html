@@ -21,225 +21,86 @@
         projectId: "amar-bari-website",
         storageBucket: "amar-bari-website.firebasestorage.app",
         messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765290b351221f7d56"
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
       };
       
-      // Firebase অ্যাপ ইনিশিয়ালাইজ করা
       if (!firebase.apps.length) {
-          firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
       }
     </script>
-
-    <style>
-        /* প্রোফাইল পেজের জন্য নির্দিষ্ট স্টাইল */
-        .profile-container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-        }
-
-        /* ১. প্রোফাইল হেডার কার্ড */
-        .profile-header-card {
-            display: flex;
-            align-items: center;
-            padding: 20px;
-            margin-bottom: 20px;
-            background-color: #ecf0f1;
-            border-radius: 6px;
-        }
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 20px;
-            border: 3px solid #3498db;
-        }
-        .profile-info h2 {
-            margin: 0 0 5px 0;
-            color: #2c3e50;
-        }
-        .profile-info p {
-            margin: 0;
-            color: #7f8c8d;
-        }
-
-        /* ২. ট্যাব নেভিগেশন */
-        .tab-nav {
-            display: flex;
-            border-bottom: 2px solid #bdc3c7;
-            margin-bottom: 20px;
-        }
-        .tab-button {
-            padding: 10px 20px;
-            cursor: pointer;
-            border: none;
-            background-color: transparent;
-            font-size: 16px;
-            color: #34495e;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s ease-in-out;
-        }
-        .tab-button.active {
-            color: #3498db;
-            border-bottom-color: #3498db;
-            font-weight: 600;
-        }
-
-        /* ট্যাব কন্টেন্ট */
-        .tab-content-item {
-            display: none;
-        }
-        .tab-content-item.active {
-            display: block;
-        }
-        
-        /* প্রপার্টি কার্ড স্টাইল (index.css থেকে ধার করা) */
-        .property-card {
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #f9f9f9;
-        }
-        .property-card-details h4 {
-            margin: 0 0 5px 0;
-            color: #2c3e50;
-        }
-        .property-card-details p {
-            margin: 0 0 5px 0;
-            font-size: 0.9em;
-            color: #7f8c8d;
-        }
-        .property-card-actions button {
-            margin-left: 10px;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .property-card-actions .edit-btn {
-            background-color: #3498db;
-            color: white;
-        }
-        .property-card-actions .delete-btn {
-            background-color: #e74c3c;
-            color: white;
-        }
-        .property-card-actions .edit-btn:hover { background-color: #2980b9; }
-        .property-card-actions .delete-btn:hover { background-color: #c0392b; }
-
-        /* ফর্ম স্টাইল (post.css থেকে ধার করা) */
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        .input-group input, .input-group textarea, .input-group button {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .input-group button {
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .input-group button:hover {
-            background-color: #27ae60;
-        }
-        .empty-message {
-            text-align: center;
-            padding: 30px;
-            background-color: #f7f7f7;
-            border-radius: 4px;
-            margin-top: 20px;
-        }
-        .empty-message a {
-            display: inline-block;
-            margin-top: 15px;
-            background-color: #3498db;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 4px;
-        }
-    </style>
 </head>
 <body>
+
     <header class="main-header">
-        <div class="header-top container">
-            <a href="index.html" class="logo">
-                <img src="images/logo-placeholder.png" alt="আমার বাড়ি.কম লোগো" width="40">
-                <h1>আমার বাড়ি.কম</h1>
-            </a>
-            <nav class="nav-links">
-                <a href="profile.html" id="profileButton" class="nav-button profile-btn" style="display: none;">
-                    <i class="material-icons">account_circle</i> প্রোফাইল
+        <div class="header-top">
+            
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                <a href="index.html" class="logo-title">
+                    <i class="material-icons logo-icon">home</i> 
+                    <span>আমার বাড়ি.কম</span>
                 </a>
-                <button id="menuButton" class="menu-button">
-                    <i class="material-icons">menu</i>
-                </button>
-            </nav>
+            </div>
+            
+            <div class="header-actions">
+                <a href="post.html" class="post-button" id="post-link">
+                    <i class="material-icons">add_home</i>
+                    <span class="desktop-only">প্রপার্টি যোগ করুন</span>
+                </a>
+                
+                </div>
         </div>
-    </header>
+
+        </header>
 
     <div class="sidebar" id="sidebar">
-        <nav class="sidebar-nav">
-            <a href="index.html" id="home-link-sidebar" class="sidebar-link active"><i class="material-icons">home</i> হোম</a>
-            <a href="post.html" id="post-link" class="sidebar-link"><i class="material-icons">add_circle</i> প্রপার্টি পোস্ট করুন</a>
-            <a href="tips.html" id="tips-link-sidebar" class="sidebar-link"><i class="material-icons">lightbulb</i> প্রপার্টি টিপস</a>
-            <a href="about.html" id="about-link-sidebar" class="sidebar-link"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html" id="contact-link-sidebar" class="sidebar-link"><i class="material-icons">mail</i> যোগাযোগ</a>
-            <div class="sidebar-divider"></div>
-            <a href="auth.html" id="login-link-sidebar" class="sidebar-link"><i class="material-icons">login</i> লগইন</a>
+        <nav>
+            <a href="index.html" class="sidebar-logo">
+                <i class="material-icons">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
+            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            <a href="#" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="#" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="#" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            
         </nav>
     </div>
+
     <div class="overlay" id="overlay"></div>
 
     <main class="main-content container">
-        <div class="profile-container">
-            <h2 style="color: #3498db; margin-top: 0;">ব্যবহারকারীর ড্যাশবোর্ড</h2>
+        <div class="form-container" style="max-width: 900px; padding-top: 50px;">
+            <h2>প্রোফাইল ড্যাশবোর্ড</h2>
 
-            <div class="profile-header-card">
-                <img id="user-avatar" class="profile-avatar" src="images/default-avatar.png" alt="প্রোফাইল ছবি">
-                <div class="profile-info">
-                    <h2 id="display-name">লোড হচ্ছে...</h2>
-                    <p id="user-email">ইমেইল: লোড হচ্ছে...</p>
-                    <p id="user-phone">ফোন: যুক্ত করা হয়নি</p>
-                </div>
-            </div>
-            
-            <div class="tab-nav">
-                <button class="tab-button active" data-tab="properties">আমার প্রপার্টিজ</button>
-                <button class="tab-button" data-tab="edit">প্রোফাইল এডিট</button>
-                <button class="tab-button" data-tab="security">পাসওয়ার্ড/নিরাপত্তা</button>
-            </div>
-
-            <div id="properties-tab" class="tab-content-item active">
-                <div id="my-properties-list">
+            <div class="user-info-display">
+                <img id="user-avatar" src="https://via.placeholder.com/100" alt="ইউজার ছবি" class="profile-avatar">
+                <div class="user-details">
+                    <h3 id="display-name">নাম লোড হচ্ছে...</h3>
+                    <p><i class="material-icons">email</i> <span id="user-email">ইমেইল লোড হচ্ছে...</span></p>
+                    <p><i class="material-icons">phone</i> <span id="user-phone">ফোন নম্বর: (নেই)</span></p>
+                    <div style="margin-top: 15px;">
+                        <button type="button" id="logout-btn" style="background-color: #e74c3c; width: auto; padding: 8px 15px;">লগআউট করুন</button>
                     </div>
-                <div id="empty-properties-message" class="empty-message" style="display: none;">
-                    <p>আপনার কোনো প্রপার্টি পোস্ট করা হয়নি।</p>
-                    <a href="post.html">এখন একটি পোস্ট করুন</a>
                 </div>
             </div>
 
-            <div id="edit-tab" class="tab-content-item">
+            <hr style="margin: 30px 0;">
+
+            <div class="tab-navigation">
+                <button class="tab-button active" data-tab="profile-tab">প্রোফাইল সম্পাদনা</button>
+                <button class="tab-button" data-tab="my-posts-tab">আমার পোস্ট</button>
+            </div>
+
+            <div id="profile-tab" class="tab-content-item active">
+                <h3>প্রোফাইল তথ্য আপডেট</h3>
                 <form id="edit-profile-form">
                     <div class="input-group">
-                        <label for="edit-full-name">পুরো নাম:</label>
+                        <label for="edit-full-name">পূর্ণ নাম:</label>
                         <input type="text" id="edit-full-name" required>
                     </div>
                     <div class="input-group">
@@ -247,7 +108,7 @@
                         <input type="tel" id="edit-phone-number">
                     </div>
                     <div class="input-group">
-                        <label for="edit-address">ঠিকানা (ঐচ্ছিক):</label>
+                        <label for="edit-address">ঠিকানা:</label>
                         <textarea id="edit-address" rows="3"></textarea>
                     </div>
                     
@@ -260,19 +121,13 @@
                 </form>
             </div>
 
-            <div id="security-tab" class="tab-content-item">
-                <h3>পাসওয়ার্ড পরিবর্তন</h3>
-                <div class="input-group">
-                    <p>নিরাপত্তার জন্য, আমরা পাসওয়ার্ড রিসেট ইমেইল ফাংশন ব্যবহার করার পরামর্শ দিচ্ছি। এটি আপনার অ্যাকাউন্টে একটি রিসেট লিঙ্ক পাঠাবে।</p>
-                    <button type="button" id="send-reset-email-btn">পাসওয়ার্ড রিসেট ইমেইল পাঠান</button>
-                </div>
+            <div id="my-posts-tab" class="tab-content-item" style="display: none;">
+                <h3>আমার আপলোড করা প্রপার্টিগুলো</h3>
                 
-                <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
-                
-                <h3>অ্যাকাউন্ট নিয়ন্ত্রণ</h3>
-                <div class="input-group">
-                    <button type="button" id="logout-btn" style="background-color: #e74c3c;">লগআউট করুন</button>
-                </div>
+                <div id="my-properties-list" class="property-grid" style="margin-top: 20px;">
+                    </div>
+
+                <p id="empty-properties-message" class="no-results-message" style="display: none; grid-column: 1 / -1;">আপনি এখনও কোনো প্রপার্টি আপলোড করেননি।</p>
             </div>
 
         </div>
@@ -286,4 +141,4 @@
     
     <script src="profile.js"></script> 
 </body>
-    </html>
+            </html>
