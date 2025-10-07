@@ -70,7 +70,7 @@ a {
 }
 
 .profile-button {
-    display: flex; /* ✅ গুরুত্বপূর্ণ: এটি index.js এর সাথে মেলে */
+    display: flex; /* ✅ সঠিক ডিসপ্লে মান */
     align-items: center;
     gap: 5px;
     padding: 8px 12px;
@@ -589,4 +589,4 @@ a {
     .auth-container, .post-container, .profile-header-card {
         margin: 20px 8px;
     }
-       }
+   }
