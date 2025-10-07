@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const editAddressInput = document.getElementById('edit-address');
     const editProfilePictureInput = document.getElementById('edit-profile-picture');
     const updateProfileBtn = document.getElementById('update-profile-btn');
-    const logoutBtn = document.getElementById('logout-btn');
+    // ✅ লগআউট বাটন সরানো হয়েছে
 
 
     // --- ১. অথেন্টিকেশন স্টেট এবং ইউজার প্রোফাইল লোড করা ---
@@ -148,23 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    // --- ৫. লগআউট হ্যান্ডেলার ---
-    const handleLogout = async () => {
-        try {
-            await auth.signOut();
-            alert('সফলভাবে লগআউট করা হয়েছে!');
-            // লগআউট এর পর হোমপেজে রিডাইরেক্ট
-            window.location.href = 'index.html'; 
-        } catch (error) {
-            console.error("লগআউট ব্যর্থ হয়েছে:", error);
-            alert("লগআউট ব্যর্থ হয়েছে।");
-        }
-    };
-    
-    // লগআউট বাটন লিসেনার
-    logoutBtn.addEventListener('click', handleLogout);
-
-    // --- ৬. সাইডবার কার্যকারিতা ---
+    // --- ৫. সাইডবার কার্যকারিতা ---
     const menuButton = document.getElementById('menuButton');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
