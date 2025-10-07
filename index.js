@@ -2,29 +2,6 @@
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// UI elements
-const postLink = document.getElementById('post-link'); // সাইডবার প্রপার্টি লিঙ্ক
-const menuButton = document.getElementById('menuButton');
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('overlay');
-const profileButton = document.getElementById('profileButton'); // ✅ নিশ্চিত করা হয়েছে
-const navButtons = document.querySelectorAll('.nav-filters .nav-button');
-const globalSearchInput = document.getElementById('globalSearchInput');
-const propertyGrid = document.querySelector('.property-grid');
-const loginLinkSidebar = document.getElementById('login-link-sidebar'); // সাইডবার লগইন লিঙ্ক
-
-// নতুন যুক্ত সেকশনের উপাদান
-const homeLinkSidebar = document.getElementById('home-link-sidebar');
-const tipsLinkSidebar = document.getElementById('tips-link-sidebar');
-const aboutLinkSidebar = document.getElementById('about-link-sidebar');
-const contactLinkSidebar = document.getElementById('contact-link-sidebar');
-
-const propertyGridContainer = document.getElementById('property-grid-container');
-const aboutSection = document.getElementById('about-section');
-const tipsSection = document.getElementById('tips-section');
-const contactSection = document.getElementById('contact-section');
-
-
 // --- ডামি ডেটা (কার্যকারিতা পরীক্ষার জন্য) ---
 const dummyProperties = [
     {
@@ -88,8 +65,9 @@ function createPropertyCard(property) {
 
 // --- ফাংশন: প্রপার্টি লোড ও ডিসপ্লে করা ---
 function fetchAndDisplayProperties(category, searchTerm) {
-    // এই ফাংশনে ফায়ারস্টোর থেকে ডেটা আনার লজিক থাকবে, কিন্তু বর্তমানে ডামি ডেটা ব্যবহার করা হচ্ছে।
-
+    const propertyGrid = document.querySelector('.property-grid');
+    if (!propertyGrid) return;
+    
     let filteredProperties = dummyProperties.filter(p => p.category === category);
     
     // সার্চ টার্ম থাকলে ফিল্টার করা
@@ -116,8 +94,42 @@ function fetchAndDisplayProperties(category, searchTerm) {
 }
 
 
-// --- ফাংশন: UI ইভেন্ট লিসেনার সেটআপ করা ---
-function setupUIEventListeners() {
+// --- ফাংশন: লগআউট হ্যান্ডেলার ---
+const handleLogout = async () => {
+    try {
+        await auth.signOut();
+        alert("সফলভাবে লগআউট করা হয়েছে! আপনাকে হোমপেজে নিয়ে যাওয়া হচ্ছে।");
+        window.location.reload();
+    } catch (error) {
+        console.error("লগআউট ব্যর্থ হয়েছে:", error);
+        alert("লগআউট ব্যর্থ হয়েছে।");
+    }
+};
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // ✅ সংশোধন: সকল UI উপাদান DOMContentLoaded ব্লকের মধ্যে সংজ্ঞায়িত করা হলো 
+    const postLink = document.getElementById('post-link');
+    const menuButton = document.getElementById('menuButton');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const profileButton = document.getElementById('profileButton'); // ✅ এখানে নিশ্চিত করা হলো
+    const navButtons = document.querySelectorAll('.nav-filters .nav-button');
+    const globalSearchInput = document.getElementById('globalSearchInput');
+    const propertyGridContainer = document.getElementById('property-grid-container');
+    const loginLinkSidebar = document.getElementById('login-link-sidebar'); 
+    
+    // নতুন যুক্ত সেকশনের উপাদান
+    const homeLinkSidebar = document.getElementById('home-link-sidebar');
+    const aboutLinkSidebar = document.getElementById('about-link-sidebar');
+    const tipsLinkSidebar = document.getElementById('tips-link-sidebar');
+    const contactLinkSidebar = document.getElementById('contact-link-sidebar');
+    const aboutSection = document.getElementById('about-section');
+    const tipsSection = document.getElementById('tips-section');
+    const contactSection = document.getElementById('contact-section');
+    
+    
+    // --- UI ইভেন্ট লিসেনার সেটআপ করা ---
     
     // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
     if (menuButton) {
@@ -141,28 +153,24 @@ function setupUIEventListeners() {
             button.classList.add('active');
             const category = button.textContent.trim();
             
-            // নতুন ক্যাটাগরি ফিল্টার করা
             fetchAndDisplayProperties(category, globalSearchInput.value);
         });
     });
     
-    // গ্লোবাল সার্চ ইনপুট লিসেনার (Enter টিপলে বা ডিবাউন্সড ইনপুট)
+    // গ্লোবাল সার্চ ইনপুট লিসেনার 
     globalSearchInput?.addEventListener('keyup', (e) => {
-        // বর্তমানে active ক্যাটাগরি খুঁজে নেওয়া
         const activeCategory = document.querySelector('.nav-filters .nav-button.active')?.textContent.trim() || 'বিক্রয়';
         
-        // Enter চাপলে বা ৩ অক্ষরের বেশি টাইপ করলে সার্চ করা 
         if (e.key === 'Enter' || e.target.value.length > 2) {
             fetchAndDisplayProperties(activeCategory, e.target.value);
         } else if (e.target.value.length === 0) {
-             // সার্চ খালি করলে আবার সব প্রপার্টি লোড করা
              fetchAndDisplayProperties(activeCategory, '');
         }
     });
 
 
     // সাইডবার লিঙ্ক লিসেনার (সেকশন দেখানোর জন্য)
-    const toggleSection = (sectionElement, currentLink) => {
+    const toggleSection = (sectionElement) => {
         // সব সেকশন লুকানো
         propertyGridContainer.style.display = 'none';
         aboutSection.style.display = 'none';
@@ -170,26 +178,16 @@ function setupUIEventListeners() {
         contactSection.style.display = 'none';
 
         // বর্তমান সেকশন দেখানো
-        sectionElement.style.display = 'block';
+        if(sectionElement) sectionElement.style.display = 'block';
 
         // সাইডবার লুকানো
         sidebar.classList.remove('active');
         overlay.classList.remove('active');
-        
-        // হোম লিঙ্কে ক্লিক হলে প্রপার্টি গ্রিড দেখানো
-        if (currentLink === homeLinkSidebar) {
-            propertyGridContainer.style.display = 'block';
-            sectionElement.style.display = 'none'; // এটিকে শুধু 'home-section' হিসেবে ধরলে
-        }
     };
     
     homeLinkSidebar?.addEventListener('click', (e) => {
         e.preventDefault();
-        // সব লুকানো
-        aboutSection.style.display = 'none';
-        tipsSection.style.display = 'none';
-        contactSection.style.display = 'none';
-        // শুধু প্রপার্টি গ্রিড দেখানো
+        toggleSection(null); // সব লুকানো
         propertyGridContainer.style.display = 'block';
         sidebar.classList.remove('active');
         overlay.classList.remove('active');
@@ -197,37 +195,20 @@ function setupUIEventListeners() {
 
     aboutLinkSidebar?.addEventListener('click', (e) => {
         e.preventDefault();
-        toggleSection(aboutSection, aboutLinkSidebar);
+        toggleSection(aboutSection);
     });
 
     tipsLinkSidebar?.addEventListener('click', (e) => {
         e.preventDefault();
-        toggleSection(tipsSection, tipsLinkSidebar);
+        toggleSection(tipsSection);
     });
 
     contactLinkSidebar?.addEventListener('click', (e) => {
         e.preventDefault();
-        toggleSection(contactSection, contactLinkSidebar);
+        toggleSection(contactSection);
     });
-}
 
 
-// --- ফাংশন: লগআউট হ্যান্ডেলার ---
-const handleLogout = async () => {
-    try {
-        await auth.signOut();
-        alert("সফলভাবে লগআউট করা হয়েছে! আপনাকে হোমপেজে নিয়ে যাওয়া হচ্ছে।");
-        window.location.reload();
-    } catch (error) {
-        console.error("লগআউট ব্যর্থ হয়েছে:", error);
-        alert("লগআউট ব্যর্থ হয়েছে।");
-    }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    // সকল ইভেন্ট লিসেনার সেটআপ করা হলো
-    setupUIEventListeners();
-    
     // প্রাথমিক লোড: শুরুতে 'বিক্রয়' ক্যাটাগরি দেখাবে
     fetchAndDisplayProperties('বিক্রয়', '');
     document.getElementById('sellButton')?.classList.add('active'); 
