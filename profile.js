@@ -13,20 +13,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const propertiesList = document.getElementById('my-properties-list');
     const emptyMessage = document.getElementById('empty-properties-message');
 
-    // ট্যাব নেভিগেশন
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content-item');
-
-    // প্রোফাইল এডিট ফর্ম
+    // প্রোফাইল এডিট ফর্ম এবং বাটন
+    const editProfileSection = document.getElementById('edit-profile-section');
+    const editProfileShowBtn = document.getElementById('edit-profile-show-btn');
+    const editProfileHideBtn = document.getElementById('edit-profile-hide-btn');
     const editProfileForm = document.getElementById('edit-profile-form');
     const editFullNameInput = document.getElementById('edit-full-name');
     const editPhoneNumberInput = document.getElementById('edit-phone-number');
     const editAddressInput = document.getElementById('edit-address');
     const editProfilePictureInput = document.getElementById('edit-profile-picture');
     const updateProfileBtn = document.getElementById('update-profile-btn');
-
-    // নিরাপত্তা পরিবর্তন
-    // const sendResetEmailBtn = document.getElementById('send-reset-email-btn'); // ✅ কোড সরানো হলো
     const logoutBtn = document.getElementById('logout-btn');
 
 
@@ -41,12 +37,12 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = 'auth.html';
         }
         
-        // হেডার UI আপডেট করুন
+        // হেডার UI আপডেট করুন (যদি প্রয়োজন হয়)
         const postLink = document.getElementById('post-link');
         if (postLink) postLink.style.display = user ? 'flex' : 'none';
     });
 
-    // ... (loadUserProfile ফাংশন - ধরুন এখানে আছে) ...
+    // প্রোফাইল তথ্য লোড করার ফাংশন
     function loadUserProfile(user) {
         // ফায়ারস্টোর থেকে প্রোফাইল তথ্য লোড করুন
         db.collection('users').doc(user.uid).get().then(doc => {
@@ -74,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    // --- ২. ব্যবহারকারীর পোস্ট লোড করা (নতুন ফাংশন) ---
+    // --- ২. ব্যবহারকারীর পোস্ট লোড করা ---
     async function fetchUserProperties(userId) {
         propertiesList.innerHTML = '<p class="loading-message">পোস্ট লোড হচ্ছে...</p>';
         emptyMessage.style.display = 'none';
@@ -108,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // একটি প্রপার্টি কার্ড তৈরির জন্য ইউটিলিটি ফাংশন (index.js থেকে নেওয়া যেতে পারে)
+    // প্রপার্টি কার্ড তৈরির ফাংশন (index.js থেকে নেওয়া)
     function createPropertyCard(property) {
         const card = document.createElement('a');
         card.href = 'property-details.html?id=' + property.id; 
@@ -132,31 +128,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    // --- ৩. প্রোফাইল এডিট হ্যান্ডেলার ---
-    editProfileForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        // ... (আপনার আপডেট প্রোফাইল লজিক এখানে)
-        alert("প্রোফাইল আপডেট লজিক এখনও লেখা হয়নি।");
+    // --- ৩. প্রোফাইল এডিট ফর্ম দৃশ্যমান/লুকানো ---
+    editProfileShowBtn.addEventListener('click', () => {
+        editProfileSection.style.display = 'block';
+        editProfileShowBtn.style.display = 'none'; // সম্পাদনা বাটন লুকানো
+    });
+    
+    editProfileHideBtn.addEventListener('click', () => {
+        editProfileSection.style.display = 'none';
+        editProfileShowBtn.style.display = 'inline-block'; // সম্পাদনা বাটন দেখানো
     });
 
-    // --- ৪. ট্যাব নেভিগেশন হ্যান্ডেলার ---
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const targetTab = button.getAttribute('data-tab');
-            
-            // বাটন সক্রিয় করা
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
 
-            // কন্টেন্ট সক্রিয় করা
-            tabContents.forEach(content => {
-                if (content.id === targetTab) {
-                    content.style.display = 'block';
-                } else {
-                    content.style.display = 'none';
-                }
-            });
-        });
+    // --- ৪. প্রোফাইল এডিট হ্যান্ডেলার ---
+    editProfileForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        // ... (আপনার আপডেট প্রোফাইল লজিক এখানে যুক্ত করুন)
+        alert("প্রোফাইল আপডেট লজিক এখনও লেখা হয়নি।");
     });
 
 
