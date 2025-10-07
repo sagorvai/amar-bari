@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>আমার প্রোফাইল - আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <script>
+      // আপনার firebaseConfig এখানে থাকবে (auth.html, index.html এর অনুরূপ)
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b351..."
+      };
+      
+      // Firebase অ্যাপ্লিকেশন ইনিশিয়ালাইজ করা
+      if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+      }
+    </script>
+</head>
+<body>
+    
+    <header class="main-header">
+        <div class="header-top container">
+            <a href="index.html" class="logo">আমার বাড়ি.কম</a>
+            <div class="header-actions">
+                <a href="profile.html" class="profile-button" id="profileButton">
+                    <i class="material-icons">account_circle</i> প্রোফাইল
+                </a>
+                <button class="menu-button" id="menuButton">
+                    <i class="material-icons">menu</i>
+                </button>
+            </div>
+        </div>
+        </header>
+
+    <nav class="sidebar" id="sidebar">
+        <ul>
+            <li><a href="index.html" id="home-link-sidebar"><i class="material-icons">home</i> হোম</a></li>
+            <li><a href="post.html" id="post-link"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a></li>
+            <li><a href="profile.html" class="active"><i class="material-icons">account_circle</i> আমার প্রোফাইল</a></li> 
+            <li><a href="auth.html" id="login-link-sidebar"><i class="material-icons">login</i> লগইন</a></li>
+            <li class="separator"></li>
+            <li><a href="#about-section"><i class="material-icons">info</i> আমার বাড়ি সম্পর্কে</a></li>
+            <li><a href="#tips-section"><i class="material-icons">lightbulb</i> টিপস ও পরামর্শ</a></li>
+            <li><a href="#contact-section"><i class="material-icons">phone</i> যোগাযোগ</a></li>
+        </ul>
+    </nav>
+    <div class="overlay" id="overlay"></div>
+
+    <main class="main-content container">
+        <h2 class="section-title">আমার প্রোফাইল</h2>
+        <p id="auth-status" class="auth-message"></p>
+
+        <div class="profile-header-card">
+            <img id="profile-pic-display" src="https://via.placeholder.com/150?text=Profile" alt="প্রোফাইল ছবি" class="profile-avatar">
+            <h3 id="profile-name-display">ব্যবহারকারীর নাম</h3>
+            <p id="profile-email-display" class="profile-email-text"></p>
+        </div>
+
+        <div class="tab-navigation">
+            <button class="tab-button active" data-tab="profile-info">ব্যক্তিগত তথ্য</button>
+            <button class="tab-button" data-tab="my-properties">আমার প্রপার্টিগুলো</button>
+            <button class="tab-button" data-tab="saved-properties">সেভ করা প্রপার্টি</button>
+        </div>
+        
+        <div class="tab-content active" id="profile-info">
+            <form id="profile-update-form" class="form-container">
+                <h3 class="subsection-title">প্রোফাইল আপডেট</h3>
+                <div class="input-group">
+                    <label for="profile-name">নাম:</label>
+                    <input type="text" id="profile-name" required>
+                </div>
+                <div class="input-group">
+                    <label for="profile-phone">মোবাইল নম্বর:</label>
+                    <input type="tel" id="profile-phone" placeholder="উদাহরণ: ০১৭-xxxxxxxx" pattern="[0-9]{11}" required>
+                </div>
+                <div class="input-group">
+                    <label for="profile-bio">সংক্ষিপ্ত পরিচয় (Bio):</label>
+                    <textarea id="profile-bio" rows="4" placeholder="আপনি একজন রিয়েল এস্টেট এজেন্ট, মালিক বা সাধারণ ক্রেতা - সংক্ষেপে লিখুন।"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="profile-pic-input">প্রোফাইল ছবি পরিবর্তন:</label>
+                    <input type="file" id="profile-pic-input" accept="image/*">
+                </div>
+                <button type="submit" id="update-profile-btn">প্রোফাইল আপডেট করুন</button>
+            </form>
+            
+            <button id="password-reset-btn" class="secondary-btn">পাসওয়ার্ড রিসেট ইমেইল পাঠান</button>
+            
+        </div>
+
+        <div class="tab-content" id="my-properties">
+            <h3 class="subsection-title">পোস্ট করা প্রপার্টি</h3>
+            <div class="property-grid" id="my-properties-grid">
+                <p id="no-properties-message">আপনি এখনো কোনো প্রপার্টি পোস্ট করেননি।</p>
+            </div>
+        </div>
+
+        <div class="tab-content" id="saved-properties">
+            <h3 class="subsection-title">সেভ করা প্রপার্টি</h3>
+            <div class="property-grid" id="saved-properties-grid">
+                <p>ফিচারটি এখনো সম্পূর্ণ হয়নি। আপনার সেভ করা প্রপার্টি এখানে দেখতে পাবেন।</p>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
+    </footer>
+    
+    <script src="profile.js"></script> 
+    <script>
+        // প্রোফাইল পেইজের জন্য শুধুমাত্র সাইডবার কার্যকারিতা (আপনার অন্যান্য ফাইলের মত)
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
+            if (menuButton) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+            }
+
+            // ওভারলেতে ক্লিক করলে সাইড মেনু বন্ধ হবে
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
