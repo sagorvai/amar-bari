@@ -30,7 +30,7 @@ a {
 
 
 /* =====================================
-   ২. ফিক্সড হেডার এবং নেভিগেশন (পরিবর্তিত)
+   ২. ফিক্সড হেডার এবং নেভিগেশন (ছবি অনুযায়ী পরিবর্তিত)
    ==================================== */
 .main-header {
     width: 100%;
@@ -43,24 +43,16 @@ a {
 }
 
 .header-top {
-    /* Flexbox ব্যবহার করা হলো */
     display: flex; 
-    /* লোগোকে মাঝখানে এবং অন্য উপাদানগুলিকে দুই প্রান্তে ঠেলে দেবে */
+    /* ✅ প্রধান পরিবর্তন: space-between ব্যবহার করা হলো */
     justify-content: space-between; 
-    /* উল্লম্বভাবে (vertically) সব উপাদানকে মাঝখানে আনবে */
     align-items: center; 
     height: 60px; /* হেডারের উচ্চতা নির্দিষ্ট করা হলো */
     padding: 0 15px;
     box-sizing: border-box;
 }
 
-/* ✅ ১ নং সংশোধন: মেনু বাটন এবং সাইটের নাম গ্রুপ */
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* মেনু আইকন এবং লোগো টাইটেলের মধ্যে দূরত্ব */
-}
-
+/* লোগো টাইটেল - মাঝখানে থাকবে */
 .logo-title {
     display: flex;
     align-items: center;
@@ -68,6 +60,13 @@ a {
     font-size: 20px;
     font-weight: 700;
     white-space: nowrap; 
+    /* flex-grow/shrink শূন্য রাখা হলো যাতে এটি কনটেন্ট অনুযায়ী জায়গা নেয় */
+    flex-grow: 0;
+    flex-shrink: 0;
+    /* মেনু ও প্রোফাইল আইকনের মাঝে এটি মাঝখানে থাকবে */
+    position: absolute; 
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .logo-icon {
@@ -75,11 +74,13 @@ a {
     margin-right: 5px;
 }
 
-/* অ্যাকশন বাটন গ্রুপ - মেনু ও প্রোফাইল বাটন ডান দিকে */
+/* অ্যাকশন বাটন গ্রুপ - প্রোফাইল আইকন ডান দিকে */
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 15px; /* আইকন এবং পোস্ট বাটনের মধ্যে দূরত্ব */
+    gap: 15px;
+    /* মেনু বাটনের বিপরীতে এটিকে ডান প্রান্তে ঠেলে দেবে */
+    margin-left: auto;
 }
 
 /* মেনু এবং প্রোফাইল আইকনের সাধারণ স্টাইল */
@@ -96,26 +97,9 @@ a {
     color: #2ecc71;
 }
 
-/* প্রপার্টি যোগ করার বাটন স্টাইল */
+/* এই বাটনটি index.html থেকে সরানো হয়েছে, কিন্তু অন্য পেজে লাগতে পারে */
 .post-button {
-    display: flex;
-    align-items: center;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background-color: #2ecc71;
-    color: #fff;
-    font-weight: 600;
-    font-size: 14px;
-    transition: background-color 0.2s;
-}
-
-.post-button:hover {
-    background-color: #27ae60;
-}
-
-.post-button .material-icons {
-    font-size: 20px;
-    margin-right: 5px;
+    display: none; /* index.html এ লুকানো হলো */
 }
 
 /* সার্চ বার স্টাইল */
@@ -584,7 +568,14 @@ h2 {
         padding: 0 8px; 
     }
 
-    /* ১ নং সংশোধন: লোগো টেক্সট ছোট স্ক্রিনে দৃশ্যমান রাখতে */
+    /* ✅ ছোট স্ক্রিনে লোগো ঠিক মাঝখানে রাখা */
+    .logo-title {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 18px;
+    }
+    
     .logo-title span {
         display: inline; 
         font-size: 16px; 
@@ -595,32 +586,6 @@ h2 {
         font-size: 24px;
     }
     
-    .header-left {
-        gap: 5px; /* ছোট স্ক্রিনে দূরত্ব কমানো */
-    }
-
-    .desktop-only {
-        /* ছোট স্ক্রিনে 'প্রপার্টি যোগ করুন' টেক্সট লুকানো হলো */
-        display: none !important; 
-    }
-    
-    .post-button {
-        /* শুধুমাত্র আইকন দেখানোর জন্য প্যাডিং ঠিক করা */
-        padding: 6px; 
-        border-radius: 50%; /* গোল বাটন */
-    }
-    
-    .post-button .material-icons {
-        margin-right: 0;
-    }
-
-    .search-bar {
-        padding: 5px 8px;
-    }
-    .search-bar input {
-        font-size: 13px;
-    }
-
     /* ফিক্সড হেডারের জন্য কন্টেন্টকে নিচে নামানো */
     body {
         padding-top: 150px; /* হেডার ৩ লাইনের জন্য জায়গা রাখা হলো */
