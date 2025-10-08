@@ -51,9 +51,11 @@
         </div>
         
         <div class="nav-filters">
-            <button class="nav-button" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
-            <button class="nav-button" data-category="ভাড়া">ভাড়া</button>
-            <button class="nav-button" data-category="নতুন">নতুন প্রজেক্ট</button>
+            <button class="nav-button" data-category="map" id="mapButton">
+                <i class="material-icons">map</i> ম্যাপ
+            </button>
+            <button class="nav-button active" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
+            <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
         </div>
     </header>
 
@@ -84,7 +86,13 @@
                 </div>
         </section>
 
-
+        <section id="map-section" style="display: none;">
+            <h2>📍 প্রপার্টি ম্যাপ ভিউ</h2>
+            <div id="map-container" style="height: 600px; width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+                <p style="text-align: center; padding-top: 280px; color: #555;">ম্যাপ লোড হচ্ছে...</p>
+            </div>
+        </section>
+        
         <section id="tips-section" style="display: none;">
             <h2>💡 বাড়ি কেনা-বেচার টিপস ও গাইড</h2>
             <div class="tip-card-grid">
@@ -154,5 +162,5 @@
     </footer>
     
     <script src="index.js"></script> 
-</body>
-                    </html>
+    </body>
+    </html>
