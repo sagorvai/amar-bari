@@ -121,11 +121,19 @@
     
     <script src="auth.js"></script> 
     <script>
-        // Auth পেইজের জন্য শুধুমাত্র সাইডবার কার্যকারিতা
+        // Auth পেইজের জন্য সাইডবার ও প্রোফাইল কার্যকারিতা
         document.addEventListener('DOMContentLoaded', () => {
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
+            const profileButton = document.getElementById('profileButton'); // ✅ নতুন ভেরিয়েবল
+
+            // প্রোফাইল বাটন ক্লিক লজিক
+            if (profileButton) {
+                profileButton.addEventListener('click', () => {
+                    window.location.href = 'profile.html';
+                });
+            }
             
             // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
             if (menuButton) {
@@ -145,4 +153,4 @@
         });
     </script>
 </body>
-    </html>
+                </html>
