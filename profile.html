@@ -137,5 +137,35 @@
     </footer>
     
     <script src="profile.js"></script> 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const profileButton = document.getElementById('profileButton'); // ✅ নতুন ভেরিয়েবল
+
+            // প্রোফাইল বাটন ক্লিক লজিক
+            if (profileButton) {
+                profileButton.addEventListener('click', () => {
+                    window.location.href = 'profile.html';
+                });
+            }
+
+            // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা (profile.js এও এই লজিক আছে, তবে এখানে রাখা হলো)
+            if (menuButton) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+    </script>
 </body>
-                </html>
+    </html>
