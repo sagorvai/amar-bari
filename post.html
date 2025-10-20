@@ -21,104 +21,103 @@
         projectId: "amar-bari-website",
         storageBucket: "amar-bari-website.firebasestorage.app",
         messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765290b3511f939316"
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
       };
       
-      // Firebase initialization
       if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
       }
     </script>
 </head>
 <body>
+
     <header class="main-header">
         <div class="header-top">
-            <button class="menu-button" id="menuButton">
-                <i class="material-icons">menu</i>
-            </button>
-            <div class="logo">
-                <a href="index.html">আমার বাড়ি.কম</a>
-            </div>
+            
+            <i class="material-icons menu-icon" id="menuButton">menu</i>
+            
+            <a href="index.html" class="logo-title">
+                <i class="material-icons logo-icon">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
             <div class="header-actions">
-                <a href="profile.html" class="action-button" id="profileButton" style="display: none;">
-                    <i class="material-icons">person</i>
-                </a>
+                <i class="material-icons profile-icon" id="profileButton">person</i>
             </div>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="globalSearchInput" placeholder="শহর, এলাকা বা প্রপার্টির নাম লিখে খুঁজুন..." disabled>
+            <button disabled><i class="material-icons">search</i></button>
+        </div>
+        
+        <div class="nav-filters">
+            <button class="nav-button" data-category="map" id="mapButton" disabled>
+                <i class="material-icons">map</i> ম্যাপ
+            </button>
+            <button class="nav-button" data-category="বিক্রয়" id="sellButton" disabled>বিক্রয়</button>
+            <button class="nav-button" data-category="ভাড়া" id="rentButton" disabled>ভাড়া</button>
         </div>
     </header>
 
-    <div class="overlay" id="overlay"></div>
     <div class="sidebar" id="sidebar">
-        <a href="index.html" class="sidebar-link">
-            <i class="material-icons">home</i>হোম
-        </a>
-        <a href="index.html#tips-section" class="sidebar-link">
-            <i class="material-icons">lightbulb</i>টিপস্ ও গাইড
-        </a>
-        <a href="index.html#about-section" class="sidebar-link">
-            <i class="material-icons">info</i>আমাদের সস্পর্কে
-        </a>
-        <a href="index.html#contact-section" class="sidebar-link">
-            <i class="material-icons">mail</i>যোগাযোগ
-        </a>
-        
-        <a href="post.html" id="post-link" class="sidebar-link">
-            <i class="material-icons">add_circle</i>প্রপার্টি যুক্ত করুন
-        </a>
-        
-        <a href="profile.html" id="profile-link-sidebar" class="sidebar-link">
-            <i class="material-icons">person</i>প্রোফাইল
-        </a>
-        
-        <a href="auth.html" id="login-link-sidebar" class="sidebar-link">
-            <i class="material-icons">lock_open</i>লগইন
-        </a>
+        <nav>
+            <a href="index.html" class="sidebar-logo">
+                <i class="material-icons">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
+            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            
+            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            
+        </nav>
     </div>
 
-    <main class="main-content container">
-        <h2 class="page-title">একটি নতুন প্রপার্টি যুক্ত করুন</h2>
+    <div class="overlay" id="overlay"></div>
 
-        <div class="form-container">
-            <form id="property-form">
-                
+    <main class="main-content container">
+        <div class="post-form-container">
+            <h2>🏠 আপনার প্রপার্টি যোগ করুন</h2>
+            <p id="auth-warning-message" style="color: red; display: none; margin-bottom: 15px;">অনুগ্রহ করে প্রপার্টি যোগ করার জন্য লগইন করুন।</p>
+            <form id="property-form" style="display: none;">
                 <div class="input-group">
-                    <label for="post-category">বিক্রয় নাকি ভাড়া?</label>
+                    <label for="post-category">ধরন:</label>
                     <select id="post-category" required>
                         <option value="">-- নির্বাচন করুন --</option>
                         <option value="বিক্রয়">বিক্রয়</option>
                         <option value="ভাড়া">ভাড়া</option>
                     </select>
                 </div>
-                
+
                 <div id="dynamic-fields-container">
                     </div>
+
+                <div class="input-group">
+                    <label for="post-price">দাম (টাকা):</label>
+                    <input type="number" id="post-price" placeholder="যেমন: 5000000" required>
+                </div>
                 
                 <div class="input-group">
-                    <label for="property-title">শিরোনাম (Title):</label>
-                    <input type="text" id="property-title" required placeholder="সংক্ষিপ্ত এবং আকর্ষণীয় শিরোনাম">
+                    <label for="post-area">এলাকা/শহর:</label>
+                    <input type="text" id="post-area" placeholder="যেমন: ঢাকা, মোহাম্মদপুর" required>
                 </div>
 
                 <div class="input-group">
-                    <label for="property-description">বিস্তারিত বর্ণনা:</label>
-                    <textarea id="property-description" rows="6" required placeholder="প্রপার্টি সম্পর্কে বিস্তারিত তথ্য লিখুন।"></textarea>
+                    <label for="post-description">বিবরণ:</label>
+                    <textarea id="post-description" rows="5" placeholder="প্রপার্টি সম্পর্কে বিস্তারিত লিখুন..." required></textarea>
                 </div>
 
                 <div class="input-group">
-                    <label for="property-price">দাম (Price):</label>
-                    <input type="number" id="property-price" required placeholder="৳">
+                    <label for="post-images">ছবি আপলোড (কমপক্ষে ১টি):</label>
+                    <input type="file" id="post-images" accept="image/*" multiple required>
                 </div>
 
-                <div class="input-group">
-                    <label for="property-location">অবস্থান (Location):</label>
-                    <input type="text" id="property-location" required placeholder="যেমন: ঢাকা, মোহাম্মদপুর">
-                </div>
-
-                <div class="input-group">
-                    <label for="image-upload">ছবি আপলোড করুন (সর্বাধিক ৫টি):</label>
-                    <input type="file" id="image-upload" accept="image/*" multiple required>
-                    <p class="file-hint">প্রথম ছবিটি প্রধান ছবি হিসেবে ব্যবহৃত হবে।</p>
-                </div>
-                
                 <div class="input-group">
                     <label for="google-map">Google Map লিঙ্ক (ঐচ্ছিক):</label>
                     <input type="url" id="google-map" placeholder="Google Maps থেকে লিঙ্ক পেস্ট করুন">
@@ -161,4 +160,4 @@
         });
     </script>
 </body>
-            </html>
+</html>
