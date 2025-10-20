@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const description = document.getElementById('description')?.value;
             const district = document.getElementById('district')?.value;
             const upazila = document.getElementById('upazila')?.value;
-            const phoneNumber = document.getElementById('phone-number')?.value;
+            const phoneNumber = document.getElementById('phone-number')?.value; // ✅ এখন এই স্ট্যাটিক ইনপুট থেকে ডেটা নিবে
             const googleMap = document.getElementById('google-map')?.value;
             const imageFiles = document.getElementById('images')?.files;
 
