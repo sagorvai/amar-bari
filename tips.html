@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>টিপস ও গাইড - আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+      };
+      
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-top">
+            
+            <i class="material-icons menu-icon" id="menuButton">menu</i>
+            
+            <a href="index.html" class="logo-title">
+                <i class="material-icons logo-icon">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
+            <div class="header-actions">
+                <i class="material-icons profile-icon" id="profileButton">person</i>
+            </div>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="globalSearchInput" placeholder="শহর, এলাকা বা প্রপার্টির নাম লিখে খুঁজুন...">
+            <button><i class="material-icons">search</i></button>
+        </div>
+        
+        <div class="nav-filters">
+            <button class="nav-button" data-category="map" id="mapButton">
+                <i class="material-icons">map</i> ম্যাপ
+            </button>
+            <button class="nav-button" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
+            <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <nav>
+            <a href="index.html" class="sidebar-logo">
+                <i class="material-icons">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
+            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            <a href="tips.html" id="tips-link-sidebar" class="active"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            
+        </nav>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <main class="main-content container">
+
+        <section id="tips-section">
+            <h2>💡 বাড়ি কেনা-বেচার টিপস ও গাইড</h2>
+            <div class="tip-card-grid">
+                <div class="tip-card">
+                    <h3>১. কাগজপত্র যাচাই</h3>
+                    <p>জমির দলিল, মিউটেশন ও অন্যান্য সরকারি কাগজপত্র কেনার আগে সঠিকভাবে যাচাই করুন।</p>
+                </div>
+                <div class="tip-card">
+                    <h3>২. বাজারদর বিশ্লেষণ</h3>
+                    <p>আপনার এলাকার বর্তমান বাজারদর সম্পর্কে জেনে নিন, যাতে ন্যায্য দামে কিনতে বা বিক্রি করতে পারেন।</p>
+                </div>
+                <div class="tip-card">
+                    <h3>৩. আইনি সহায়তা</h3>
+                    <p>কোনো চুক্তি করার আগে একজন অভিজ্ঞ আইনজীবীর পরামর্শ নিন।</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
+    </footer>
+    
+    <script src="auth.js"></script> 
+    <script>
+        // এই পেজে শুধুমাত্র সাইডবার কার্যকারিতা
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            if (menuButton) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
