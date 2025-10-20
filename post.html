@@ -96,28 +96,13 @@
                 </div>
 
                 <div id="dynamic-fields-container">
-                    </div>
-
-                <div class="input-group">
-                    <label for="post-price">দাম (টাকা):</label>
-                    <input type="number" id="post-price" placeholder="যেমন: 5000000" required>
-                </div>
-                
-                <div class="input-group">
-                    <label for="post-area">এলাকা/শহর:</label>
-                    <input type="text" id="post-area" placeholder="যেমন: ঢাকা, মোহাম্মদপুর" required>
+                    <p class="placeholder-text">ক্যাটাগরি নির্বাচন করার পরে এখানে ফর্মের বাকি অংশ আসবে।</p>
                 </div>
 
                 <div class="input-group">
-                    <label for="post-description">বিবরণ:</label>
-                    <textarea id="post-description" rows="5" placeholder="প্রপার্টি সম্পর্কে বিস্তারিত লিখুন..." required></textarea>
+                    <label for="phone-number">যোগাযোগের ফোন নম্বর:</label>
+                    <input type="tel" id="phone-number" placeholder="যেমন: 017xxxxxxxx" required>
                 </div>
-
-                <div class="input-group">
-                    <label for="post-images">ছবি আপলোড (কমপক্ষে ১টি):</label>
-                    <input type="file" id="post-images" accept="image/*" multiple required>
-                </div>
-
                 <div class="input-group">
                     <label for="google-map">Google Map লিঙ্ক (ঐচ্ছিক):</label>
                     <input type="url" id="google-map" placeholder="Google Maps থেকে লিঙ্ক পেস্ট করুন">
@@ -136,11 +121,18 @@
     
     <script src="post.js"></script> 
     <script>
-        // পোস্ট পেইজের জন্য শুধুমাত্র সাইডবার কার্যকারিতা
         document.addEventListener('DOMContentLoaded', () => {
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
+            const profileButton = document.getElementById('profileButton'); // ✅ নতুন ভেরিয়েবল
+
+            // প্রোফাইল বাটন ক্লিক লজিক
+            if (profileButton) {
+                profileButton.addEventListener('click', () => {
+                    window.location.href = 'profile.html';
+                });
+            }
             
             // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
             if (menuButton) {
