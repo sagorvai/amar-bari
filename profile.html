@@ -21,107 +21,113 @@
         projectId: "amar-bari-website",
         storageBucket: "amar-bari-website.firebasestorage.app",
         messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765290b3511f939316"
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
       };
       
-      // Firebase initialization
       if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
       }
     </script>
 </head>
 <body>
+
     <header class="main-header">
         <div class="header-top">
-            <button class="menu-button" id="menuButton">
-                <i class="material-icons">menu</i>
-            </button>
-            <div class="logo">
-                <a href="index.html">আমার বাড়ি.কম</a>
-            </div>
+            
+            <i class="material-icons menu-icon" id="menuButton">menu</i>
+            
+            <a href="index.html" class="logo-title">
+                <i class="material-icons logo-icon">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
             <div class="header-actions">
-                <a href="profile.html" class="action-button" id="profileButton" style="display: none;">
-                    <i class="material-icons">person</i>
-                </a>
+                <i class="material-icons profile-icon" id="profileButton" style="display: none;">person</i>
             </div>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="globalSearchInput" placeholder="শহর, এলাকা বা প্রপার্টির নাম লিখে খুঁজুন..." disabled>
+            <button disabled><i class="material-icons">search</i></button>
+        </div>
+        
+        <div class="nav-filters">
+            <button class="nav-button" data-category="map" id="mapButton" disabled>
+                <i class="material-icons">map</i> ম্যাপ
+            </button>
+            <button class="nav-button" data-category="বিক্রয়" id="sellButton" disabled>বিক্রয়</button>
+            <button class="nav-button" data-category="ভাড়া" id="rentButton" disabled>ভাড়া</button>
         </div>
     </header>
-    
-    <div class="overlay" id="overlay"></div>
+
     <div class="sidebar" id="sidebar">
-        <a href="index.html" class="sidebar-link">
-            <i class="material-icons">home</i>হোম
-        </a>
-        <a href="index.html#tips-section" class="sidebar-link">
-            <i class="material-icons">lightbulb</i>টিপস্ ও গাইড
-        </a>
-        <a href="index.html#about-section" class="sidebar-link">
-            <i class="material-icons">info</i>আমাদের সস্পর্কে
-        </a>
-        <a href="index.html#contact-section" class="sidebar-link">
-            <i class="material-icons">mail</i>যোগাযোগ
-        </a>
-        
-        <a href="post.html" id="post-link" class="sidebar-link">
-            <i class="material-icons">add_circle</i>প্রপার্টি যুক্ত করুন
-        </a>
-        
-        <a href="profile.html" id="profile-link-sidebar" class="sidebar-link">
-            <i class="material-icons">person</i>প্রোফাইল
-        </a>
-        
-        <a href="auth.html" id="login-link-sidebar" class="sidebar-link">
-            <i class="material-icons">lock_open</i>লগইন
-        </a>
+        <nav>
+            <a href="index.html" class="sidebar-logo">
+                <i class="material-icons">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
+            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            
+            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            
+        </nav>
     </div>
 
+    <div class="overlay" id="overlay"></div>
+
     <main class="main-content container">
-        <h2 class="page-title">প্রোফাইল ড্যাশবোর্ড</h2>
-
-        <div class="profile-info-card">
-            <img src="https://via.placeholder.com/100x100?text=A" alt="Profile Picture" id="user-avatar" class="profile-avatar">
-            <div class="profile-details">
-                <h3 id="display-name">ব্যবহারকারীর নাম</h3>
-                <p><i class="material-icons">email</i> <span id="user-email">user@example.com</span></p>
-                <p><i class="material-icons">phone</i> <span id="user-phone">ফোন নম্বর দেওয়া হয়নি</span></p>
-                <button id="edit-profile-show-btn" class="action-button primary-button" style="margin-top: 10px;">প্রোফাইল সম্পাদনা</button>
-            </div>
-        </div>
-
-        <div id="edit-profile-section" class="profile-edit-section" style="display: none;">
-            <h3>প্রোফাইল সম্পাদনা করুন</h3>
-            <form id="edit-profile-form" class="edit-form">
-                <div class="input-group">
-                    <label for="edit-full-name">সম্পূর্ণ নাম:</label>
-                    <input type="text" id="edit-full-name" required>
+        <div id="profile-dashboard">
+            <div class="profile-header">
+                <img id="user-avatar" src="https://via.placeholder.com/150x150?text=User" alt="User Avatar" class="avatar">
+                <div>
+                    <h2 id="display-name">ব্যবহারকারীর নাম</h2>
+                    <p id="user-email">email@example.com</p>
+                    <p id="user-phone">ফোন নম্বর: <span class="data-placeholder">যোগ করা হয়নি</span></p>
+                    <button id="edit-profile-show-btn" class="primary-button" style="margin-top: 10px;">প্রোফাইল সম্পাদনা করুন</button>
                 </div>
-                <div class="input-group">
-                    <label for="edit-phone-number">ফোন নম্বর:</label>
-                    <input type="tel" id="edit-phone-number">
-                </div>
-                <div class="input-group">
-                    <label for="edit-address">ঠিকানা:</label>
-                    <textarea id="edit-address" rows="3"></textarea>
-                </div>
-                
-                <div class="input-group">
-                    <label for="edit-profile-picture">প্রোফাইল ছবি আপলোড:</label>
-                    <input type="file" id="edit-profile-picture" accept="image/*">
-                </div>
-                
-                <button type="submit" id="update-profile-btn">আপডেট সংরক্ষণ করুন</button>
-                <button type="button" id="edit-profile-hide-btn" style="background-color: #95a5a6; margin-top: 10px;">বাতিল করুন</button>
-            </form>
-        </div>
-
-
-        <h3>আমার আপলোড করা প্রপার্টিগুলো</h3>
-        
-        <div id="my-properties-list" class="property-grid" style="margin-top: 20px;">
             </div>
 
-        <p id="empty-properties-message" class="no-results-message" style="display: none; grid-column: 1 / -1;">আপনি এখনও কোনো প্রপার্টি আপলোড করেননি।</p>
+            <div id="edit-profile-section" class="edit-section" style="display: none;">
+                <h3>প্রোফাইল তথ্য আপডেট</h3>
+                <form id="edit-profile-form">
+                    <div class="input-group">
+                        <label for="edit-full-name">সম্পূর্ণ নাম:</label>
+                        <input type="text" id="edit-full-name">
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-phone-number">ফোন নম্বর:</label>
+                        <input type="tel" id="edit-phone-number">
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-address">ঠিকানা:</label>
+                        <textarea id="edit-address" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="edit-profile-picture">প্রোফাইল ছবি আপলোড:</label>
+                        <input type="file" id="edit-profile-picture" accept="image/*">
+                    </div>
+                    
+                    <button type="submit" id="update-profile-btn">আপডেট সংরক্ষণ করুন</button>
+                    <button type="button" id="edit-profile-hide-btn" style="background-color: #95a5a6; margin-top: 10px;">বাতিল করুন</button>
+                </form>
+            </div>
 
+
+            <h3>আমার আপলোড করা প্রপার্টিগুলো</h3>
+            
+            <div id="my-properties-list" class="property-grid" style="margin-top: 20px;">
+                </div>
+
+            <p id="empty-properties-message" class="no-results-message" style="display: none; grid-column: 1 / -1;">আপনি এখনও কোনো প্রপার্টি আপলোড করেননি।</p>
+
+        </div>
     </main>
 
     <footer class="footer">
@@ -132,4 +138,4 @@
     
     <script src="profile.js"></script> 
 </body>
-    </html>
+                </html>
