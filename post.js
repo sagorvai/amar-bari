@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const propertyForm = document.getElementById('property-form');
     const submitBtn = document.querySelector('#property-form button[type="submit"]');
 
-    let uploadedFiles = []; // Track files currently selected for upload
+    // NEW: আপলোড হতে যাওয়া ফাইলগুলো ট্র্যাক করার জন্য অ্যারে
+    let uploadedFiles = []; 
 
     // Function to generate and display the main property type dropdown based on category
     function generateTypeDropdown(category) {
@@ -328,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
              areaTypeSelect.addEventListener('change', (e) => generateSubAddressFields(e.target.value));
         }
         
-        // Image Preview Handler
+        // NEW: Image Preview Handler
         const imageInput = document.getElementById('images');
         if (imageInput) {
             // Re-initialize uploadedFiles when generating new fields
@@ -338,6 +339,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             imageInput.addEventListener('change', handleImageSelection);
         }
+        // NEW: Load existing files if any (e.g., if switching categories, though normally it resets)
+        renderImagePreview(); 
     }
     
     // Function to generate Sub-Address Fields (উপজেলা/সিটি কর্পোরেশন)
@@ -409,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    // Function to handle Image Preview & Selection (UPDATED)
+    // NEW: Function to handle Image Preview & Selection 
     function handleImageSelection(event) {
         const imageInput = event.target;
         const newFiles = Array.from(imageInput.files);
@@ -431,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderImagePreview();
     }
     
-    // Function to remove a file from the uploadedFiles array (NEW)
+    // NEW: Function to remove a file from the uploadedFiles array 
     function removeFile(index) {
         if (index >= 0 && index < uploadedFiles.length) {
             uploadedFiles.splice(index, 1);
@@ -442,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Function to render the current set of uploadedFiles (NEW)
+    // NEW: Function to render the current set of uploadedFiles 
     function renderImagePreview() {
         const previewArea = document.getElementById('image-preview-area');
         const imageInput = document.getElementById('images');
@@ -461,7 +464,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 reader.onload = (e) => {
                     // Create the image container with image and remove button
                     const imageContainer = document.createElement('div');
-                    imageContainer.className = 'preview-image-container';
+                    // 'preview-image-container' এবং 'preview-image' ক্লাস দুটি CSS-এ যোগ করা হয়েছে
+                    imageContainer.className = 'preview-image-container'; 
                     
                     const img = document.createElement('img');
                     img.src = e.target.result;
@@ -470,7 +474,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const removeButton = document.createElement('button');
                     removeButton.innerHTML = '&times;'; // Cross symbol
                     removeButton.className = 'remove-image-btn';
-                    removeButton.addEventListener('click', (e) => {
+                    // ক্রস বাটনে ক্লিক করলে ফাইলটি রিমুভ করার ফাংশন কল হবে
+                    removeButton.addEventListener('click', (e) => { 
                         e.preventDefault(); // Prevent form submission
                         removeFile(index);
                     });
@@ -493,7 +498,8 @@ document.addEventListener('DOMContentLoaded', function() {
             dynamicFieldsContainer.innerHTML = '<p class="placeholder-text">ক্যাটাগরি নির্বাচন করার পরে এখানে ফর্মের বাকি অংশ আসবে।</p>';
             // Clear files and preview when category is reset
             uploadedFiles = [];
-            document.getElementById('image-preview-area').innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
+            // Use renderImagePreview to reset the UI correctly
+            renderImagePreview(); 
         }
     });
 
@@ -512,7 +518,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const imageFiles = uploadedFiles; // Use the tracked array
+            // NEW: Use the tracked array
+            const imageFiles = uploadedFiles; 
 
             if (imageFiles.length === 0) {
                  alert("অনুগ্রহ করে কমপক্ষে একটি ছবি আপলোড করুন।");
@@ -521,8 +528,7 @@ document.addEventListener('DOMContentLoaded', function() {
                  return;
             }
             if (imageFiles.length > 3) {
-                 // This should technically not happen due to the limit check in handleImageSelection, 
-                 // but kept as a safeguard
+                 // Although handled in handleImageSelection, kept as a safeguard
                  alert("আপনি সর্বোচ্চ ৩টি ছবি আপলোড করতে পারবেন।"); 
                  submitBtn.disabled = false;
                  submitBtn.textContent = 'সাবমিট করুন';
@@ -650,7 +656,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Reset state variables and UI after successful submission
             uploadedFiles = []; 
             dynamicFieldsContainer.innerHTML = '<p class="placeholder-text">ক্যাটাগরি নির্বাচন করার পরে এখানে ফর্মের বাকি অংশ আসবে।</p>'; 
-            document.getElementById('image-preview-area').innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
+            // Reset preview
+            renderImagePreview();
 
 
         } catch (error) {
@@ -665,7 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auth state change handler for UI updates (লগইন স্ট্যাটাস চেক করে ফর্ম দেখাবে)
     auth.onAuthStateChanged(user => {
         const authWarningMessage = document.getElementById('auth-warning-message');
-        const postLinkSidebar = document.getElementById('post-link'); // Note: 'post-link' is not in HTML, using 'post-link-sidebar-menu'
+        const postLinkSidebar = document.getElementById('post-link-sidebar-menu'); // Corrected ID
         const loginLinkSidebar = document.getElementById('login-link-sidebar');
         const propertyFormDisplay = document.getElementById('property-form');
         
@@ -687,8 +694,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (authWarningMessage) authWarningMessage.style.display = 'none';
             
             // Using the correct ID from post.html
-            const postLinkSidebarMenu = document.getElementById('post-link-sidebar-menu'); 
-            if (postLinkSidebarMenu) postLinkSidebarMenu.style.display = 'flex'; // Assuming flex is the desired display style for the sidebar link
+            if (postLinkSidebar) postLinkSidebar.style.display = 'flex'; // Assuming flex is the desired display style for the sidebar link
             
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
@@ -709,8 +715,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (authWarningMessage) authWarningMessage.style.display = 'block';
             
             // Using the correct ID from post.html
-            const postLinkSidebarMenu = document.getElementById('post-link-sidebar-menu');
-            if (postLinkSidebarMenu) postLinkSidebarMenu.style.display = 'none';
+            if (postLinkSidebar) postLinkSidebar.style.display = 'none';
             
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগইন';
