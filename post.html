@@ -68,7 +68,7 @@
             </a>
             
             <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
-            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu" class="active"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
             
             <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
@@ -86,29 +86,32 @@
             <h2>🏠 আপনার প্রপার্টি যোগ করুন</h2>
             <p id="auth-warning-message" style="color: red; display: none; margin-bottom: 15px;">অনুগ্রহ করে প্রপার্টি যোগ করার জন্য লগইন করুন।</p>
             <form id="property-form" style="display: none;">
-                <div class="input-group">
-                    <label for="post-category">ধরন:</label>
-                    <select id="post-category" required>
-                        <option value="">-- নির্বাচন করুন --</option>
-                        <option value="বিক্রয়">বিক্রয়</option>
-                        <option value="ভাড়া">ভাড়া</option>
-                    </select>
+                <div class="form-section primary-selection-section">
+                    <h3>পোস্টের ক্যাটাগরি</h3>
+                    <div class="input-group">
+                        <label for="post-category">ধরন:</label>
+                        <select id="post-category" required class="full-width-select">
+                            <option value="">-- নির্বাচন করুন --</option>
+                            <option value="বিক্রয়">বিক্রয়</option>
+                            <option value="ভাড়া">ভাড়া</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div id="dynamic-fields-container">
                     <p class="placeholder-text">ক্যাটাগরি নির্বাচন করার পরে এখানে ফর্মের বাকি অংশ আসবে।</p>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group" style="display:none;"> 
                     <label for="phone-number">যোগাযোগের ফোন নম্বর:</label>
                     <input type="tel" id="phone-number" placeholder="যেমন: 017xxxxxxxx" required>
                 </div>
-                <div class="input-group">
+                <div class="input-group" style="display:none;">
                     <label for="google-map">Google Map লিঙ্ক (ঐচ্ছিক):</label>
                     <input type="url" id="google-map" placeholder="Google Maps থেকে লিঙ্ক পেস্ট করুন">
                 </div>
-
-                <button type="submit">সাবমিট করুন</button>
+                
+                <button type="submit" class="submit-button">সাবমিট করুন</button>
             </form>
         </div>
     </main>
@@ -125,9 +128,9 @@
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
-            const profileButton = document.getElementById('profileButton'); // ✅ নতুন ভেরিয়েবল
+            const profileButton = document.getElementById('profileButton');
 
-            // প্রোফাইল বাটন ক্লিক লজিক
+            // প্রোফাইল বাটন ক্লিক লজিক (শুধুমাত্র 'profile.html' এ যাবে)
             if (profileButton) {
                 profileButton.addEventListener('click', () => {
                     window.location.href = 'profile.html';
@@ -152,4 +155,4 @@
         });
     </script>
 </body>
-</html>
+    </html>
