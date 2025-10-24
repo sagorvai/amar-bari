@@ -23,23 +23,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const editAddressInput = document.getElementById('edit-address');
     const editProfilePictureInput = document.getElementById('edit-profile-picture');
     const updateProfileBtn = document.getElementById('update-profile-btn');
-    // ✅ লগআউট বাটন সরানো হয়েছে
-
-
+    
     // --- ১. অথেন্টিকেশন স্টেট এবং ইউজার প্রোফাইল লোড করা ---
     auth.onAuthStateChanged(user => {
+        // হেডার UI আপডেট করুন
+        const profileButton = document.getElementById('profileButton');
+        const loginLinkSidebar = document.getElementById('login-link-sidebar');
+        
         if (user) {
             // ইউজার লগইন আছে
             loadUserProfile(user);
-            fetchUserProperties(user.uid); // ব্যবহারকারীর পোস্ট লোড করুন
+            fetchUserProperties(user.uid); 
+            
+            if (profileButton) profileButton.style.display = 'inline-block';
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগআউট';
+                loginLinkSidebar.href = '#';
+                loginLinkSidebar.onclick = handleLogout; 
+            }
         } else {
             // ইউজার লগইন নেই, লগইন পেজে পাঠান
             window.location.href = 'auth.html';
         }
-        
-        // হেডার UI আপডেট করুন (যদি প্রয়োজন হয়)
-        const postLink = document.getElementById('post-link');
-        if (postLink) postLink.style.display = user ? 'flex' : 'none';
     });
 
     // প্রোফাইল তথ্য লোড করার ফাংশন
@@ -49,8 +54,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (doc.exists) {
                 const data = doc.data();
                 displayNameEl.textContent = data.fullName || user.email;
+                // userPhoneEl.textContent আপডেট করার জন্য HTML এ <span class="data-placeholder"> যোগ করা হয়েছে
+                const phoneSpan = userPhoneEl.querySelector('.data-placeholder');
+                if (phoneSpan) {
+                     phoneSpan.textContent = data.phoneNumber || 'যোগ করা হয়নি';
+                }
+
                 userEmailEl.textContent = user.email;
-                userPhoneEl.textContent = data.phoneNumber || '(নেই)';
                 
                 // ফর্ম পূরণ করুন
                 editFullNameInput.value = data.fullName || '';
@@ -69,8 +79,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // লগআউট হ্যান্ডেলার
+    const handleLogout = async (e) => {
+        e.preventDefault();
+        try {
+            await auth.signOut();
+            alert('সফলভাবে লগআউট করা হয়েছে!');
+            window.location.href = 'index.html';
+        } catch (error) {
+            console.error("লগআউট ব্যর্থ হয়েছে:", error);
+            alert("লগআউট ব্যর্থ হয়েছে।");
+        }
+    };
+
 
     // --- ২. ব্যবহারকারীর পোস্ট লোড করা ---
+    // ... (পূর্বের কোড একই থাকবে)
     async function fetchUserProperties(userId) {
         propertiesList.innerHTML = '<p class="loading-message">পোস্ট লোড হচ্ছে...</p>';
         emptyMessage.style.display = 'none';
@@ -78,7 +102,8 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // 'ownerId' ফিল্ড দিয়ে প্রপার্টি ফিল্টার করা
             const snapshot = await db.collection('properties')
-                .where('ownerId', '==', userId)
+                // প্রপার্টিতে userId ফিল্ড রাখা হয়েছিল post.js-এ
+                .where('userId', '==', userId) // পূর্বে 'ownerId' ছিল, post.js এ 'userId' ছিল। এখানে 'userId' ব্যবহার করা হলো।
                 .orderBy('timestamp', 'desc')
                 .get();
 
@@ -90,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            propertiesList.style.display = 'grid'; // গ্রিড মোড সেট করা
+            propertiesList.style.display = 'grid'; 
             
             snapshot.forEach(doc => {
                 const property = { id: doc.id, ...doc.data() };
@@ -110,17 +135,19 @@ document.addEventListener('DOMContentLoaded', function() {
         card.href = 'property-details.html?id=' + property.id; 
         card.classList.add('property-card');
         
+        // এখানে property.price, property.location, property.rooms, property.baths, property.size ইত্যাদি ফিল্ডগুলো post.js অনুযায়ী নাও থাকতে পারে।
+        // তাই একটি সাধারণ ডিসপ্লে ব্যবহার করা হলো।
         card.innerHTML = `
             <div class="property-image" style="background-image: url('${property.images[0] || 'https://via.placeholder.com/400x300?text=ছবি+নেই'}');"></div>
             <div class="property-info">
                 <div class="category-tag ${property.category === 'বিক্রয়' ? 'sell' : 'rent'}">${property.category}</div>
                 <h3>${property.title}</h3>
-                <p class="price">${property.price}</p>
-                <p class="location"><i class="material-icons">location_on</i> ${property.location}</p>
+                <p class="price">${property.price || property.rentAmount || 'দাম/ভাড়া উল্লেখ নেই'}</p>
+                <p class="location"><i class="material-icons">location_on</i> ${property.location.upazila || property.location.district || 'অজানা এলাকা'}</p>
                 <div class="details">
-                    <span><i class="material-icons">king_bed</i> ${property.rooms} বেড</span>
-                    <span><i class="material-icons">bathtub</i> ${property.baths} বাথ</span>
-                    <span><i class="material-icons">square_foot</i> ${property.size}</span>
+                    ${property.rooms ? `<span><i class="material-icons">king_bed</i> ${property.rooms} বেড</span>` : ''}
+                    ${property.bathrooms ? `<span><i class="material-icons">bathtub</i> ${property.bathrooms} বাথ</span>` : ''}
+                    ${property.landSize ? `<span><i class="material-icons">square_foot</i> ${property.landSize}</span>` : ''}
                 </div>
             </div>
         `;
@@ -131,24 +158,92 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- ৩. প্রোফাইল এডিট ফর্ম দৃশ্যমান/লুকানো ---
     editProfileShowBtn.addEventListener('click', () => {
         editProfileSection.style.display = 'block';
-        editProfileShowBtn.style.display = 'none'; // সম্পাদনা বাটন লুকানো
+        editProfileShowBtn.style.display = 'none'; 
     });
     
     editProfileHideBtn.addEventListener('click', () => {
         editProfileSection.style.display = 'none';
-        editProfileShowBtn.style.display = 'inline-block'; // সম্পাদনা বাটন দেখানো
+        editProfileShowBtn.style.display = 'inline-block'; 
     });
 
 
-    // --- ৪. প্রোফাইল এডিট হ্যান্ডেলার ---
+    // --- ৪. প্রোফাইল এডিট হ্যান্ডেলার (সম্পূর্ণ লজিক যুক্ত করা হলো) ---
     editProfileForm.addEventListener('submit', async function(e) {
         e.preventDefault();
-        // ... (আপনার আপডেট প্রোফাইল লজিক এখানে যুক্ত করুন)
-        alert("প্রোফাইল আপডেট লজিক এখনও লেখা হয়নি।");
+        
+        const user = auth.currentUser;
+        if (!user) {
+            alert("অনুগ্রহ করে লগইন করুন।");
+            return;
+        }
+
+        updateProfileBtn.disabled = true;
+        updateProfileBtn.textContent = 'আপডেট হচ্ছে...';
+
+        try {
+            const fullName = editFullNameInput.value.trim();
+            const phoneNumber = editPhoneNumberInput.value.trim();
+            const address = editAddressInput.value.trim();
+            const profilePictureFile = editProfilePictureInput.files[0];
+            let profilePictureUrl = userAvatar.src; 
+
+            // ১. প্রোফাইল ছবি আপলোড
+            if (profilePictureFile) {
+                const storageRef = storage.ref(`profile_pictures/${user.uid}/${profilePictureFile.name}`);
+                const snapshot = await storageRef.put(profilePictureFile);
+                profilePictureUrl = await snapshot.ref.getDownloadURL();
+            }
+
+            // ২. ফায়ারস্টোর (Firestore) এ ইউজার ডেটা আপডেট
+            const userData = {
+                fullName: fullName,
+                phoneNumber: phoneNumber,
+                address: address,
+                profilePictureUrl: profilePictureUrl
+            };
+
+            // merge: true ব্যবহার করা হয়েছে যাতে শুধুমাত্র পরিবর্তিত ফিল্ডগুলো আপডেট হয়
+            await db.collection('users').doc(user.uid).set(userData, { merge: true });
+
+            // ৩. Firebase Auth প্রোফাইল আপডেট (যদি নাম পরিবর্তন হয়)
+            if (user.displayName !== fullName && fullName) {
+                await user.updateProfile({ displayName: fullName });
+            }
+
+            // ৪. UI আপডেট
+            displayNameEl.textContent = fullName || user.email;
+            const phoneSpan = userPhoneEl.querySelector('.data-placeholder');
+            if (phoneSpan) {
+                phoneSpan.textContent = phoneNumber || 'যোগ করা হয়নি';
+            }
+            userAvatar.src = profilePictureUrl;
+            
+            // ৫. ফর্ম লুকানো
+            editProfileSection.style.display = 'none';
+            editProfileShowBtn.style.display = 'inline-block';
+
+            alert("প্রোফাইল সফলভাবে আপডেট করা হয়েছে!");
+            
+        } catch (error) {
+            console.error("প্রোফাইল আপডেট ব্যর্থ:", error);
+            alert("প্রোফাইল আপডেট ব্যর্থ হয়েছে: " + error.message);
+        } finally {
+            updateProfileBtn.disabled = false;
+            updateProfileBtn.textContent = 'আপডেট সংরক্ষণ করুন';
+        }
     });
 
 
-    // --- ৫. সাইডবার কার্যকারিতা ---
+    // --- ৫. প্রোফাইল বাটন কার্যকারিতা (হেডার আইকন) ---
+    const profileButton = document.getElementById('profileButton');
+    if (profileButton) {
+        profileButton.addEventListener('click', () => {
+            window.location.href = 'profile.html';
+        });
+    }
+
+
+    // --- ৬. সাইডবার কার্যকারিতা ---
     const menuButton = document.getElementById('menuButton');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
