@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const postLinkSidebar = document.getElementById('post-link'); 
     const loginLinkSidebar = document.getElementById('login-link-sidebar'); 
     
-    // ১. প্রোফাইল আইকন যুক্ত করা হয়েছে
-    const profileButton = document.getElementById('profileButton'); 
+    // প্রোফাইল আইকন উপাদানটি
+    const profileButton = document.getElementById('profileButton');
     
 
     // Show login form by default, hide signup
@@ -83,12 +83,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // **প্রোফাইল আইকন ফাংশনালিটি (শুধুমাত্র profile.html এ যাবে)**
+    if (profileButton) {
+        profileButton.addEventListener('click', () => {
+            // প্রোফাইল আইকনে ক্লিক করলে সরাসরি 'profile.html' পেজে নিয়ে যাওয়া হবে।
+            window.location.href = 'profile.html'; 
+        });
+    }
+
     // ৩. অথেন্টিকেশন স্টেট পরিবর্তন (Auth state change handler)
-    // এই অংশটি সব পেজেই লগইন স্ট্যাটাস বজায় রাখবে।
+    // এই অংশটি সব পেজেই লগইন স্ট্যাটাস বজায় রাখবে এবং সাইডবার লিঙ্ক আপডেট করবে।
     auth.onAuthStateChanged(user => {
         if (user) {
             // ইউজার লগইন থাকলে
             if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
+            
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
                 loginLinkSidebar.href = '#';
@@ -104,6 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // ইউজার লগইন না থাকলে
             if (postLinkSidebar) postLinkSidebar.style.display = 'none';
+            
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগইন';
                 loginLinkSidebar.href = 'auth.html';
@@ -111,13 +121,5 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-
-    // **প্রোফাইল আইকন ফাংশনালিটি (সমাধান)**
-    if (profileButton) {
-        profileButton.addEventListener('click', () => {
-            // প্রোফাইল আইকনে ক্লিক করলে auth.html (লগইন/সাইনআপ) পেজে নিয়ে যাওয়া হবে।
-            window.location.href = 'auth.html'; 
-        });
-    }
 
 });
