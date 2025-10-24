@@ -15,32 +15,34 @@
 
     <script>
       // আপনার firebaseConfig এখানে থাকবে
-      const firebaseConfig = { //
-        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA", //
-        authDomain: "amar-bari-website.firebaseapp.com", //
-        projectId: "amar-bari-website", //
-        storageBucket: "amar-bari-website.firebasestorage.app", //
-        messagingSenderId: "719084789035", //
-        appId: "1:719084789035:web:f4da765290b3519d0e82fe" //
-      }; //
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+      };
       
-      if (!firebase.apps.length) { //
-        firebase.initializeApp(firebaseConfig); //
-      } //
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
     </script>
     
     <style>
+        /* Mobile-first approach for image preview */
         .image-preview-area {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
             margin-top: 10px;
             padding: 10px;
-            border: 1px solid #ccc;
+            border: 1px dashed #ccc; /* দৃষ্টিনন্দন বর্ডার */
             border-radius: 5px;
-            min-height: 100px;
+            min-height: 120px;
             align-items: center;
             justify-content: flex-start;
+            background-color: #f9f9f9;
         }
         .image-preview-area .placeholder-text {
             color: #888;
@@ -50,32 +52,44 @@
         }
         .preview-item {
             position: relative;
-            width: 100px; /* প্রিভিউ সাইজ নিয়ন্ত্রণ */
+            width: 100px; /* মোবাইল ভিউয়ের জন্য ফিক্সড সাইজ */
             height: 100px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            border: 2px solid #007bff; /* হাইলাইট বর্ডার */
+            border-radius: 8px;
             overflow: hidden;
             flex-shrink: 0;
+            cursor: pointer; /* ক্লিক করে রিমুভ করার ইঙ্গিত */
         }
         .preview-item img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* ছবিকে নির্দিষ্ট সাইজের মধ্যে ফিট করার জন্য */
+            object-fit: cover; /* ফিক্সড এরিয়ার মধ্যে ফিট করার জন্য */
             display: block;
         }
         .remove-image-btn {
             position: absolute;
-            top: 0px;
-            right: 0px;
-            background: rgba(255, 0, 0, 0.8);
+            top: -5px;
+            right: -5px;
+            background: red;
             color: white;
-            border: none;
-            padding: 2px 6px;
+            border: 2px solid white;
+            border-radius: 50%;
+            padding: 0 5px;
             cursor: pointer;
             font-size: 16px;
             line-height: 1;
-            border-bottom-left-radius: 4px;
             z-index: 10;
+            font-weight: bold;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            display: block;
+            text-align: center;
+        }
+        /* Desktop/Tablet adjustment */
+        @media (min-width: 768px) {
+            .preview-item {
+                width: 150px; /* ডেস্কটপ ভিউয়ের জন্য সামান্য বড় সাইজ */
+                height: 150px;
+            }
         }
     </style>
     
@@ -153,7 +167,7 @@
                 <div class="input-group">
                     <label for="phone-number">যোগাযোগের ফোন নম্বর:</label>
                     <input type="tel" id="phone-number" placeholder="যেমন: 017xxxxxxxx" required>
-                    </div>
+                </div>
                 <div class="input-group">
                     <label for="google-map">Google Map লিঙ্ক (ঐচ্ছিক):</label>
                     <input type="url" id="google-map" placeholder="Google Maps থেকে লিঙ্ক পেস্ট করুন">
