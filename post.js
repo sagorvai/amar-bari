@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const specificFieldsContainer = document.getElementById('specific-fields-container');
         let fieldsHTML = '';
         
-        // সাধারণ ফিল্ডসমূহ (সকল প্রকার প্রপার্টির জন্য)
+        // --- সকল প্রকার প্রপার্টির জন্য সাধারণ ফিল্ডসমূহ ---
         fieldsHTML += `
             <div class="input-group">
                 <label for="property-title">পোস্টের শিরোনাম:</label>
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        // স্পেসিফিক ফিল্ডসমূহ (ধরন ও ক্যাটাগরি অনুযায়ী)
+        // --- স্পেসিফিক ফিল্ডসমূহ (ধরন ও ক্যাটাগরি অনুযায়ী) ---
         if (category === 'বিক্রয়') {
             fieldsHTML += `
                 <div class="input-group">
@@ -122,9 +122,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // ইমেজ ইনপুট এবং প্রিভিউ কন্টেইনার
+        // --- ইমেজ ইনপুট এবং প্রিভিউ কন্টেইনার (এখানে সব সময় একই থাকবে) ---
         fieldsHTML += `
             <div class="form-section image-upload-section">
+                <h3>ছবি আপলোড</h3>
                 <div class="input-group">
                     <label for="images">ছবি আপলোড (কমপক্ষে ১টি, সর্বোচ্চ ৩টি):</label>
                     <input type="file" id="images" accept="image/*" multiple required>
@@ -140,29 +141,30 @@ document.addEventListener('DOMContentLoaded', function() {
         // Image Preview Handler যুক্ত করা
         const imageInput = document.getElementById('images');
         if (imageInput) {
-            imageInput.addEventListener('change', handleImagePreview);
+            imageInput.addEventListener('change', handleImageSelection);
         }
+        
+        // ডাইনামিক ফিল্ড লোড হওয়ার পরেও প্রিভিউ রেন্ডার করা
+        renderImagePreviews(document.getElementById('image-preview-area'));
     }
     
     // ছবি প্রিভিউ এবং রিমুভ করার লজিক
-    function handleImagePreview(event) {
-        const previewArea = document.getElementById('image-preview-area');
+    function handleImageSelection(event) {
         const files = event.target.files;
-        
-        // নতুন ফাইলগুলোকে array তে যোগ করা
-        const newFiles = Array.from(files);
+        const newFiles = Array.from(files); 
 
-        // মোট ফাইল সংখ্যা পরীক্ষা করা
-        if (newFiles.length > 3) {
+        // নতুন ফাইল দিয়ে অ্যারে প্রতিস্থাপন
+        selectedImageFiles = newFiles;
+
+        // ফাইল সংখ্যা পরীক্ষা করা
+        if (selectedImageFiles.length > 3) {
             alert("আপনি সর্বোচ্চ ৩টি ছবি আপলোড করতে পারবেন।");
-            event.target.value = ''; // ইনপুট খালি করা
-            selectedImageFiles = []; // গ্লোবাল অ্যারে খালি করা
-            previewArea.innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে। (সর্বোচ্চ ৩টি)</p>';
-            return;
+            event.target.value = ''; 
+            selectedImageFiles = [];
         }
-
-        selectedImageFiles = newFiles; // নতুন নির্বাচিত ফাইল দিয়ে গ্লোবাল অ্যারে প্রতিস্থাপন
-        renderImagePreviews(previewArea);
+        
+        // প্রিভিউ রেন্ডার করা
+        renderImagePreviews(document.getElementById('image-preview-area'));
     }
 
     function renderImagePreviews(previewArea) {
@@ -178,17 +180,24 @@ document.addEventListener('DOMContentLoaded', function() {
             reader.onload = (e) => {
                 const previewItem = document.createElement('div');
                 previewItem.className = 'preview-item';
-                previewItem.dataset.index = index;
-
+                
                 const img = document.createElement('img');
                 img.src = e.target.result;
                 img.alt = `Image Preview ${index + 1}`;
                 
-                // ক্রস বাটন
+                // ক্রস বাটন (&#10006; হলো X চিহ্নের HTML এনটিটি)
                 const removeBtn = document.createElement('span');
                 removeBtn.className = 'remove-image-btn';
-                removeBtn.innerHTML = '&times;'; 
-                removeBtn.addEventListener('click', () => removeImage(index));
+                removeBtn.innerHTML = '&#10006;'; 
+                
+                // ছবি বা ক্রস বাটনে ক্লিক করলে রিমুভ ফাংশন কল হবে
+                const remover = (e) => {
+                    e.stopPropagation();
+                    removeImage(index);
+                };
+                
+                removeBtn.addEventListener('click', remover);
+                img.addEventListener('click', remover);
 
                 previewItem.appendChild(img);
                 previewItem.appendChild(removeBtn);
@@ -202,10 +211,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // গ্লোবাল অ্যারে থেকে ফাইল মুছে ফেলা
         selectedImageFiles.splice(index, 1); 
         
-        // ইনপুট ফাইল লিস্ট আপডেট করার দরকার নেই, আমরা শুধু গ্লোবাল অ্যারে ব্যবহার করব
-        // এবং প্রিভিউ আপডেট করব
-        const previewArea = document.getElementById('image-preview-area');
-        renderImagePreviews(previewArea);
+        // প্রিভিউ আপডেট করা
+        renderImagePreviews(document.getElementById('image-preview-area'));
+
+        // ইনপুট ফাইল রিসেট করা
+        const imageInput = document.getElementById('images');
+        if (imageInput) {
+             imageInput.value = '';
+        }
     }
     // ছবি প্রিভিউ এবং রিমুভ করার লজিক শেষ
 
@@ -221,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ফর্ম সাবমিট হ্যান্ডেল
+    // ফর্ম সাবমিট হ্যান্ডেল (selectedImageFiles ব্যবহার করা হচ্ছে)
     propertyForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         submitBtn.disabled = true;
@@ -244,13 +257,8 @@ document.addEventListener('DOMContentLoaded', function() {
                  submitBtn.textContent = 'সাবমিট করুন';
                  return;
             }
-            if (imageFilesToUpload.length > 3) {
-                 // এই চেকটি handleImagePreview এ হলেও, নিরাপত্তার জন্য এখানে রাখা হলো
-                 alert("আপনি সর্বোচ্চ ৩টি ছবি আপলোড করতে পারবেন।");
-                 submitBtn.disabled = false;
-                 submitBtn.textContent = 'সাবমিট করুন';
-                 return;
-            }
+            // (৩টি ছবির লিমিট handleImageSelection ফাংশনে চেক করা হয়েছে)
+
 
             const category = document.getElementById('post-category').value;
             const type = document.getElementById('post-type')?.value;
@@ -286,9 +294,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 userId: user.uid,
                 status: 'pending' 
             };
-
-            // অতিরিক্ত ফিল্ড যোগ করা (আগের লজিক অনুযায়ী)
-            if (category === 'বিক্রয়') {
+            
+            // ... (অতিরিক্ত ফিল্ড যোগ করার লজিক)
+             if (category === 'বিক্রয়') {
                 propertyData.price = document.getElementById('price')?.value;
                 if (type === 'জমি') {
                     propertyData.landSize = document.getElementById('land-size')?.value;
@@ -312,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
             propertyForm.reset();
             // ফর্ম সাবমিট হওয়ার পর গ্লোবাল ফাইল ও প্রিভিউ রিসেট করা
             selectedImageFiles = []; 
-            document.getElementById('image-preview-area').innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে। (সর্বোচ্চ ৩টি)</p>';
+            renderImagePreviews(document.getElementById('image-preview-area'));
             dynamicFieldsContainer.innerHTML = '<p class="placeholder-text">ক্যাটাগরি নির্বাচন করার পরে এখানে ফর্মের বাকি অংশ আসবে।</p>'; 
 
         } catch (error) {
@@ -324,15 +332,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Auth state change handler for UI updates (মোবাইল নম্বর দৃশ্যমান করা হলো)
+    // Auth state change handler for UI updates (মোবাইল নম্বর দৃশ্যমান করা)
     auth.onAuthStateChanged(user => {
         const postLinkSidebar = document.getElementById('post-link');
         const loginLinkSidebar = document.getElementById('login-link-sidebar');
         const authWarningMessage = document.getElementById('auth-warning-message');
         const propertyFormDisplay = document.getElementById('property-form');
-        const phoneNumberInput = document.getElementById('phone-number'); // ✅ ফোন ইনপুট
+        const phoneNumberInput = document.getElementById('phone-number'); // ফোন ইনপুট
 
-        // লগআউট হ্যান্ডেলার (auth.js এর মত)
+        // লগআউট হ্যান্ডেলার
         const handleLogout = async () => {
             try {
                 await auth.signOut();
@@ -349,12 +357,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (propertyFormDisplay) propertyFormDisplay.style.display = 'block';
             if (authWarningMessage) authWarningMessage.style.display = 'none';
 
-            // ✅ ফোন নম্বর দৃশ্যমান করা (প্রোফাইল থেকে ডামি নম্বর ব্যবহার করে)
+            // ✅ ফোন নম্বর দৃশ্যমান করা
             if (phoneNumberInput) {
-                 // **TODO: ফায়ারবেস/Firestore থেকে আসল নম্বর লোড করার লজিক এখানে যুক্ত করুন**
-                 // আপাতত একটি ডামি/টেস্ট নম্বর ব্যবহার করা হলো:
-                phoneNumberInput.value = '01712345678'; 
-                phoneNumberInput.disabled = false; // চাইলে সম্পাদনার সুযোগ রাখা হলো
+                // NOTE: ফায়ারবেস/Firestore থেকে আসল নম্বর লোড করার লজিক এখানে যুক্ত করুন
+                // আপাতত একটি ডামি/টেস্ট নম্বর ব্যবহার করা হলো:
+                phoneNumberInput.value = '01712345678'; // ডামি প্রোফাইল নম্বর
+                phoneNumberInput.disabled = false; // সম্পাদনার সুযোগ রাখা হলো
             }
             
             if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
