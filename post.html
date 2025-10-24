@@ -15,19 +15,70 @@
 
     <script>
       // আপনার firebaseConfig এখানে থাকবে
-      const firebaseConfig = {
-        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
-        authDomain: "amar-bari-website.firebaseapp.com",
-        projectId: "amar-bari-website",
-        storageBucket: "amar-bari-website.firebasestorage.app",
-        messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
-      };
+      const firebaseConfig = { //
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA", //
+        authDomain: "amar-bari-website.firebaseapp.com", //
+        projectId: "amar-bari-website", //
+        storageBucket: "amar-bari-website.firebasestorage.app", //
+        messagingSenderId: "719084789035", //
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe" //
+      }; //
       
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
+      if (!firebase.apps.length) { //
+        firebase.initializeApp(firebaseConfig); //
+      } //
     </script>
+    
+    <style>
+        .image-preview-area {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            min-height: 100px;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .image-preview-area .placeholder-text {
+            color: #888;
+            font-style: italic;
+            width: 100%;
+            text-align: center;
+        }
+        .preview-item {
+            position: relative;
+            width: 100px; /* প্রিভিউ সাইজ নিয়ন্ত্রণ */
+            height: 100px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* ছবিকে নির্দিষ্ট সাইজের মধ্যে ফিট করার জন্য */
+            display: block;
+        }
+        .remove-image-btn {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            border-bottom-left-radius: 4px;
+            z-index: 10;
+        }
+    </style>
+    
 </head>
 <body>
 
@@ -86,32 +137,29 @@
             <h2>🏠 আপনার প্রপার্টি যোগ করুন</h2>
             <p id="auth-warning-message" style="color: red; display: none; margin-bottom: 15px;">অনুগ্রহ করে প্রপার্টি যোগ করার জন্য লগইন করুন।</p>
             <form id="property-form" style="display: none;">
-                <div class="form-section primary-selection-section">
-                    <h3>পোস্টের ক্যাটাগরি</h3>
-                    <div class="input-group">
-                        <label for="post-category">ধরন:</label>
-                        <select id="post-category" required class="full-width-select">
-                            <option value="">-- নির্বাচন করুন --</option>
-                            <option value="বিক্রয়">বিক্রয়</option>
-                            <option value="ভাড়া">ভাড়া</option>
-                        </select>
-                    </div>
+                <div class="input-group">
+                    <label for="post-category">ধরন:</label>
+                    <select id="post-category" required>
+                        <option value="">-- নির্বাচন করুন --</option>
+                        <option value="বিক্রয়">বিক্রয়</option>
+                        <option value="ভাড়া">ভাড়া</option>
+                    </select>
                 </div>
 
                 <div id="dynamic-fields-container">
                     <p class="placeholder-text">ক্যাটাগরি নির্বাচন করার পরে এখানে ফর্মের বাকি অংশ আসবে।</p>
                 </div>
 
-                <div class="input-group" style="display:none;"> 
+                <div class="input-group">
                     <label for="phone-number">যোগাযোগের ফোন নম্বর:</label>
                     <input type="tel" id="phone-number" placeholder="যেমন: 017xxxxxxxx" required>
-                </div>
-                <div class="input-group" style="display:none;">
+                    </div>
+                <div class="input-group">
                     <label for="google-map">Google Map লিঙ্ক (ঐচ্ছিক):</label>
                     <input type="url" id="google-map" placeholder="Google Maps থেকে লিঙ্ক পেস্ট করুন">
                 </div>
-                
-                <button type="submit" class="submit-button">সাবমিট করুন</button>
+
+                <button type="submit">সাবমিট করুন</button>
             </form>
         </div>
     </main>
@@ -130,7 +178,7 @@
             const overlay = document.getElementById('overlay');
             const profileButton = document.getElementById('profileButton');
 
-            // প্রোফাইল বাটন ক্লিক লজিক (শুধুমাত্র 'profile.html' এ যাবে)
+            // প্রোফাইল বাটন ক্লিক লজিক
             if (profileButton) {
                 profileButton.addEventListener('click', () => {
                     window.location.href = 'profile.html';
