@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const postLinkSidebar = document.getElementById('post-link'); 
     const loginLinkSidebar = document.getElementById('login-link-sidebar'); 
     
+    // ১. প্রোফাইল আইকন যুক্ত করা হয়েছে
+    const profileButton = document.getElementById('profileButton'); 
+    
 
     // Show login form by default, hide signup
     if (loginForm && signupForm) {
@@ -108,5 +111,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // **প্রোফাইল আইকন ফাংশনালিটি (সমাধান)**
+    if (profileButton) {
+        profileButton.addEventListener('click', () => {
+            // প্রোফাইল আইকনে ক্লিক করলে auth.html (লগইন/সাইনআপ) পেজে নিয়ে যাওয়া হবে।
+            window.location.href = 'auth.html'; 
+        });
+    }
 
 });
