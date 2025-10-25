@@ -15,20 +15,20 @@ document.addEventListener('DOMContentLoaded', function() {
     let sketchFile = null;
 
     // Helper to generate a standard input group
-    const inputGroup = (id, label, type = 'text', required = true, placeholder = '', value = '') => `
+    const inputGroup = (id, label, type = 'text', required = true, placeholder = '', value = '', optional = false) => `
         <div class="input-group">
-            <label for="${id}">${label}:</label>
-            <input type="${type}" id="${id}" name="${id}" ${required ? 'required' : ''} placeholder="${placeholder}" value="${value}">
+            <label for="${id}">${label}${optional ? ' (ঐচ্ছিক)' : ''}:</label>
+            <input type="${type}" id="${id}" name="${id}" ${required && !optional ? 'required' : ''} placeholder="${placeholder}" value="${value}">
         </div>
     `;
 
-    // Helper to generate a radio group (for Yes/No)
-    const radioGroup = (name, label, options) => `
+    // Helper to generate a radio group (for Yes/No, Family/Bachelor)
+    const radioGroup = (name, label, options, required = true) => `
         <div class="input-group">
             <label>${label}:</label>
             <div class="radio-group">
                 ${options.map((opt, index) => `
-                    <input type="radio" id="${name}-${opt.value}" name="${name}" value="${opt.value}" ${opt.required ? 'required' : ''} ${index === 0 ? 'checked' : ''}>
+                    <input type="radio" id="${name}-${opt.value}" name="${name}" value="${opt.value}" ${required ? 'required' : ''} ${index === 0 ? 'checked' : ''}>
                     <label for="${name}-${opt.value}">${opt.label}</label>
                 `).join('')}
             </div>
@@ -46,11 +46,12 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     `;
 
-
     // ------------------------------------
     // START: IMAGE PREVIEW & REMOVAL LOGIC (Smart Preview)
     // ------------------------------------
-
+    
+    // (এই অংশটি পূর্বের আপডেটের মতো হুবহু কাজ করবে, যা আপনার স্মার্ট প্রিভিউ এবং রিমুভ লজিক বজায় রাখবে)
+    
     /**
      * রিমুভ বাটন সহ ছবি প্রিভিউ এবং ফাইল অ্যারে আপডেট করে।
      * @param {Array<File>} filesArray - ফাইল অবজেক্টের অ্যারে
@@ -123,7 +124,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // END: IMAGE PREVIEW & REMOVAL LOGIC
     // ------------------------------------
 
-
     // Function to generate the secondary property type dropdown
     function generateTypeDropdown(category) {
         let options = [];
@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${inputGroup('union-name', 'ইউনিয়ন')}
                 ${inputGroup('road-name', 'রোড')}
                 ${inputGroup('village-name', 'গ্রাম')}
-                ${inputGroup('ward-no', 'ওয়ার্ড নং', 'number', false)}
+                ${inputGroup('ward-no', 'ওয়ার্ড নং', 'number', false, '', '', true)}
             `;
         } else if (areaType === 'সিটি কর্পোরেশন') {
              subFieldsHTML = `
@@ -175,6 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         subAddressFieldsContainer.innerHTML = subFieldsHTML;
     }
+
 
     // Function to generate the core dynamic fields
     function generateSpecificFields(category, type) {
@@ -190,10 +191,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- সেকশন ১: প্রপার্টি বিবরণ (সকল টাইপের জন্য প্রযোজ্য) ---
         let descriptionHTML = `
             <div class="form-section property-images-section">
-                <h3>প্রপার্টি ছবি (সর্বোচ্চ ৩টি)</h3>
+                <h3>প্রপার্টি ছবি</h3>
                 <div class="input-group">
                     <input type="file" id="property-images" name="property-images" accept="image/*" multiple required style="display: none;">
-                    <label for="property-images" class="submit-button" style="display: block; width: fit-content; margin-bottom: 10px; cursor: pointer;">ছবি নির্বাচন করুন</label>
+                    <label for="property-images" class="submit-button" style="display: block; width: fit-content; margin-bottom: 10px; cursor: pointer;">ছবি নির্বাচন করুন (সর্বোচ্চ ৩টি)</label>
                     <div class="image-preview-area" id="main-images-preview-area">
                          <p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>
                     </div>
@@ -210,26 +211,36 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             // প্লটের জন্য অতিরিক্ত:
             if (type === 'প্লট') {
-                descriptionHTML += inputGroup('plot-no', 'প্লট নং (ঐচ্ছিক)', 'text', false);
+                descriptionHTML += inputGroup('plot-no', 'প্লট নং', 'text', false, '', '', true); // ঐচ্ছিক
             }
         } else if (type === 'বাড়ি' || type === 'ফ্লাট' || type === 'অফিস') {
             // কমন: বাড়ি/ফ্লাট/অফিস
-            descriptionHTML += `
-                ${inputGroup('access-road-ft', 'চলাচলের রাস্তা (ফিট)', 'number', type !== 'অফিস')}
-                ${radioGroup('parking', 'পার্কিং', [{label: 'হ্যাঁ', value: 'হ্যাঁ', required: true}, {label: 'না', value: 'না', required: true}])}
-            `;
-            if (type !== 'অফিস' && type !== 'বাড়ি') {
+            if (type !== 'অফিস') {
+                descriptionHTML += inputGroup('access-road-ft', 'চলাচলের রাস্তা', 'number');
+            }
+            descriptionHTML += radioGroup('parking', 'পার্কিং', [{label: 'হ্যাঁ', value: 'হ্যাঁ'}, {label: 'না', value: 'না'}]);
+            
+            if (type === 'বাড়ি' && isSale) { // বাড়ি বিক্রয়: তলা (ঐচ্ছিক)
+                 descriptionHTML += inputGroup('floors', 'তলা', 'number', false, '', '', true);
+            } else if (type === 'বাড়ি' && !isSale) { // বাড়ি ভাড়া: ফ্লোর নং (ঐচ্ছিক)
+                 descriptionHTML += inputGroup('floor-no', 'ফ্লোর নং', 'number', false, '', '', true);
+            } else if (type === 'ফ্লাট' || type === 'অফিস') { // ফ্লাট/অফিস: ফ্লোর নং
                  descriptionHTML += inputGroup('floor-no', 'ফ্লোর নং', 'number');
             }
-            if (type === 'বাড়ি') {
-                 descriptionHTML += inputGroup('floors', 'তলা', 'number', false); // ঐচ্ছিক
-            }
-            if (type === 'বাড়ি' || type === 'ফ্লাট' || type === 'অফিস') {
+            
+            if (type === 'বাড়ি' || type === 'ফ্লাট') {
                  descriptionHTML += `
                     <div class="input-inline-group">
                         ${inputGroup('room-count', 'রুম সংখ্যা', 'number')}
                         ${inputGroup('bathroom-count', 'বাথরুম', 'number')}
-                        ${inputGroup('kitchen-count', 'কিচেন', 'number', type !== 'অফিস')}
+                        ${inputGroup('kitchen-count', 'কিচেন', 'number')}
+                    </div>
+                 `;
+            } else if (type === 'অফিস') {
+                 descriptionHTML += `
+                    <div class="input-inline-group">
+                        ${inputGroup('room-count', 'রুম সংখ্যা', 'number')}
+                        ${inputGroup('bathroom-count', 'বাথরুম', 'number')}
                     </div>
                  `;
             }
@@ -280,23 +291,32 @@ document.addEventListener('DOMContentLoaded', function() {
         let quantityField = '';
         let priceLabel = isSale ? 'দাম' : 'ভাড়া';
         let priceUnitOptions = [];
+        let quantityUnitOptions = [];
         
-        // Quantity Unit Logic
+        // Unit Logic
         if (type === 'জমি' || type === 'প্লট') {
-            quantityField = `<input type="number" id="quantity-value" name="quantity-value" placeholder="পরিমাণ" required><select id="quantity-unit" name="quantity-unit" class="unit-select" required><option value="শতক">শতক</option><option value="একর">একর</option></select>`;
+            quantityUnitOptions = ['শতক', 'একর'];
             priceUnitOptions = ['শতক', 'একর', 'মোট'];
         } else if (type === 'বাড়ি') {
-            quantityField = `<input type="number" id="quantity-value" name="quantity-value" placeholder="পরিমাণ" required><select id="quantity-unit" name="quantity-unit" class="unit-select" required><option value="শতক">শতক</option><option value="মোট">মোট</option></select>`;
+            quantityUnitOptions = ['শতক', 'মোট'];
             priceUnitOptions = ['শতক', 'মোট'];
-        } else if (type === 'ফ্লাট') {
-            quantityField = `<input type="number" id="quantity-value" name="quantity-value" placeholder="স্কয়ার ফিট" required><select id="quantity-unit" name="quantity-unit" class="unit-select" required><option value="স্কয়ার ফিট">স্কয়ার ফিট</option></select>`;
+        } else if (type === 'ফ্লাট') { // পরিমাণ (স্কয়ার ফিট) - দাম (স্কয়ার ফিট/মোট)
+            quantityField = `<input type="number" id="quantity-value" name="quantity-value" placeholder="পরিমাণ (স্কয়ার ফিট)" required>`;
             priceUnitOptions = ['স্কয়ার ফিট', 'মোট'];
         } else if (type === 'দোকান' || type === 'অফিস') {
-            quantityField = `<input type="number" id="quantity-value" name="quantity-value" placeholder="পরিমাণ" required><select id="quantity-unit" name="quantity-unit" class="unit-select" required><option value="শতক">শতক</option><option value="স্কয়ার ফিট">স্কয়ার ফিট</option></select>`;
+            quantityUnitOptions = ['শতক', 'স্কয়ার ফিট'];
             priceUnitOptions = ['শতক', 'স্কয়ার ফিট', 'মোট'];
         }
         
         // Quantity Field HTML
+        if (type !== 'ফ্লাট') {
+            quantityField = `<input type="number" id="quantity-value" name="quantity-value" placeholder="পরিমাণ" required><select id="quantity-unit" name="quantity-unit" class="unit-select" required>${quantityUnitOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select>`;
+        } else {
+            // Flat: Quantity is only Square Feet (input only)
+            quantityField = `<input type="number" id="quantity-value" name="quantity-value" placeholder="পরিমাণ (স্কয়ার ফিট)" required style="width: 100%;">`;
+        }
+
+
         priceRentHTML += `
              <div class="input-group input-inline-unit">
                 <label for="quantity-value">পরিমাণ:</label>
@@ -318,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
             priceRentHTML += `
                 ${inputGroup('monthly-rent', 'মাসিক ভাড়া', 'number')}
                 ${inputGroup('advance-amount', 'এডভান্স', 'number', false, 'এডভান্সের পরিমাণ')}
-                ${type !== 'দোকান' ? selectGroup('rent-type', 'ভাড়ার ধরন', ['ফ্যামিলি', 'ব্যাচেলর', 'উভয়']) : ''}
+                ${type !== 'দোকান' ? radioGroup('rent-type', 'ভাড়ার ধরন', [{label: 'ফ্যামিলি', value: 'ফ্যামিলি'}, {label: 'ব্যাচেলর', value: 'ব্যাচেলর'}, {label: 'উভয়', value: 'উভয়'}]) : ''}
                 ${inputGroup('entry-date', 'ওঠার তারিখ', 'date')}
             `;
         }
@@ -348,16 +368,16 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         fieldsHTML += addressHTML;
 
-        // --- যোগাযোগ ---
+        // --- যোগাযোগ --- (ফোন নম্বর এডিট করার অপশন সহ)
         let contactHTML = `
             <div class="form-section contact-section">
                 <h3>যোগাযোগের তথ্য</h3>
                 <div class="input-group">
                     <label for="primary-phone">ফোন নম্বর (প্রোফাইল থেকে অটো-এড):</label>
-                    <input type="tel" id="primary-phone" value="" readonly required>
-                    <p class="small-text">প্রোফাইলের নাম্বারটি অটো এড হবে।</p>
+                    <input type="tel" id="primary-phone" value="" required> 
+                    <p class="small-text">প্রোফাইলে থাকা নাম্বারটি অটো এড হয়ে যাবে, আপনি চাইলে ইডিট করতে পারবেন।</p>
                 </div>
-                ${inputGroup('secondary-phone', 'অতিরিক্ত ফোন নম্বর (ঐচ্ছিক)', 'tel', false, 'অন্য কোনো নম্বর থাকলে')}
+                ${inputGroup('secondary-phone', 'অতিরিক্ত ফোন নম্বর (ঐচ্ছিক)', 'tel', false, 'অন্য একটি নাম্বার')}
             </div>
         `;
         fieldsHTML += contactHTML;
@@ -453,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 type,
                 title: getValue('property-title'),
                 description: getValue('description'),
-                primaryPhone: getValue('primary-phone'),
+                primaryPhone: getValue('primary-phone'), // Editable
                 secondaryPhone: getValue('secondary-phone'),
                 mapLocation: getValue('map-location'),
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
@@ -466,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     district: getValue('district'),
                     areaType: getValue('area-type-select'),
                     thana: getValue('thana-name'),
-                    wardNo: getValue('ward-no'),
+                    wordNo: getValue('ward-no'),
                     road: getValue('road-name'),
                     village: getValue('village-name'),
                 }
@@ -505,8 +525,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     propertyData.roomCount = getParsedValue('room-count', 'number');
                     propertyData.bathroomCount = getParsedValue('bathroom-count', 'number');
                     propertyData.kitchenCount = getParsedValue('kitchen-count', 'number');
-                    propertyData.floorNo = getParsedValue('floor-no', 'number'); // Flat/Office
-                    if (type === 'বাড়ি') propertyData.floors = getParsedValue('floors', 'number');
+                    propertyData.floorNo = getParsedValue('floor-no', 'number'); // Flat/Office, House Rent
+                    if (type === 'বাড়ি' && category === 'বিক্রয়') propertyData.floors = getParsedValue('floors', 'number'); // House Sale
                 } else if (type === 'দোকান') {
                     propertyData.shopCount = getParsedValue('shop-count', 'number');
                 }
@@ -514,17 +534,18 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (category === 'ভাড়া') {
                 propertyData.monthlyRent = getParsedValue('monthly-rent', 'number');
                 propertyData.advance = getParsedValue('advance-amount', 'number');
-                propertyData.rentType = getValue('rent-type');
+                propertyData.rentType = getRadioValue('rent-type');
                 propertyData.entryDate = getValue('entry-date');
-                
+                propertyData.quantityValue = getParsedValue('quantity-value', 'number');
+                propertyData.quantityUnit = getValue('quantity-unit');
+
                  if (type === 'বাড়ি' || type === 'ফ্লাট' || type === 'অফিস') {
                     propertyData.accessRoadFt = getParsedValue('access-road-ft', 'number');
                     propertyData.parking = getRadioValue('parking');
                     propertyData.roomCount = getParsedValue('room-count', 'number');
                     propertyData.bathroomCount = getParsedValue('bathroom-count', 'number');
                     propertyData.kitchenCount = getParsedValue('kitchen-count', 'number');
-                    propertyData.floorNo = getParsedValue('floor-no', 'number'); // Flat/Office
-                    if (type === 'বাড়ি') propertyData.floors = getParsedValue('floors', 'number');
+                    propertyData.floorNo = getParsedValue('floor-no', 'number'); 
                 } else if (type === 'দোকান') {
                      propertyData.shopCount = getParsedValue('shop-count', 'number');
                 }
