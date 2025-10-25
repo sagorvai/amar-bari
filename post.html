@@ -21,75 +21,176 @@
         projectId: "amar-bari-website",
         storageBucket: "amar-bari-website.firebasestorage.app",
         messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+        appId: "1:719084789035:web:5d2a09549f7b4e94154da6"
       };
-      
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
+
+      // Firebase ইনিশিয়ালাইজ করুন
+      firebase.initializeApp(firebaseConfig);
     </script>
+    
+    <style>
+        /* CSS for dynamic form and smart image preview */
+        .form-section {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .form-section h3 {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            color: #007bff;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .input-group input[type="text"], 
+        .input-group input[type="number"], 
+        .input-group textarea, 
+        .input-group select, 
+        .input-group input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .input-group.inline-group input, 
+        .input-group.inline-group select {
+            width: auto;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        /* Image Preview Styles */
+        .flex-container-3-cols {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .image-preview-item {
+            position: relative;
+            width: calc(33.33% - 7px); /* For 3-column layout */
+            aspect-ratio: 1 / 1; /* Square ratio */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            overflow: hidden;
+            background-color: #e9e9e9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .single-image-preview-container {
+            position: relative;
+            width: 150px; /* Specific width for single documents */
+            height: 150px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            overflow: hidden;
+            background-color: #e9e9e9;
+            margin-top: 5px;
+        }
+        .image-preview-item img, .single-image-preview-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .remove-image-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 16px;
+            line-height: 24px;
+            text-align: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .remove-image-btn:hover {
+            background-color: #cc0000;
+        }
+
+        /* Responsive adjustments for image preview */
+        @media (max-width: 600px) {
+            .image-preview-item {
+                width: calc(50% - 5px); /* 2 columns on mobile */
+            }
+        }
+        
+        .full-width-select { width: 100%; }
+        .input-hint { font-size: 0.9em; color: #666; margin-top: 5px; }
+        .auth-warning-message { color: red; font-weight: bold; text-align: center; padding: 20px; border: 1px solid red; border-radius: 8px; }
+        .button {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-
-    <header class="main-header">
-        <div class="header-top">
-            
-            <i class="material-icons menu-icon" id="menuButton">menu</i>
-            
-            <a href="index.html" class="logo-title">
-                <i class="material-icons logo-icon">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
-            
+    <header class="header">
+        <div class="container">
+            <div class="logo">আমার বাড়ি.কম</div>
             <div class="header-actions">
-                <i class="material-icons profile-icon" id="profileButton">person</i>
+                <button id="menuButton" class="icon-button"><i class="material-icons">menu</i></button>
+                <input type="search" placeholder="খুঁজুন..." class="search-input">
+                <button id="profileButton" class="icon-button"><i class="material-icons">person</i></button>
             </div>
         </div>
-
-        <div class="search-bar">
-            <input type="text" id="globalSearchInput" placeholder="শহর, এলাকা বা প্রপার্টির নাম লিখে খুঁজুন..." disabled>
-            <button disabled><i class="material-icons">search</i></button>
-        </div>
-        
-        <div class="nav-filters">
-            <button class="nav-button" data-category="map" id="mapButton" disabled>
-                <i class="material-icons">map</i> ম্যাপ
-            </button>
-            <button class="nav-button" data-category="বিক্রয়" id="sellButton" disabled>বিক্রয়</button>
-            <button class="nav-button" data-category="ভাড়া" id="rentButton" disabled>ভাড়া</button>
-        </div>
+        <nav class="main-nav">
+            <button class="nav-button">বিক্রয়</button>
+            <button class="nav-button">ভাড়া</button>
+            <button class="nav-button">ম্যাপ</button>
+        </nav>
     </header>
 
-    <div class="sidebar" id="sidebar">
+    <div id="overlay" class="overlay"></div>
+    <div id="sidebar" class="sidebar">
         <nav>
-            <a href="index.html" class="sidebar-logo">
-                <i class="material-icons">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
-            
-            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
-            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu" class="active"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            
-            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
-            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            
-            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
+            <a href="dashboard.html"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a id="postLinkSidebar" href="post.html" style="display: none;"><i class="material-icons">add_circle_outline</i> প্রপার্টি যোগ করুন</a>
+            <a href="tips.html"><i class="material-icons">lightbulb_outline</i> টিপস ও গাইড</a>
+            <a href="about.html"><i class="material-icons">info_outline</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html"><i class="material-icons">contact_support</i> যোগাযোগ</a>
+            <a id="loginLinkSidebar" href="auth.html"><i class="material-icons">account_circle</i> লগইন</a>
         </nav>
     </div>
 
-    <div class="overlay" id="overlay"></div>
-
     <main class="main-content container">
-        <div class="post-form-container">
-            <h2>🏠 আপনার প্রপার্টি যোগ করুন</h2>
-            <p id="auth-warning-message" style="color: red; display: none; margin-bottom: 15px;">অনুগ্রহ করে প্রপার্টি যোগ করার জন্য লগইন করুন।</p>
+        <h1>নতুন প্রপার্টি যোগ করুন</h1>
+
+        <div id="auth-warning-message" class="auth-warning-message" style="display: none;">
+            অনুগ্রহ করে লগইন করুন প্রপার্টি পোস্ট করার জন্য।
+        </div>
+
+        <div id="post-form-container">
             <form id="property-form" style="display: none;">
-                <div class="form-section primary-selection-section">
+
+                <div class="form-section category-selection-section">
                     <h3>পোস্টের ক্যাটাগরি</h3>
                     <div class="input-group">
-                        <label for="post-category">ধরন:</label>
+                        <label for="post-category">ক্যাটাগরি নির্বাচন করুন:</label>
                         <select id="post-category" required class="full-width-select">
                             <option value="">-- নির্বাচন করুন --</option>
                             <option value="বিক্রয়">বিক্রয়</option>
@@ -99,19 +200,74 @@
                 </div>
 
                 <div id="dynamic-fields-container">
-                    <p class="placeholder-text">ক্যাটাগরি নির্বাচন করার পরে এখানে ফর্মের বাকি অংশ আসবে।</p>
+                    </div>
+                
+                <div class="form-section property-images-section">
+                    <h3>প্রপার্টি ছবি (সর্বোচ্চ ৩টি)</h3>
+                    <div id="main-images-preview-container" class="image-preview-container flex-container-3-cols">
+                        </div>
+                    <div class="input-group file-upload-group">
+                        <label for="property-images" class="custom-file-upload button">
+                            প্রপার্টির ছবি নির্বাচন করুন
+                        </label>
+                        <input type="file" id="property-images" name="property-images" accept="image/*" multiple style="display: none;">
+                    </div>
+                    <p class="input-hint">আপনার প্রপার্টির দৃশ্যমান ছবি (কমপক্ষে ১টি, সর্বোচ্চ ৩টি)।</p>
                 </div>
 
-                <div class="input-group" style="display:none;"> 
-                    <label for="phone-number">যোগাযোগের ফোন নম্বর:</label>
-                    <input type="tel" id="phone-number" placeholder="যেমন: 017xxxxxxxx" required>
+                <div id="document-images-container" style="display: none;">
+                    <div class="form-section document-upload-section">
+                        <h3>মালিকানা সংক্রান্ত ডকুমেন্ট</h3>
+                        
+                        <div class="input-group">
+                            <label for="latest-khatian-image">সর্বশেষ খতিয়ানের ছবি (১টি):</label>
+                            <div id="latest-khatian-image-preview" class="single-image-preview-container">
+                                </div>
+                            <input type="file" id="latest-khatian-image" name="latest-khatian-image" accept="image/*" style="display: none;">
+                            <label for="latest-khatian-image" class="custom-file-upload button small-button">আপলোড করুন</label>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="property-sketch-image">প্রপার্টি স্কেস বা হস্ত নকশা ছবি (১টি):</label>
+                            <div id="property-sketch-image-preview" class="single-image-preview-container">
+                                </div>
+                            <input type="file" id="property-sketch-image" name="property-sketch-image" accept="image/*" style="display: none;">
+                            <label for="property-sketch-image" class="custom-file-upload button small-button">আপলোড করুন</label>
+                        </div>
+                    </div>
                 </div>
-                <div class="input-group" style="display:none;">
-                    <label for="google-map">Google Map লিঙ্ক (ঐচ্ছিক):</label>
-                    <input type="url" id="google-map" placeholder="Google Maps থেকে লিঙ্ক পেস্ট করুন">
+
+                <div class="form-section address-section">
+                    <h3>গুগল ম্যাপ লোকেশন</h3>
+                    <div class="input-group">
+                        <label for="map-location">ম্যাপ লোকেশন (অক্ষাংশ, দ্রাঘিমাংশ - পিন করুন):</label>
+                        <input type="text" id="map-location" name="map-location" placeholder="23.8103, 90.4125" required>
+                        <p class="input-hint">Google Maps থেকে লোকেশন পিন করে এখানে অক্ষাংশ ও দ্রাঘিমাংশ দিন।</p>
+                        </div>
                 </div>
-                
-                <button type="submit" class="submit-button">সাবমিট করুন</button>
+
+                <div class="form-section contact-section">
+                    <h3>যোগাযোগ</h3>
+                    <div class="input-group">
+                        <label for="primary-phone">ফোন নম্বর (প্রোফাইল থেকে অটো এড):</label>
+                        <input type="text" id="primary-phone" name="primary-phone" value="" readonly required>
+                        <p class="input-hint">আপনার প্রোফাইল নাম্বার। এটি পরিবর্তনযোগ্য নয়।</p>
+                    </div>
+                    <div class="input-group">
+                        <label for="additional-phone">অন্যান্য ফোন নম্বর (ঐচ্ছিক):</label>
+                        <input type="text" id="additional-phone" name="additional-phone" placeholder="যেমন: 01xxxxxxxxx">
+                    </div>
+                </div>
+
+                <div class="form-section details-section">
+                    <h3>বিস্তারিত</h3>
+                    <div class="input-group">
+                        <label for="property-details">বিস্তারিত বর্ণনা:</label>
+                        <textarea id="property-details" name="property-details" rows="6" placeholder="আপনার প্রপার্টি সম্পর্কে বিস্তারিত তথ্য লিখুন... যেমন: আশেপাশের সুবিধা, বিশেষত্ব, ইত্যাদি" required></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-button">পোস্ট করুন</button>
             </form>
         </div>
     </main>
@@ -150,9 +306,10 @@
                 overlay.addEventListener('click', () => {
                     sidebar.classList.remove('active');
                     overlay.classList.remove('active');
+                    
                 });
             }
         });
     </script>
 </body>
-</html>
+            </html>
