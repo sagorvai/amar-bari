@@ -8,124 +8,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const dynamicFieldsContainer = document.getElementById('dynamic-fields-container');
     const propertyForm = document.getElementById('property-form');
     const submitBtn = document.querySelector('#property-form button[type="submit"]');
-    
-    // Global array to hold main image files for smart preview
-    let mainImageFiles = []; 
-    let khatianFile = null;
-    let sketchFile = null;
 
-    // Helper to generate a standard input group
-    const inputGroup = (id, label, type = 'text', required = true, placeholder = '', value = '', optional = false) => `
-        <div class="input-group">
-            <label for="${id}">${label}${optional ? ' (ঐচ্ছিক)' : ''}:</label>
-            <input type="${type}" id="${id}" name="${id}" ${required && !optional ? 'required' : ''} placeholder="${placeholder}" value="${value}">
-        </div>
-    `;
-
-    // Helper to generate a radio group (for Yes/No, Family/Bachelor)
-    const radioGroup = (name, label, options, required = true) => `
-        <div class="input-group">
-            <label>${label}:</label>
-            <div class="radio-group">
-                ${options.map((opt, index) => `
-                    <input type="radio" id="${name}-${opt.value}" name="${name}" value="${opt.value}" ${required ? 'required' : ''} ${index === 0 ? 'checked' : ''}>
-                    <label for="${name}-${opt.value}">${opt.label}</label>
-                `).join('')}
-            </div>
-        </div>
-    `;
-
-    // Helper to generate a select/dropdown
-    const selectGroup = (id, label, options, required = true) => `
-        <div class="input-group">
-            <label for="${id}">${label}:</label>
-            <select id="${id}" name="${id}" class="full-width-select" ${required ? 'required' : ''}>
-                <option value="">-- নির্বাচন করুন --</option>
-                ${options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
-            </select>
-        </div>
-    `;
-
-    // ------------------------------------
-    // START: IMAGE PREVIEW & REMOVAL LOGIC (Smart Preview)
-    // ------------------------------------
-    
-    // (এই অংশটি পূর্বের আপডেটের মতো হুবহু কাজ করবে, যা আপনার স্মার্ট প্রিভিউ এবং রিমুভ লজিক বজায় রাখবে)
-    
-    /**
-     * রিমুভ বাটন সহ ছবি প্রিভিউ এবং ফাইল অ্যারে আপডেট করে।
-     * @param {Array<File>} filesArray - ফাইল অবজেক্টের অ্যারে
-     * @param {HTMLElement} container - যেখানে প্রিভিউ দেখানো হবে
-     * @param {string} fileInputId - ফাইল ইনপুটের ID
-     * @param {boolean} isMultiple - একাধিক ফাইল (true) নাকি একক ফাইল (false)
-     */
-    function renderImagePreviews(fileArray, container, fileInputId, isMultiple = true) {
-        container.innerHTML = fileArray.length > 0 ? '' : '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
-        
-        fileArray.forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const previewItem = document.createElement('div');
-                previewItem.className = 'preview-item-container';
-                previewItem.innerHTML = `
-                    <img src="${e.target.result}" alt="Property Image" class="preview-image">
-                    <button type="button" class="remove-image-btn" data-index="${index}">&times;</button>
-                `;
-                container.appendChild(previewItem);
-                
-                // Add removal listener
-                previewItem.querySelector('.remove-image-btn').addEventListener('click', () => {
-                    if (isMultiple) {
-                        mainImageFiles.splice(index, 1);
-                        renderImagePreviews(mainImageFiles, container, fileInputId, true);
-                    } else {
-                        // Single file removal
-                        if (fileInputId === 'latest-khatian-image') khatianFile = null;
-                        if (fileInputId === 'property-sketch-image') sketchFile = null;
-                        document.getElementById(fileInputId).value = ''; // Clear file input
-                        renderImagePreviews([], container, fileInputId, false); // Clear preview
-                    }
-                });
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // Main Image Input Handler
-    function handleMainImageInput(event) {
-        const files = Array.from(event.target.files);
-        
-        // Clear previous selection if new files are added
-        mainImageFiles = []; 
-        
-        if (files.length > 3) {
-            alert('সর্বোচ্চ ৩টি ছবি আপলোড করা যাবে।');
-            event.target.value = '';
-            return;
-        }
-
-        mainImageFiles = files;
-        renderImagePreviews(mainImageFiles, document.getElementById('main-images-preview-area'), 'property-images', true);
-        event.target.value = ''; // Clear input for next selection (optional)
-    }
-
-    // Single Document Input Handler
-    function handleDocumentInput(event, fileVarName, previewContainerId) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        if (fileVarName === 'khatianFile') khatianFile = file;
-        if (fileVarName === 'sketchFile') sketchFile = file;
-
-        renderImagePreviews([file], document.getElementById(previewContainerId), event.target.id, false);
-    }
-    
-    // ------------------------------------
-    // END: IMAGE PREVIEW & REMOVAL LOGIC
-    // ------------------------------------
-
-    // Function to generate the secondary property type dropdown
+    // Function to generate and display the main property type dropdown based on category
     function generateTypeDropdown(category) {
+        let typeSelectHTML = '';
         let options = [];
 
         if (category === 'বিক্রয়') {
@@ -134,10 +20,17 @@ document.addEventListener('DOMContentLoaded', function() {
             options = ['বাড়ি', 'ফ্লাট', 'অফিস', 'দোকান'];
         }
 
-        let typeSelectHTML = `
+        // ফর্মের স্টাইল ও গ্রুপিং-এর জন্য সুন্দর ক্লাস ব্যবহার করা হয়েছে
+        typeSelectHTML = `
             <div class="form-section category-selection-section">
                 <h3>প্রপার্টির ধরন</h3>
-                ${selectGroup('post-type', 'প্রপার্টির ধরন নির্বাচন করুন', options)}
+                <div class="input-group">
+                    <label for="post-type">প্রপার্টির ধরন নির্বাচন করুন:</label>
+                    <select id="post-type" required class="full-width-select">
+                        <option value="">-- নির্বাচন করুন --</option>
+                        ${options.map(option => `<option value="${option}">${option}</option>`).join('')}
+                    </select>
+                </div>
             </div>
             <div id="specific-fields-container"></div>
         `;
@@ -149,6 +42,376 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Function to generate specific input fields based on type (ডাইনামিক ফর্মের মূল লজিক)
+    function generateSpecificFields(category, type) {
+        const specificFieldsContainer = document.getElementById('specific-fields-container');
+        let fieldsHTML = '';
+        
+        if (!type) {
+             specificFieldsContainer.innerHTML = '';
+             return;
+        }
+
+        // --- সেকশন ১: প্রপার্টির বিবরণ (ছবি, শিরোনাম, রুম ইত্যাদি) ---
+        let descriptionHTML = `
+            <div class="form-section property-details-section">
+                <h3>${type} ${category}ের বিবরণ</h3>
+
+                <div class="input-group image-upload-group">
+                    <label for="images">প্রপার্টি ছবি (সর্বোচ্চ ৩টি):</label>
+                    <input type="file" id="images" accept="image/*" multiple required class="file-input-custom">
+                    <div class="image-preview-area" id="image-preview-area">
+                        <p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="property-title">শিরোনাম (যেমন: শান্ত পরিবেশে আধুনিক ফ্লাট):</label>
+                    <input type="text" id="property-title" required>
+                </div>
+        `;
+        
+        // টাইপ-ভিত্তিক ফিল্ডসমূহ যুক্ত করা
+        if (type === 'জমি' || type === 'প্লট') {
+            descriptionHTML += `
+                <div class="input-group">
+                    <label for="road-width">চলাচলের রাস্তা (ফিট):</label>
+                    <input type="number" id="road-width" required>
+                </div>
+                <div class="input-group">
+                    <label for="land-type">জমির ধরন:</label>
+                    <select id="land-type" required>
+                        <option value="">-- নির্বাচন করুন --</option>
+                        <option value="আবাসিক">আবাসিক</option>
+                        <option value="বিলান">বিলান</option>
+                        <option value="বাস্ত">বাস্ত</option>
+                        <option value="ভিটা">ভিটা</option>
+                        <option value="ডোবা">ডোবা</option>
+                        <option value="পুকুর">পুকুর</option>
+                    </select>
+                </div>
+            `;
+            if (type === 'প্লট') {
+                 descriptionHTML += `
+                    <div class="input-group">
+                        <label for="plot-no">প্লট নং (ঐচ্ছিক):</label>
+                        <input type="text" id="plot-no">
+                    </div>
+                 `;
+            }
+        } else if (type === 'বাড়ি' || type === 'ফ্লাট' || type === 'অফিস') {
+             descriptionHTML += `
+                <div class="input-group">
+                    <label>পার্কিং সুবিধা:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="parking-yes" name="parking" value="হ্যাঁ" required><label for="parking-yes">হ্যাঁ</label>
+                        <input type="radio" id="parking-no" name="parking" value="না"><label for="parking-no">না</label>
+                    </div>
+                </div>
+            `;
+            
+            if (type === 'বাড়ি' || type === 'ফ্লাট') {
+                descriptionHTML += `
+                    <div class="input-group">
+                        <label for="road-width">চলাচলের রাস্তা (ফিট):</label>
+                        <input type="number" id="road-width" required>
+                    </div>
+                    <div class="input-inline-group">
+                        <div class="input-group">
+                            <label for="rooms">রুম সংখ্যা:</label>
+                            <input type="number" id="rooms" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="bathrooms">বাথরুম সংখ্যা:</label>
+                            <input type="number" id="bathrooms" required>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (type === 'বাড়ি') {
+                 descriptionHTML += `
+                    <div class="input-group">
+                        <label for="kitchen">কিচেন সংখ্যা:</label>
+                        <input type="number" id="kitchen" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="floors">তলা সংখ্যা (ঐচ্ছিক):</label>
+                        <input type="number" id="floors">
+                    </div>
+                 `;
+            } else if (type === 'ফ্লাট' || type === 'অফিস') {
+                descriptionHTML += `
+                    <div class="input-group">
+                        <label for="floor-no">ফ্লোর নং:</label>
+                        <input type="number" id="floor-no" required>
+                    </div>
+                `;
+                if (type === 'ফ্লাট') {
+                    descriptionHTML += `
+                        <div class="input-group">
+                            <label for="kitchen">কিচেন সংখ্যা:</label>
+                            <input type="number" id="kitchen" required>
+                        </div>
+                    `;
+                } else if (type === 'অফিস') {
+                    descriptionHTML += `
+                        <div class="input-group">
+                            <label for="rooms">রুম সংখ্যা:</label>
+                            <input type="number" id="rooms" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="bathrooms">বাথরুম সংখ্যা:</label>
+                            <input type="number" id="bathrooms" required>
+                        </div>
+                    `;
+                }
+            }
+            
+            // ভাড়ার জন্য অতিরিক্ত ফিল্ড
+            if (category === 'ভাড়া') {
+                descriptionHTML += `
+                    <div class="input-group">
+                        <label for="rent-type">ভাড়ার ধরন:</label>
+                        <select id="rent-type" required>
+                            <option value="">-- নির্বাচন করুন --</option>
+                            <option value="ফ্যামিলি">ফ্যামিলি</option>
+                            <option value="ব্যাচেলর">ব্যাচেলর</option>
+                            <option value="উভয়">উভয়</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="move-in-date">ওঠার তারিখ:</label>
+                        <input type="date" id="move-in-date" required>
+                    </div>
+                `;
+            }
+            
+        } else if (type === 'দোকান') {
+             descriptionHTML += `
+                <div class="input-group">
+                    <label for="shop-count">দোকান সংখ্যা:</label>
+                    <input type="number" id="shop-count" required>
+                </div>
+            `;
+            // ভাড়ার জন্য ওঠার তারিখ
+            if (category === 'ভাড়া') {
+                 descriptionHTML += `
+                    <div class="input-group">
+                        <label for="move-in-date">ওঠার তারিখ:</label>
+                        <input type="date" id="move-in-date" required>
+                    </div>
+                 `;
+            }
+        }
+        
+        descriptionHTML += '</div>'; // property-details-section বন্ধ
+        fieldsHTML += descriptionHTML;
+        
+        // --- সেকশন ২: মালিকানা বিবরণ (শুধুমাত্র বিক্রয়ের জন্য) ---
+        if (category === 'বিক্রয়') {
+            let ownershipHTML = `
+                <div class="form-section ownership-section">
+                    <h3>মালিকানা বিবরণ</h3>
+                    <div class="input-group">
+                        <label for="donor-name">দাতার নাম:</label>
+                        <input type="text" id="donor-name" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="dag-no-select">দাগ নং:</label>
+                        <select id="dag-no-select" required>
+                            <option value="">-- নির্বাচন করুন --</option>
+                            <option value="RS">RS</option>
+                            <option value="BRS">BRS</option>
+                            <option value="নামজারি">নামজারি</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="mouja">মৌজা:</label>
+                        <input type="text" id="mouja" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="khotian-image">সর্বশেষ খতিয়ানের ছবি (১টি):</label>
+                        <input type="file" id="khotian-image" accept="image/*" required class="file-input-custom">
+                        <div class="image-preview-area" id="khotian-preview-area"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="sketch-image">প্রপার্টি স্কেস বা হস্ত নকশা ছবি (১টি):</label>
+                        <input type="file" id="sketch-image" accept="image/*" required class="file-input-custom">
+                        <div class="image-preview-area" id="sketch-preview-area"></div>
+                    </div>
+                </div>
+            `;
+            fieldsHTML += ownershipHTML;
+        }
+
+        // --- সেকশন ৩: পরিমাণ/দাম/ভাড়ার পর্ব ---
+        let priceRentHTML = '<div class="form-section price-rent-section"><h3>পরিমাণ ও দাম / ভাড়া</h3>';
+        
+        // পরিমাণের ফিল্ড
+        if (type === 'জমি' || type === 'প্লট') {
+            priceRentHTML += `
+                <div class="input-group input-inline-unit">
+                    <label for="land-area">পরিমাণ:</label>
+                    <input type="number" id="land-area" placeholder="পরিমাণ" required>
+                    <select id="land-area-unit" class="unit-select" required>
+                        <option value="শতক">শতক</option>
+                        <option value="একর">একর</option>
+                    </select>
+                </div>
+            `;
+        } else if (type === 'বাড়ি') {
+            priceRentHTML += `
+                <div class="input-group input-inline-unit">
+                    <label for="house-area">পরিমাণ:</label>
+                    <input type="number" id="house-area" placeholder="পরিমাণ" required>
+                    <select id="house-area-unit" class="unit-select" required>
+                        <option value="শতক">শতক</option>
+                        <option value="মোট">মোট (স্কয়ার ফিট)</option>
+                    </select>
+                </div>
+            `;
+        } else if (type === 'ফ্লাট') {
+            priceRentHTML += `
+                <div class="input-group">
+                    <label for="flat-area-sqft">পরিমাণ (স্কয়ার ফিট):</label>
+                    <input type="number" id="flat-area-sqft" required>
+                </div>
+            `;
+        } else if (type === 'দোকান' || type === 'অফিস') {
+            priceRentHTML += `
+                <div class="input-group input-inline-unit">
+                    <label for="commercial-area">পরিমাণ:</label>
+                    <input type="number" id="commercial-area" placeholder="পরিমাণ" required>
+                    <select id="commercial-area-unit" class="unit-select" required>
+                        <option value="শতক">শতক</option>
+                        <option value="স্কয়ার ফিট">স্কয়ার ফিট</option>
+                    </select>
+                </div>
+            `;
+        }
+        
+        // দাম/ভাড়ার ফিল্ড
+        if (category === 'বিক্রয়') {
+            priceRentHTML += `
+                <div class="input-group input-inline-unit">
+                    <label for="price">দাম:</label>
+                    <input type="number" id="price" placeholder="মোট দাম" required>
+                    <select id="price-unit" class="unit-select" required>
+                        <option value="মোট">মোট (টাকায়)</option>
+            `;
+            if (type === 'জমি' || type === 'প্লট' || type === 'বাড়ি') {
+                priceRentHTML += `<option value="শতক">শতক প্রতি (টাকায়)</option>`;
+            }
+            if (type === 'ফ্লাট' || type === 'দোকান' || type === 'অফিস') {
+                 priceRentHTML += `<option value="স্কয়ার ফিট">স্কয়ার ফিট প্রতি (টাকায়)</option>`;
+            }
+            priceRentHTML += `
+                    </select>
+                </div>
+            `;
+        } else if (category === 'ভাড়া') {
+            priceRentHTML += `
+                <div class="input-group">
+                    <label for="monthly-rent">মাসিক ভাড়া (টাকায়):</label>
+                    <input type="number" id="monthly-rent" required>
+                </div>
+                <div class="input-group">
+                    <label for="advance">এডভান্স / জামানত (টাকায়):</label>
+                    <input type="number" id="advance" placeholder="টাকায়" required>
+                </div>
+            `;
+        }
+        
+        priceRentHTML += '</div>'; // price-rent-section বন্ধ
+        fieldsHTML += priceRentHTML;
+
+        // --- সেকশন ৪: ঠিকানা পর্ব ---
+        let addressHTML = `
+            <div class="form-section address-section">
+                <h3>ঠিকানা ও অবস্থান</h3>
+                <div class="input-inline-group">
+                    <div class="input-group">
+                        <label for="division">বিভাগ:</label>
+                        <input type="text" id="division" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="district">জেলা:</label>
+                        <input type="text" id="district" required>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="area-type-select">এলাকার ধরন:</label>
+                    <select id="area-type-select" required>
+                        <option value="">-- নির্বাচন করুন --</option>
+                        <option value="উপজেলা">উপজেলা</option>
+                        <option value="সিটি কর্পোরেশন">সিটি কর্পোরেশন</option>
+                    </select>
+                </div>
+                
+                <div id="sub-address-fields">
+                </div>
+                
+                <div class="input-group google-map-pinning">
+                    <label for="google-map">Google ম্যাপ লোকেশন (পিন করুন):</label>
+                    <input type="text" id="google-map-pin" placeholder="ম্যাপ থেকে পিন করার অপশন থাকবে">
+                    <p class="small-text">বর্তমানে টেক্সট ইনপুট হিসেবে রাখা হলো।</p>
+                </div>
+            </div>
+        `;
+        fieldsHTML += addressHTML;
+
+        // --- সেকশন ৫: যোগাযোগ পর্ব ---
+        let contactHTML = `
+            <div class="form-section contact-section">
+                <h3>যোগাযোগের তথ্য</h3>
+                <div class="input-group">
+                    <label for="primary-phone">ফোন নম্বর (প্রোফাইল থেকে অটো-এড):</label>
+                    <input type="tel" id="primary-phone" value="017xxxxxxxx" required>
+                    <p class="small-text">প্রোফাইলে থাকা নাম্বারটি অটো এড হয়ে যাবে, চাইলে আপনি ইডিট করতে পারবেন।</p>
+                </div>
+                <div class="input-group">
+                    <label for="secondary-phone">অতিরিক্ত ফোন নম্বর (ঐচ্ছিক):</label>
+                    <input type="tel" id="secondary-phone" placeholder="অন্য কোনো নম্বর থাকলে">
+                </div>
+            </div>
+        `;
+        fieldsHTML += contactHTML;
+
+        // --- সেকশন ৬: বিস্তারিত ---
+        fieldsHTML += `
+            <div class="input-group description-final-group">
+                <label for="description">সম্পূর্ণ বিস্তারিত বিবরণ:</label>
+                <textarea id="description" rows="6" placeholder="আপনার প্রপার্টির বিস্তারিত তথ্য, সুবিধা এবং বিশেষত্ব লিখুন।" required></textarea>
+            </div>
+        `;
+        
+        // সব ফিল্ড কনটেইনারে যুক্ত করা
+        specificFieldsContainer.innerHTML = fieldsHTML;
+        
+        // ডাইনামিক সাব-ফিল্ড হ্যান্ডেলিং
+        const areaTypeSelect = document.getElementById('area-type-select');
+        if(areaTypeSelect) {
+             areaTypeSelect.addEventListener('change', (e) => generateSubAddressFields(e.target.value));
+        }
+        
+        // Image Preview Handler
+        const imageInput = document.getElementById('images');
+        if (imageInput) {
+            imageInput.addEventListener('change', (e) => handleImagePreview(e, 'image-preview-area'));
+        }
+        
+        // মালিকানা বিবরণের ছবি প্রিভিউ
+        const khotianImageInput = document.getElementById('khotian-image');
+        if (khotianImageInput) {
+            khotianImageInput.addEventListener('change', (e) => handleImagePreview(e, 'khotian-preview-area', 1));
+        }
+        const sketchImageInput = document.getElementById('sketch-image');
+        if (sketchImageInput) {
+            sketchImageInput.addEventListener('change', (e) => handleImagePreview(e, 'sketch-preview-area', 1));
+        }
+    }
+    
     // Function to generate Sub-Address Fields (উপজেলা/সিটি কর্পোরেশন)
     function generateSubAddressFields(areaType) {
         const subAddressFieldsContainer = document.getElementById('sub-address-fields');
@@ -156,269 +419,126 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (areaType === 'উপজেলা') {
              subFieldsHTML = `
-                ${inputGroup('upazila-name', 'উপজেলা')}
-                ${inputGroup('thana-name', 'থানা')}
-                ${inputGroup('union-name', 'ইউনিয়ন')}
-                ${inputGroup('road-name', 'রোড')}
-                ${inputGroup('village-name', 'গ্রাম')}
-                ${inputGroup('ward-no', 'ওয়ার্ড নং', 'number', false, '', '', true)}
+                <div class="input-group">
+                    <label for="upazila-name">উপজেলা:</label>
+                    <input type="text" id="upazila-name" required>
+                </div>
+                <div class="input-group">
+                    <label for="union-name">ইউনিয়ন:</label>
+                    <input type="text" id="union-name" required>
+                </div>
+                <div class="input-group">
+                    <label for="thana-name">থানা:</label>
+                    <input type="text" id="thana-name" required>
+                </div>
+                <div class="input-group">
+                    <label for="ward-no">ওয়ার্ড নং (ঐচ্ছিক):</label>
+                    <input type="number" id="ward-no">
+                </div>
+                <div class="input-group">
+                    <label for="village-name">গ্রাম:</label>
+                    <input type="text" id="village-name" required>
+                </div>
+                <div class="input-group">
+                    <label for="road-name">রোড:</label>
+                    <input type="text" id="road-name" required>
+                </div>
             `;
         } else if (areaType === 'সিটি কর্পোরেশন') {
              subFieldsHTML = `
-                ${inputGroup('city-corp-name', 'সিটি কর্পোরেশন')}
-                ${inputGroup('thana-name', 'থানা')}
-                ${inputGroup('ward-no', 'ওয়ার্ড নং', 'number')}
-                ${inputGroup('road-name', 'রোড')}
-                ${inputGroup('village-name', 'গ্রাম')}
+                <div class="input-group">
+                    <label for="city-corp-name">সিটি কর্পোরেশন:</label>
+                    <input type="text" id="city-corp-name" required>
+                </div>
+                <div class="input-group">
+                    <label for="thana-name">থানা:</label>
+                    <input type="text" id="thana-name" required>
+                </div>
+                <div class="input-group">
+                    <label for="ward-no">ওয়ার্ড নং:</label>
+                    <input type="number" id="ward-no" required>
+                </div>
+                <div class="input-group">
+                    <label for="village-name">গ্রাম:</label>
+                    <input type="text" id="village-name" required>
+                </div>
+                <div class="input-group">
+                    <label for="road-name">রোড:</label>
+                    <input type="text" id="road-name" required>
+                </div>
             `;
+        } else {
+            subFieldsHTML = '';
         }
         
         subAddressFieldsContainer.innerHTML = subFieldsHTML;
     }
 
-
-    // Function to generate the core dynamic fields
-    function generateSpecificFields(category, type) {
-        const specificFieldsContainer = document.getElementById('specific-fields-container');
-        let fieldsHTML = '';
-        const isSale = (category === 'বিক্রয়');
+    // Function to handle Image Preview (SMART IMAGE PREVIEW)
+    function handleImagePreview(event, previewAreaId, maxFiles = 3) {
+        const previewArea = document.getElementById(previewAreaId);
+        previewArea.innerHTML = ''; // Clear previous previews
+        const files = event.target.files;
         
-        if (!type) {
-             specificFieldsContainer.innerHTML = '';
-             return;
+        if (files.length > maxFiles) {
+            alert(`আপনি সর্বোচ্চ ${maxFiles}টি ছবি আপলোড করতে পারবেন।`);
+            event.target.value = ''; // Clear selection
+            previewArea.innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
+            return;
         }
 
-        // --- সেকশন ১: প্রপার্টি বিবরণ (সকল টাইপের জন্য প্রযোজ্য) ---
-        let descriptionHTML = `
-            <div class="form-section property-images-section">
-                <h3>প্রপার্টি ছবি</h3>
-                <div class="input-group">
-                    <input type="file" id="property-images" name="property-images" accept="image/*" multiple required style="display: none;">
-                    <label for="property-images" class="submit-button" style="display: block; width: fit-content; margin-bottom: 10px; cursor: pointer;">ছবি নির্বাচন করুন (সর্বোচ্চ ৩টি)</label>
-                    <div class="image-preview-area" id="main-images-preview-area">
-                         <p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>
-                    </div>
-                </div>
-                ${inputGroup('property-title', 'শিরোনাম')}
-        `;
-        
-        // --- টাইপ-ভিত্তিক ফিল্ডসমূহ ---
-        if (type === 'জমি' || type === 'প্লট') {
-            // কমন: জমি ও প্লট
-            descriptionHTML += `
-                ${inputGroup('access-road-ft', 'চলাচলের রাস্তা (ফিট)', 'number')}
-                ${selectGroup('land-type', 'জমির ধরন', ['আবাসিক', 'বিলান', 'বাস্ত', 'ভিটা', 'ডোবা', 'পুকুর'])}
-            `;
-            // প্লটের জন্য অতিরিক্ত:
-            if (type === 'প্লট') {
-                descriptionHTML += inputGroup('plot-no', 'প্লট নং', 'text', false, '', '', true); // ঐচ্ছিক
-            }
-        } else if (type === 'বাড়ি' || type === 'ফ্লাট' || type === 'অফিস') {
-            // কমন: বাড়ি/ফ্লাট/অফিস
-            if (type !== 'অফিস') {
-                descriptionHTML += inputGroup('access-road-ft', 'চলাচলের রাস্তা', 'number');
-            }
-            descriptionHTML += radioGroup('parking', 'পার্কিং', [{label: 'হ্যাঁ', value: 'হ্যাঁ'}, {label: 'না', value: 'না'}]);
-            
-            if (type === 'বাড়ি' && isSale) { // বাড়ি বিক্রয়: তলা (ঐচ্ছিক)
-                 descriptionHTML += inputGroup('floors', 'তলা', 'number', false, '', '', true);
-            } else if (type === 'বাড়ি' && !isSale) { // বাড়ি ভাড়া: ফ্লোর নং (ঐচ্ছিক)
-                 descriptionHTML += inputGroup('floor-no', 'ফ্লোর নং', 'number', false, '', '', true);
-            } else if (type === 'ফ্লাট' || type === 'অফিস') { // ফ্লাট/অফিস: ফ্লোর নং
-                 descriptionHTML += inputGroup('floor-no', 'ফ্লোর নং', 'number');
-            }
-            
-            if (type === 'বাড়ি' || type === 'ফ্লাট') {
-                 descriptionHTML += `
-                    <div class="input-inline-group">
-                        ${inputGroup('room-count', 'রুম সংখ্যা', 'number')}
-                        ${inputGroup('bathroom-count', 'বাথরুম', 'number')}
-                        ${inputGroup('kitchen-count', 'কিচেন', 'number')}
-                    </div>
-                 `;
-            } else if (type === 'অফিস') {
-                 descriptionHTML += `
-                    <div class="input-inline-group">
-                        ${inputGroup('room-count', 'রুম সংখ্যা', 'number')}
-                        ${inputGroup('bathroom-count', 'বাথরুম', 'number')}
-                    </div>
-                 `;
-            }
-            
-        } else if (type === 'দোকান') {
-             descriptionHTML += inputGroup('shop-count', 'দোকান সংখ্যা', 'number');
+        if (files.length === 0) {
+            previewArea.innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
+            return;
         }
 
-        // --- মালিকানা বিবরন (শুধুমাত্র বিক্রয়ের জন্য) ---
-        if (isSale) {
-            descriptionHTML += `
-                </div> 
-                <div class="form-section ownership-section">
-                    <h3>মালিকানা বিবরন</h3>
-                    ${inputGroup('owner-name', 'দাতার নাম')}
-                    <div class="input-inline-group">
-                        ${selectGroup('dag-type', 'দাগ নং (ধরন)', ['RS', 'BRS', 'নামজারি'])}
-                        ${inputGroup('dag-no', 'দাগ নং (নম্বর)')}
-                    </div>
-                    ${inputGroup('mouja', 'মৌজা')}
-
-                    <div class="input-group">
-                        <label for="latest-khatian-image">সর্বশেষ খতিয়ানের ছবি (১টি):</label>
-                        <input type="file" id="latest-khatian-image" name="latest-khatian-image" accept="image/*" required style="display: none;">
-                        <label for="latest-khatian-image" class="submit-button" style="display: block; width: fit-content; margin-bottom: 10px; cursor: pointer;">খতিয়ানের ছবি আপলোড</label>
-                        <div class="image-preview-area" id="latest-khatian-preview-area">
-                             <p class="placeholder-text">এখানে খতিয়ানের ছবি দেখা যাবে।</p>
-                        </div>
-                    </div>
+        for (const file of files) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewWrapper = document.createElement('div');
+                    previewWrapper.className = 'image-preview-wrapper';
                     
-                    <div class="input-group">
-                        <label for="property-sketch-image">প্রপার্টি স্কেস বা হস্ত নকশা ছবি (১টি):</label>
-                        <input type="file" id="property-sketch-image" name="property-sketch-image" accept="image/*" required style="display: none;">
-                        <label for="property-sketch-image" class="submit-button" style="display: block; width: fit-content; margin-bottom: 10px; cursor: pointer;">স্কেচ আপলোড</label>
-                        <div class="image-preview-area" id="property-sketch-preview-area">
-                             <p class="placeholder-text">এখানে স্কেচ দেখা যাবে।</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else {
-             descriptionHTML += `</div>`; // description section close for RENT
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'preview-image';
+                    
+                    const removeButton = document.createElement('button');
+                    removeButton.className = 'remove-image-btn';
+                    removeButton.innerHTML = '&times;'; // HTML entity for multiplication sign (cross)
+                    removeButton.style.backgroundColor = 'red';
+                    removeButton.style.color = 'white';
+                    
+                    // রিমুভ লজিক
+                    removeButton.addEventListener('click', () => {
+                        const dt = new DataTransfer();
+                        const currentFiles = Array.from(event.target.files);
+                        const fileIndex = currentFiles.findIndex(f => f.name === file.name && f.size === file.size);
+                        
+                        if (fileIndex !== -1) {
+                            currentFiles.splice(fileIndex, 1);
+                            currentFiles.forEach(f => dt.items.add(f));
+                            event.target.files = dt.files;
+                            previewWrapper.remove();
+                            if (dt.files.length === 0) {
+                                previewArea.innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
+                            }
+                        }
+                    });
+                    
+                    previewWrapper.appendChild(img);
+                    previewWrapper.appendChild(removeButton);
+                    previewArea.appendChild(previewWrapper);
+                };
+                reader.readAsDataURL(file);
+            }
         }
-
-        // --- পরিমাণ/দাম/ভাড়া ---
-        let priceRentHTML = '<div class="form-section price-rent-section"><h3>পরিমাণ / দাম / ভাড়া</h3>';
-        
-        let quantityField = '';
-        let priceLabel = isSale ? 'দাম' : 'ভাড়া';
-        let priceUnitOptions = [];
-        let quantityUnitOptions = [];
-        
-        // Unit Logic
-        if (type === 'জমি' || type === 'প্লট') {
-            quantityUnitOptions = ['শতক', 'একর'];
-            priceUnitOptions = ['শতক', 'একর', 'মোট'];
-        } else if (type === 'বাড়ি') {
-            quantityUnitOptions = ['শতক', 'মোট'];
-            priceUnitOptions = ['শতক', 'মোট'];
-        } else if (type === 'ফ্লাট') { // পরিমাণ (স্কয়ার ফিট) - দাম (স্কয়ার ফিট/মোট)
-            quantityField = `<input type="number" id="quantity-value" name="quantity-value" placeholder="পরিমাণ (স্কয়ার ফিট)" required>`;
-            priceUnitOptions = ['স্কয়ার ফিট', 'মোট'];
-        } else if (type === 'দোকান' || type === 'অফিস') {
-            quantityUnitOptions = ['শতক', 'স্কয়ার ফিট'];
-            priceUnitOptions = ['শতক', 'স্কয়ার ফিট', 'মোট'];
-        }
-        
-        // Quantity Field HTML
-        if (type !== 'ফ্লাট') {
-            quantityField = `<input type="number" id="quantity-value" name="quantity-value" placeholder="পরিমাণ" required><select id="quantity-unit" name="quantity-unit" class="unit-select" required>${quantityUnitOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select>`;
-        } else {
-            // Flat: Quantity is only Square Feet (input only)
-            quantityField = `<input type="number" id="quantity-value" name="quantity-value" placeholder="পরিমাণ (স্কয়ার ফিট)" required style="width: 100%;">`;
-        }
-
-
-        priceRentHTML += `
-             <div class="input-group input-inline-unit">
-                <label for="quantity-value">পরিমাণ:</label>
-                ${quantityField}
-            </div>
-        `;
-
-        // Price/Rent Field HTML
-        priceRentHTML += `
-            <div class="input-group input-inline-unit">
-                <label for="price-rent-value">${priceLabel}:</label>
-                <input type="number" id="price-rent-value" name="price-rent-value" placeholder="${priceLabel} এর পরিমাণ" required>
-                ${selectGroup('price-rent-unit', 'ইউনিট', priceUnitOptions)}
-            </div>
-        `;
-        
-        // Rent Specific Fields
-        if (!isSale) {
-            priceRentHTML += `
-                ${inputGroup('monthly-rent', 'মাসিক ভাড়া', 'number')}
-                ${inputGroup('advance-amount', 'এডভান্স', 'number', false, 'এডভান্সের পরিমাণ')}
-                ${type !== 'দোকান' ? radioGroup('rent-type', 'ভাড়ার ধরন', [{label: 'ফ্যামিলি', value: 'ফ্যামিলি'}, {label: 'ব্যাচেলর', value: 'ব্যাচেলর'}, {label: 'উভয়', value: 'উভয়'}]) : ''}
-                ${inputGroup('entry-date', 'ওঠার তারিখ', 'date')}
-            `;
-        }
-        
-        priceRentHTML += '</div>';
-        fieldsHTML += priceRentHTML;
-
-        // --- ঠিকানা ও অবস্থান ---
-        let addressHTML = `
-            <div class="form-section address-section">
-                <h3>ঠিকানা ও অবস্থান</h3>
-                <div class="input-inline-group">
-                    ${inputGroup('division', 'বিভাগ')}
-                    ${inputGroup('district', 'জেলা')}
-                </div>
-                ${selectGroup('area-type-select', 'এলাকার ধরন', ['উপজেলা', 'সিটি কর্পোরেশন'])}
-                
-                <div id="sub-address-fields">
-                    </div>
-                
-                <div class="input-group google-map-pinning">
-                    <label for="map-location">Google ম্যাপ লোকেশন:</label>
-                    <input type="text" id="map-location" placeholder="23.8103, 90.4125 (ম্যাপ থেকে পিন)" required>
-                    <p class="small-text">সরাসরি ম্যাপ থেকে লোকেশন পিন করে এখানে অক্ষাংশ ও দ্রাঘিমাংশ দিন।</p>
-                </div>
-            </div>
-        `;
-        fieldsHTML += addressHTML;
-
-        // --- যোগাযোগ --- (ফোন নম্বর এডিট করার অপশন সহ)
-        let contactHTML = `
-            <div class="form-section contact-section">
-                <h3>যোগাযোগের তথ্য</h3>
-                <div class="input-group">
-                    <label for="primary-phone">ফোন নম্বর (প্রোফাইল থেকে অটো-এড):</label>
-                    <input type="tel" id="primary-phone" value="" required> 
-                    <p class="small-text">প্রোফাইলে থাকা নাম্বারটি অটো এড হয়ে যাবে, আপনি চাইলে ইডিট করতে পারবেন।</p>
-                </div>
-                ${inputGroup('secondary-phone', 'অতিরিক্ত ফোন নম্বর (ঐচ্ছিক)', 'tel', false, 'অন্য একটি নাম্বার')}
-            </div>
-        `;
-        fieldsHTML += contactHTML;
-
-        // --- বিস্তারিত ---
-        fieldsHTML += `
-            <div class="form-section description-final-group">
-                <h3>বিস্তারিত</h3>
-                <div class="input-group">
-                    <label for="description">সম্পূর্ণ বিস্তারিত বিবরণ:</label>
-                    <textarea id="description" rows="6" placeholder="আপনার প্রপার্টির বিস্তারিত তথ্য, সুবিধা এবং বিশেষত্ব লিখুন।" required></textarea>
-                </div>
-            </div>
-        `;
-        
-        // সব ফিল্ড কনটেইনারে যুক্ত করা
-        specificFieldsContainer.innerHTML = fieldsHTML;
-        
-        // ইভেন্ট লিসেনার যুক্ত করা
-        document.getElementById('property-images').addEventListener('change', handleMainImageInput);
-        if (isSale) {
-            document.getElementById('latest-khatian-image').addEventListener('change', (e) => handleDocumentInput(e, 'khatianFile', 'latest-khatian-preview-area'));
-            document.getElementById('property-sketch-image').addEventListener('change', (e) => handleDocumentInput(e, 'sketchFile', 'property-sketch-preview-area'));
-        }
-
-        const areaTypeSelect = document.getElementById('area-type-select');
-        if(areaTypeSelect) {
-             areaTypeSelect.addEventListener('change', (e) => generateSubAddressFields(e.target.value));
-        }
-        
     }
 
 
     // প্রাথমিক ক্যাটাগরি নির্বাচনের ইভেন্ট
     postCategorySelect.addEventListener('change', (e) => {
         const selectedCategory = e.target.value;
-        // রিসেট গ্লোবাল ফাইল স্টোরেজ
-        mainImageFiles = [];
-        khatianFile = null;
-        sketchFile = null;
-        
         if (selectedCategory) {
             generateTypeDropdown(selectedCategory);
         } else {
@@ -436,36 +556,35 @@ document.addEventListener('DOMContentLoaded', function() {
             const user = auth.currentUser;
             if (!user) {
                 alert("পোস্ট করার আগে আপনাকে লগইন করতে হবে!");
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'সাবমিট করুন';
                 return;
             }
 
-            // 1. Validation for main images
-            if (mainImageFiles.length === 0 || mainImageFiles.length > 3) {
-                 alert("অনুগ্রহ করে কমপক্ষে একটি এবং সর্বোচ্চ ৩টি ছবি আপলোড করুন।");
+            const imageFiles = document.getElementById('images')?.files;
+            const khotianFile = document.getElementById('khotian-image')?.files?.[0];
+            const sketchFile = document.getElementById('sketch-image')?.files?.[0];
+
+            if (!imageFiles || imageFiles.length === 0) {
+                 alert("অনুগ্রহ করে কমপক্ষে একটি প্রপার্টি ছবি আপলোড করুন।");
+                 submitBtn.disabled = false;
+                 submitBtn.textContent = 'সাবমিট করুন';
                  return;
             }
-            
+            if (imageFiles.length > 3) {
+                 alert("আপনি সর্বোচ্চ ৩টি ছবি আপলোড করতে পারবেন।");
+                 submitBtn.disabled = false;
+                 submitBtn.textContent = 'সাবমিট করুন';
+                 return;
+            }
+
+
+            // ডেটা সংগ্রহ (আপডেট করা ডাইনামিক ফিল্ড অনুযায়ী)
             const category = document.getElementById('post-category').value;
             const type = document.getElementById('post-type')?.value;
 
-            // 2. Validation for documents (Sale only)
-            if (category === 'বিক্রয়') {
-                if (!khatianFile || !sketchFile) {
-                    alert('বিক্রয় ক্যাটাগরির জন্য সর্বশেষ খতিয়ানের ছবি এবং প্রপার্টি স্কেস বা হস্ত নকশা ছবি অবশ্যই আপলোড করতে হবে।');
-                    return;
-                }
-            }
-
-
             // ডেটা সংগ্রহের জন্য একটি সহায়ক ফাংশন যা ইনপুট আইডি থেকে মান নেয়
             const getValue = (id) => document.getElementById(id)?.value;
-            const getParsedValue = (id, type) => {
-                const val = getValue(id);
-                if (!val) return null;
-                return type === 'number' ? parseFloat(val) : val;
-            }
-            const getRadioValue = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value;
-
 
             // মূল ডেটা অবজেক্ট
             const propertyData = {
@@ -473,22 +592,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 type,
                 title: getValue('property-title'),
                 description: getValue('description'),
-                primaryPhone: getValue('primary-phone'), // Editable
+                primaryPhone: getValue('primary-phone'),
                 secondaryPhone: getValue('secondary-phone'),
-                mapLocation: getValue('map-location'),
+                googleMapPin: getValue('google-map-pin'),
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 userId: user.uid,
                 status: 'pending',
-                
+
                 // ঠিকানা ডেটা
                 location: {
                     division: getValue('division'),
                     district: getValue('district'),
                     areaType: getValue('area-type-select'),
-                    thana: getValue('thana-name'),
-                    wordNo: getValue('ward-no'),
-                    road: getValue('road-name'),
                     village: getValue('village-name'),
+                    road: getValue('road-name'),
+                    thana: getValue('thana-name'),
+                    wardNo: getValue('ward-no'),
                 }
             };
             
@@ -501,107 +620,165 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
 
-            // অতিরিক্ত ক্যাটাগরি/টাইপ-ভিত্তিক ফিল্ড যোগ করা
+            // --- অতিরিক্ত ক্যাটাগরি/টাইপ-ভিত্তিক ফিল্ড যোগ করা ---
+            
+            // বিক্রয়ের জন্য
             if (category === 'বিক্রয়') {
-                propertyData.price = getParsedValue('price-rent-value', 'number');
-                propertyData.priceUnit = getValue('price-rent-unit');
-                propertyData.quantityValue = getParsedValue('quantity-value', 'number');
-                propertyData.quantityUnit = getValue('quantity-unit');
+                propertyData.price = getValue('price');
+                propertyData.priceUnit = getValue('price-unit');
                 
-                // Ownership Info
-                propertyData.ownerName = getValue('owner-name');
-                propertyData.dagType = getValue('dag-type');
-                propertyData.dagNo = getValue('dag-no');
-                propertyData.mouja = getValue('mouja');
+                // মালিকানা বিবরণ
+                propertyData.owner = {
+                    donorName: getValue('donor-name'),
+                    dagNoType: getValue('dag-no-select'),
+                    mouja: getValue('mouja')
+                };
                 
-                // Type Specific
+                // প্রপার্টি টাইপ অনুসারে
                 if (type === 'জমি' || type === 'প্লট') {
-                    propertyData.accessRoadFt = getParsedValue('access-road-ft', 'number');
+                    propertyData.landArea = getValue('land-area');
+                    propertyData.landAreaUnit = getValue('land-area-unit');
+                    propertyData.roadWidth = getValue('road-width');
                     propertyData.landType = getValue('land-type');
-                    if (type === 'প্লট') propertyData.plotNo = getValue('plot-no');
+                    if (type === 'প্লট') {
+                        propertyData.plotNo = getValue('plot-no');
+                    }
                 } else if (type === 'বাড়ি' || type === 'ফ্লাট' || type === 'অফিস') {
-                    propertyData.accessRoadFt = getParsedValue('access-road-ft', 'number');
-                    propertyData.parking = getRadioValue('parking');
-                    propertyData.roomCount = getParsedValue('room-count', 'number');
-                    propertyData.bathroomCount = getParsedValue('bathroom-count', 'number');
-                    propertyData.kitchenCount = getParsedValue('kitchen-count', 'number');
-                    propertyData.floorNo = getParsedValue('floor-no', 'number'); // Flat/Office, House Rent
-                    if (type === 'বাড়ি' && category === 'বিক্রয়') propertyData.floors = getParsedValue('floors', 'number'); // House Sale
-                } else if (type === 'দোকান') {
-                    propertyData.shopCount = getParsedValue('shop-count', 'number');
+                    propertyData.parking = document.querySelector('input[name="parking"]:checked')?.value;
+                    
+                    if (type === 'বাড়ি') {
+                        propertyData.rooms = getValue('rooms');
+                        propertyData.bathrooms = getValue('bathrooms');
+                        propertyData.kitchen = getValue('kitchen');
+                        propertyData.roadWidth = getValue('road-width');
+                        propertyData.floors = getValue('floors');
+                        propertyData.houseArea = getValue('house-area');
+                        propertyData.houseAreaUnit = getValue('house-area-unit');
+                    } else if (type === 'ফ্লাট') {
+                        propertyData.rooms = getValue('rooms');
+                        propertyData.bathrooms = getValue('bathrooms');
+                        propertyData.kitchen = getValue('kitchen');
+                        propertyData.roadWidth = getValue('road-width');
+                        propertyData.areaSqft = getValue('flat-area-sqft');
+                        propertyData.floorNo = getValue('floor-no');
+                    } else if (type === 'দোকান' || type === 'অফিস') {
+                        propertyData.commercialArea = getValue('commercial-area');
+                        propertyData.commercialAreaUnit = getValue('commercial-area-unit');
+                        
+                        if (type === 'দোকান') {
+                             propertyData.shopCount = getValue('shop-count');
+                        } else if (type === 'অফিস') {
+                            propertyData.rooms = getValue('rooms');
+                            propertyData.bathrooms = getValue('bathrooms');
+                            propertyData.floorNo = getValue('floor-no');
+                        }
+                    }
+                } else if (type === 'দোকান' || type === 'অফিস') {
+                    propertyData.commercialArea = getValue('commercial-area');
+                    propertyData.commercialAreaUnit = getValue('commercial-area-unit');
+                    
+                    if (type === 'দোকান') {
+                         propertyData.shopCount = getValue('shop-count');
+                    }
                 }
-
-            } else if (category === 'ভাড়া') {
-                propertyData.monthlyRent = getParsedValue('monthly-rent', 'number');
-                propertyData.advance = getParsedValue('advance-amount', 'number');
-                propertyData.rentType = getRadioValue('rent-type');
-                propertyData.entryDate = getValue('entry-date');
-                propertyData.quantityValue = getParsedValue('quantity-value', 'number');
-                propertyData.quantityUnit = getValue('quantity-unit');
-
+            } 
+            
+            // ভাড়ার জন্য
+            else if (category === 'ভাড়া') {
+                propertyData.monthlyRent = getValue('monthly-rent');
+                propertyData.advance = getValue('advance');
+                propertyData.moveInDate = getValue('move-in-date');
+                
                  if (type === 'বাড়ি' || type === 'ফ্লাট' || type === 'অফিস') {
-                    propertyData.accessRoadFt = getParsedValue('access-road-ft', 'number');
-                    propertyData.parking = getRadioValue('parking');
-                    propertyData.roomCount = getParsedValue('room-count', 'number');
-                    propertyData.bathroomCount = getParsedValue('bathroom-count', 'number');
-                    propertyData.kitchenCount = getParsedValue('kitchen-count', 'number');
-                    propertyData.floorNo = getParsedValue('floor-no', 'number'); 
+                    propertyData.parking = document.querySelector('input[name="parking"]:checked')?.value;
+                    propertyData.commercialArea = getValue('commercial-area');
+                    propertyData.commercialAreaUnit = getValue('commercial-area-unit');
+                    
+                    if (type === 'বাড়ি' || type === 'ফ্লাট') {
+                         propertyData.roadWidth = getValue('road-width');
+                         propertyData.rooms = getValue('rooms');
+                         propertyData.bathrooms = getValue('bathrooms');
+                         propertyData.kitchen = getValue('kitchen');
+                         propertyData.rentType = getValue('rent-type');
+                         
+                         if (type === 'বাড়ি') {
+                             propertyData.floors = getValue('floors');
+                             propertyData.houseArea = getValue('house-area');
+                             propertyData.houseAreaUnit = getValue('house-area-unit');
+                         } else if (type === 'ফ্লাট') {
+                             propertyData.floorNo = getValue('floor-no');
+                             propertyData.areaSqft = getValue('flat-area-sqft');
+                         }
+                    } else if (type === 'অফিস') {
+                        propertyData.floorNo = getValue('floor-no');
+                        propertyData.rooms = getValue('rooms');
+                        propertyData.bathrooms = getValue('bathrooms');
+                    }
                 } else if (type === 'দোকান') {
-                     propertyData.shopCount = getParsedValue('shop-count', 'number');
+                    propertyData.commercialArea = getValue('commercial-area');
+                    propertyData.commercialAreaUnit = getValue('commercial-area-unit');
+                    propertyData.shopCount = getValue('shop-count');
                 }
             }
             
-            // 3. ইমেজ এবং ডকুমেন্টস আপলোড
-            const propertyId = db.collection('properties').doc().id;
-            const storagePath = `properties/${propertyId}`;
+            // --- ফাইল আপলোড এবং URL সংগ্রহ ---
             
             const uploadFile = async (file, path) => {
-                const storageRef = storage.ref(path);
+                const storageRef = storage.ref(`${path}/${Date.now()}_${file.name}`);
                 const snapshot = await storageRef.put(file);
-                return snapshot.ref.getDownloadURL();
+                return await snapshot.ref.getDownloadURL();
             };
 
-            const mainImagePromises = mainImageFiles.map((file, index) => 
-                uploadFile(file, `${storagePath}/main_images/image_${index}`)
-            );
-            propertyData.mainImageURLs = await Promise.all(mainImagePromises);
+            // ১. প্রপার্টি ছবি (১-৩টি)
+            const imageUrls = [];
+            for (const file of imageFiles) {
+                const downloadURL = await uploadFile(file, 'property_images');
+                imageUrls.push(downloadURL);
+            }
+            propertyData.images = imageUrls;
             
+            // ২. মালিকানা বিবরণের ছবি (যদি বিক্রয়ের জন্য হয়)
             if (category === 'বিক্রয়') {
-                propertyData.khatianURL = await uploadFile(khatianFile, `${storagePath}/documents/khatian`);
-                propertyData.sketchURL = await uploadFile(sketchFile, `${storagePath}/documents/sketch`);
+                if (khotianFile) {
+                    propertyData.owner.khotianImageUrl = await uploadFile(khotianFile, 'ownership_docs/khotian');
+                }
+                if (sketchFile) {
+                    propertyData.owner.sketchImageUrl = await uploadFile(sketchFile, 'ownership_docs/sketch');
+                }
             }
 
-            // 4. ডেটাবেসে সংরক্ষণ
-            await db.collection("properties").doc(propertyId).set(propertyData);
+
+            await db.collection("properties").add(propertyData);
 
             alert("প্রপার্টি সফলভাবে আপলোড করা হয়েছে!");
             propertyForm.reset();
-            // UI ও ফাইল রিসেট করা
-            mainImageFiles = []; khatianFile = null; sketchFile = null;
-            document.getElementById('dynamic-fields-container').innerHTML = '<p class="placeholder-text">ক্যাটাগরি নির্বাচন করার পরে এখানে ফর্মের বাকি অংশ আসবে।</p>'; 
-            
+            dynamicFieldsContainer.innerHTML = '<p class="placeholder-text">ক্যাটাগরি নির্বাচন করার পরে এখানে ফর্মের বাকি অংশ আসবে।</p>'; 
+            document.getElementById('image-preview-area').innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
+
+
         } catch (error) {
             console.error("ডেটা আপলোড করতে সমস্যা হয়েছে: ", error);
             alert("প্রপার্টি আপলোড ব্যর্থ হয়েছে: " + error.message);
         } finally {
             submitBtn.disabled = false;
-            submitBtn.textContent = 'পোস্ট করুন';
+            submitBtn.textContent = 'সাবমিট করুন';
         }
     });
 
     // Auth state change handler for UI updates (লগইন স্ট্যাটাস চেক করে ফর্ম দেখাবে)
     auth.onAuthStateChanged(user => {
         const authWarningMessage = document.getElementById('auth-warning-message');
+        const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
         const loginLinkSidebar = document.getElementById('login-link-sidebar');
         const propertyFormDisplay = document.getElementById('property-form');
         const primaryPhoneInput = document.getElementById('primary-phone');
-
-        // লগআউট হ্যান্ডেলার
+        
+        // লগআউট হ্যান্ডেলার (auth.js এর মত)
         const handleLogout = async () => {
             try {
                 await auth.signOut();
                 alert('সফলভাবে লগআউট করা হয়েছে!');
-                window.location.reload();
+                window.location.href = 'index.html';
             } catch (error) {
                 console.error("লগআউট ব্যর্থ হয়েছে:", error);
                 alert("লগআউট ব্যর্থ হয়েছে।");
@@ -609,31 +786,40 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         if (user) {
+            // লগইন থাকলে ফর্ম দেখাও
             if (propertyFormDisplay) propertyFormDisplay.style.display = 'block';
             if (authWarningMessage) authWarningMessage.style.display = 'none';
             
+            if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
             if (loginLinkSidebar) {
-                loginLinkSidebar.innerHTML = '<i class="material-icons">lock_open</i> লগআউট';
+                loginLinkSidebar.textContent = 'লগআউট';
                 loginLinkSidebar.href = '#';
                 loginLinkSidebar.onclick = handleLogout;
             }
             
-            // ফোন নম্বর লোড (ডামি)
-            if (primaryPhoneInput) {
-                // TODO: এখানে Firebase Auth বা Firestore থেকে আসল ফোন নম্বর লোড করতে হবে
-                primaryPhoneInput.value = '01712345678'; 
-            }
+            // TODO: প্রোফাইল থেকে ফোন নম্বর লোড করার লজিক এখানে যুক্ত করতে হবে (যেমন: user.phoneNumber)
+            // আপাতত একটি ডামি নম্বর রাখা হলো
+             if (primaryPhoneInput) {
+                primaryPhoneInput.value = '01712345678'; // ডামি প্রোফাইল নাম্বার
+                primaryPhoneInput.disabled = false; // ব্যবহারকারী চাইলে ইডিট করতে পারবে
+             }
+             
 
         } else {
+            // লগইন না থাকলে ফর্ম লুকিয়ে ওয়ার্নিং দেখাও
             if (propertyFormDisplay) propertyFormDisplay.style.display = 'none';
             if (authWarningMessage) authWarningMessage.style.display = 'block';
             
+            if (postLinkSidebar) postLinkSidebar.style.display = 'none';
             if (loginLinkSidebar) {
-                loginLinkSidebar.innerHTML = '<i class="material-icons">lock_open</i> লগইন';
+                loginLinkSidebar.textContent = 'লগইন';
                 loginLinkSidebar.href = 'auth.html';
                 loginLinkSidebar.onclick = null;
             }
-            if (primaryPhoneInput) primaryPhoneInput.value = '';
+            if (primaryPhoneInput) {
+                primaryPhoneInput.value = '';
+                primaryPhoneInput.disabled = true;
+            }
         }
     });
 });
