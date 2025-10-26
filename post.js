@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <option value="">-- নির্বাচন করুন --</option>
                             <option value="ফ্যামিলি">ফ্যামিলি</option>
                             <option value="ব্যাচেলর">ব্যাচেলর</option>
-                            <option value="উভয়">উভয়</option>
+                            <option value="সকল">সকল</option>
                         </select>
                     </div>
                     <div class="input-group">
@@ -242,8 +242,8 @@ document.addEventListener('DOMContentLoaded', function() {
             fieldsHTML += ownershipHTML;
         }
 
-        // --- সেকশন ৩: পরিমাণ/দাম/ভাড়ার পর্ব ---
-        let priceRentHTML = '<div class="form-section price-rent-section"><h3>পরিমাণ ও দাম / ভাড়া</h3>';
+        // --- সেকশন ৩: পরিমাণ/দাম/ভাড়া ---
+        let priceRentHTML = '<div class="form-section price-rent-section"><h3>পরিমাণ ও দাম </h3>';
         
         // পরিমাণের ফিল্ড
         if (type === 'জমি' || type === 'প্লট') {
