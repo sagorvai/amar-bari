@@ -480,41 +480,39 @@ document.addEventListener('DOMContentLoaded', function() {
         subAddressFieldsContainer.innerHTML = subFieldsHTML;
     }
 
-    // Function to handle Image Preview (SMART IMAGE PREVIEW with REMOVE functionality)
+    // ⭐ আপডেট করা ফাংশন: Image Preview এবং রিমুভ লজিক
     function handleImagePreview(event, previewAreaId, maxFiles = 3) {
         const previewArea = document.getElementById(previewAreaId);
-        // যদি maxFiles 1 হয়, তবে শুধুমাত্র একটি placeholder থাকবে, অন্যথায় সব ক্লিয়ার হবে।
-        if (maxFiles === 1) {
-            previewArea.innerHTML = '';
-        } else if (previewArea.children.length === 0 || maxFiles > 1) {
-            previewArea.innerHTML = ''; 
-        }
-
-        const files = event.target.files;
+        const fileInput = event.target;
         
-        if (files.length > maxFiles) {
+        // যদি ছবি নির্বাচন না করা হয়, তবে শুধু প্লেসহোল্ডার দেখাও
+        if (fileInput.files.length === 0) {
+            previewArea.innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
+            return;
+        }
+
+        // সর্বোচ্চ ফাইল সীমা অতিক্রম করলে সতর্কতা
+        if (fileInput.files.length > maxFiles) {
             alert(`আপনি সর্বোচ্চ ${maxFiles}টি ছবি আপলোড করতে পারবেন।`);
-            event.target.value = ''; // Clear selection
-            // যদি একাধিক ফাইল সিলেক্ট করা হয় এবং তা সর্বোচ্চ সীমা অতিক্রম করে তবে প্লেসহোল্ডার দেখাও
+            fileInput.value = ''; // Clear selection
             previewArea.innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
             return;
         }
 
-        if (files.length === 0 && maxFiles > 1) {
-            previewArea.innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
-            return;
-        }
+        // প্রিভিউ এরিয়া পরিষ্কার করা
+        previewArea.innerHTML = '';
+        const currentFilesArray = Array.from(fileInput.files);
 
-        const currentFilesArray = Array.from(files); // FileList to Array for manipulation
-
-        // শুধুমাত্র নতুন ফাইলগুলির জন্য প্রিভিউ তৈরি করো
+        // শুধুমাত্র বর্তমানে ইনপুট ফাইলের জন্য প্রিভিউ তৈরি করো
         for (const file of currentFilesArray) {
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const previewWrapper = document.createElement('div');
                     previewWrapper.className = 'image-preview-wrapper';
-                    previewWrapper.dataset.filename = file.name; // ছবির নাম ডেটা অ্যাট্রিবিউটে সংরক্ষণ
+                    // ফাইলের নাম, সাইজ এবং শেষ পরিবর্তনের সময় ডেটা অ্যাট্রিবিউটে সংরক্ষণ করা
+                    previewWrapper.dataset.filename = file.name; 
+                    previewWrapper.dataset.filesize = file.size;
 
                     const img = document.createElement('img');
                     img.src = e.target.result;
@@ -526,23 +524,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     removeButton.style.backgroundColor = 'red';
                     removeButton.style.color = 'white';
                     
-                    // রিমুভ লজিক
+                    // ✅ সংশোধিত রিমুভ লজিক
                     removeButton.addEventListener('click', (e) => {
                         e.preventDefault(); // ফর্ম সাবমিট হওয়া আটকানো
 
+                        // একটি নতুন DataTransfer অবজেক্ট তৈরি
                         const dt = new DataTransfer();
-                        const currentInputFiles = Array.from(event.target.files);
+                        const currentInputFiles = Array.from(fileInput.files);
                         
-                        // রিমুভ করতে চাওয়া ফাইলের ইন্ডেক্স খুঁজে বের করা
-                        const fileIndexToRemove = currentInputFiles.findIndex(f => 
-                            f.name === file.name && f.size === file.size
-                        );
+                        // রিমুভ করতে চাওয়া ফাইলের ডেটা অ্যাট্রিবিউট থেকে ডেটা
+                        const filenameToRemove = previewWrapper.dataset.filename;
+                        const filesizeToRemove = previewWrapper.dataset.filesize;
+
+                        let fileRemoved = false;
                         
-                        if (fileIndexToRemove !== -1) {
-                            currentInputFiles.splice(fileIndexToRemove, 1);
-                            currentInputFiles.forEach(f => dt.items.add(f));
-                            event.target.files = dt.files; // আপডেট করা ফাইল লিস্ট ইনপুটে সেট করা
-                            
+                        // রিমুভ করতে চাওয়া ফাইল বাদে বাকি ফাইলগুলো নতুন DataTransfer-এ যোগ
+                        currentInputFiles.forEach(f => {
+                            // শুধুমাত্র নাম, সাইজ এবং টাইপ মিলিয়ে ফাইলটি চিহ্নিত করা
+                            if (!(f.name === filenameToRemove && f.size.toString() === filesizeToRemove)) {
+                                dt.items.add(f);
+                            } else {
+                                fileRemoved = true;
+                            }
+                        });
+                        
+                        // যদি ফাইল সফলভাবে রিমুভ হয় তবে ইনপুট আপডেট করো
+                        if (fileRemoved) {
+                            fileInput.files = dt.files; // আপডেট করা ফাইল লিস্ট ইনপুটে সেট করা
                             previewWrapper.remove(); // প্রিভিউ UI থেকে রিমুভ করা
                             
                             // যদি কোনো ছবি না থাকে তবে প্লেসহোল্ডার দেখাও
@@ -555,10 +563,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     previewWrapper.appendChild(img);
                     previewWrapper.appendChild(removeButton);
                     
-                    // single file-এর জন্য আগেরটা রিমুভ করে নতুনটা যোগ
-                    if (maxFiles === 1) {
-                        previewArea.innerHTML = '';
-                    }
                     previewArea.appendChild(previewWrapper);
                 };
                 reader.readAsDataURL(file);
