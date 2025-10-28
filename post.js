@@ -1010,6 +1010,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set the initial submit button text
     if (submitBtn) {
-         submitBtn.textContent = 'প্রিভিউ দেখুন';
+         submitBtn.textContent = 'এগিয়ে যান';
     }
 });
