@@ -15,9 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
         let options = [];
 
         if (category === 'বিক্রয়') {
-            options = ['জমি', 'প্লট', 'বাড়ি', 'ফ্লাট', 'দোকান', 'অফিস']; // প্রথম দিকের অপশন ফিরিয়ে আনা হলো
+            options = ['জমি', 'প্লট', 'বাড়ি', 'ফ্লাট', 'দোকান', 'অফিস'];
         } else if (category === 'ভাড়া') {
-            options = ['বাড়ি', 'ফ্লাট', 'অফিস', 'দোকান']; // প্রথম দিকের অপশন ফিরিয়ে আনা হলো
+            options = ['বাড়ি', 'ফ্লাট', 'অফিস', 'দোকান'];
         }
 
         // ফর্মের স্টাইল ও গ্রুপিং-এর জন্য সুন্দর ক্লাস ব্যবহার করা হয়েছে
@@ -53,9 +53,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // --- সেকশন ১: প্রপার্টির বিবরণ (ছবি, শিরোনাম, রুম ইত্যাদি) ---
+        // ✅ সমস্যা ১ এর সমাধান: 'ভাড়োর'-এর পরিবর্তে 'ভাড়া' ব্যবহার
         let descriptionHTML = `
             <div class="form-section property-details-section">
-                <h3>${type} ${category}ের বিবরণ</h3>
+                <h3>${type} ${category === 'ভাড়া' ? 'ভাড়া' : category}ের বিবরণ</h3>
 
                 <div class="input-group image-upload-group">
                     <label for="images">প্রপার্টি ছবি (সর্বোচ্চ ৩টি):</label>
@@ -157,16 +158,22 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // ভাড়ার জন্য অতিরিক্ত ফিল্ড
             if (category === 'ভাড়া') {
+                // ✅ সমস্যা ২ এর সমাধান: 'অফিস' ভাড়ার ক্ষেত্রে ভাড়ার ধরন (rent-type) বাদ দেওয়া 
+                if (type !== 'অফিস') {
+                    descriptionHTML += `
+                        <div class="input-group">
+                            <label for="rent-type">ভাড়ার ধরন:</label>
+                            <select id="rent-type" required>
+                                <option value="">-- নির্বাচন করুন --</option>
+                                <option value="ফ্যামিলি">ফ্যামিলি</option>
+                                <option value="ব্যাচেলর">ব্যাচেলর</option>
+                                <option value="সকল">সকল</option>
+                            </select>
+                        </div>
+                    `;
+                }
+                
                 descriptionHTML += `
-                    <div class="input-group">
-                        <label for="rent-type">ভাড়ার ধরন:</label>
-                        <select id="rent-type" required>
-                            <option value="">-- নির্বাচন করুন --</option>
-                            <option value="ফ্যামিলি">ফ্যামিলি</option>
-                            <option value="ব্যাচেলর">ব্যাচেলর</option>
-                            <option value="সকল">সকল</option>
-                        </select>
-                    </div>
                     <div class="input-group">
                         <label for="move-in-date">ওঠার তারিখ:</label>
                         <input type="date" id="move-in-date" required>
@@ -247,10 +254,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // পরিমাণের ফিল্ড
         if (type === 'জমি' || type === 'প্লট') {
+            // ✅ সমস্যা ৩ এর সমাধান: বিক্রয়ের ক্ষেত্রে 'পরিমাণ' ইনপুট বক্স বড় করার জন্য placeholder যোগ করা
+            const areaPlaceholder = category === 'বিক্রয়' ? 'মোট পরিমাণ (সংখ্যায়)' : 'পরিমাণ';
+            
             priceRentHTML += `
                 <div class="input-group input-inline-unit">
                     <label for="land-area">পরিমাণ:</label>
-                    <input type="number" id="land-area" placeholder="পরিমাণ" required>
+                    <input type="number" id="land-area" placeholder="${areaPlaceholder}" required>
                     <select id="land-area-unit" class="unit-select" required>
                         <option value="শতক">শতক</option>
                         <option value="একর">একর</option>
@@ -727,7 +737,10 @@ document.addEventListener('DOMContentLoaded', function() {
                          propertyData.rooms = getValue('rooms');
                          propertyData.bathrooms = getValue('bathrooms');
                          propertyData.kitchen = getValue('kitchen');
-                         propertyData.rentType = getValue('rent-type');
+                         // 'অফিস' বাদে অন্য ভাড়ার ক্ষেত্রে rentType লাগবে
+                         if (type !== 'অফিস') {
+                             propertyData.rentType = getValue('rent-type');
+                         }
                          
                          if (type === 'বাড়ি') {
                              propertyData.floors = getValue('floors');
