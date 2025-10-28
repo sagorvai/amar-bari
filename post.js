@@ -15,9 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
         let options = [];
 
         if (category === 'বিক্রয়') {
-            options = ['জমি', 'প্লট', 'বাড়ি', 'ফ্লাট', 'দোকান', 'অফিস'];
+            options = ['জমি', 'প্লট', 'বাড়ি', 'ফ্লাট', 'দোকান', 'অফিস']; // প্রথম দিকের অপশন ফিরিয়ে আনা হলো
         } else if (category === 'ভাড়া') {
-            options = ['বাড়ি', 'ফ্লাট', 'অফিস', 'দোকান'];
+            options = ['বাড়ি', 'ফ্লাট', 'অফিস', 'দোকান']; // প্রথম দিকের অপশন ফিরিয়ে আনা হলো
         }
 
         // ফর্মের স্টাইল ও গ্রুপিং-এর জন্য সুন্দর ক্লাস ব্যবহার করা হয়েছে
@@ -52,11 +52,13 @@ document.addEventListener('DOMContentLoaded', function() {
              return;
         }
 
+        // Issue 1 Fix: Change "ভাড়ের বিবরণ" to "ভাড়ার বিবরণ"
+        let categoryDescriptionText = category === 'ভাড়া' ? 'ভাড়ার বিবরণ' : `${category}ের বিবরণ`;
+
         // --- সেকশন ১: প্রপার্টির বিবরণ (ছবি, শিরোনাম, রুম ইত্যাদি) ---
-        // ✅ সমস্যা ১ এর সমাধান: 'ভাড়োর'-এর পরিবর্তে 'ভাড়া' ব্যবহার
         let descriptionHTML = `
             <div class="form-section property-details-section">
-                <h3>${type} ${category === 'ভাড়া' ? 'ভাড়া' : category}ের বিবরণ</h3>
+                <h3>${type} ${categoryDescriptionText}</h3>
 
                 <div class="input-group image-upload-group">
                     <label for="images">প্রপার্টি ছবি (সর্বোচ্চ ৩টি):</label>
@@ -158,8 +160,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // ভাড়ার জন্য অতিরিক্ত ফিল্ড
             if (category === 'ভাড়া') {
-                // ✅ সমস্যা ২ এর সমাধান: 'অফিস' ভাড়ার ক্ষেত্রে ভাড়ার ধরন (rent-type) বাদ দেওয়া 
-                if (type !== 'অফিস') {
+                // Issue 2 Fix: ভাড়ার ধরন (rent-type) শুধুমাত্র 'বাড়ি' এবং 'ফ্লাট' এর জন্য
+                if (type === 'বাড়ি' || type === 'ফ্লাট') {
                     descriptionHTML += `
                         <div class="input-group">
                             <label for="rent-type">ভাড়ার ধরন:</label>
@@ -173,6 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                 }
                 
+                // ওঠার তারিখ (move-in-date) 'ভাড়া' ক্যাটাগরির সবার জন্য
                 descriptionHTML += `
                     <div class="input-group">
                         <label for="move-in-date">ওঠার তারিখ:</label>
@@ -254,13 +257,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // পরিমাণের ফিল্ড
         if (type === 'জমি' || type === 'প্লট') {
-            // ✅ সমস্যা ৩ এর সমাধান: বিক্রয়ের ক্ষেত্রে 'পরিমাণ' ইনপুট বক্স বড় করার জন্য placeholder যোগ করা
-            const areaPlaceholder = category === 'বিক্রয়' ? 'মোট পরিমাণ (সংখ্যায়)' : 'পরিমাণ';
-            
             priceRentHTML += `
                 <div class="input-group input-inline-unit">
                     <label for="land-area">পরিমাণ:</label>
-                    <input type="number" id="land-area" placeholder="${areaPlaceholder}" required>
+                    <input type="number" id="land-area" placeholder="পরিমাণ" required>
                     <select id="land-area-unit" class="unit-select" required>
                         <option value="শতক">শতক</option>
                         <option value="একর">একর</option>
@@ -490,39 +490,41 @@ document.addEventListener('DOMContentLoaded', function() {
         subAddressFieldsContainer.innerHTML = subFieldsHTML;
     }
 
-    // ⭐ আপডেট করা ফাংশন: Image Preview এবং রিমুভ লজিক
+    // Function to handle Image Preview (SMART IMAGE PREVIEW with REMOVE functionality)
     function handleImagePreview(event, previewAreaId, maxFiles = 3) {
         const previewArea = document.getElementById(previewAreaId);
-        const fileInput = event.target;
+        // যদি maxFiles 1 হয়, তবে শুধুমাত্র একটি placeholder থাকবে, অন্যথায় সব ক্লিয়ার হবে।
+        if (maxFiles === 1) {
+            previewArea.innerHTML = '';
+        } else if (previewArea.children.length === 0 || maxFiles > 1) {
+            previewArea.innerHTML = ''; 
+        }
+
+        const files = event.target.files;
         
-        // যদি ছবি নির্বাচন না করা হয়, তবে শুধু প্লেসহোল্ডার দেখাও
-        if (fileInput.files.length === 0) {
-            previewArea.innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
-            return;
-        }
-
-        // সর্বোচ্চ ফাইল সীমা অতিক্রম করলে সতর্কতা
-        if (fileInput.files.length > maxFiles) {
+        if (files.length > maxFiles) {
             alert(`আপনি সর্বোচ্চ ${maxFiles}টি ছবি আপলোড করতে পারবেন।`);
-            fileInput.value = ''; // Clear selection
+            event.target.value = ''; // Clear selection
+            // যদি একাধিক ফাইল সিলেক্ট করা হয় এবং তা সর্বোচ্চ সীমা অতিক্রম করে তবে প্লেসহোল্ডার দেখাও
             previewArea.innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
             return;
         }
 
-        // প্রিভিউ এরিয়া পরিষ্কার করা
-        previewArea.innerHTML = '';
-        const currentFilesArray = Array.from(fileInput.files);
+        if (files.length === 0 && maxFiles > 1) {
+            previewArea.innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
+            return;
+        }
 
-        // শুধুমাত্র বর্তমানে ইনপুট ফাইলের জন্য প্রিভিউ তৈরি করো
+        const currentFilesArray = Array.from(files); // FileList to Array for manipulation
+
+        // শুধুমাত্র নতুন ফাইলগুলির জন্য প্রিভিউ তৈরি করো
         for (const file of currentFilesArray) {
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const previewWrapper = document.createElement('div');
                     previewWrapper.className = 'image-preview-wrapper';
-                    // ফাইলের নাম, সাইজ এবং শেষ পরিবর্তনের সময় ডেটা অ্যাট্রিবিউটে সংরক্ষণ করা
-                    previewWrapper.dataset.filename = file.name; 
-                    previewWrapper.dataset.filesize = file.size;
+                    previewWrapper.dataset.filename = file.name; // ছবির নাম ডেটা অ্যাট্রিবিউটে সংরক্ষণ
 
                     const img = document.createElement('img');
                     img.src = e.target.result;
@@ -534,33 +536,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     removeButton.style.backgroundColor = 'red';
                     removeButton.style.color = 'white';
                     
-                    // ✅ সংশোধিত রিমুভ লজিক
+                    // রিমুভ লজিক
                     removeButton.addEventListener('click', (e) => {
                         e.preventDefault(); // ফর্ম সাবমিট হওয়া আটকানো
 
-                        // একটি নতুন DataTransfer অবজেক্ট তৈরি
                         const dt = new DataTransfer();
-                        const currentInputFiles = Array.from(fileInput.files);
+                        const currentInputFiles = Array.from(event.target.files);
                         
-                        // রিমুভ করতে চাওয়া ফাইলের ডেটা অ্যাট্রিবিউট থেকে ডেটা
-                        const filenameToRemove = previewWrapper.dataset.filename;
-                        const filesizeToRemove = previewWrapper.dataset.filesize;
-
-                        let fileRemoved = false;
+                        // রিমুভ করতে চাওয়া ফাইলের ইন্ডেক্স খুঁজে বের করা
+                        const fileIndexToRemove = currentInputFiles.findIndex(f => 
+                            f.name === file.name && f.size === file.size
+                        );
                         
-                        // রিমুভ করতে চাওয়া ফাইল বাদে বাকি ফাইলগুলো নতুন DataTransfer-এ যোগ
-                        currentInputFiles.forEach(f => {
-                            // শুধুমাত্র নাম, সাইজ এবং টাইপ মিলিয়ে ফাইলটি চিহ্নিত করা
-                            if (!(f.name === filenameToRemove && f.size.toString() === filesizeToRemove)) {
-                                dt.items.add(f);
-                            } else {
-                                fileRemoved = true;
-                            }
-                        });
-                        
-                        // যদি ফাইল সফলভাবে রিমুভ হয় তবে ইনপুট আপডেট করো
-                        if (fileRemoved) {
-                            fileInput.files = dt.files; // আপডেট করা ফাইল লিস্ট ইনপুটে সেট করা
+                        if (fileIndexToRemove !== -1) {
+                            currentInputFiles.splice(fileIndexToRemove, 1);
+                            currentInputFiles.forEach(f => dt.items.add(f));
+                            event.target.files = dt.files; // আপডেট করা ফাইল লিস্ট ইনপুটে সেট করা
+                            
                             previewWrapper.remove(); // প্রিভিউ UI থেকে রিমুভ করা
                             
                             // যদি কোনো ছবি না থাকে তবে প্লেসহোল্ডার দেখাও
@@ -573,6 +565,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     previewWrapper.appendChild(img);
                     previewWrapper.appendChild(removeButton);
                     
+                    // single file-এর জন্য আগেরটা রিমুভ করে নতুনটা যোগ
+                    if (maxFiles === 1) {
+                        previewArea.innerHTML = '';
+                    }
                     previewArea.appendChild(previewWrapper);
                 };
                 reader.readAsDataURL(file);
@@ -737,10 +733,7 @@ document.addEventListener('DOMContentLoaded', function() {
                          propertyData.rooms = getValue('rooms');
                          propertyData.bathrooms = getValue('bathrooms');
                          propertyData.kitchen = getValue('kitchen');
-                         // 'অফিস' বাদে অন্য ভাড়ার ক্ষেত্রে rentType লাগবে
-                         if (type !== 'অফিস') {
-                             propertyData.rentType = getValue('rent-type');
-                         }
+                         propertyData.rentType = getValue('rent-type'); // Issue 2 Fix: এটি শুধুমাত্র বাড়ি/ফ্লাটের জন্য সেট হবে
                          
                          if (type === 'বাড়ি') {
                              propertyData.floors = getValue('floors');
