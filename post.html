@@ -91,7 +91,7 @@
             min-width: 120px;
         }
         .input-inline-unit input {
-            flex: 3; /* CHANGED: ইনপুট ফিল্ডটি আরও বেশি জায়গা নেবে */
+            flex: 3; /* CHANGED: ইনপুট ফিল্ডটি আরও বেশি জায়গা নেবে (ইউনিটের চেয়ে ৩ গুণ বেশি) */
             min-width: 0; 
         }
         .input-inline-unit .unit-select {
@@ -230,6 +230,18 @@
             <p id="auth-warning-message" style="color: red; display: none; margin-bottom: 15px;">অনুগ্রহ করে প্রপার্টি যোগ করার জন্য লগইন করুন।</p>
             <form id="property-form" style="display: none;">
                 
+                <div class="form-section lister-type-section">
+                    <h3>পোস্টকারী ধরন</h3>
+                    <div class="input-group">
+                        <label for="lister-type">আপনি কে:</label>
+                        <select id="lister-type" required class="full-width-select">
+                            <option value="">-- নির্বাচন করুন --</option>
+                            <option value="মালিক">মালিক (Owner)</option>
+                            <option value="এজেন্সী">এজেন্সী (Agency)</option>
+                            <option value="ডেভেলপার">ডেভেলপার (Developer)</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="form-section primary-selection-section">
                     <h3>পোস্টের ক্যাটাগরি</h3>
                     <div class="input-group">
@@ -290,4 +302,4 @@
         });
     </script>
 </body>
-                </html>
+    </html>
