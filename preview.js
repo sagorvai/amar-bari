@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const previewContent = document.getElementById('preview-content');
     const editButton = document.getElementById('edit-button');
     const confirmButton = document.getElementById('confirm-post-button');
+    const loginLinkSidebar = document.getElementById('login-link-sidebar');
+    const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
 
     // Utility Function: Base64 to Blob (for final Firebase upload)
     const dataURLtoBlob = (dataurl) => {
@@ -19,18 +21,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return new Blob([u8arr], {type:mime});
     }
+    
+    // Function to safely check and format data for display
+    const checkAndFormat = (value, unit = '', defaultValue = 'প্রদান করা হয়নি') => {
+        if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+            return defaultValue;
+        }
+        return `${value} ${unit}`.trim();
+    };
 
     // Function to render the preview data
     function renderPreview(stagedData, stagedMetadata) {
         let html = '';
         
-        // 1. Image Preview Section
+        // 1. Image Preview Section (Wrapper added for fixed size)
         if (stagedData.base64Images && stagedData.base64Images.length > 0) {
             html += `
                 <div class="preview-section">
-                    <h3>ছবিসমূহ (${stagedData.base64Images.length}টি)</h3>
+                    <h3>🖼️ ছবিসমূহ (${stagedData.base64Images.length}টি)</h3>
                     <div id="image-carousel">
-                        ${stagedData.base64Images.map(base64 => `<img src="${base64}" class="preview-image" alt="Property Image">`).join('')}
+                        ${stagedData.base64Images.map(base64 => `
+                            <div class="preview-image-wrapper">
+                                <img src="${base64}" class="preview-image" alt="Property Image">
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             `;
@@ -39,14 +53,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // 2. Main Details
         html += `
             <div class="preview-section">
-                <h3>সাধারণ তথ্য</h3>
-                <div class="preview-item"><div class="preview-label">পোস্টকারী ধরন</div><div class="preview-value">${stagedData.listerType || 'N/A'}</div></div>
-                <div class="preview-item"><div class="preview-label">ক্যাটাগরি</div><div class="preview-value">${stagedData.category}</div></div>
-                <div class="preview-item"><div class="preview-label">ধরন</div><div class="preview-value">${stagedData.type}</div></div>
-                <div class="preview-item"><div class="preview-label">শিরোনাম</div><div class="preview-value">${stagedData.title}</div></div>
+                <h3>📜 সাধারণ তথ্য</h3>
+                <div class="preview-item"><div class="preview-label">পোস্টকারী ধরন</div><div class="preview-value">${checkAndFormat(stagedData.listerType)}</div></div>
+                <div class="preview-item"><div class="preview-label">ক্যাটাগরি</div><div class="preview-value">${checkAndFormat(stagedData.category)}</div></div>
+                <div class="preview-item"><div class="preview-label">প্রপার্টির ধরন</div><div class="preview-value">${checkAndFormat(stagedData.type)}</div></div>
+                <div class="preview-item"><div class="preview-label">শিরোনাম</div><div class="preview-value">${checkAndFormat(stagedData.title)}</div></div>
                 
-                ${stagedData.propertyAge !== undefined ? `<div class="preview-item"><div class="preview-label">প্রপার্টির বয়স</div><div class="preview-value">${stagedData.propertyAge} বছর</div></div>` : ''}
-                ${stagedData.facing ? `<div class="preview-item"><div class="preview-label">প্রপার্টির দিক</div><div class="preview-value">${stagedData.facing}</div></div>` : ''}
+                ${stagedData.propertyAge !== undefined ? `<div class="preview-item"><div class="preview-label">প্রপার্টির বয়স</div><div class="preview-value">${checkAndFormat(stagedData.propertyAge, 'বছর')}</div></div>` : ''}
+                ${stagedData.facing ? `<div class="preview-item"><div class="preview-label">প্রপার্টির দিক</div><div class="preview-value">${checkAndFormat(stagedData.facing)}</div></div>` : ''}
                 
                 ${stagedData.utilities && stagedData.utilities.length > 0 ? `
                     <div class="preview-item">
@@ -55,16 +69,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 ` : ''}
                 
-                ${stagedData.rooms !== undefined ? `<div class="preview-item"><div class="preview-label">রুম সংখ্যা</div><div class="preview-value">${stagedData.rooms || 'N/A'}</div></div>` : ''}
-                ${stagedData.bathrooms !== undefined ? `<div class="preview-label">বাথরুম সংখ্যা</div><div class="preview-value">${stagedData.bathrooms || 'N/A'}</div></div>` : ''}
-                ${stagedData.kitchen !== undefined ? `<div class="preview-item"><div class="preview-label">কিচেন সংখ্যা</div><div class="preview-value">${stagedData.kitchen || 'N/A'}</div></div>` : ''}
+                ${stagedData.rooms !== undefined ? `<div class="preview-item"><div class="preview-label">রুম সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.rooms)}</div></div>` : ''}
+                ${stagedData.bathrooms !== undefined ? `<div class="preview-item"><div class="preview-label">বাথরুম সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.bathrooms)}</div></div>` : ''}
+                ${stagedData.kitchen !== undefined ? `<div class="preview-item"><div class="preview-label">কিচেন সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.kitchen)}</div></div>` : ''}
+                ${stagedData.floors !== undefined ? `<div class="preview-item"><div class="preview-label">তলা সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.floors)}</div></div>` : ''}
+                ${stagedData.floorNo !== undefined ? `<div class="preview-item"><div class="preview-label">ফ্লোর নং</div><div class="preview-value">${checkAndFormat(stagedData.floorNo)}</div></div>` : ''}
+                ${stagedData.roadWidth !== undefined ? `<div class="preview-item"><div class="preview-label">রাস্তার প্রস্থ</div><div class="preview-value">${checkAndFormat(stagedData.roadWidth, 'ফিট')}</div></div>` : ''}
+                ${stagedData.parking !== undefined ? `<div class="preview-item"><div class="preview-label">পার্কিং সুবিধা</div><div class="preview-value">${checkAndFormat(stagedData.parking)}</div></div>` : ''}
+                ${stagedData.landType !== undefined ? `<div class="preview-item"><div class="preview-label">জমির ধরন</div><div class="preview-value">${checkAndFormat(stagedData.landType)}</div></div>` : ''}
+                ${stagedData.plotNo !== undefined ? `<div class="preview-item"><div class="preview-label">প্লট নং</div><div class="preview-value">${checkAndFormat(stagedData.plotNo)}</div></div>` : ''}
+                ${stagedData.shopCount !== undefined ? `<div class="preview-item"><div class="preview-label">দোকান সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.shopCount)}</div></div>` : ''}
+                ${stagedData.rentType !== undefined ? `<div class="preview-item"><div class="preview-label">ভাড়ার ধরন</div><div class="preview-value">${checkAndFormat(stagedData.rentType)}</div></div>` : ''}
+                ${stagedData.moveInDate !== undefined ? `<div class="preview-item"><div class="preview-label">ওঠার তারিখ</div><div class="preview-value">${checkAndFormat(stagedData.moveInDate)}</div></div>` : ''}
             </div>
         `;
 
         // 3. Price/Rent Section
         html += `
             <div class="preview-section">
-                <h3>পরিমাণ ও দাম/ভাড়া</h3>
+                <h3>💰 পরিমাণ ও দাম/ভাড়া</h3>
+                
                 ${stagedData.landArea ? `<div class="preview-item"><div class="preview-label">জমির পরিমাণ</div><div class="preview-value">${stagedData.landArea} ${stagedData.landAreaUnit}</div></div>` : ''}
                 ${stagedData.houseArea ? `<div class="preview-item"><div class="preview-label">বাড়ির/জমির পরিমাণ</div><div class="preview-value">${stagedData.houseArea} ${stagedData.houseAreaUnit}</div></div>` : ''}
                 ${stagedData.areaSqft ? `<div class="preview-item"><div class="preview-label">ফ্ল্যাটের পরিমাণ</div><div class="preview-value">${stagedData.areaSqft} স্কয়ার ফিট</div></div>` : ''}
@@ -80,10 +104,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (stagedData.category === 'বিক্রয়' && stagedData.owner) {
              html += `
                 <div class="preview-section">
-                    <h3>মালিকানা বিবরণ</h3>
-                    <div class="preview-item"><div class="preview-label">দাতার নাম</div><div class="preview-value">${stagedData.owner.donorName}</div></div>
-                    <div class="preview-item"><div class="preview-label">দাগ নং</div><div class="preview-value">${stagedData.owner.dagNo} (${stagedData.owner.dagNoType})</div></div>
-                    <div class="preview-item"><div class="preview-label">মৌজা</div><div class="preview-value">${stagedData.owner.mouja}</div></div>
+                    <h3>⚖️ মালিকানা বিবরণ</h3>
+                    <div class="preview-item"><div class="preview-label">দাতার নাম</div><div class="preview-value">${checkAndFormat(stagedData.owner.donorName)}</div></div>
+                    <div class="preview-item"><div class="preview-label">দাগ নং</div><div class="preview-value">${checkAndFormat(stagedData.owner.dagNo)} (${checkAndFormat(stagedData.owner.dagNoType)})</div></div>
+                    <div class="preview-item"><div class="preview-label">মৌজা</div><div class="preview-value">${checkAndFormat(stagedData.owner.mouja)}</div></div>
                     ${stagedData.owner.khotianBase64 ? `
                         <div class="preview-item"><div class="preview-label">সর্বশেষ খতিয়ান</div><div class="preview-value"><img src="${stagedData.owner.khotianBase64}" class="full-width-image" alt="খতিয়ানের ছবি"></div></div>
                     ` : ''}
@@ -97,20 +121,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // 5. Address & Contact
         html += `
             <div class="preview-section">
-                <h3>ঠিকানা ও যোগাযোগ</h3>
-                <div class="preview-item"><div class="preview-label">বিভাগ, জেলা</div><div class="preview-value">${stagedData.location.division}, ${stagedData.location.district}</div></div>
-                <div class="preview-item"><div class="preview-label">এলাকার ধরন</div><div class="preview-value">${stagedData.location.areaType}</div></div>
-                <div class="preview-item"><div class="preview-label">ঠিকানা</div><div class="preview-value">গ্রাম: ${stagedData.location.village}, রোড: ${stagedData.location.road}, থানা: ${stagedData.location.thana}</div></div>
-                <div class="preview-item"><div class="preview-label">ফোন নম্বর</div><div class="preview-value">${stagedData.phoneNumber} ${stagedData.secondaryPhone ? `(${stagedData.secondaryPhone})` : ''}</div></div>
-                <div class="preview-item"><div class="preview-label">গুগল ম্যাপ পিন</div><div class="preview-value">${stagedData.googleMap || 'প্রদান করা হয়নি'}</div></div>
+                <h3>📍 ঠিকানা ও যোগাযোগ</h3>
+                <div class="preview-item"><div class="preview-label">বিভাগ</div><div class="preview-value">${checkAndFormat(stagedData.location.division)}</div></div>
+                <div class="preview-item"><div class="preview-label">জেলা</div><div class="preview-value">${checkAndFormat(stagedData.location.district)}</div></div>
+                <div class="preview-item"><div class="preview-label">এলাকার ধরন</div><div class="preview-value">${checkAndFormat(stagedData.location.areaType)}</div></div>
+                
+                ${stagedData.location.areaType === 'উপজেলা' ? `<div class="preview-item"><div class="preview-label">উপজেলা / ইউনিয়ন</div><div class="preview-value">${checkAndFormat(stagedData.location.upazila)} / ${checkAndFormat(stagedData.location.union)}</div></div>` : ''}
+                ${stagedData.location.areaType === 'সিটি কর্পোরেশন' ? `<div class="preview-item"><div class="preview-label">সিটি কর্পোরেশন</div><div class="preview-value">${checkAndFormat(stagedData.location.cityCorporation)}</div></div>` : ''}
+                
+                <div class="preview-item"><div class="preview-label">থানা / ওয়ার্ড</div><div class="preview-value">${checkAndFormat(stagedData.location.thana)} / ${checkAndFormat(stagedData.location.wardNo)}</div></div>
+                <div class="preview-item"><div class="preview-label">গ্রাম / রোড</div><div class="preview-value">${checkAndFormat(stagedData.location.village)} / ${checkAndFormat(stagedData.location.road)}</div></div>
+                
+                <div class="preview-item"><div class="preview-label">প্রাথমিক ফোন</div><div class="preview-value">${checkAndFormat(stagedData.phoneNumber)}</div></div>
+                <div class="preview-item"><div class="preview-label">অতিরিক্ত ফোন</div><div class="preview-value">${checkAndFormat(stagedData.secondaryPhone)}</div></div>
+                <div class="preview-item"><div class="preview-label">গুগল ম্যাপ পিন</div><div class="preview-value">${checkAndFormat(stagedData.googleMap)}</div></div>
             </div>
         `;
 
         // 6. Full Description
         html += `
             <div class="preview-section">
-                <h3>সম্পূর্ণ বিস্তারিত বিবরণ</h3>
-                <p>${stagedData.description.replace(/\n/g, '<br>')}</p>
+                <h3>📝 সম্পূর্ণ বিস্তারিত বিবরণ</h3>
+                <p>${checkAndFormat(stagedData.description).replace(/\n/g, '<br>')}</p>
             </div>
         `;
 
@@ -119,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    // Function to handle the final submission to Firebase
+    // Function to handle the final submission to Firebase (Same logic as before)
     async function handleFinalSubmission(stagedData, stagedMetadata) {
         confirmButton.disabled = true;
         confirmButton.textContent = 'পোস্ট করা হচ্ছে... অনুগ্রহ করে অপেক্ষা করুন';
@@ -164,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 4. Add final metadata (timestamp and status)
             stagedData.timestamp = firebase.firestore.FieldValue.serverTimestamp();
-            stagedData.status = 'pending'; // or 'live', depending on your approval process
+            stagedData.status = 'pending'; 
 
             // 5. Save to Firestore
             await db.collection("properties").add(stagedData);
@@ -174,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sessionStorage.removeItem('stagedImageMetadata');
 
             alert("প্রপার্টি সফলভাবে পোস্ট করা হয়েছে! এটি এখন অনুমোদনের অপেক্ষায় আছে।");
-            window.location.href = 'index.html'; // Go back to the homepage/dashboard
+            window.location.href = 'index.html'; 
 
         } catch (error) {
             console.error("চূড়ান্ত পোস্ট ব্যর্থ হয়েছে: ", error);
@@ -186,7 +218,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    // --- Main Logic on Load ---
+    // --- Main Logic on Load & Auth State ---
+    
+    // Auth state change handler for UI updates (Sidebar Link)
+    const handleLogout = async () => {
+        try {
+            await auth.signOut();
+            alert('সফলভাবে লগআউট করা হয়েছে!');
+            window.location.href = 'index.html';
+        } catch (error) {
+            console.error("লগআউট ব্যর্থ হয়েছে:", error);
+            alert("লগআউট ব্যর্থ হয়েছে।");
+        }
+    };
+    
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগআউট';
+                loginLinkSidebar.href = '#';
+                loginLinkSidebar.onclick = handleLogout;
+            }
+        } else {
+            if (postLinkSidebar) postLinkSidebar.style.display = 'none';
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগইন';
+                loginLinkSidebar.href = 'auth.html';
+                loginLinkSidebar.onclick = null;
+            }
+        }
+    });
+    
+
     const stagedDataString = sessionStorage.getItem('stagedPropertyData');
     const stagedMetadataString = sessionStorage.getItem('stagedImageMetadata');
     
@@ -194,12 +258,12 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const stagedData = JSON.parse(stagedDataString);
             const stagedMetadata = JSON.parse(stagedMetadataString);
-            previewContent.innerHTML = ''; // Clear the "not found" message
+            previewContent.innerHTML = ''; 
             renderPreview(stagedData, stagedMetadata);
 
             // Event Listeners for action buttons
             editButton.addEventListener('click', () => {
-                window.location.href = 'post.html'; // Go back to edit
+                window.location.href = 'post.html'; 
             });
 
             confirmButton.addEventListener('click', () => {
@@ -208,9 +272,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('Error parsing staged data:', error);
+            alert('সংরক্ষিত ডেটা লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার পোস্ট করুন।');
         }
     } else {
-        // No data found: keep default message and disable confirm button
         confirmButton.disabled = true;
         editButton.addEventListener('click', () => {
             window.location.href = 'post.html';
