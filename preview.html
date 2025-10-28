@@ -58,7 +58,7 @@
             color: var(--primary-color);
         }
         
-        /* Header/Sidebar Styles (From post.html) */
+        /* Header/Sidebar Styles (From post.html - exact replica) */
         .main-header {
             background-color: #fff;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -187,7 +187,7 @@
             margin-top: 30px;
         }
 
-        /* --- PREVIEW SPECIFIC STYLES (MODIFIED) --- */
+        /* --- PREVIEW SPECIFIC STYLES (Image Fix) --- */
         .preview-container {
             max-width: 900px;
             margin: 20px auto;
@@ -216,7 +216,7 @@
             margin-bottom: 10px;
             padding: 5px 0;
             border-bottom: 1px dashed #eee;
-            flex-wrap: wrap; /* Allows wrapping on smaller screens */
+            flex-wrap: wrap; 
         }
         .preview-item:last-child {
             border-bottom: none;
@@ -236,23 +236,24 @@
         /* Image Carousel and Sizing Fix */
         #image-carousel {
             display: flex;
-            overflow-x: auto;
+            overflow-x: auto; /* স্লাইড করার জন্য */
             gap: 10px;
             padding: 10px 0;
             border: 1px dashed #ccc;
             border-radius: 4px;
         }
-        .preview-image-wrapper { /* New wrapper for fixed size */
-            width: 200px; /* Fixed width for better preview */
-            height: 120px; /* Fixed height for consistency */
-            flex-shrink: 0;
+        .preview-image-wrapper { 
+            width: 200px; /* ফিক্সড প্রস্থ */
+            height: 120px; /* ফিক্সড উচ্চতা */
+            flex-shrink: 0; /* ছোট হতে দেবে না */
             overflow: hidden;
+            border-radius: 4px; 
         }
         .preview-image {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            border-radius: 4px;
+            object-fit: cover; /* ছবিকে ক্রপ করে হলেও কন্টেইনারে ফিট করবে */
+            display: block;
         }
         /* --- */
         
@@ -288,10 +289,7 @@
         .confirm-button:hover { background-color: #1e7e34; }
         #preview-content {
             min-height: 200px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            /* ... flex settings ... */
         }
         .not-found {
             text-align: center;
@@ -361,7 +359,7 @@
             
             <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            <a href="contact.html" id="contact.html"><i class="material-icons">mail</i> যোগাযোগ</a>
             
             <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
             
@@ -421,10 +419,9 @@
                     overlay.classList.remove('active');
                 });
             }
-            
-            // Auth State Change (for sidebar login/logout link) will be handled in preview.js
         });
     </script>
+    
     <script src="preview.js"></script> 
 </body>
     </html>
