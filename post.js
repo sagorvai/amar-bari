@@ -15,9 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
         let options = [];
 
         if (category === 'বিক্রয়') {
-            options = ['জমি', 'প্লট', 'বাড়ি', 'ফ্লাট', 'দোকান', 'অফিস']; // প্রথম দিকের অপশন ফিরিয়ে আনা হলো
+            options = ['জমি', 'প্লট', 'বাড়ি', 'ফ্লাট', 'দোকান', 'অফিস']; 
         } else if (category === 'ভাড়া') {
-            options = ['বাড়ি', 'ফ্লাট', 'অফিস', 'দোকান']; // প্রথম দিকের অপশন ফিরিয়ে আনা হলো
+            options = ['বাড়ি', 'ফ্লাট', 'অফিস', 'দোকান']; 
         }
 
         // ফর্মের স্টাইল ও গ্রুপিং-এর জন্য সুন্দর ক্লাস ব্যবহার করা হয়েছে
@@ -52,7 +52,6 @@ document.addEventListener('DOMContentLoaded', function() {
              return;
         }
 
-        // Issue 1 Fix: Change "ভাড়ের বিবরণ" to "ভাড়ার বিবরণ"
         let categoryDescriptionText = category === 'ভাড়া' ? 'ভাড়ার বিবরণ' : `${category}ের বিবরণ`;
 
         // --- সেকশন ১: প্রপার্টির বিবরণ (ছবি, শিরোনাম, রুম ইত্যাদি) ---
@@ -73,7 +72,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
         `;
         
-        // টাইপ-ভিত্তিক ফিল্ডসমূহ যুক্ত করা (প্রপার্টির বিবরণ ফিরিয়ে আনা হলো)
+        // NEW ADDITION: Property Age, Facing and Utilities for built properties
+        if (type !== 'জমি' && type !== 'প্লট') {
+            // 1. Property Age & Facing
+            descriptionHTML += `
+                <div class="input-inline-group">
+                    <div class="input-group">
+                        <label for="property-age">প্রপার্টির বয়স (বছর):</label>
+                        <input type="number" id="property-age" placeholder="0 (নতুন) বা বয়স" min="0" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="facing">প্রপার্টির দিক:</label>
+                        <select id="facing">
+                            <option value="">-- নির্বাচন করুন (ঐচ্ছিক) --</option>
+                            <option value="উত্তর">উত্তর</option>
+                            <option value="দক্ষিণ">দক্ষিণ</option>
+                            <option value="পূর্ব">পূর্ব</option>
+                            <option value="পশ্চিম">পশ্চিম</option>
+                            <option value="উত্তর-পূর্ব">উত্তর-পূর্ব</option>
+                            <option value="উত্তর-পশ্চিম">উত্তর-পশ্চিম</option>
+                            <option value="দক্ষিণ-পূর্ব">দক্ষিণ-পূর্ব</option>
+                            <option value="দক্ষিণ-পশ্চিম">দক্ষিণ-পশ্চিম</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            
+            // 2. Utilities/Amenities
+            descriptionHTML += `
+                <div class="input-group">
+                    <label>অন্যান্য সুবিধা:</label>
+                    <div class="radio-group utility-checkbox-group" style="display: flex; flex-wrap: wrap; gap: 15px;">
+                        ${(type === 'ফ্লাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="লিফট" id="utility-lift"> লিফট</label>` : ''}
+                        <label><input type="checkbox" name="utility" value="গ্যাস সংযোগ" id="utility-gas"> গ্যাস সংযোগ</label>
+                        <label><input type="checkbox" name="utility" value="জেনারেটর" id="utility-generator"> জেনারেটর/পাওয়ার ব্যাকআপ</label>
+                        <label><input type="checkbox" name="utility" value="ওয়াসা পানি" id="utility-wasa"> ওয়াসা পানি</label>
+                    </div>
+                    <p class="small-text">প্রযোজ্য সুবিধাগুলো নির্বাচন করুন।</p>
+                </div>
+            `;
+        }
+
+        
+        // টাইপ-ভিত্তিক ফিল্ডসমূহ যুক্ত করা
         if (type === 'জমি' || type === 'প্লট') {
             descriptionHTML += `
                 <div class="input-group">
@@ -160,7 +201,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // ভাড়ার জন্য অতিরিক্ত ফিল্ড
             if (category === 'ভাড়া') {
-                // Issue 2 Fix: ভাড়ার ধরন (rent-type) শুধুমাত্র 'বাড়ি' এবং 'ফ্লাট' এর জন্য
                 if (type === 'বাড়ি' || type === 'ফ্লাট') {
                     descriptionHTML += `
                         <div class="input-group">
@@ -175,7 +215,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                 }
                 
-                // ওঠার তারিখ (move-in-date) 'ভাড়া' ক্যাটাগরির সবার জন্য
                 descriptionHTML += `
                     <div class="input-group">
                         <label for="move-in-date">ওঠার তারিখ:</label>
@@ -403,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
              areaTypeSelect.addEventListener('change', (e) => generateSubAddressFields(e.target.value));
         }
         
-        // Image Preview Handler and Cross Button Logic (ক্রস বাটন লজিক কার্যকর রাখা হলো)
+        // Image Preview Handler and Cross Button Logic
         const imageInput = document.getElementById('images');
         if (imageInput) {
             imageInput.addEventListener('change', (e) => handleImagePreview(e, 'image-preview-area', 3));
@@ -422,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Function to generate Sub-Address Fields (উপজেলা/সিটি কর্পোরেশন)
+    // Function to generate Sub-Address Fields
     function generateSubAddressFields(areaType) {
         const subAddressFieldsContainer = document.getElementById('sub-address-fields');
         let subFieldsHTML = '';
@@ -490,10 +529,9 @@ document.addEventListener('DOMContentLoaded', function() {
         subAddressFieldsContainer.innerHTML = subFieldsHTML;
     }
 
-    // Function to handle Image Preview (SMART IMAGE PREVIEW with REMOVE functionality)
+    // Function to handle Image Preview
     function handleImagePreview(event, previewAreaId, maxFiles = 3) {
         const previewArea = document.getElementById(previewAreaId);
-        // যদি maxFiles 1 হয়, তবে শুধুমাত্র একটি placeholder থাকবে, অন্যথায় সব ক্লিয়ার হবে।
         if (maxFiles === 1) {
             previewArea.innerHTML = '';
         } else if (previewArea.children.length === 0 || maxFiles > 1) {
@@ -505,7 +543,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (files.length > maxFiles) {
             alert(`আপনি সর্বোচ্চ ${maxFiles}টি ছবি আপলোড করতে পারবেন।`);
             event.target.value = ''; // Clear selection
-            // যদি একাধিক ফাইল সিলেক্ট করা হয় এবং তা সর্বোচ্চ সীমা অতিক্রম করে তবে প্লেসহোল্ডার দেখাও
             previewArea.innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
             return;
         }
@@ -515,16 +552,15 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const currentFilesArray = Array.from(files); // FileList to Array for manipulation
+        const currentFilesArray = Array.from(files); 
 
-        // শুধুমাত্র নতুন ফাইলগুলির জন্য প্রিভিউ তৈরি করো
         for (const file of currentFilesArray) {
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const previewWrapper = document.createElement('div');
                     previewWrapper.className = 'image-preview-wrapper';
-                    previewWrapper.dataset.filename = file.name; // ছবির নাম ডেটা অ্যাট্রিবিউটে সংরক্ষণ
+                    previewWrapper.dataset.filename = file.name; 
 
                     const img = document.createElement('img');
                     img.src = e.target.result;
@@ -532,18 +568,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     const removeButton = document.createElement('button');
                     removeButton.className = 'remove-image-btn';
-                    removeButton.innerHTML = '&times;'; // Cross icon (❌)
+                    removeButton.innerHTML = '&times;'; 
                     removeButton.style.backgroundColor = 'red';
                     removeButton.style.color = 'white';
                     
                     // রিমুভ লজিক
                     removeButton.addEventListener('click', (e) => {
-                        e.preventDefault(); // ফর্ম সাবমিট হওয়া আটকানো
+                        e.preventDefault(); 
 
                         const dt = new DataTransfer();
                         const currentInputFiles = Array.from(event.target.files);
                         
-                        // রিমুভ করতে চাওয়া ফাইলের ইন্ডেক্স খুঁজে বের করা
                         const fileIndexToRemove = currentInputFiles.findIndex(f => 
                             f.name === file.name && f.size === file.size
                         );
@@ -551,11 +586,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (fileIndexToRemove !== -1) {
                             currentInputFiles.splice(fileIndexToRemove, 1);
                             currentInputFiles.forEach(f => dt.items.add(f));
-                            event.target.files = dt.files; // আপডেট করা ফাইল লিস্ট ইনপুটে সেট করা
+                            event.target.files = dt.files; 
                             
-                            previewWrapper.remove(); // প্রিভিউ UI থেকে রিমুভ করা
+                            previewWrapper.remove(); 
                             
-                            // যদি কোনো ছবি না থাকে তবে প্লেসহোল্ডার দেখাও
                             if (dt.files.length === 0) {
                                 previewArea.innerHTML = `<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>`;
                             }
@@ -565,7 +599,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     previewWrapper.appendChild(img);
                     previewWrapper.appendChild(removeButton);
                     
-                    // single file-এর জন্য আগেরটা রিমুভ করে নতুনটা যোগ
                     if (maxFiles === 1) {
                         previewArea.innerHTML = '';
                     }
@@ -621,13 +654,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
 
-            // ডেটা সংগ্রহ (আপডেট করা ডাইনামিক ফিল্ড অনুযায়ী)
-            const category = document.getElementById('post-category').value;
-            const type = document.getElementById('post-type')?.value;
-            const googleMapStatic = document.getElementById('google-map-pin')?.value; // id ঠিক করা হলো
-
             // ডেটা সংগ্রহের জন্য একটি সহায়ক ফাংশন যা ইনপুট আইডি থেকে মান নেয়
             const getValue = (id) => document.getElementById(id)?.value;
+
+            // Function to get all selected utility values
+            const getUtilityValues = () => {
+                const checked = document.querySelectorAll('input[name="utility"]:checked');
+                return Array.from(checked).map(c => c.value);
+            };
+            
+            // ডেটা সংগ্রহ
+            const category = document.getElementById('post-category').value;
+            const type = document.getElementById('post-type')?.value;
+            const googleMapStatic = getValue('google-map-pin'); 
 
             // মূল ডেটা অবজেক্ট
             const propertyData = {
@@ -641,6 +680,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 userId: user.uid,
                 status: 'pending',
+                
+                // NEW: Lister Type
+                listerType: getValue('lister-type'), 
 
                 // ঠিকানা ডেটা
                 location: {
@@ -654,6 +696,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             };
             
+            // NEW: Built Property Details
+            if (type !== 'জমি' && type !== 'প্লট') {
+                propertyData.propertyAge = getValue('property-age');
+                propertyData.facing = getValue('facing');
+                propertyData.utilities = getUtilityValues();
+            }
+
             // ঠিকানা উপ-ফিল্ড যুক্ত করা
             if (propertyData.location.areaType === 'উপজেলা') {
                 propertyData.location.upazila = getValue('upazila-name');
@@ -672,7 +721,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.owner = {
                     donorName: getValue('donor-name'),
                     dagNoType: getValue('dag-no-type-select'),
-                    dagNo: getValue('dag-no-input'), // সংশোধিত: নতুন ইনপুট ফিল্ডের মান
+                    dagNo: getValue('dag-no-input'), 
                     mouja: getValue('mouja-owner')
                 };
 
@@ -733,7 +782,7 @@ document.addEventListener('DOMContentLoaded', function() {
                          propertyData.rooms = getValue('rooms');
                          propertyData.bathrooms = getValue('bathrooms');
                          propertyData.kitchen = getValue('kitchen');
-                         propertyData.rentType = getValue('rent-type'); // Issue 2 Fix: এটি শুধুমাত্র বাড়ি/ফ্লাটের জন্য সেট হবে
+                         propertyData.rentType = getValue('rent-type'); 
                          
                          if (type === 'বাড়ি') {
                              propertyData.floors = getValue('floors');
@@ -789,6 +838,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             alert("প্রপার্টি সফলভাবে আপলোড করা হয়েছে!");
             propertyForm.reset();
+            // সব ফিল্ড রিসেট করা
+            document.getElementById('lister-type').value = ''; 
+            document.getElementById('post-category').value = ''; 
             dynamicFieldsContainer.innerHTML = '<p class="placeholder-text">ক্যাটাগরি নির্বাচন করার পরে এখানে ফর্মের বাকি অংশ আসবে।</p>'; 
             document.getElementById('image-preview-area').innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
             
@@ -806,11 +858,11 @@ document.addEventListener('DOMContentLoaded', function() {
             alert("প্রপার্টি আপলোড ব্যর্থ হয়েছে: " + error.message);
         } finally {
             submitBtn.disabled = false;
-            submitBtn.textContent = 'সাবমিট করুন';
+            submitBtn.textContent = 'পোস্ট করুন';
         }
     });
 
-    // Auth state change handler for UI updates (লগইন স্ট্যাটাস চেক করে ফর্ম দেখাবে)
+    // Auth state change handler for UI updates
     auth.onAuthStateChanged(user => {
         const authWarningMessage = document.getElementById('auth-warning-message');
         const postLinkSidebar = document.getElementById('post-link-sidebar-menu'); 
@@ -818,7 +870,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const propertyFormDisplay = document.getElementById('property-form');
         const primaryPhoneInput = document.getElementById('primary-phone');
         
-        // লগআউট হ্যান্ডেলার (auth.js এর মত)
+        // লগআউট হ্যান্ডেলার
         const handleLogout = async () => {
             try {
                 await auth.signOut();
@@ -842,11 +894,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 loginLinkSidebar.onclick = handleLogout;
             }
             
-            // TODO: প্রোফাইল থেকে ফোন নম্বর লোড করার লজিক এখানে যুক্ত করতে হবে (যেমন: user.phoneNumber)
-            // আপাতত একটি ডামি নম্বর রাখা হলো
              if (primaryPhoneInput) {
-                primaryPhoneInput.value = '01712345678'; // ডামি প্রোফাইল নাম্বার
-                primaryPhoneInput.disabled = false; // ব্যবহারকারী চাইলে ইডিট করতে পারবে
+                primaryPhoneInput.value = '01712345678'; 
+                primaryPhoneInput.disabled = false; 
              }
              
 
