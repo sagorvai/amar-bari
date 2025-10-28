@@ -27,6 +27,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
             return defaultValue;
         }
+        // Array handling for utilities (just display the list)
+        if (Array.isArray(value)) {
+             return value.length > 0 ? value.join(', ') : defaultValue;
+        }
         return `${value} ${unit}`.trim();
     };
 
@@ -34,11 +38,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderPreview(stagedData, stagedMetadata) {
         let html = '';
         
-        // 1. Image Preview Section (Wrapper added for fixed size)
+        // 1. Image Preview Section (3 Main Images in Carousel)
+        // stagedData.base64Images এ ৩টি ছবি থাকবে (যদি post.js এ limit ৩ থাকে)
         if (stagedData.base64Images && stagedData.base64Images.length > 0) {
             html += `
                 <div class="preview-section">
-                    <h3>🖼️ ছবিসমূহ (${stagedData.base64Images.length}টি)</h3>
+                    <h3>🖼️ প্রপার্টির ছবি (${stagedData.base64Images.length}টি)</h3>
+                    <p>ছবিগুলো স্লাইড করে দেখুন।</p>
                     <div id="image-carousel">
                         ${stagedData.base64Images.map(base64 => `
                             <div class="preview-image-wrapper">
@@ -69,16 +75,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 ` : ''}
                 
-                ${stagedData.rooms !== undefined ? `<div class="preview-item"><div class="preview-label">রুম সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.rooms)}</div></div>` : ''}
-                ${stagedData.bathrooms !== undefined ? `<div class="preview-item"><div class="preview-label">বাথরুম সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.bathrooms)}</div></div>` : ''}
-                ${stagedData.kitchen !== undefined ? `<div class="preview-item"><div class="preview-label">কিচেন সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.kitchen)}</div></div>` : ''}
+                ${stagedData.rooms !== undefined ? `<div class="preview-item"><div class="preview-label">রুম সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.rooms)}টি</div></div>` : ''}
+                ${stagedData.bathrooms !== undefined ? `<div class="preview-item"><div class="preview-label">বাথরুম সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.bathrooms)}টি</div></div>` : ''}
+                ${stagedData.kitchen !== undefined ? `<div class="preview-item"><div class="preview-label">কিচেন সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.kitchen)}টি</div></div>` : ''}
                 ${stagedData.floors !== undefined ? `<div class="preview-item"><div class="preview-label">তলা সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.floors)}</div></div>` : ''}
                 ${stagedData.floorNo !== undefined ? `<div class="preview-item"><div class="preview-label">ফ্লোর নং</div><div class="preview-value">${checkAndFormat(stagedData.floorNo)}</div></div>` : ''}
                 ${stagedData.roadWidth !== undefined ? `<div class="preview-item"><div class="preview-label">রাস্তার প্রস্থ</div><div class="preview-value">${checkAndFormat(stagedData.roadWidth, 'ফিট')}</div></div>` : ''}
                 ${stagedData.parking !== undefined ? `<div class="preview-item"><div class="preview-label">পার্কিং সুবিধা</div><div class="preview-value">${checkAndFormat(stagedData.parking)}</div></div>` : ''}
                 ${stagedData.landType !== undefined ? `<div class="preview-item"><div class="preview-label">জমির ধরন</div><div class="preview-value">${checkAndFormat(stagedData.landType)}</div></div>` : ''}
                 ${stagedData.plotNo !== undefined ? `<div class="preview-item"><div class="preview-label">প্লট নং</div><div class="preview-value">${checkAndFormat(stagedData.plotNo)}</div></div>` : ''}
-                ${stagedData.shopCount !== undefined ? `<div class="preview-item"><div class="preview-label">দোকান সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.shopCount)}</div></div>` : ''}
+                ${stagedData.shopCount !== undefined ? `<div class="preview-item"><div class="preview-label">দোকান সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.shopCount)}টি</div></div>` : ''}
                 ${stagedData.rentType !== undefined ? `<div class="preview-item"><div class="preview-label">ভাড়ার ধরন</div><div class="preview-value">${checkAndFormat(stagedData.rentType)}</div></div>` : ''}
                 ${stagedData.moveInDate !== undefined ? `<div class="preview-item"><div class="preview-label">ওঠার তারিখ</div><div class="preview-value">${checkAndFormat(stagedData.moveInDate)}</div></div>` : ''}
             </div>
@@ -100,19 +106,26 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        // 4. Ownership Documents (Only for 'বিক্রয়')
+        // 4. Ownership Documents (1 Khotian + 1 Sketch = 2 Images)
         if (stagedData.category === 'বিক্রয়' && stagedData.owner) {
              html += `
                 <div class="preview-section">
-                    <h3>⚖️ মালিকানা বিবরণ</h3>
+                    <h3>⚖️ মালিকানা ও ডকুমেন্ট বিবরণ</h3>
                     <div class="preview-item"><div class="preview-label">দাতার নাম</div><div class="preview-value">${checkAndFormat(stagedData.owner.donorName)}</div></div>
                     <div class="preview-item"><div class="preview-label">দাগ নং</div><div class="preview-value">${checkAndFormat(stagedData.owner.dagNo)} (${checkAndFormat(stagedData.owner.dagNoType)})</div></div>
                     <div class="preview-item"><div class="preview-label">মৌজা</div><div class="preview-value">${checkAndFormat(stagedData.owner.mouja)}</div></div>
+                    
                     ${stagedData.owner.khotianBase64 ? `
-                        <div class="preview-item"><div class="preview-label">সর্বশেষ খতিয়ান</div><div class="preview-value"><img src="${stagedData.owner.khotianBase64}" class="full-width-image" alt="খতিয়ানের ছবি"></div></div>
+                        <div class="preview-item">
+                            <div class="preview-label">সর্বশেষ খতিয়ান (১/৫)</div>
+                            <div class="preview-value"><img src="${stagedData.owner.khotianBase64}" class="full-width-image" alt="খতিয়ানের ছবি"></div>
+                        </div>
                     ` : ''}
                     ${stagedData.owner.sketchBase64 ? `
-                        <div class="preview-item"><div class="preview-label">প্রপার্টি স্কেস</div><div class="preview-value"><img src="${stagedData.owner.sketchBase64}" class="full-width-image" alt="স্কেসের ছবি"></div></div>
+                        <div class="preview-item">
+                            <div class="preview-label">প্রপার্টি স্কেস (১/৫)</div>
+                            <div class="preview-value"><img src="${stagedData.owner.sketchBase64}" class="full-width-image" alt="স্কেসের ছবি"></div>
+                        </div>
                     ` : ''}
                 </div>
             `;
@@ -151,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    // Function to handle the final submission to Firebase (Same logic as before)
+    // Function to handle the final submission to Firebase (Unchanged)
     async function handleFinalSubmission(stagedData, stagedMetadata) {
         confirmButton.disabled = true;
         confirmButton.textContent = 'পোস্ট করা হচ্ছে... অনুগ্রহ করে অপেক্ষা করুন';
@@ -173,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await snapshot.ref.getDownloadURL();
             };
 
-            // 2. Upload Main Images
+            // 2. Upload Main Images (3 photos)
             const imageUrls = [];
             for (let i = 0; i < stagedData.base64Images.length; i++) {
                 const downloadURL = await uploadFile(stagedData.base64Images[i], stagedMetadata.images[i], 'property_images');
@@ -182,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
             stagedData.images = imageUrls;
             delete stagedData.base64Images; // Clean up data object
 
-            // 3. Upload Ownership Documents
+            // 3. Upload Ownership Documents (Khotian and Sketch - 2 photos)
             if (stagedData.category === 'বিক্রয়' && stagedData.owner) {
                 if (stagedData.owner.khotianBase64) {
                     stagedData.owner.khotianImageUrl = await uploadFile(stagedData.owner.khotianBase64, stagedMetadata.khotian, 'ownership_docs/khotian');
