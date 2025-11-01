@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ইনবক্স - আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <script>
+      // আপনার firebaseConfig এখানে থাকবে (post.html থেকে নেওয়া)
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+      };
+      
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
+    
+    <style>
+        /* মেসেজিং পেজের জন্য নির্দিষ্ট স্টাইল */
+        .message-container {
+            display: flex;
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            min-height: 70vh;
+        }
+        .chat-list-panel {
+            width: 30%;
+            border-right: 1px solid #eee;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        .chat-area-panel {
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        #chat-messages {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message-input-area {
+            padding: 10px;
+            border-top: 1px solid #eee;
+            display: flex;
+        }
+        .message-input-area input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+        .message-input-area button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        
+        .chat-item {
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .chat-item:hover, .chat-item.active {
+            background-color: #e9ecef;
+        }
+        .chat-info {
+            margin-left: 10px;
+        }
+        .chat-info h4 {
+            margin: 0;
+            font-size: 1em;
+        }
+        .chat-info p {
+            margin: 0;
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+        
+        /* Individual Message Bubbles */
+        .message-bubble {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            word-wrap: break-word; /* লম্বা টেক্সট ভাঙার জন্য */
+        }
+        .message-bubble.sent {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+        .message-bubble.received {
+            background-color: #e9ecef;
+            color: #343a40;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+        .message-time {
+            font-size: 0.7em;
+            color: #ccc;
+            margin-top: 3px;
+            text-align: right;
+            display: block;
+        }
+        .message-bubble.received .message-time {
+             color: #6c757d;
+             text-align: left;
+        }
+        .no-chat-selected {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    
+    <header class="main-header">
+        <div class="header-top">
+            <i class="material-icons menu-icon" id="menuButton">menu</i>
+            <a href="index.html" class="logo-title">
+                <i class="material-icons logo-icon">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            <div class="header-actions">
+                <i class="material-icons profile-icon" id="profileButton">person</i>
+            </div>
+        </div>
+        <div class="search-bar">
+            <input type="text" id="globalSearchInput" placeholder="শহর, এলাকা বা প্রপার্টির নাম লিখে খুঁজুন..." disabled>
+            <button disabled><i class="material-icons">search</i></button>
+        </div>
+        <div class="nav-filters">
+            <button class="nav-button" data-category="map" id="mapButton" disabled>
+                <i class="material-icons">map</i> ম্যাপ
+            </button>
+            <button class="nav-button" data-category="বিক্রয়" id="sellButton" disabled>বিক্রয়</button>
+            <button class="nav-button" data-category="ভাড়া" id="rentButton" disabled>ভাড়া</button>
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <nav>
+            <a href="index.html" class="sidebar-logo">
+                <i class="material-icons">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            <a href="messages.html" class="active"><i class="material-icons">message</i> আমার ইনবক্স</a> <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="about.html" id="about.html"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html" id="contact.html"><i class="material-icons">mail</i> যোগাযোগ</a>
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+        </nav>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <main class="main-content container">
+        <h2>💌 আমার ইনবক্স</h2>
+        
+        <div class="message-container">
+            <div class="chat-list-panel" id="chat-list-panel">
+                <p style="text-align: center; color: #6c757d;">আপনার কথোপকথনগুলো এখানে দেখা যাবে।</p>
+                </div>
+            
+            <div class="chat-area-panel">
+                <div class="chat-header" id="chat-header">কোনো চ্যাট নির্বাচন করা হয়নি</div>
+                
+                <div id="chat-messages">
+                    <p class="no-chat-selected">বাম পাশ থেকে একটি কথোপকথন নির্বাচন করুন বা <a href="index.html">হোমপেজে</a> গিয়ে প্রপার্টি ব্রাউজ করুন।</p>
+                </div>
+                
+                <div class="message-input-area">
+                    <input type="text" id="message-input" placeholder="আপনার মেসেজ লিখুন..." disabled>
+                    <button id="send-button" disabled>
+                        <i class="material-icons">send</i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const profileButton = document.getElementById('profileButton');
+
+            if (profileButton) {
+                profileButton.addEventListener('click', () => {
+                    window.location.href = 'profile.html';
+                });
+            }
+            
+            if (menuButton) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+            
+            // Auth State Change Logic will be handled in messages.js
+        });
+    </script>
+    <script src="messages.js"></script> 
+</body>
+</html>
