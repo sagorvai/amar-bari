@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>নোটিফিকেশনস - আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <script>
+      // আপনার firebaseConfig এখানে থাকবে
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+      };
+      
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
+    
+    <style>
+        /* CSS ফিক্সিং: হেডারের ফিক্সড পজিশন ও সাইডবারের z-index নিশ্চিত করা */
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        .main-header {
+             position: fixed; 
+             top: 0;
+             left: 0;
+             right: 0;
+             background-color: white; 
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             z-index: 1000; 
+        }
+        .sidebar { z-index: 1050; }
+        .overlay { z-index: 1040; }
+        .main-content {
+             padding-top: 100px; /* হেডারের উচ্চতা অনুসারে প্যাডিং */
+             padding-bottom: 20px;
+        }
+        
+        /* নোটিফিকেশন পেজ স্টাইল */
+        .notification-page-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .notification-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .notification-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        .notification-item.unread {
+            background-color: #e9f5ff; /* অপঠিত নোটিফিকেশনের জন্য হালকা নীল ব্যাকগ্রাউন্ড */
+        }
+        .notification-item.unread .notif-text {
+            font-weight: bold;
+            color: #1a1a1a;
+        }
+        .notification-icon-large {
+            font-size: 32px;
+            color: #007bff;
+            margin-right: 15px;
+        }
+        .notif-content {
+            flex-grow: 1;
+        }
+        .notif-text {
+            font-size: 1em;
+            margin: 0;
+            line-height: 1.4;
+        }
+        .notif-time {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+        #notifications-title {
+            color: var(--primary-color, #007bff);
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* মোবাইল ফিক্স */
+        @media (max-width: 600px) {
+            .notification-page-container {
+                padding: 10px;
+            }
+            .main-content {
+                padding-top: 140px; 
+            }
+            .notification-item {
+                 padding: 10px;
+            }
+            .notification-icon-large {
+                font-size: 24px;
+                margin-right: 10px;
+            }
+            .notif-text {
+                 font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <header class="main-header">
+        <div class="header-top">
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                <a href="index.html" class="logo-title">
+                    <i class="material-icons logo-icon">home</i> 
+                    <span>আমার বাড়ি.কম</span>
+                </a>
+            </div>
+            <div class="header-actions">
+                <div class="notification-icon-wrapper" id="notificationButton" style="color: #007bff; opacity: 0.7;">
+                    <i class="material-icons notification-icon">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
+                </div>
+                
+                <i class="material-icons message-icon" id="messageButton">message</i>
+                <i class="material-icons profile-icon" id="profileButton">person</i>
+                <div class="notification-dropdown" id="notification-dropdown"></div>
+            </div>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="globalSearchInput" placeholder="শহর, এলাকা বা প্রপার্টির নাম লিখে খুঁজুন...">
+            <button><i class="material-icons">search</i></button>
+        </div>
+        
+        <div class="nav-filters">
+            <button class="nav-button" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
+            <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
+            <button class="nav-button" data-category="map" id="mapButton">
+                 <i class="material-icons">map</i> ম্যাপ
+            </button>
+        </div>
+    </header>
+    <div class="sidebar" id="sidebar">
+        <nav>
+            <a href="index.html" class="sidebar-logo">
+                <i class="material-icons">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
+            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            <a href="messages.html" id="messages-link-sidebar"><i class="material-icons">message</i> আমার ইনবক্স</a>
+            
+            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            
+        </nav>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <main class="main-content container">
+        <div class="notification-page-container">
+            <h2 id="notifications-title"><i class="material-icons" style="vertical-align: middle;">notifications</i> আপনার সকল নোটিফিকেশনস</h2>
+            <p id="auth-message" style="text-align: center; color: red; display: none;">নোটিফিকেশন দেখতে অনুগ্রহ করে লগইন করুন।</p>
+            <ul id="notifications-list" class="notification-list">
+                <p style="text-align: center; color: #555;">নোটিফিকেশন লোড হচ্ছে...</p>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
+    </footer>
+    
+    <script src="notifications.js"></script> 
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const profileButton = document.getElementById('profileButton');
+            const messageButton = document.getElementById('messageButton');
+
+            // প্রোফাইল বাটন ক্লিক লজিক
+            if (profileButton) {
+                profileButton.addEventListener('click', () => {
+                    window.location.href = 'profile.html';
+                });
+            }
+             // ম্যাসেজ বাটন ক্লিক লজিক
+            if (messageButton) {
+                messageButton.addEventListener('click', () => {
+                    window.location.href = 'messages.html';
+                });
+            }
+            
+            // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
+            if (menuButton) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+            }
+
+            // ওভারলেতে ক্লিক করলে সাইড মেনু বন্ধ হবে
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+    </script>
+</body>
+                      </html>
