@@ -29,66 +29,75 @@
     </script>
     
     <style>
-        /* CSS ফিক্স: নতুন মেসেজ আইকন এবং লোগো স্টাইল */
+        /* CSS ফিক্স: হেডারের বিকৃতি ও অতিরিক্ত ফাঁকা স্থান অপসারণ */
         .main-header {
-             /* নিশ্চিত করুন হেডারটি স্ক্রলের সাথে চলে */
              position: sticky;
              top: 0;
              z-index: 50; 
         }
         .header-top {
-            /* flex-এর মাধ্যমে বাম-ডান অ্যালাইনমেন্ট নিশ্চিত করা */
             display: flex;
             align-items: center;
             justify-content: space-between; 
-            padding: 10px 15px;
+            padding: 10px 15px; /* স্ক্রিনশট অনুযায়ী প্যাডিং কমানো বা ঠিক করা হলো */
+        }
+        .menu-icon {
+             /* মেনু আইকন বামে থাকবে এবং কোনো অতিরিক্ত মার্জিন নেবে না */
+             margin-right: 0; 
         }
         .logo-title {
             /* লোগো টেক্সট ফিক্সড করা */
             display: flex;
             align-items: center;
-            font-size: 1.6em; /* টেক্সট বড় করা হলো */
+            font-size: 1.5em; /* স্ক্রিনশট অনুযায়ী ফন্ট সাইজ সামান্য কমানো */
             font-weight: bold;
             color: var(--primary-color);
-            margin-left: 10px; /* মেনু আইকন থেকে সামান্য দূরত্ব */
-            flex-grow: 1; /* মাঝখানে থাকার জন্য */
+            margin-left: 10px; /* মেনু আইকন থেকে সামঞ্জস্যপূর্ণ দূরত্ব */
+            flex-grow: 1; 
+            /* অপ্রয়োজনীয় স্পেস এড়াতে এখানে max-width বা অতিরিক্ত মার্জিন নেই */
         }
-        .menu-icon {
-            /* মেনু আইকন বামে থাকবে */
-            margin-right: 0; 
+        .logo-icon {
+            margin-right: 5px;
         }
+
         .header-actions {
+             /* ম্যাসেজ ও প্রোফাইল আইকনের জন্য একটি ফ্লেক্স কন্টেইনার */
              display: flex;
              align-items: center;
-             /* ডান পাশে থাকা প্রোফাইল ও মেসেজ বাটন একত্রে রাখার জন্য */
+             gap: 10px; /* আইকনগুলির মধ্যে দূরত্ব */
              margin-left: auto;
         }
         
         /* Messenger-এর মতো গোল আইকন ফিক্স */
         .message-icon {
             cursor: pointer;
-            color: white; /* আইকনের রং সাদা */
-            background-color: #007bff; /* ব্যাকগ্রাউন্ডের রং primary-color */
-            font-size: 20px; /* আইকনের সাইজ ছোট করা */
-            padding: 4px; /* প্যাডিং দিয়ে গোল করার ক্ষেত্র তৈরি করা */
-            border-radius: 50%; /* গোল করা */
-            width: 28px; /* ফিক্সড প্রস্থ */
-            height: 28px; /* ফিক্সড উচ্চতা */
+            color: white; 
+            background-color: #007bff; 
+            font-size: 18px; /* আইকনের সাইজ সামান্য ছোট */
+            padding: 5px; 
+            border-radius: 50%; 
+            width: 30px; /* ফিক্সড প্রস্থ সামান্য বাড়ানো */
+            height: 30px; /* ফিক্সড উচ্চতা সামান্য বাড়ানো */
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 15px; /* প্রোফাইল আইকন থেকে দূরত্ব */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* সামান্য শ্যাডো */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+            margin-right: 0; /* গ্যাপ নিয়ন্ত্রণ করছে header-actions */
         }
         .profile-icon {
-            font-size: 28px;
+            font-size: 30px; /* প্রোফাইল আইকন সামান্য বড় */
+            color: var(--primary-color);
+            cursor: pointer;
         }
         
         /* ফিল্টার বাটন ফিক্স (ম্যাপে ফিক্সড না হওয়ার জন্য) */
         .nav-filters {
-            /* নিশ্চিত করুন ফিল্টারটি অন্যান্য হেডারের অংশের মতো স্বাভাবিকভাবে থাকে */
             position: relative; 
             z-index: 10;
+        }
+        /* সার্চ বার এর জন্য প্যাডিং ঠিক করা */
+        .search-bar {
+            padding: 0 15px 10px;
         }
         
     </style>
@@ -150,11 +159,11 @@
     <main class="main-content container">
 
         <section id="property-grid-container" style="display: block;">
-             <div class="property-grid">
+            <div class="property-grid">
                 </div>
         </section>
 
-        </main>
+    </main>
 
     <footer class="footer">
         <div class="container">
@@ -164,4 +173,4 @@
     
     <script src="index.js"></script> 
 </body>
-                </html>
+                                                                   </html>
