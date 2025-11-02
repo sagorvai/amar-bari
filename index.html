@@ -54,18 +54,16 @@
         
         /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
         .sidebar {
-            z-index: 1050; /* হেডার (1000) এর চেয়ে বেশি */
+            z-index: 1050; 
         }
         .overlay {
-            z-index: 1040; /* হেডার (1000) এর চেয়ে বেশি */
+            z-index: 1040; 
         }
         
-        /* --- মেন কনটেন্ট ফিক্স: হেডার যেন কনটেন্ট লুকিয়ে না ফেলে --- */
         .main-content {
              padding-top: 150px; 
         }
         
-        /* --- হেডার টপ ফিক্স: বামে লোগো, ডানে আইকন --- */
         .header-top {
             display: flex;
             align-items: center;
@@ -73,7 +71,6 @@
             padding: 8px 15px; 
         }
 
-        /* বামের ব্লক (মেনু + লোগো) ফিক্স */
         .header-left {
             display: flex;
             align-items: center;
@@ -85,7 +82,6 @@
              cursor: pointer;
         }
         
-        /* ✅ লোগো স্টাইল ফিক্স: বামে অবস্থান ও বড় ফন্ট */
         .logo-title {
             display: flex;
             align-items: center;
@@ -112,35 +108,18 @@
              flex-shrink: 0; 
         }
         
-        /* নোটিফিকেশন ড্রপডাউন পজিশন ফিক্স */
-        .notification-dropdown {
-            display: none;
-            position: absolute;
-            top: 45px; 
-            right: 0; /* ডানদিকে সারিবদ্ধ */
-            width: 300px;
-            max-height: 400px;
-            overflow-y: auto;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 1010; 
-        }
-        .notification-dropdown.active {
-            display: block;
+        /* ✅ কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
+        .icon-wrapper {
+             position: relative;
+             display: inline-flex;
+             cursor: pointer;
+             align-items: center; 
+             justify-content: center;
+             height: 30px; 
+             width: 30px; 
         }
         
-        /* অন্যান্য আইকন স্টাইল */
-        .notification-icon-wrapper {
-            position: relative;
-            display: inline-flex;
-            cursor: pointer;
-            color: var(--primary-color);
-            align-items: center; 
-            justify-content: center;
-            height: 30px; 
-            width: 30px; 
-        }
+        /* ✅ কমন নোটিফিকেশন কাউন্ট স্টাইল */
         .notification-count {
             position: absolute;
             top: -5px; 
@@ -154,33 +133,32 @@
             min-width: 10px;
             text-align: center;
             line-height: 1; 
-            display: none; 
+            display: none; /* ডিফল্টভাবে লুকানো */
         }
-        .message-icon {
+        
+        /* আইকন কালার */
+        .notification-icon { color: var(--primary-color); }
+        .message-icon { color: var(--primary-color); }
+        .post-icon-header { color: #28a745; }
+
+        /* প্রোফাইল ইমেজ স্টাইল */
+        .profile-image-wrapper {
             cursor: pointer;
-            color: white; 
-            background-color: #007bff; 
-            font-size: 18px; 
-            padding: 4px; 
-            border-radius: 50%; 
-            width: 28px; 
-            height: 28px; 
-            display: inline-flex; 
+            width: 35px; /* আইকন থেকে সামান্য বড় */
+            height: 35px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary-color); /* রঙের বর্ডার */
+            display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
         }
-        .profile-icon {
-            font-size: 28px; 
-            color: var(--primary-color);
-            cursor: pointer;
+        #profileImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-        /* ✅ নতুন পোস্ট আইকনের স্টাইল (সবুজ) */
-        .post-icon-header {
-            font-size: 28px; 
-            color: #28a745; /* সবুজ রঙ */
-            cursor: pointer;
-        }
+
 
         /* সার্চ বার এবং নেভিগেশন ফিল্টারগুলির প্যাডিং ফিক্স */
         .search-bar, .nav-filters {
@@ -199,10 +177,9 @@
             .header-actions {
                  gap: 8px; 
             }
-            .notification-dropdown {
-                width: 90vw; 
-                right: -10px; 
-                max-width: 300px; 
+            .profile-image-wrapper {
+                 width: 30px; 
+                 height: 30px;
             }
         }
         
@@ -224,16 +201,24 @@
             
             <div class="header-actions">
                 
-                <div class="notification-icon-wrapper" id="notificationButton">
+                <div class="icon-wrapper" id="notificationButton">
                     <i class="material-icons notification-icon">notifications</i>
                     <span class="notification-count" id="notification-count"></span>
                 </div>
                 
-                <i class="material-icons post-icon-header" id="headerPostButton">add_circle_outline</i>
+                <div class="icon-wrapper" id="headerPostButton">
+                    <i class="material-icons post-icon-header">add_circle_outline</i>
+                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
+                </div>
                 
-                <i class="material-icons message-icon" id="messageButton">message</i>
+                <div class="icon-wrapper" id="messageButton">
+                    <i class="material-icons message-icon">message</i>
+                    <span class="notification-count" id="message-count"></span>
+                </div>
                 
-                <i class="material-icons profile-icon" id="profileButton">person</i>
+                <div class="profile-image-wrapper" id="profileImageWrapper">
+                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
+                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
                 
                 <div class="notification-dropdown" id="notification-dropdown">
                     </div>
@@ -299,4 +284,4 @@
     
     <script src="index.js"></script> 
 </body>
-                                                                            </html>
+                                                                                                             </html>
