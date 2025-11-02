@@ -170,6 +170,12 @@
             color: var(--primary-color);
             cursor: pointer;
         }
+        /* ✅ নতুন পোস্ট আইকনের স্টাইল */
+        .post-icon-header {
+            font-size: 28px; 
+            color: #28a745; /* সবুজ রঙ ব্যবহার করা হলো */
+            cursor: pointer;
+        }
 
         /* সার্চ বার এবং নেভিগেশন ফিল্টারগুলির প্যাডিং ফিক্স */
         .search-bar, .nav-filters {
@@ -217,6 +223,8 @@
                     <i class="material-icons notification-icon">notifications</i>
                     <span class="notification-count" id="notification-count"></span>
                 </div>
+                
+                <i class="material-icons post-icon-header" id="headerPostButton">add_circle_outline</i>
                 
                 <i class="material-icons message-icon" id="messageButton">message</i>
                 
@@ -286,4 +294,4 @@
     
     <script src="index.js"></script> 
 </body>
-                    </html>
+                </html>
