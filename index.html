@@ -56,13 +56,21 @@
         .header-top {
             display: flex;
             align-items: center;
-            /* প্রয়োজন অনুসারে স্পেস বিটউইন বা স্পেস অ্যারাউন্ড ব্যবহার করুন */
-            justify-content: flex-start; /* উপাদানগুলো বাম থেকে শুরু হবে */
+            /* ✅ ফিক্স: বামের লোগো এবং ডানের আইকনগুলিকে দুটি ব্লকে ভাগ করা */
+            justify-content: space-between; 
             padding: 8px 15px; 
         }
 
+        /* লোগো এবং মেনু আইকনকে এক গ্রপে রাখতে নতুন কন্টেইনার */
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
         .menu-icon {
+             /* মার্জিন অপসারণ করা হলো, কারণ এটি .header-left এর অংশ হবে */
              margin-right: 0; 
+             cursor: pointer;
         }
         
         .logo-title {
@@ -72,9 +80,9 @@
             font-weight: bold;
             color: var(--primary-color);
             margin-left: 10px; 
-            /* ✅ ফিক্স: এটি বাকি আইকনগুলিকে ডানে ঠেলে দেবে */
-            margin-right: auto; 
-            flex-grow: 1; /* যদি অতিরিক্ত ফাঁকা স্থান দরকার হয় */
+            /* ✅ ফিক্স: অপ্রয়োজনীয় মার্জিন/ফ্লেক্স প্রপার্টি অপসারণ করা হলো */
+            margin-right: 0; 
+            flex-grow: 0; 
         }
         .logo-icon {
             margin-right: 5px;
@@ -83,9 +91,8 @@
         .header-actions {
              display: flex;
              align-items: center;
-             gap: 10px; /* আইকনগুলির মধ্যে দূরত্ব */
-             /* ✅ ফিক্স: এটি ডানে থাকা আইকনগুলির অবস্থান নিশ্চিত করবে */
-             flex-shrink: 0; 
+             gap: 10px; 
+             /* margin-left: auto; এখন প্রয়োজন নেই কারণ justify-content: space-between ব্যবহার করা হয়েছে */
              position: relative; 
         }
         
@@ -95,27 +102,35 @@
             display: inline-flex;
             cursor: pointer;
             color: var(--primary-color);
-            /* নিশ্চিত করা হলো যে নোটিফিকেশন আইকনটি ছোট স্ক্রিনে কেটে না যায় */
             align-items: center; 
             justify-content: center;
             height: 30px; 
             width: 30px; 
         }
         .notification-icon {
-            font-size: 28px; /* আইকনের সাইজ সামান্য কমানো */
+            font-size: 28px; 
         }
         .notification-count {
-            top: -3px; /* অবস্থান সামঞ্জস্য করা হলো */
+            position: absolute;
+            top: -3px; 
             right: -3px;
-            padding: 2px 5px; /* প্যাডিং সামঞ্জস্য করা হলো */
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 5px; 
             font-size: 0.7em;
+            font-weight: bold;
+            min-width: 10px;
+            text-align: center;
+            line-height: 1; /* টেক্সট সেন্টারে আনতে */
+            display: none; 
         }
         
         /* ✅ নোটিফিকেশন ড্রপডাউন স্টাইল ফিক্স */
         .notification-dropdown {
             display: none;
             position: absolute;
-            top: 45px; /* আইকনের নিচে নামানো */
+            top: 45px; 
             right: 0;
             width: 300px;
             max-height: 400px;
@@ -125,6 +140,11 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             z-index: 1010;
         }
+        .notification-dropdown.active {
+            display: block;
+        }
+        /* অন্যান্য ড্রপডাউন স্টাইল অপরিবর্তিত রাখা হলো */
+
 
         /* Messenger-এর মতো গোল আইকন ফিক্স */
         .message-icon {
@@ -153,11 +173,10 @@
                  padding-top: 140px; 
             }
             .logo-title {
-                 font-size: 1.3em; /* ছোট স্ক্রিনে ফন্ট সাইজ আরও কমানো */
+                 font-size: 1.3em; 
             }
             .notification-dropdown {
                 width: 95vw; 
-                /* ফিক্স: ডান প্রান্ত থেকে দূরত্ব রাখা হলো */
                 right: 5px; 
             }
         }
@@ -169,12 +188,14 @@
     <header class="main-header">
         <div class="header-top">
             
-            <i class="material-icons menu-icon" id="menuButton">menu</i>
-            
-            <a href="index.html" class="logo-title">
-                <i class="material-icons logo-icon">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                
+                <a href="index.html" class="logo-title">
+                    <i class="material-icons logo-icon">home</i> 
+                    <span>আমার বাড়ি.কম</span>
+                </a>
+            </div>
             
             <div class="header-actions">
                 
@@ -244,4 +265,4 @@
     
     <script src="index.js"></script> 
 </body>
-</html>
+    </html>
