@@ -56,9 +56,15 @@
         .header-top {
             display: flex;
             align-items: center;
-            justify-content: space-between; 
+            /* প্রয়োজন অনুসারে স্পেস বিটউইন বা স্পেস অ্যারাউন্ড ব্যবহার করুন */
+            justify-content: flex-start; /* উপাদানগুলো বাম থেকে শুরু হবে */
             padding: 8px 15px; 
         }
+
+        .menu-icon {
+             margin-right: 0; 
+        }
+        
         .logo-title {
             display: flex;
             align-items: center;
@@ -66,15 +72,21 @@
             font-weight: bold;
             color: var(--primary-color);
             margin-left: 10px; 
-            flex-grow: 1; 
+            /* ✅ ফিক্স: এটি বাকি আইকনগুলিকে ডানে ঠেলে দেবে */
+            margin-right: auto; 
+            flex-grow: 1; /* যদি অতিরিক্ত ফাঁকা স্থান দরকার হয় */
+        }
+        .logo-icon {
+            margin-right: 5px;
         }
 
         .header-actions {
              display: flex;
              align-items: center;
              gap: 10px; /* আইকনগুলির মধ্যে দূরত্ব */
-             margin-left: auto;
-             position: relative; /* নোটিফিকেশন ড্রপডাউন অ্যাবস্যুট করার জন্য */
+             /* ✅ ফিক্স: এটি ডানে থাকা আইকনগুলির অবস্থান নিশ্চিত করবে */
+             flex-shrink: 0; 
+             position: relative; 
         }
         
         /* ✅ নোটিফিকেশন আইকন স্টাইল */
@@ -83,30 +95,27 @@
             display: inline-flex;
             cursor: pointer;
             color: var(--primary-color);
+            /* নিশ্চিত করা হলো যে নোটিফিকেশন আইকনটি ছোট স্ক্রিনে কেটে না যায় */
+            align-items: center; 
+            justify-content: center;
+            height: 30px; 
+            width: 30px; 
         }
         .notification-icon {
-            font-size: 30px; 
+            font-size: 28px; /* আইকনের সাইজ সামান্য কমানো */
         }
         .notification-count {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background-color: red;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 6px;
+            top: -3px; /* অবস্থান সামঞ্জস্য করা হলো */
+            right: -3px;
+            padding: 2px 5px; /* প্যাডিং সামঞ্জস্য করা হলো */
             font-size: 0.7em;
-            font-weight: bold;
-            min-width: 15px;
-            text-align: center;
-            display: none; /* ডিফল্টভাবে লুকানো */
         }
         
-        /* ✅ নোটিফিকেশন ড্রপডাউন স্টাইল */
+        /* ✅ নোটিফিকেশন ড্রপডাউন স্টাইল ফিক্স */
         .notification-dropdown {
             display: none;
             position: absolute;
-            top: 40px; /* আইকনের নিচে নামানো */
+            top: 45px; /* আইকনের নিচে নামানো */
             right: 0;
             width: 300px;
             max-height: 400px;
@@ -115,36 +124,6 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             z-index: 1010;
-        }
-        .notification-dropdown.active {
-            display: block;
-        }
-        .notification-item {
-            display: block;
-            padding: 10px 15px;
-            border-bottom: 1px solid #eee;
-            color: #333;
-            text-decoration: none;
-            line-height: 1.4;
-        }
-        .notification-item:last-child {
-            border-bottom: none;
-        }
-        .notification-item:hover {
-            background-color: #f8f9fa;
-        }
-        .notification-item.unread {
-            background-color: #e9f5ff; /* অপঠিত নোটিফিকেশনের জন্য হালকা নীল ব্যাকগ্রাউন্ড */
-            font-weight: bold;
-        }
-        .notif-text {
-            font-size: 0.9em;
-        }
-        .notif-time {
-            font-size: 0.7em;
-            color: #6c757d;
-            margin-top: 3px;
-            text-align: right;
         }
 
         /* Messenger-এর মতো গোল আইকন ফিক্স */
@@ -168,22 +147,18 @@
             cursor: pointer;
         }
         
-        .search-bar {
-            padding: 0 15px 8px;
-        }
-        .nav-filters {
-            padding: 0 15px 8px; 
-        }
-        
         /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স (সর্বাধিক 600px) --- */
         @media (max-width: 600px) {
             .main-content {
                  padding-top: 140px; 
             }
+            .logo-title {
+                 font-size: 1.3em; /* ছোট স্ক্রিনে ফন্ট সাইজ আরও কমানো */
+            }
             .notification-dropdown {
-                width: 95vw; /* মোবাইল ভিউতে পুরো প্রস্থ ব্যবহার করা */
-                right: 2.5vw;
-                max-width: none;
+                width: 95vw; 
+                /* ফিক্স: ডান প্রান্ত থেকে দূরত্ব রাখা হলো */
+                right: 5px; 
             }
         }
         
