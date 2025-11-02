@@ -48,74 +48,142 @@
         }
         
         /* --- মেন কনটেন্ট ফিক্স: হেডার যেন কনটেন্ট লুকিয়ে না ফেলে --- */
-        /* আগের 150px সম্ভবত বেশি ছিল। এখানে মিডিয়াম স্ক্রিনের জন্য রাখা হলো */
         .main-content {
              padding-top: 150px; 
-             /* আপনার style.css এ যদি .container এর মধ্যে padding না থাকে, তবে সেটি যোগ করুন */
         }
-        
         
         /* --- হেডার স্টাইল সামঞ্জস্য --- */
         .header-top {
             display: flex;
             align-items: center;
             justify-content: space-between; 
-            /* ভার্টিক্যাল প্যাডিং সামান্য কমানো হলো */
             padding: 8px 15px; 
         }
-
         .logo-title {
-            font-size: 1.5em; /* ফন্ট সাইজ একই রাখা হলো */
+            display: flex;
+            align-items: center;
+            font-size: 1.5em; 
+            font-weight: bold;
+            color: var(--primary-color);
             margin-left: 10px; 
-            white-space: nowrap; /* নিশ্চিত করা হলো যে লোগো এক লাইনে থাকবে */
+            flex-grow: 1; 
         }
 
         .header-actions {
-             gap: 8px; /* আইকনের মধ্যে দূরত্ব কমানো হলো */
+             display: flex;
+             align-items: center;
+             gap: 10px; /* আইকনগুলির মধ্যে দূরত্ব */
+             margin-left: auto;
+             position: relative; /* নোটিফিকেশন ড্রপডাউন অ্যাবস্যুট করার জন্য */
         }
         
+        /* ✅ নোটিফিকেশন আইকন স্টাইল */
+        .notification-icon-wrapper {
+            position: relative;
+            display: inline-flex;
+            cursor: pointer;
+            color: var(--primary-color);
+        }
+        .notification-icon {
+            font-size: 30px; 
+        }
+        .notification-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.7em;
+            font-weight: bold;
+            min-width: 15px;
+            text-align: center;
+            display: none; /* ডিফল্টভাবে লুকানো */
+        }
+        
+        /* ✅ নোটিফিকেশন ড্রপডাউন স্টাইল */
+        .notification-dropdown {
+            display: none;
+            position: absolute;
+            top: 40px; /* আইকনের নিচে নামানো */
+            right: 0;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1010;
+        }
+        .notification-dropdown.active {
+            display: block;
+        }
+        .notification-item {
+            display: block;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+            text-decoration: none;
+            line-height: 1.4;
+        }
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        .notification-item.unread {
+            background-color: #e9f5ff; /* অপঠিত নোটিফিকেশনের জন্য হালকা নীল ব্যাকগ্রাউন্ড */
+            font-weight: bold;
+        }
+        .notif-text {
+            font-size: 0.9em;
+        }
+        .notif-time {
+            font-size: 0.7em;
+            color: #6c757d;
+            margin-top: 3px;
+            text-align: right;
+        }
+
         /* Messenger-এর মতো গোল আইকন ফিক্স */
         .message-icon {
+            cursor: pointer;
+            color: white; 
+            background-color: #007bff; 
             font-size: 18px; 
-            padding: 4px; /* প্যাডিং সামান্য কমানো হলো */
-            width: 28px; /* আকার সামান্য কমানো হলো */
+            padding: 4px; 
+            border-radius: 50%; 
+            width: 28px; 
             height: 28px; 
+            display: inline-flex; 
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
         }
         .profile-icon {
-            font-size: 28px; /* প্রোফাইল আইকনের আকার কমানো হলো */
+            font-size: 28px; 
+            color: var(--primary-color);
+            cursor: pointer;
         }
         
         .search-bar {
-            padding: 0 15px 8px; /* ভার্টিক্যাল প্যাডিং কমানো হলো */
+            padding: 0 15px 8px;
         }
         .nav-filters {
-            padding: 0 15px 8px; /* ভার্টিক্যাল প্যাডিং কমানো হলো */
+            padding: 0 15px 8px; 
         }
         
         /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স (সর্বাধিক 600px) --- */
         @media (max-width: 600px) {
-            .logo-title {
-                font-size: 1.4em; /* ছোট স্ক্রিনে ফন্ট সাইজ সামান্য কমানো */
-                margin-left: 8px;
-            }
-            .header-top {
-                padding: 6px 10px; /* মোবাইল ভিউতে প্যাডিং আরও কমানো */
-            }
-            .header-actions {
-                gap: 8px;
-            }
-            .message-icon {
-                font-size: 16px;
-                width: 26px;
-                height: 26px;
-                padding: 5px;
-            }
-            .profile-icon {
-                 font-size: 26px;
-            }
-            /* নিশ্চিত করা হলো যে main-content এর padding-top হেডারের সাথে মানানসই */
             .main-content {
-                 padding-top: 140px; /* মোবাইল ভিউতে মান কমানো হলো */
+                 padding-top: 140px; 
+            }
+            .notification-dropdown {
+                width: 95vw; /* মোবাইল ভিউতে পুরো প্রস্থ ব্যবহার করা */
+                right: 2.5vw;
+                max-width: none;
             }
         }
         
@@ -134,9 +202,18 @@
             </a>
             
             <div class="header-actions">
+                
+                <div class="notification-icon-wrapper" id="notificationButton">
+                    <i class="material-icons notification-icon">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
+                </div>
+                
                 <i class="material-icons message-icon" id="messageButton">message</i>
                 
                 <i class="material-icons profile-icon" id="profileButton">person</i>
+                
+                <div class="notification-dropdown" id="notification-dropdown">
+                    </div>
             </div>
         </div>
 
@@ -192,4 +269,4 @@
     
     <script src="index.js"></script> 
 </body>
-    </html>
+</html>
