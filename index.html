@@ -27,9 +27,23 @@
         firebase.initializeApp(firebaseConfig);
       }
     </script>
+    
+    <style>
+        /* CSS for the new message icon */
+        .message-icon {
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 28px;
+            margin-right: 15px; /* প্রোফাইল আইকন থেকে কিছুটা দূরত্ব তৈরি করতে */
+        }
+        .header-actions {
+             display: flex;
+             align-items: center;
+        }
+    </style>
 </head>
 <body>
-
+    
     <header class="main-header">
         <div class="header-top">
             
@@ -41,6 +55,8 @@
             </a>
             
             <div class="header-actions">
+                <i class="material-icons message-icon" id="messageButton">message</i>
+                
                 <i class="material-icons profile-icon" id="profileButton">person</i>
             </div>
         </div>
@@ -51,14 +67,13 @@
         </div>
         
         <div class="nav-filters">
-            <button class="nav-button" data-category="map" id="mapButton">
+            <button class="nav-button active" data-category="map" id="mapButton">
                 <i class="material-icons">map</i> ম্যাপ
             </button>
-            <button class="nav-button active" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
+            <button class="nav-button" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
             <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
         </div>
     </header>
-
     <div class="sidebar" id="sidebar">
         <nav>
             <a href="index.html" class="sidebar-logo">
@@ -66,8 +81,11 @@
                 <span>আমার বাড়ি.কম</span>
             </a>
             
-            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="index.html" class="active" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
             <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            
+            <a href="messages.html" id="messages-link-sidebar"><i class="material-icons">message</i> আমার ইনবক্স</a>
+            
             <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
             <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
@@ -93,7 +111,15 @@
             </div>
         </section>
         
-        </main>
+        <section id="tips-section" style="display: none;">
+            </section>
+        <section id="about-section" style="display: none;">
+            </section>
+        <section id="contact-section" style="display: none;">
+            </section>
+
+
+    </main>
 
     <footer class="footer">
         <div class="container">
@@ -102,5 +128,5 @@
     </footer>
     
     <script src="index.js"></script> 
-    </body>
-    </html>
+</body>
+                    </html>
