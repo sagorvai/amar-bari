@@ -11,12 +11,17 @@ const profileButton = document.getElementById('profileButton');
 const messageButton = document.getElementById('messageButton');
 const messagesLinkSidebar = document.getElementById('messages-link-sidebar');
 
+// ✅ নতুন নোটিফিকেশন UI উপাদান
+const notificationButton = document.getElementById('notificationButton');
+const notificationCount = document.getElementById('notification-count');
+const notificationDropdown = document.getElementById('notification-dropdown');
 
 const navButtons = document.querySelectorAll('.nav-filters .nav-button'); 
 const globalSearchInput = document.getElementById('globalSearchInput');
 const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
 
+let unsubscribeNotifications = null; // রিয়েল-টাইম লিসেনার বন্ধ করার জন্য
 
 // --- ১. প্রপার্টি লোডিং এবং ডিসপ্লে লজিক ---
 async function fetchAndDisplayProperties(category, searchTerm = '') {
@@ -40,7 +45,79 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
     }, 500);
 }
 
-// --- ২. ফিল্টার এবং UI লজিক ---
+// --- ২. নোটিফিকেশন লজিক ---
+
+function loadNotifications(userId) {
+    if (unsubscribeNotifications) {
+        unsubscribeNotifications(); // আগের লিসেনার বন্ধ করা
+    }
+    
+    // শেষ ৫টি নোটিফিকেশন রিয়েল-টাইমে লোড করা
+    unsubscribeNotifications = db.collection("notifications")
+        .where("userId", "==", userId)
+        .orderBy("timestamp", "desc")
+        .limit(5) 
+        .onSnapshot(snapshot => {
+            let unreadCount = 0;
+            notificationDropdown.innerHTML = ''; // ড্রপডাউন খালি করা
+            
+            if (snapshot.empty) {
+                notificationDropdown.innerHTML = '<div class="notification-item">কোনো নতুন নোটিফিকেশন নেই।</div>';
+            } else {
+                snapshot.forEach(doc => {
+                    const notification = doc.data();
+                    const notifId = doc.id;
+                    
+                    if (!notification.read) {
+                        unreadCount++;
+                    }
+                    
+                    // নোটিফিকেশন আইটেম তৈরি
+                    const item = document.createElement('a');
+                    item.href = notification.link || '#';
+                    item.className = `notification-item ${notification.read ? '' : 'unread'}`;
+                    item.dataset.notifId = notifId;
+
+                    const timeAgo = notification.timestamp ? 
+                        notification.timestamp.toDate().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }) : '';
+                        
+                    item.innerHTML = `
+                        <div class="notif-text">${notification.message}</div>
+                        <div class="notif-time">${timeAgo}</div>
+                    `;
+                    
+                    // ক্লিক করলে 'read' হিসেবে মার্ক করা
+                    item.addEventListener('click', () => markNotificationAsRead(notifId));
+
+                    notificationDropdown.appendChild(item);
+                });
+            }
+            
+            // অপঠিত সংখ্যা আপডেট করা
+            if (unreadCount > 0) {
+                notificationCount.textContent = unreadCount;
+                notificationCount.style.display = 'block';
+            } else {
+                notificationCount.style.display = 'none';
+            }
+        }, error => {
+            console.error("নোটিফিকেশন লোড করতে ব্যর্থ:", error);
+        });
+}
+
+// নোটিফিকেশন 'read' হিসেবে চিহ্নিত করার ফাংশন
+function markNotificationAsRead(notifId) {
+    const userId = auth.currentUser ? auth.currentUser.uid : null;
+    if (userId && notifId) {
+        db.collection("notifications").doc(notifId).update({ read: true })
+            .catch(error => {
+                console.error("নোটিফিকেশন রিড করতে ব্যর্থ:", error);
+            });
+        // UI আপডেট loadNotifications দ্বারা রিয়েল-টাইমে হবে।
+    }
+}
+
+// --- ৩. UI লজিক ---
 
 function setupUIEventListeners() {
     
@@ -55,8 +132,28 @@ function setupUIEventListeners() {
             fetchAndDisplayProperties(category, globalSearchInput.value);
         });
     });
+    
+    // ✅ নোটিফিকেশন বাটন ক্লিক লজিক
+    if (notificationButton) {
+        notificationButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // document ক্লিক ইভেন্ট বন্ধ করা
+            if (auth.currentUser) {
+                notificationDropdown.classList.toggle('active');
+            } else {
+                 alert("নোটিফিকেশন দেখতে আপনাকে লগইন করতে হবে।");
+            }
+        });
+    }
+    
+    // অন্য কোথাও ক্লিক করলে ড্রপডাউন বন্ধ করা
+    document.addEventListener('click', (e) => {
+        if (notificationDropdown && notificationDropdown.classList.contains('active') && !e.target.closest('#notificationButton')) {
+            notificationDropdown.classList.remove('active');
+        }
+    });
 
-    // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
+
+    // অন্যান্য ইভেন্ট লিসেনার...
     if (menuButton) {
         menuButton.addEventListener('click', () => {
             sidebar.classList.toggle('active');
@@ -64,7 +161,6 @@ function setupUIEventListeners() {
         });
     }
 
-    // ওভারলেতে ক্লিক করলে সাইড মেনু বন্ধ হবে
     if (overlay) {
         overlay.addEventListener('click', () => {
             sidebar.classList.remove('active');
@@ -72,14 +168,12 @@ function setupUIEventListeners() {
         });
     }
 
-    // প্রোফাইল বাটন ক্লিক লজিক
     if (profileButton) {
         profileButton.addEventListener('click', () => {
             window.location.href = 'profile.html';
         });
     }
     
-    // ম্যাসেজ বাটন ক্লিক লজিক
     if (messageButton) {
         messageButton.addEventListener('click', () => {
             if (auth.currentUser) {
@@ -91,7 +185,6 @@ function setupUIEventListeners() {
         });
     }
     
-    // সার্চ ইনপুট ইভেন্ট লিসেনার
     if (globalSearchInput) {
         globalSearchInput.addEventListener('keypress', (e) => {
              if (e.key === 'Enter') {
@@ -102,11 +195,14 @@ function setupUIEventListeners() {
     }
 }
 
-// --- ৩. লগআউট হ্যান্ডেলার ---
+// --- ৪. লগআউট হ্যান্ডেলার ---
 const handleLogout = async () => {
     try {
         await auth.signOut();
         alert('সফলভাবে লগআউট করা হয়েছে!');
+        if (unsubscribeNotifications) {
+            unsubscribeNotifications(); // লিসেনার বন্ধ করা
+        }
         window.location.reload();
     } catch (error) {
         console.error("লগআউট ব্যর্থ হয়েছে:", error);
@@ -115,10 +211,7 @@ const handleLogout = async () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // সকল ইভেন্ট লিসেনার সেটআপ করা হলো
     setupUIEventListeners();
-    
-    // প্রাথমিক লোড: ডিফল্টভাবে 'বিক্রয়' ক্যাটাগরি দেখাবে
     fetchAndDisplayProperties('বিক্রয়', ''); 
     
     // Auth State Change Handler 
@@ -129,7 +222,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (postLink) postLink.style.display = 'flex'; 
             if (profileButton) profileButton.style.display = 'inline-block';
             
-            // ম্যাসেজ আইকন এখন inline-flex হিসাবে দেখানো হবে
+            // ✅ নোটিফিকেশন বাটন দেখানো এবং লোড করা
+            if (notificationButton) notificationButton.style.display = 'inline-flex';
+            loadNotifications(user.uid);
+            
             if (messageButton) messageButton.style.display = 'inline-flex'; 
             if (messagesLinkSidebar) messagesLinkSidebar.style.display = 'flex';
             
@@ -145,7 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (postLink) postLink.style.display = 'none';
             if (profileButton) profileButton.style.display = 'none';
             
-            // ম্যাসেজ আইকন এবং সাইডবার লিঙ্ক লুকিয়ে রাখছে
+            // ✅ নোটিফিকেশন বাটন লুকিয়ে রাখা
+            if (notificationButton) notificationButton.style.display = 'none'; 
+            if (notificationCount) notificationCount.style.display = 'none'; 
+            if (notificationDropdown) notificationDropdown.classList.remove('active');
+            if (unsubscribeNotifications) unsubscribeNotifications();
+
             if (messageButton) messageButton.style.display = 'none'; 
             if (messagesLinkSidebar) messagesLinkSidebar.style.display = 'none';
             
