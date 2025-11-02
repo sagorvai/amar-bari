@@ -29,17 +29,68 @@
     </script>
     
     <style>
-        /* CSS for the new message icon */
-        .message-icon {
-            cursor: pointer;
+        /* CSS ফিক্স: নতুন মেসেজ আইকন এবং লোগো স্টাইল */
+        .main-header {
+             /* নিশ্চিত করুন হেডারটি স্ক্রলের সাথে চলে */
+             position: sticky;
+             top: 0;
+             z-index: 50; 
+        }
+        .header-top {
+            /* flex-এর মাধ্যমে বাম-ডান অ্যালাইনমেন্ট নিশ্চিত করা */
+            display: flex;
+            align-items: center;
+            justify-content: space-between; 
+            padding: 10px 15px;
+        }
+        .logo-title {
+            /* লোগো টেক্সট ফিক্সড করা */
+            display: flex;
+            align-items: center;
+            font-size: 1.6em; /* টেক্সট বড় করা হলো */
+            font-weight: bold;
             color: var(--primary-color);
-            font-size: 28px;
-            margin-right: 15px; /* প্রোফাইল আইকন থেকে কিছুটা দূরত্ব তৈরি করতে */
+            margin-left: 10px; /* মেনু আইকন থেকে সামান্য দূরত্ব */
+            flex-grow: 1; /* মাঝখানে থাকার জন্য */
+        }
+        .menu-icon {
+            /* মেনু আইকন বামে থাকবে */
+            margin-right: 0; 
         }
         .header-actions {
              display: flex;
              align-items: center;
+             /* ডান পাশে থাকা প্রোফাইল ও মেসেজ বাটন একত্রে রাখার জন্য */
+             margin-left: auto;
         }
+        
+        /* Messenger-এর মতো গোল আইকন ফিক্স */
+        .message-icon {
+            cursor: pointer;
+            color: white; /* আইকনের রং সাদা */
+            background-color: #007bff; /* ব্যাকগ্রাউন্ডের রং primary-color */
+            font-size: 20px; /* আইকনের সাইজ ছোট করা */
+            padding: 4px; /* প্যাডিং দিয়ে গোল করার ক্ষেত্র তৈরি করা */
+            border-radius: 50%; /* গোল করা */
+            width: 28px; /* ফিক্সড প্রস্থ */
+            height: 28px; /* ফিক্সড উচ্চতা */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px; /* প্রোফাইল আইকন থেকে দূরত্ব */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* সামান্য শ্যাডো */
+        }
+        .profile-icon {
+            font-size: 28px;
+        }
+        
+        /* ফিল্টার বাটন ফিক্স (ম্যাপে ফিক্সড না হওয়ার জন্য) */
+        .nav-filters {
+            /* নিশ্চিত করুন ফিল্টারটি অন্যান্য হেডারের অংশের মতো স্বাভাবিকভাবে থাকে */
+            position: relative; 
+            z-index: 10;
+        }
+        
     </style>
 </head>
 <body>
@@ -67,11 +118,11 @@
         </div>
         
         <div class="nav-filters">
-            <button class="nav-button active" data-category="map" id="mapButton">
-                <i class="material-icons">map</i> ম্যাপ
-            </button>
-            <button class="nav-button" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
+            <button class="nav-button active" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
             <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
+            <button class="nav-button" data-category="map" id="mapButton">
+                 <i class="material-icons">map</i> ম্যাপ
+            </button>
         </div>
     </header>
     <div class="sidebar" id="sidebar">
@@ -83,7 +134,6 @@
             
             <a href="index.html" class="active" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
             <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            
             <a href="messages.html" id="messages-link-sidebar"><i class="material-icons">message</i> আমার ইনবক্স</a>
             
             <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
@@ -100,26 +150,11 @@
     <main class="main-content container">
 
         <section id="property-grid-container" style="display: block;">
-            <div class="property-grid">
+             <div class="property-grid">
                 </div>
         </section>
 
-        <section id="map-section" style="display: none;">
-            <h2>📍 প্রপার্টি ম্যাপ ভিউ</h2>
-            <div id="map-container" style="height: 600px; width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
-                <p style="text-align: center; padding-top: 280px; color: #555;">ম্যাপ লোড হচ্ছে...</p>
-            </div>
-        </section>
-        
-        <section id="tips-section" style="display: none;">
-            </section>
-        <section id="about-section" style="display: none;">
-            </section>
-        <section id="contact-section" style="display: none;">
-            </section>
-
-
-    </main>
+        </main>
 
     <footer class="footer">
         <div class="container">
@@ -129,4 +164,4 @@
     
     <script src="index.js"></script> 
 </body>
-                    </html>
+                </html>
