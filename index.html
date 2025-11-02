@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="bn">
 <head>
@@ -6,12 +7,12 @@
     <title>আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    <link rel="stylesheet" href="[https://fonts.googleapis.com/icon?family=Material+Icons](https://fonts.googleapis.com/icon?family=Material+Icons)"> 
     
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js)"></script>
+    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js)"></script>
+    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js)"></script>
+    <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js)"></script>
 
     <script>
       const firebaseConfig = {
@@ -47,6 +48,17 @@
              z-index: 1000; 
         }
         
+        /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
+        /* ধরে নিলাম সাইডবার ও ওভারলে-এর বাকি স্টাইল style.css এ আছে */
+        .sidebar {
+            /* ✅ ফিক্স: হেডারের (1000) চেয়ে বেশি z-index ব্যবহার করা হলো */
+            z-index: 1050; 
+        }
+        .overlay {
+            /* ✅ ফিক্স: হেডারের (1000) চেয়ে বেশি z-index ব্যবহার করা হলো */
+            z-index: 1040; 
+        }
+        
         /* --- মেন কনটেন্ট ফিক্স: হেডার যেন কনটেন্ট লুকিয়ে না ফেলে --- */
         .main-content {
              padding-top: 150px; 
@@ -56,13 +68,17 @@
         .header-top {
             display: flex;
             align-items: center;
+            /* ✅ ফিক্স: বামের লোগো ব্লক এবং ডানের আইকন ব্লক দুই প্রান্তে যাবে */
             justify-content: space-between; 
             padding: 8px 15px; 
         }
 
+        /* মেনু আইকন এবং লোগোকে বামে ব্লক হিসেবে রাখা */
         .header-left {
             display: flex;
             align-items: center;
+            /* ✅ ফিক্স: বাম পাশে থাকবে, মাঝখানে নয় */
+            flex-grow: 0; 
         }
 
         .menu-icon {
@@ -73,14 +89,14 @@
         .logo-title {
             display: flex;
             align-items: center;
-            /* ✅ ফিক্স: লোগো সাইজ বাড়ানো হলো */
+            /* ✅ ফিক্স: লোগো সাইজ বাড়ানো */
             font-size: 1.8em; 
             font-weight: bold;
             color: var(--primary-color);
             margin-left: 10px; 
             margin-right: 0; 
             flex-grow: 0; 
-            text-decoration: none; /* আন্ডারলাইন থাকলে সরিয়ে দেওয়া */
+            text-decoration: none; 
         }
         .logo-title:visited {
              color: var(--primary-color);
@@ -93,12 +109,11 @@
              display: flex;
              align-items: center;
              gap: 12px; 
-             /* ✅ ফিক্স: ড্রপডাউন সঠিক স্থানে দেখানোর জন্য এটি আবশ্যক */
              position: relative; 
              flex-shrink: 0; 
         }
         
-        /* ✅ নোটিফিকেশন আইকন স্টাইল */
+        /* নোটিফিকেশন আইকন স্টাইল */
         .notification-icon-wrapper {
             position: relative;
             display: inline-flex;
@@ -128,7 +143,7 @@
             display: none; 
         }
         
-        /* ✅ নোটিফিকেশন ড্রপডাউন স্টাইল ফিক্স */
+        /* নোটিফিকেশন ড্রপডাউন স্টাইল ফিক্স */
         .notification-dropdown {
             display: none;
             position: absolute;
@@ -146,34 +161,6 @@
         .notification-dropdown.active {
             display: block;
         }
-        .notification-item {
-            display: block;
-            padding: 10px 15px;
-            border-bottom: 1px solid #eee;
-            color: #333;
-            text-decoration: none;
-            line-height: 1.4;
-        }
-        .notification-item:last-child {
-            border-bottom: none;
-        }
-        .notification-item:hover {
-            background-color: #f8f9fa;
-        }
-        .notification-item.unread {
-            background-color: #e9f5ff; /* অপঠিত নোটিফিকেশনের জন্য হালকা নীল ব্যাকগ্রাউন্ড */
-            font-weight: bold;
-        }
-        .notif-text {
-            font-size: 0.9em;
-        }
-        .notif-time {
-            font-size: 0.7em;
-            color: #6c757d;
-            margin-top: 3px;
-            text-align: right;
-        }
-
 
         /* Messenger-এর মতো গোল আইকন ফিক্স */
         .message-icon {
@@ -201,7 +188,6 @@
             .main-content {
                  padding-top: 140px; 
             }
-            /* ✅ ফিক্স: ছোট স্ক্রিনে লোগো সাইজ সামঞ্জস্য করা */
             .logo-title {
                  font-size: 1.5em; 
             }
