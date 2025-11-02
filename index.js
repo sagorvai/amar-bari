@@ -3,38 +3,107 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // UI elements
-// ... বিদ্যমান উপাদান ...
 const menuButton = document.getElementById('menuButton');
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
 
-// ✅ নতুন/পরিবর্তিত UI উপাদান
+// ✅ নেভিগেশন ও প্রোফাইল উপাদান
 const notificationButton = document.getElementById('notificationButton'); 
 const messageButton = document.getElementById('messageButton');
 const headerPostButton = document.getElementById('headerPostButton'); 
-const profileImageWrapper = document.getElementById('profileImageWrapper'); // wrapper
-const profileImage = document.getElementById('profileImage'); // img element
-const defaultProfileIcon = document.getElementById('defaultProfileIcon'); // default icon
+const profileImageWrapper = document.getElementById('profileImageWrapper'); 
+const profileImage = document.getElementById('profileImage'); 
+const defaultProfileIcon = document.getElementById('defaultProfileIcon'); 
 
-// কাউন্টার
+// ✅ কাউন্টার উপাদান
 const notificationCount = document.getElementById('notification-count');
 const messageCount = document.getElementById('message-count');
-const postCount = document.getElementById('post-count'); // নতুন পোস্ট কাউন্টার
+const postCount = document.getElementById('post-count'); 
 
 const navButtons = document.querySelectorAll('.nav-filters .nav-button'); 
-const globalSearchInput = document.getElementById('globalSearchInput');
 const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
+const globalSearchInput = document.getElementById('globalSearchInput');
 
-// ... (fetchAndDisplayProperties এবং createPropertyCard ফাংশন অপরিবর্তিত থাকবে) ...
+// --- প্রপার্টি লোডিং এবং ডিসপ্লে লজিক ---
 async function fetchAndDisplayProperties(category, searchTerm = '') {
     // ... (পূর্বের কোড)
+    
+    propertyG.innerHTML = '<p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>';
+    
+    let query = db.collection('properties').where('category', '==', category).where('status', '==', 'approved'); 
+    
+    if (searchTerm) {
+        query = query.where('location.district', '==', searchTerm.trim()); 
+    }
+    
+    try {
+        const snapshot = await query.get();
+        if (snapshot.empty) {
+            propertyG.innerHTML = '<p class="no-results-message">এই ক্যাটাগরিতে কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।</p>';
+            return;
+        }
+
+        propertyG.innerHTML = '';
+        snapshot.forEach(doc => {
+            const property = doc.data();
+            const card = createPropertyCard(property, doc.id);
+            propertyG.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error("Error fetching properties:", error);
+        propertyG.innerHTML = '<p class="error-message">প্রপার্টি লোড করার সময় একটি সমস্যা হয়েছে।</p>';
+    }
 }
+
 function createPropertyCard(property, id) {
     // ... (পূর্বের কোড)
+    const card = document.createElement('div');
+    card.classList.add('property-card');
+    card.setAttribute('data-id', id);
+
+    const priceText = property.category === 'ভাড়া' ? 
+        `${property.monthlyRent ? property.monthlyRent.toLocaleString('bn-BD') : 'অজানা'} টাকা/মাস` : 
+        `${(property.price ? property.price / 100000 : 0).toFixed(2)} লক্ষ টাকা`;
+    
+    const areaText = property.location && property.location.district ? property.location.district : 'অজানা এলাকা';
+    const beds = property.rooms || '-';
+    const baths = property.bathrooms || '-';
+    let sizeText = property.areaSqft ? `${property.areaSqft} স্কয়ার ফিট` : (property.landArea ? `${property.landArea} ${property.landAreaUnit}` : '-');
+
+    card.innerHTML = `
+        <div class="property-image-container">
+            <img src="${property.images[0] || 'https://via.placeholder.com/300x200?text=No+Image'}" alt="${property.title}" class="property-image">
+            <span class="property-category">${property.category}</span>
+        </div>
+        <div class="property-info">
+            <h3 class="property-title">${property.title || property.type}</h3>
+            <p class="property-area"><i class="material-icons">place</i> ${areaText}</p>
+            <p class="property-price">${priceText}</p>
+            <div class="property-features">
+                <span><i class="material-icons">bed</i> ${beds} বেড</span>
+                <span><i class="material-icons">bathtub</i> ${baths} বাথ</span>
+                <span><i class="material-icons">square_foot</i> ${sizeText}</span>
+            </div>
+        </div>
+    `;
+    
+    card.addEventListener('click', () => {
+         window.location.href = `property-view.html?id=${id}`;
+    });
+    
+    return card;
 }
+
 function toggleMapAndGrid(showMap) {
-    // ... (পূর্বের কোড)
+    if (showMap) {
+        propertyGridContainer.style.display = 'none';
+        mapSection.style.display = 'block';
+    } else {
+        propertyGridContainer.style.display = 'block';
+        mapSection.style.display = 'none';
+    }
 }
 
 
@@ -56,40 +125,34 @@ function setupUIEventListeners() {
         });
     }
     
-    // প্রোফাইল ছবি/আইকনে ক্লিক করলে
+    // ✅ প্রোফাইল, নোটিফিকেশন, ম্যাসেজ, পোস্ট বাটনের নেভিগেশন
     if (profileImageWrapper) {
         profileImageWrapper.addEventListener('click', () => {
             window.location.href = 'profile.html';
         });
     }
 
-    // নোটিফিকেশন বাটনে ক্লিক করলে
     if (notificationButton) {
         notificationButton.addEventListener('click', () => {
             window.location.href = 'notifications.html'; 
         });
     }
 
-    // ম্যাসেজ বাটনে ক্লিক করলে
     if (messageButton) {
         messageButton.addEventListener('click', () => {
             window.location.href = 'messages.html'; 
         });
     }
     
-    // পোস্ট বাটনে ক্লিক করলে
     if (headerPostButton) {
         headerPostButton.addEventListener('click', () => {
             window.location.href = 'post.html';
         });
     }
 
-
     // ... (নেভিগেশন/ফিল্টার বাটন লজিক এবং গ্লোবাল সার্চ লজিক অপরিবর্তিত থাকবে) ...
-    const navButtons = document.querySelectorAll('.nav-filters .nav-button');
     navButtons.forEach(button => {
         button.addEventListener('click', () => {
-            // ... (পূর্বের কোড)
             navButtons.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
 
@@ -109,7 +172,6 @@ function setupUIEventListeners() {
             const searchTerm = globalSearchInput.value.trim();
             const activeCategory = document.querySelector('.nav-filters .nav-button.active');
             let category = 'বিক্রয়'; 
-            // ... (পূর্বের কোড)
             fetchAndDisplayProperties(category, searchTerm);
         }
     });
@@ -120,7 +182,6 @@ function updateIconCounts() {
     // এই ফাংশনটি Firebase থেকে আসল কাউন্ট লোড করবে।
     // আপাতত UI দেখানোর জন্য ডামি ডেটা ব্যবহার করা হলো:
 
-    // ডামি নোটিফিকেশন কাউন্ট
     const notifCount = 3; 
     if (notifCount > 0) {
         notificationCount.textContent = notifCount;
@@ -129,7 +190,6 @@ function updateIconCounts() {
         notificationCount.style.display = 'none';
     }
 
-    // ডামি ম্যাসেজ কাউন্ট
     const msgCount = 1; 
     if (msgCount > 0) {
         messageCount.textContent = msgCount;
@@ -138,7 +198,6 @@ function updateIconCounts() {
         messageCount.style.display = 'none';
     }
     
-    // ডামি পোস্ট কাউন্ট (এটি নতুন পোস্ট আপডেটের সংখ্যা হতে পারে, বা আপাতত 0 রাখা হলো)
     const newPostCount = 0; 
     if (newPostCount > 0) {
         postCount.textContent = newPostCount;
@@ -152,17 +211,12 @@ function updateIconCounts() {
 // --- ৪. প্রোফাইল ছবি লোড করা ---
 async function loadProfilePicture(user) {
     if (user.photoURL) {
-        // যদি Firebase এ photoURL থাকে, তবে সেটি ব্যবহার করা হবে
         profileImage.src = user.photoURL;
         profileImage.style.display = 'block';
         defaultProfileIcon.style.display = 'none';
     } else {
-        // যদি ছবি না থাকে বা লোড করতে ব্যর্থ হয়, তবে ডিফল্ট আইকন দেখানো হবে
         profileImage.style.display = 'none';
         defaultProfileIcon.style.display = 'block';
-        
-        // যদি আপনি ফায়ারস্টোর থেকে ছবি আনতে চান তবে এই লজিকটি এখানে যুক্ত করুন
-        // যেমন: userDoc.data().profileImageUrl
     }
 }
 
@@ -191,17 +245,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (user) {
             // লগইন থাকলে
-            loadProfilePicture(user); // প্রোফাইল ছবি লোড করা
-            updateIconCounts(); // আইকন কাউন্টার আপডেট করা (ডামি)
+            loadProfilePicture(user); 
+            updateIconCounts(); 
             
-            // if (postLink) postLink.style.display = 'flex'; // postLink নেই, তাই কমেন্ট করা হলো
-            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; // ছবি দেখানোর জন্য flex
+            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
             
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
                 loginLinkSidebar.href = '#';
                 
-                // লগআউট লিসেনার সেট করা
                 loginLinkSidebar.removeEventListener('click', handleLogout);
                 loginLinkSidebar.addEventListener('click', handleLogout);
             }
@@ -209,14 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // লগইন না থাকলে
             profileImage.style.display = 'none';
             defaultProfileIcon.style.display = 'block';
-            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; // ডিফল্ট আইকন দেখাতে হবে
+            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
 
-            // সমস্ত কাউন্টার লুকানো
             notificationCount.style.display = 'none';
             messageCount.style.display = 'none';
             postCount.style.display = 'none';
-            
-            // if (postLink) postLink.style.display = 'none'; // postLink নেই
             
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগইন';
