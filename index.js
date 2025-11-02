@@ -3,29 +3,30 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // UI elements
-const postLink = document.getElementById('post-link'); // হেডার প্রপার্টি লিঙ্ক
+// ✅ বিদ্যমান উপাদান
+const postLink = document.getElementById('post-link'); // হেডার প্রপার্টি লিঙ্ক (যদি থাকে)
 const menuButton = document.getElementById('menuButton');
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
 const profileButton = document.getElementById('profileButton');
 
-// ✅ নতুন/পরিবর্তিত UI উপাদান (notificationButton এবং messageButton যুক্ত করা হলো)
+// ✅ নতুন/পরিবর্তিত UI উপাদান
 const notificationButton = document.getElementById('notificationButton'); 
 const messageButton = document.getElementById('messageButton');
-const navButtons = document.querySelectorAll('.nav-filters .nav-button'); // সমস্ত ফিল্টার বাটন
-const mapButton = document.getElementById('mapButton'); // ম্যাপ বাটন
-const sellButton = document.getElementById('sellButton'); // বিক্রয় বাটন
-const rentButton = document.getElementById('rentButton'); // ভাড়া বাটন
+const headerPostButton = document.getElementById('headerPostButton'); // ✅ নতুন পোস্ট বাটন
+const navButtons = document.querySelectorAll('.nav-filters .nav-button'); 
+const mapButton = document.getElementById('mapButton'); 
+const sellButton = document.getElementById('sellButton'); 
+const rentButton = document.getElementById('rentButton'); 
 
 const propertyGridContainer = document.getElementById('property-grid-container');
-const mapSection = document.getElementById('map-section'); // ম্যাপ সেকশন
+const mapSection = document.getElementById('map-section'); 
 
-// অন্যান্য সেকশনের উপাদান
 const homeLinkSidebar = document.getElementById('home-link-sidebar');
-
 const globalSearchInput = document.getElementById('globalSearchInput');
 const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
+
 
 // --- ১. প্রপার্টি লোডিং এবং ডিসপ্লে লজিক ---
 async function fetchAndDisplayProperties(category, searchTerm = '') {
@@ -38,7 +39,6 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
     
     if (searchTerm) {
         // একটি সহজ সার্চ লজিক (শহর/এলাকার উপর ভিত্তি করে)
-        // Note: For advanced searching (full-text search) you should use tools like Algolia
         query = query.where('location.district', '==', searchTerm.trim()); 
     }
     
@@ -68,7 +68,6 @@ function createPropertyCard(property, id) {
     card.classList.add('property-card');
     card.setAttribute('data-id', id);
 
-    // দাম এবং এলাকার তথ্য প্রপার্টির স্ট্রাকচার থেকে অনুমান করে নেওয়া হলো
     const priceText = property.category === 'ভাড়া' ? 
         `${property.monthlyRent ? property.monthlyRent.toLocaleString('bn-BD') : 'অজানা'} টাকা/মাস` : 
         `${(property.price ? property.price / 100000 : 0).toFixed(2)} লক্ষ টাকা`;
@@ -108,11 +107,9 @@ function toggleMapAndGrid(showMap) {
         propertyGridContainer.style.display = 'none';
         mapSection.style.display = 'block';
         // এখানে আপনার ম্যাপ ইনিশিয়ালাইজেশন লজিক থাকবে (যদি থাকে)
-        // console.log("Map view activated");
     } else {
         propertyGridContainer.style.display = 'block';
         mapSection.style.display = 'none';
-        // console.log("Grid view activated");
     }
 }
 
@@ -142,17 +139,24 @@ function setupUIEventListeners() {
         });
     }
 
-    // ✅ নোটিফিকেশন বাটনে ক্লিক করলে (notifications.html এ নেভিগেট করা)
+    // নোটিফিকেশন বাটনে ক্লিক করলে
     if (notificationButton) {
         notificationButton.addEventListener('click', () => {
             window.location.href = 'notifications.html'; 
         });
     }
 
-    // ✅ ম্যাসেজ বাটনে ক্লিক করলে
+    // ম্যাসেজ বাটনে ক্লিক করলে
     if (messageButton) {
         messageButton.addEventListener('click', () => {
             window.location.href = 'messages.html'; 
+        });
+    }
+    
+    // ✅ নতুন পোস্ট বাটনে ক্লিক করলে
+    if (headerPostButton) {
+        headerPostButton.addEventListener('click', () => {
+            window.location.href = 'post.html';
         });
     }
 
@@ -220,7 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (user) {
             // লগইন থাকলে
-            if (postLink) postLink.style.display = 'flex'; 
+            // 'postLink' আপনার মূল index.html-এ ছিল না, এটি sidebar-এর 'post-link-sidebar-menu' হতে পারে
+            // if (postLink) postLink.style.display = 'flex'; 
             if (profileButton) profileButton.style.display = 'inline-block';
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
@@ -232,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             // লগইন না থাকলে
-            if (postLink) postLink.style.display = 'none';
+            // if (postLink) postLink.style.display = 'none';
             if (profileButton) profileButton.style.display = 'none';
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগইন';
