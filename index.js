@@ -3,157 +3,124 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // UI elements
-const postLink = document.getElementById('post-link'); 
+const postLink = document.getElementById('post-link'); // হেডার প্রপার্টি লিঙ্ক
 const menuButton = document.getElementById('menuButton');
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
 const profileButton = document.getElementById('profileButton');
+
+// ✅ নতুন/পরিবর্তিত UI উপাদান (notificationButton এবং messageButton যুক্ত করা হলো)
+const notificationButton = document.getElementById('notificationButton'); 
 const messageButton = document.getElementById('messageButton');
-const messagesLinkSidebar = document.getElementById('messages-link-sidebar');
+const navButtons = document.querySelectorAll('.nav-filters .nav-button'); // সমস্ত ফিল্টার বাটন
+const mapButton = document.getElementById('mapButton'); // ম্যাপ বাটন
+const sellButton = document.getElementById('sellButton'); // বিক্রয় বাটন
+const rentButton = document.getElementById('rentButton'); // ভাড়া বাটন
 
-// ✅ নতুন নোটিফিকেশন UI উপাদান
-const notificationButton = document.getElementById('notificationButton');
-const notificationCount = document.getElementById('notification-count');
-const notificationDropdown = document.getElementById('notification-dropdown');
+const propertyGridContainer = document.getElementById('property-grid-container');
+const mapSection = document.getElementById('map-section'); // ম্যাপ সেকশন
 
-const navButtons = document.querySelectorAll('.nav-filters .nav-button'); 
+// অন্যান্য সেকশনের উপাদান
+const homeLinkSidebar = document.getElementById('home-link-sidebar');
+
 const globalSearchInput = document.getElementById('globalSearchInput');
 const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
 
-let unsubscribeNotifications = null; // রিয়েল-টাইম লিসেনার বন্ধ করার জন্য
-
 // --- ১. প্রপার্টি লোডিং এবং ডিসপ্লে লজিক ---
 async function fetchAndDisplayProperties(category, searchTerm = '') {
-    // এখানে আপনার প্রপার্টি লোডিং এবং গ্রিডে ডিসপ্লে করার লজিক থাকবে।
+    // ... আপনার মূল fetchAndDisplayProperties ফাংশনের কোড ...
     
-    propertyG.innerHTML = `
-        <div style="text-align: center; padding: 20px; font-size: 1.2em; color: #007bff;">
-            ${category === 'map' ? 'ম্যাপ ভিউ লোড হচ্ছে...' : `${category} ক্যাটাগরির প্রপার্টি লোড হচ্ছে...`}
+    propertyG.innerHTML = '<p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>';
+    
+    // শুধুমাত্র অনুমোদিত প্রপার্টি দেখানোর জন্য .where('status', '==', 'approved') যুক্ত করা হলো
+    let query = db.collection('properties').where('category', '==', category).where('status', '==', 'approved'); 
+    
+    if (searchTerm) {
+        // একটি সহজ সার্চ লজিক (শহর/এলাকার উপর ভিত্তি করে)
+        // Note: For advanced searching (full-text search) you should use tools like Algolia
+        query = query.where('location.district', '==', searchTerm.trim()); 
+    }
+    
+    try {
+        const snapshot = await query.get();
+        if (snapshot.empty) {
+            propertyG.innerHTML = '<p class="no-results-message">এই ক্যাটাগরিতে কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।</p>';
+            return;
+        }
+
+        propertyG.innerHTML = '';
+        snapshot.forEach(doc => {
+            const property = doc.data();
+            const card = createPropertyCard(property, doc.id);
+            propertyG.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error("Error fetching properties:", error);
+        propertyG.innerHTML = '<p class="error-message">প্রপার্টি লোড করার সময় একটি সমস্যা হয়েছে।</p>';
+    }
+}
+
+function createPropertyCard(property, id) {
+    // ... আপনার মূল createPropertyCard ফাংশনের কোড ...
+    const card = document.createElement('div');
+    card.classList.add('property-card');
+    card.setAttribute('data-id', id);
+
+    // দাম এবং এলাকার তথ্য প্রপার্টির স্ট্রাকচার থেকে অনুমান করে নেওয়া হলো
+    const priceText = property.category === 'ভাড়া' ? 
+        `${property.monthlyRent ? property.monthlyRent.toLocaleString('bn-BD') : 'অজানা'} টাকা/মাস` : 
+        `${(property.price ? property.price / 100000 : 0).toFixed(2)} লক্ষ টাকা`;
+    
+    const areaText = property.location && property.location.district ? property.location.district : 'অজানা এলাকা';
+    const beds = property.rooms || '-';
+    const baths = property.bathrooms || '-';
+    let sizeText = property.areaSqft ? `${property.areaSqft} স্কয়ার ফিট` : (property.landArea ? `${property.landArea} ${property.landAreaUnit}` : '-');
+
+    card.innerHTML = `
+        <div class="property-image-container">
+            <img src="${property.images[0] || 'https://via.placeholder.com/300x200?text=No+Image'}" alt="${property.title}" class="property-image">
+            <span class="property-category">${property.category}</span>
+        </div>
+        <div class="property-info">
+            <h3 class="property-title">${property.title || property.type}</h3>
+            <p class="property-area"><i class="material-icons">place</i> ${areaText}</p>
+            <p class="property-price">${priceText}</p>
+            <div class="property-features">
+                <span><i class="material-icons">bed</i> ${beds} বেড</span>
+                <span><i class="material-icons">bathtub</i> ${baths} বাথ</span>
+                <span><i class="material-icons">square_foot</i> ${sizeText}</span>
+            </div>
         </div>
     `;
     
-    setTimeout(() => {
-        propertyG.innerHTML = `
-             <h3 style="width: 100%; text-align: center; margin: 20px 0;">
-                ${category === 'map' ? 'এখানে ম্যাপ ভিউ প্রদর্শিত হবে' : `${category} ক্যাটাগরির প্রপার্টি`} 
-             </h3>
-             <div style="width: 100%; text-align: center; padding: 10px; color: #6c757d;">
-                (যদি ডেটা না থাকে, তবে এখানে কোনো কার্ড দেখাবে না)
-             </div>
-        `;
-    }, 500);
-}
-
-// --- ২. নোটিফিকেশন লজিক ---
-
-function loadNotifications(userId) {
-    if (unsubscribeNotifications) {
-        unsubscribeNotifications(); // আগের লিসেনার বন্ধ করা
-    }
+    // কার্ডে ক্লিক করলে সিঙ্গেল প্রপার্টি ভিউতে নেভিগেশন
+    card.addEventListener('click', () => {
+         window.location.href = `property-view.html?id=${id}`;
+    });
     
-    // শেষ ৫টি নোটিফিকেশন রিয়েল-টাইমে লোড করা
-    unsubscribeNotifications = db.collection("notifications")
-        .where("userId", "==", userId)
-        .orderBy("timestamp", "desc")
-        .limit(5) 
-        .onSnapshot(snapshot => {
-            let unreadCount = 0;
-            notificationDropdown.innerHTML = ''; // ড্রপডাউন খালি করা
-            
-            if (snapshot.empty) {
-                notificationDropdown.innerHTML = '<div class="notification-item">কোনো নতুন নোটিফিকেশন নেই।</div>';
-            } else {
-                snapshot.forEach(doc => {
-                    const notification = doc.data();
-                    const notifId = doc.id;
-                    
-                    if (!notification.read) {
-                        unreadCount++;
-                    }
-                    
-                    // নোটিফিকেশন আইটেম তৈরি
-                    const item = document.createElement('a');
-                    item.href = notification.link || '#';
-                    item.className = `notification-item ${notification.read ? '' : 'unread'}`;
-                    item.dataset.notifId = notifId;
-
-                    const timeAgo = notification.timestamp ? 
-                        notification.timestamp.toDate().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }) : '';
-                        
-                    item.innerHTML = `
-                        <div class="notif-text">${notification.message}</div>
-                        <div class="notif-time">${timeAgo}</div>
-                    `;
-                    
-                    // ক্লিক করলে 'read' হিসেবে মার্ক করা
-                    item.addEventListener('click', () => markNotificationAsRead(notifId));
-
-                    notificationDropdown.appendChild(item);
-                });
-            }
-            
-            // অপঠিত সংখ্যা আপডেট করা
-            if (unreadCount > 0) {
-                notificationCount.textContent = unreadCount;
-                notificationCount.style.display = 'block';
-            } else {
-                notificationCount.style.display = 'none';
-            }
-        }, error => {
-            console.error("নোটিফিকেশন লোড করতে ব্যর্থ:", error);
-        });
+    return card;
 }
 
-// নোটিফিকেশন 'read' হিসেবে চিহ্নিত করার ফাংশন
-function markNotificationAsRead(notifId) {
-    const userId = auth.currentUser ? auth.currentUser.uid : null;
-    if (userId && notifId) {
-        db.collection("notifications").doc(notifId).update({ read: true })
-            .catch(error => {
-                console.error("নোটিফিকেশন রিড করতে ব্যর্থ:", error);
-            });
-        // UI আপডেট loadNotifications দ্বারা রিয়েল-টাইমে হবে।
+function toggleMapAndGrid(showMap) {
+    if (showMap) {
+        propertyGridContainer.style.display = 'none';
+        mapSection.style.display = 'block';
+        // এখানে আপনার ম্যাপ ইনিশিয়ালাইজেশন লজিক থাকবে (যদি থাকে)
+        // console.log("Map view activated");
+    } else {
+        propertyGridContainer.style.display = 'block';
+        mapSection.style.display = 'none';
+        // console.log("Grid view activated");
     }
 }
 
-// --- ৩. UI লজিক ---
 
+// --- ২. ইভেন্ট লিসেনার সেটআপ করা ---
 function setupUIEventListeners() {
     
-    // হেডার নেভিগেশন (বিক্রয়/ভাড়া/ম্যাপ)
-    navButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const category = button.dataset.category;
-            
-            navButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            
-            fetchAndDisplayProperties(category, globalSearchInput.value);
-        });
-    });
-    
-    // ✅ নোটিফিকেশন বাটন ক্লিক লজিক
-    if (notificationButton) {
-        notificationButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // document ক্লিক ইভেন্ট বন্ধ করা
-            if (auth.currentUser) {
-                notificationDropdown.classList.toggle('active');
-            } else {
-                 alert("নোটিফিকেশন দেখতে আপনাকে লগইন করতে হবে।");
-            }
-        });
-    }
-    
-    // অন্য কোথাও ক্লিক করলে ড্রপডাউন বন্ধ করা
-    document.addEventListener('click', (e) => {
-        if (notificationDropdown && notificationDropdown.classList.contains('active') && !e.target.closest('#notificationButton')) {
-            notificationDropdown.classList.remove('active');
-        }
-    });
-
-
-    // অন্যান্য ইভেন্ট লিসেনার...
+    // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
     if (menuButton) {
         menuButton.addEventListener('click', () => {
             sidebar.classList.toggle('active');
@@ -167,42 +134,73 @@ function setupUIEventListeners() {
             overlay.classList.remove('active');
         });
     }
-
+    
+    // প্রোফাইল বাটনে ক্লিক করলে
     if (profileButton) {
         profileButton.addEventListener('click', () => {
             window.location.href = 'profile.html';
         });
     }
-    
+
+    // ✅ নোটিফিকেশন বাটনে ক্লিক করলে (notifications.html এ নেভিগেট করা)
+    if (notificationButton) {
+        notificationButton.addEventListener('click', () => {
+            window.location.href = 'notifications.html'; 
+        });
+    }
+
+    // ✅ ম্যাসেজ বাটনে ক্লিক করলে
     if (messageButton) {
         messageButton.addEventListener('click', () => {
-            if (auth.currentUser) {
-                window.location.href = 'messages.html'; 
+            window.location.href = 'messages.html'; 
+        });
+    }
+
+
+    // নেভিগেশন/ফিল্টার বাটন লজিক
+    navButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            const category = button.getAttribute('data-category');
+            
+            if (category === 'map') {
+                toggleMapAndGrid(true);
             } else {
-                alert("মেসেজ দেখার জন্য আপনাকে লগইন করতে হবে।");
-                window.location.href = 'auth.html';
+                toggleMapAndGrid(false);
+                fetchAndDisplayProperties(category, ''); 
             }
         });
-    }
-    
-    if (globalSearchInput) {
-        globalSearchInput.addEventListener('keypress', (e) => {
-             if (e.key === 'Enter') {
-                 const activeCategory = document.querySelector('.nav-button.active').dataset.category;
-                 fetchAndDisplayProperties(activeCategory, globalSearchInput.value);
-             }
-        });
-    }
+    });
+
+    // গ্লোবাল সার্চ লজিক
+    globalSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const searchTerm = globalSearchInput.value.trim();
+            const activeCategory = document.querySelector('.nav-filters .nav-button.active');
+            let category = 'বিক্রয়'; // Default to sell
+
+            if (activeCategory) {
+                category = activeCategory.getAttribute('data-category');
+                if (category === 'map') {
+                    // ম্যাপ ভিউ থাকলে গ্রিড ভিউতে ফিরিয়ে আনা
+                    toggleMapAndGrid(false);
+                    // ডিফল্ট ক্যাটাগরি সেট করা
+                    document.getElementById('sellButton').classList.add('active');
+                    category = 'বিক্রয়';
+                }
+            }
+            fetchAndDisplayProperties(category, searchTerm);
+        }
+    });
 }
 
-// --- ৪. লগআউট হ্যান্ডেলার ---
+// --- ৩. লগআউট হ্যান্ডেলার ---
 const handleLogout = async () => {
     try {
         await auth.signOut();
         alert('সফলভাবে লগআউট করা হয়েছে!');
-        if (unsubscribeNotifications) {
-            unsubscribeNotifications(); // লিসেনার বন্ধ করা
-        }
         window.location.reload();
     } catch (error) {
         console.error("লগআউট ব্যর্থ হয়েছে:", error);
@@ -211,7 +209,10 @@ const handleLogout = async () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    // সকল ইভেন্ট লিসেনার সেটআপ করা হলো
     setupUIEventListeners();
+    
+    // প্রাথমিক লোড: ডিফল্টভাবে 'বিক্রয়' ক্যাটাগরি দেখাবে
     fetchAndDisplayProperties('বিক্রয়', ''); 
     
     // Auth State Change Handler 
@@ -221,18 +222,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // লগইন থাকলে
             if (postLink) postLink.style.display = 'flex'; 
             if (profileButton) profileButton.style.display = 'inline-block';
-            
-            // ✅ নোটিফিকেশন বাটন দেখানো এবং লোড করা
-            if (notificationButton) notificationButton.style.display = 'inline-flex';
-            loadNotifications(user.uid);
-            
-            if (messageButton) messageButton.style.display = 'inline-flex'; 
-            if (messagesLinkSidebar) messagesLinkSidebar.style.display = 'flex';
-            
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
                 loginLinkSidebar.href = '#';
                 
+                // লগআউট লিসেনার সেট করা
                 loginLinkSidebar.removeEventListener('click', handleLogout);
                 loginLinkSidebar.addEventListener('click', handleLogout);
             }
@@ -240,16 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // লগইন না থাকলে
             if (postLink) postLink.style.display = 'none';
             if (profileButton) profileButton.style.display = 'none';
-            
-            // ✅ নোটিফিকেশন বাটন লুকিয়ে রাখা
-            if (notificationButton) notificationButton.style.display = 'none'; 
-            if (notificationCount) notificationCount.style.display = 'none'; 
-            if (notificationDropdown) notificationDropdown.classList.remove('active');
-            if (unsubscribeNotifications) unsubscribeNotifications();
-
-            if (messageButton) messageButton.style.display = 'none'; 
-            if (messagesLinkSidebar) messagesLinkSidebar.style.display = 'none';
-            
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগইন';
                 loginLinkSidebar.href = 'auth.html';
