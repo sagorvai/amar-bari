@@ -56,7 +56,6 @@
         .header-top {
             display: flex;
             align-items: center;
-            /* বামের লোগো এবং ডানের আইকনগুলিকে দুটি ব্লকে ভাগ করা */
             justify-content: space-between; 
             padding: 8px 15px; 
         }
@@ -74,12 +73,17 @@
         .logo-title {
             display: flex;
             align-items: center;
-            font-size: 1.5em; 
+            /* ✅ ফিক্স: লোগো সাইজ বাড়ানো হলো */
+            font-size: 1.8em; 
             font-weight: bold;
             color: var(--primary-color);
             margin-left: 10px; 
             margin-right: 0; 
             flex-grow: 0; 
+            text-decoration: none; /* আন্ডারলাইন থাকলে সরিয়ে দেওয়া */
+        }
+        .logo-title:visited {
+             color: var(--primary-color);
         }
         .logo-icon {
             margin-right: 5px;
@@ -88,7 +92,7 @@
         .header-actions {
              display: flex;
              align-items: center;
-             gap: 12px; /* ✅ আইকনগুলির মধ্যে দূরত্ব সামান্য বাড়ানো হলো */
+             gap: 12px; 
              /* ✅ ফিক্স: ড্রপডাউন সঠিক স্থানে দেখানোর জন্য এটি আবশ্যক */
              position: relative; 
              flex-shrink: 0; 
@@ -110,8 +114,8 @@
         }
         .notification-count {
             position: absolute;
-            top: -5px; /* ✅ কাউন্টার অবস্থান ঠিক করা হলো */
-            right: -8px; /* ✅ কাউন্টার অবস্থান ঠিক করা হলো */
+            top: -5px; 
+            right: -8px; 
             background-color: red;
             color: white;
             border-radius: 50%;
@@ -137,12 +141,39 @@
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            /* z-index ঠিক আছে, এটি ক্লিক ইভেন্ট ব্লক করবে না */
             z-index: 1010; 
         }
         .notification-dropdown.active {
             display: block;
         }
+        .notification-item {
+            display: block;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+            text-decoration: none;
+            line-height: 1.4;
+        }
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        .notification-item.unread {
+            background-color: #e9f5ff; /* অপঠিত নোটিফিকেশনের জন্য হালকা নীল ব্যাকগ্রাউন্ড */
+            font-weight: bold;
+        }
+        .notif-text {
+            font-size: 0.9em;
+        }
+        .notif-time {
+            font-size: 0.7em;
+            color: #6c757d;
+            margin-top: 3px;
+            text-align: right;
+        }
+
 
         /* Messenger-এর মতো গোল আইকন ফিক্স */
         .message-icon {
@@ -170,17 +201,17 @@
             .main-content {
                  padding-top: 140px; 
             }
+            /* ✅ ফিক্স: ছোট স্ক্রিনে লোগো সাইজ সামঞ্জস্য করা */
             .logo-title {
-                 font-size: 1.3em; 
+                 font-size: 1.5em; 
             }
             .header-actions {
-                 gap: 8px; /* ছোট স্ক্রিনে গ্যাপ কমানো হলো */
+                 gap: 8px; 
             }
             .notification-dropdown {
                 width: 90vw; 
-                /* ✅ ফিক্স: ছোট স্ক্রিনে ডানপ্রান্ত থেকে সামান্য দূরত্ব রাখা হলো */
                 right: -10px; 
-                max-width: 300px; /* অতিরিক্ত বড় হওয়া রোধ করা হলো */
+                max-width: 300px; 
             }
         }
         
