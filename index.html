@@ -29,42 +29,61 @@
     </script>
     
     <style>
-        /* CSS ফিক্স: হেডারের বিকৃতি ও অতিরিক্ত ফাঁকা স্থান অপসারণ */
-        .main-header {
-             position: sticky;
-             top: 0;
-             z-index: 50; 
+        /* গ্লোবাল ফিক্স: ব্রাউজারের ডিফল্ট মার্জিন অপসারণ */
+        body {
+            margin: 0; /* এটাই প্রধানত হেডারের উপরে ফাঁকা স্থান তৈরি করে */
+            padding: 0;
+            /* আপনার style.css এ যদি ফন্ট ফ্যামিলি না থাকে, তবে এখানে যোগ করুন */
+            font-family: Arial, sans-serif; 
         }
+
+        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
+        .main-header {
+             position: fixed; /* ফিক্সড করে সবার উপরে রাখা হলো */
+             top: 0;
+             left: 0;
+             right: 0;
+             background-color: white; /* নিশ্চিত করা হলো যে হেডার সাদা ব্যাকগ্রাউন্ড নেবে */
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* স্ক্রল করার সময় দেখতে ভালো লাগবে */
+             z-index: 1000; /* নিশ্চিত করা হলো যে এটি অন্য সবকিছুর উপরে থাকবে */
+        }
+        
+        /* --- মেন কনটেন্ট ফিক্স: হেডার যেন কনটেন্ট লুকিয়ে না ফেলে --- */
+        .main-content {
+             /* হেডারের উচ্চতা প্রায় 150px (বাটন + সার্চ + ফিল্টার) ধরে নিয়ে padding-top যোগ করা হলো */
+             padding-top: 150px; 
+             /* আপনার style.css এ যদি .container এর মধ্যে padding না থাকে, তবে সেটি যোগ করুন */
+        }
+        /* যদি আপনার style.css এ .main-content এ ইতিমধ্যে প্যাডিং থাকে, তবে এই মানটি সামঞ্জস্য করতে হবে */
+        
+        
+        /* --- অন্যান্য স্টাইল ফিক্স (আগেরবার ঠিক করা হয়েছিল) --- */
         .header-top {
             display: flex;
             align-items: center;
             justify-content: space-between; 
-            padding: 10px 15px; /* স্ক্রিনশট অনুযায়ী প্যাডিং কমানো বা ঠিক করা হলো */
+            padding: 10px 15px; 
         }
         .menu-icon {
-             /* মেনু আইকন বামে থাকবে এবং কোনো অতিরিক্ত মার্জিন নেবে না */
              margin-right: 0; 
         }
         .logo-title {
-            /* লোগো টেক্সট ফিক্সড করা */
             display: flex;
             align-items: center;
-            font-size: 1.5em; /* স্ক্রিনশট অনুযায়ী ফন্ট সাইজ সামান্য কমানো */
+            font-size: 1.5em; 
             font-weight: bold;
             color: var(--primary-color);
-            margin-left: 10px; /* মেনু আইকন থেকে সামঞ্জস্যপূর্ণ দূরত্ব */
+            margin-left: 10px; 
             flex-grow: 1; 
-            /* অপ্রয়োজনীয় স্পেস এড়াতে এখানে max-width বা অতিরিক্ত মার্জিন নেই */
         }
         .logo-icon {
             margin-right: 5px;
         }
 
         .header-actions {
-             /* ম্যাসেজ ও প্রোফাইল আইকনের জন্য একটি ফ্লেক্স কন্টেইনার */
              display: flex;
              align-items: center;
-             gap: 10px; /* আইকনগুলির মধ্যে দূরত্ব */
+             gap: 10px; 
              margin-left: auto;
         }
         
@@ -73,31 +92,28 @@
             cursor: pointer;
             color: white; 
             background-color: #007bff; 
-            font-size: 18px; /* আইকনের সাইজ সামান্য ছোট */
+            font-size: 18px; 
             padding: 5px; 
             border-radius: 50%; 
-            width: 30px; /* ফিক্সড প্রস্থ সামান্য বাড়ানো */
-            height: 30px; /* ফিক্সড উচ্চতা সামান্য বাড়ানো */
-            display: flex;
+            width: 30px; 
+            height: 30px; 
+            display: inline-flex; /* বাটন ডিসপ্লে স্টাইল ঠিক করা হলো */
             align-items: center;
             justify-content: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-            margin-right: 0; /* গ্যাপ নিয়ন্ত্রণ করছে header-actions */
+            margin-right: 0; 
         }
         .profile-icon {
-            font-size: 30px; /* প্রোফাইল আইকন সামান্য বড় */
+            font-size: 30px; 
             color: var(--primary-color);
             cursor: pointer;
         }
         
-        /* ফিল্টার বাটন ফিক্স (ম্যাপে ফিক্সড না হওয়ার জন্য) */
-        .nav-filters {
-            position: relative; 
-            z-index: 10;
-        }
-        /* সার্চ বার এর জন্য প্যাডিং ঠিক করা */
         .search-bar {
             padding: 0 15px 10px;
+        }
+        .nav-filters {
+            padding: 5px 15px 10px; /* ফিল্টার বাটনের নিচের স্পেস ঠিক করা */
         }
         
     </style>
@@ -173,4 +189,4 @@
     
     <script src="index.js"></script> 
 </body>
-                                                                   </html>
+                </html>
