@@ -28,214 +28,46 @@
       }
     </script>
     
-    <style>
-        /* CSS ভেরিয়েবল (style.css এ না থাকলে এখানে রাখা হলো) */
-        :root {
-            --primary-color: #007bff; /* লোগো ও অন্যান্য প্রধান রঙের জন্য */
-        }
-
-        /* গ্লোবাল ফিক্স */
-        body {
-            margin: 0; 
-            padding: 0;
-            font-family: Arial, sans-serif; 
-        }
-
-        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
-        .main-header {
-             position: fixed; 
-             top: 0;
-             left: 0;
-             right: 0;
-             background-color: white; 
-             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-             z-index: 1000; 
-        }
-        
-        /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
-        .sidebar {
-            z-index: 1050; 
-        }
-        .overlay {
-            z-index: 1040; 
-        }
-        
-        /* এই padding-top টি এখন শুধু .nav-filters এর উচ্চতার জন্য, main-content এ ব্যবহৃত হবে না */
-        .main-content {
-             /* ✅ পরিবর্তন: padding-top কমানো হলো, কারণ .nav-filters এখন বাইরে আছে */
-             /* পুরোনো মান: padding-top: 150px; এখন style.css দ্বারা নিয়ন্ত্রিত হবে */
-             /* এটি style.css ফাইলে সরানো হয়েছে */
-        }
-        
-        .header-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between; 
-            padding: 8px 15px; 
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            flex-shrink: 0; 
-        }
-
-        .menu-icon {
-             margin-right: 0; 
-             cursor: pointer;
-        }
-        
-        .logo-title {
-            display: flex;
-            align-items: center;
-            font-size: 1.8em; 
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-left: 0px; 
-            text-decoration: none; 
-            white-space: nowrap; 
-        }
-        .logo-title:visited {
-             color: var(--primary-color);
-        }
-        .logo-icon {
-            margin-right: 5px;
-        }
-
-        /* ডানের ব্লক (আইকন) ফিক্স */
-        .header-actions {
-             display: flex;
-             align-items: center;
-             gap: 12px; 
-             position: relative; 
-             flex-shrink: 0; 
-        }
-        
-        /* ✅ কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
-        .icon-wrapper {
-             position: relative;
-             display: inline-flex;
-             cursor: pointer;
-             align-items: center; 
-             justify-content: center;
-             height: 30px; 
-             width: 30px; 
-        }
-        
-        /* ✅ কমন নোটিফিকেশন কাউন্ট স্টাইল */
-        .notification-count {
-            position: absolute;
-            top: -5px; 
-            right: -8px; 
-            background-color: red;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 5px; 
-            font-size: 0.7em;
-            font-weight: bold;
-            min-width: 10px;
-            text-align: center;
-            line-height: 1; 
-            display: none; /* ডিফল্টভাবে লুকানো */
-        }
-        
-        /* আইকন কালার */
-        .notification-icon { color: var(--primary-color); }
-        .message-icon { color: var(--primary-color); }
-        .post-icon-header { color: #28a745; }
-
-        /* প্রোফাইল ইমেজ স্টাইল */
-        .profile-image-wrapper {
-            cursor: pointer;
-            width: 35px; /* আইকন থেকে সামান্য বড় */
-            height: 35px;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 2px solid var(--primary-color); /* রঙের বর্ডার */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #profileImage {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-
-        /* সার্চ বার এবং নেভিগেশন ফিল্টারগুলির প্যাডিং ফিক্স */
-        /* .search-bar, .nav-filters { */
-        .search-bar { /* .nav-filters এখান থেকে সরানো হলো */
-            padding: 0 15px 8px; 
-        }
-
-        
-        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স (সর্বাধিক 600px) --- */
-        @media (max-width: 600px) {
-            .main-content {
-                 /* ✅ padding-top এখন style.css দ্বারা নিয়ন্ত্রিত হবে */
-            }
-            .logo-title {
-                 font-size: 1.5em; 
-                 margin-left: 0px;
-            }
-            .header-actions {
-                 gap: 8px; 
-            }
-            .profile-image-wrapper {
-                 width: 30px; 
-                 height: 30px;
-            }
-        }
-        
-    </style>
-    </head>
+</head>
 <body>
     
     <header class="main-header">
         <div class="header-top">
-            
             <div class="header-left">
                 <i class="material-icons menu-icon" id="menuButton">menu</i>
-                
                 <a href="index.html" class="logo-title">
                     <i class="material-icons logo-icon">home</i> 
                     <span>আমার বাড়ি.কম</span>
                 </a>
             </div>
-            
             <div class="header-actions">
+                <a href="post.html" class="post-button" id="headerPostButton">
+                    <i class="material-icons">add_box</i> পোস্ট করুন
+                </a>
                 
-                <div class="icon-wrapper" id="notificationButton">
-                    <i class="material-icons notification-icon">notifications</i>
-                    <span class="notification-count" id="notification-count"></span>
-                </div>
+                <a href="messages.html" id="messageButton" style="position: relative;">
+                    <i class="material-icons">message</i>
+                    <span class="count-badge" id="message-count" style="display: none;">0</span>
+                </a>
                 
-                <div class="icon-wrapper" id="headerPostButton">
-                    <i class="material-icons post-icon-header">add_circle_outline</i>
-                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
-                </div>
+                <a href="notifications.html" id="notificationButton" style="position: relative;">
+                    <i class="material-icons">notifications</i>
+                    <span class="count-badge" id="notification-count" style="display: none;">0</span>
+                </a>
                 
-                <div class="icon-wrapper" id="messageButton">
-                    <i class="material-icons message-icon">message</i>
-                    <span class="notification-count" id="message-count"></span>
-                </div>
-                
-                <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
-                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
-                
-                <div class="notification-dropdown" id="notification-dropdown">
-                    </div>
+                <a href="profile.html" class="profile-image-wrapper" id="profileImageWrapper" style="display: none;">
+                    <img src="" alt="Profile Image" class="profile-image" id="profileImage" style="display: none;">
+                    <i class="material-icons profile-icon" id="defaultProfileIcon">account_circle</i>
+                </a>
+
             </div>
         </div>
-
+        
         <div class="search-bar">
             <input type="text" id="globalSearchInput" placeholder="শহর, এলাকা বা প্রপার্টির নাম লিখে খুঁজুন...">
             <button><i class="material-icons">search</i></button>
         </div>
-        
-        </header>
+    </header>
     
     <div class="nav-filters">
         <button class="nav-button active" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
@@ -244,18 +76,19 @@
              <i class="material-icons">map</i> ম্যাপ
         </button>
     </div>
+    
     <div class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <i class="material-icons logo-icon">home</i> আমার বাড়ি.কম
+        </div>
         <nav>
-            <a href="index.html" class="sidebar-logo">
-                <i class="material-icons">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
-            
-            <a href="index.html" class="active" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
-            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            <a href="index.html"><i class="material-icons">dashboard</i> মূল পাতা</a>
+            <a href="profile.html"><i class="material-icons">account_circle</i> আমার প্রোফাইল</a>
+            <a href="myposts.html" id="myposts-link-sidebar"><i class="material-icons">list_alt</i> আমার পোস্ট</a>
             <a href="messages.html" id="messages-link-sidebar"><i class="material-icons">message</i> আমার ইনবক্স</a>
             
             <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">policy</i> প্রাইভেসি পলিসি</a> 
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
             <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
             
@@ -284,10 +117,12 @@
 
     <footer class="footer">
         <div class="container">
+            <a href="privacy.html" style="color: #bdc3c7; margin-right: 15px;">প্রাইভেসি পলিসি</a>
             <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
     
     <script src="index.js"></script> 
-</body>
-                    </html>
+    
+    </body>
+                        </html>
