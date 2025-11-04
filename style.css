@@ -8,8 +8,9 @@ body {
     padding: 0;
     background-color: #f4f7f6; /* হালকা ধূসর ব্যাকগ্রাউন্ড */
     color: #333;
-    /* ফিক্সড হেডারের জন্য কন্টেন্টকে নিচে নামানো */
-    padding-top: 100px; 
+    /* ✅ সংশোধিত: ফিক্সড হেডারের জন্য কন্টেন্টকে নিচে নামানো */
+    /* (header-top: 60px + search-bar: ~40px + nav-filters: ~40px) = ~140px, তাই 145px দেওয়া হলো */
+    padding-top: 145px; 
 }
 
 a {
@@ -44,23 +45,17 @@ a {
 
 .header-top {
     display: flex; 
-    /* ✅ প্রধান পরিবর্তন: space-between ব্যবহার করা হলো */
+    /* প্রধান পরিবর্তন: space-between ব্যবহার করা হলো */
     justify-content: space-between; 
     align-items: center; 
     height: 60px; /* হেডারের উচ্চতা নির্দিষ্ট করা হলো */
     padding: 0 15px;
     box-sizing: border-box;
+    /* ✅ যোগ: লোগোকে absolution পজিশন দেওয়ার জন্য এটিকে relative করা হলো */
+    position: relative; 
 }
 
-/* header-left কন্টেইনার যোগ করা হলো */
-.header-left {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    flex-grow: 0; /* অতিরিক্ত জায়গা দখল আটকানো হলো */
-}
-
-/* লোগো টাইটেল - বামে থাকবে */
+/* লোগো টাইটেল - মাঝখানে থাকবে */
 .logo-title {
     display: flex;
     align-items: center;
@@ -70,10 +65,11 @@ a {
     white-space: nowrap; 
     flex-grow: 0;
     flex-shrink: 0;
-    margin-left: 0px; /* ✅ সংশোধিত: বাম মার্জিন পুরোপুরি সরানো হলো */
-    /* position: absolute;  <-- REMOVED */
-    /* left: 50%;           <-- REMOVED */
-    /* transform: translateX(-50%); <-- REMOVED */
+    /* ✅ লোগো মাঝখানে আনার জন্য এই কোডগুলি রাখা হলো */
+    position: absolute; 
+    left: 50%;
+    transform: translateX(-50%);
+    margin-left: 0; /* নিশ্চিত করা হলো */
 }
 
 .logo-icon {
@@ -99,11 +95,6 @@ a {
     transition: color 0.2s;
 }
 
-/* ✅ নতুন যোগ: মেনু আইকন এবং লোগোর মধ্যে সামান্য দূরত্ব তৈরি করা */
-.menu-icon {
-    margin-right: 10px;
-}
-
 .menu-icon:hover,
 .profile-icon:hover {
     color: #2ecc71;
@@ -126,8 +117,8 @@ a {
     padding: 8px 10px;
     border: 1px solid #ccc;
     border-radius: 5px 0 0 5px;
-    box-sizing: border-box; /* ✅ যোগ: প্যাডিং মাপের মধ্যে থাকবে */
     font-size: 14px;
+    box-sizing: border-box; /* ✅ যোগ করা হলো */
 }
 
 .search-bar button {
@@ -146,13 +137,13 @@ a {
 
 /* নেভিগেশন ফিল্টার */
 .nav-filters {
-    /* ✅ সংশোধিত: স্টিকি করার জন্য CSS */
+    /* ✅ সংশোধিত: Sticky Header এর জন্য এই অংশটি */
     position: sticky;
-    top: 60px; /* হেডারের উচ্চতা 60px এর ঠিক নিচে থাকবে */
-    z-index: 99; /* হেডারের চেয়ে সামান্য কম z-index */
-    background-color: #fff; /* ফিক্সড হলে ব্যাকগ্রাউন্ড যেন সাদা থাকে */
+    /* top: header-top (60px) + search-bar (35-40px) = 100px. একটু বাড়িয়ে 105px দিলাম */
+    top: 105px; 
+    z-index: 99; /* হেডারের নিচে কিন্তু কন্টেন্টের উপরে থাকবে */
+    background-color: #fff; /* স্কল করার সময় সাদা ব্যাকগ্রাউন্ড নিশ্চিত করা */
 
-    /* ... আগের স্টাইল ... */
     display: flex;
     justify-content: center;
     padding: 10px 15px;
@@ -574,8 +565,8 @@ h2 {
         flex-wrap: wrap;
         /* নেভ-ফিল্টারের প্যাডিং কমানো হলো */
         padding: 5px 8px; 
-        /* ছোট স্ক্রিনে top ভ্যালু পরিবর্তন করুন */
-        top: 50px; /* header-top height 50px */
+        /* ✅ সংশোধিত: ছোট স্ক্রিনে top ভ্যালু পরিবর্তন করুন (হেডার: 50px + সার্চ: 40px = 90px. একটু বাড়িয়ে 95px দিলাম) */
+        top: 95px; 
     }
     
     .nav-filters .nav-button {
@@ -590,11 +581,11 @@ h2 {
         padding: 0 8px; 
     }
 
-    /* ✅ ছোট স্ক্রিনে লোগোকে বাম দিকে আনা হলো */
+    /* ✅ ছোট স্ক্রিনে লোগো ঠিক মাঝখানে রাখা */
     .logo-title {
-        /* position: absolute;  <-- REMOVED */
-        /* left: 50%;           <-- REMOVED */
-        /* transform: translateX(-50%); <-- REMOVED */
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
         font-size: 18px;
     }
     
@@ -610,7 +601,7 @@ h2 {
     
     /* ফিক্সড হেডারের জন্য কন্টেন্টকে নিচে নামানো */
     body {
-        /* 50px (header-top) + 38px (search-bar) + 38px (nav-filters) ~ 130px ঠিক আছে */
-        padding-top: 130px; 
+        /* (header-top: 50px + search-bar: ~40px + nav-filters: ~40px) = ~130px, তাই 135px দিলাম */
+        padding-top: 135px; 
     }
    }
