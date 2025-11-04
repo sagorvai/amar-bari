@@ -63,10 +63,10 @@ a {
     /* flex-grow/shrink শূন্য রাখা হলো যাতে এটি কনটেন্ট অনুযায়ী জায়গা নেয় */
     flex-grow: 0;
     flex-shrink: 0;
-    /* মেনু ও প্রোফাইল আইকনের মাঝে এটি মাঝখানে থাকবে */
-    position: absolute; 
-    left: 50%;
-    transform: translateX(-50%);
+    /* ✅ সংশোধিত: লোগো বাম দিকে আনার জন্য absolute positioning সরানো হলো */
+    /* position: absolute; */ 
+    /* left: 50%; */
+    /* transform: translateX(-50%); */
 }
 
 .logo-icon {
@@ -90,6 +90,11 @@ a {
     font-size: 28px; /* আইকনের আকার */
     color: #333;
     transition: color 0.2s;
+}
+
+/* ✅ নতুন যোগ: মেনু আইকন এবং লোগোর মধ্যে সামান্য দূরত্ব তৈরি করা */
+.menu-icon {
+    margin-right: 10px;
 }
 
 .menu-icon:hover,
@@ -568,11 +573,11 @@ h2 {
         padding: 0 8px; 
     }
 
-    /* ✅ ছোট স্ক্রিনে লোগো ঠিক মাঝখানে রাখা */
+    /* ✅ সংশোধিত: ছোট স্ক্রিনে লোগোকে বাম দিকে আনা হলো */
     .logo-title {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
+        /* position: absolute;  <-- REMOVED */
+        /* left: 50%;           <-- REMOVED */
+        /* transform: translateX(-50%); <-- REMOVED */
         font-size: 18px;
     }
     
