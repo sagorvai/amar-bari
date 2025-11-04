@@ -52,7 +52,15 @@ a {
     box-sizing: border-box;
 }
 
-/* লোগো টাইটেল - মাঝখানে থাকবে */
+/* header-left কন্টেইনার যোগ করা হলো */
+.header-left {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    flex-grow: 0; /* অতিরিক্ত জায়গা দখল আটকানো হলো */
+}
+
+/* লোগো টাইটেল - বামে থাকবে */
 .logo-title {
     display: flex;
     align-items: center;
@@ -60,13 +68,12 @@ a {
     font-size: 20px;
     font-weight: 700;
     white-space: nowrap; 
-    /* flex-grow/shrink শূন্য রাখা হলো যাতে এটি কনটেন্ট অনুযায়ী জায়গা নেয় */
     flex-grow: 0;
     flex-shrink: 0;
-    /* ✅ সংশোধিত: লোগো বাম দিকে আনার জন্য absolute positioning সরানো হলো */
-    /* position: absolute; */ 
-    /* left: 50%; */
-    /* transform: translateX(-50%); */
+    margin-left: 0px; /* ✅ সংশোধিত: বাম মার্জিন পুরোপুরি সরানো হলো */
+    /* position: absolute;  <-- REMOVED */
+    /* left: 50%;           <-- REMOVED */
+    /* transform: translateX(-50%); <-- REMOVED */
 }
 
 .logo-icon {
@@ -119,6 +126,7 @@ a {
     padding: 8px 10px;
     border: 1px solid #ccc;
     border-radius: 5px 0 0 5px;
+    box-sizing: border-box; /* ✅ যোগ: প্যাডিং মাপের মধ্যে থাকবে */
     font-size: 14px;
 }
 
@@ -138,6 +146,13 @@ a {
 
 /* নেভিগেশন ফিল্টার */
 .nav-filters {
+    /* ✅ সংশোধিত: স্টিকি করার জন্য CSS */
+    position: sticky;
+    top: 60px; /* হেডারের উচ্চতা 60px এর ঠিক নিচে থাকবে */
+    z-index: 99; /* হেডারের চেয়ে সামান্য কম z-index */
+    background-color: #fff; /* ফিক্সড হলে ব্যাকগ্রাউন্ড যেন সাদা থাকে */
+
+    /* ... আগের স্টাইল ... */
     display: flex;
     justify-content: center;
     padding: 10px 15px;
@@ -559,6 +574,8 @@ h2 {
         flex-wrap: wrap;
         /* নেভ-ফিল্টারের প্যাডিং কমানো হলো */
         padding: 5px 8px; 
+        /* ছোট স্ক্রিনে top ভ্যালু পরিবর্তন করুন */
+        top: 50px; /* header-top height 50px */
     }
     
     .nav-filters .nav-button {
@@ -573,7 +590,7 @@ h2 {
         padding: 0 8px; 
     }
 
-    /* ✅ সংশোধিত: ছোট স্ক্রিনে লোগোকে বাম দিকে আনা হলো */
+    /* ✅ ছোট স্ক্রিনে লোগোকে বাম দিকে আনা হলো */
     .logo-title {
         /* position: absolute;  <-- REMOVED */
         /* left: 50%;           <-- REMOVED */
@@ -593,6 +610,7 @@ h2 {
     
     /* ফিক্সড হেডারের জন্য কন্টেন্টকে নিচে নামানো */
     body {
-        padding-top: 150px; /* হেডার ৩ লাইনের জন্য জায়গা রাখা হলো */
+        /* 50px (header-top) + 38px (search-bar) + 38px (nav-filters) ~ 130px ঠিক আছে */
+        padding-top: 130px; 
     }
    }
