@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- ১. অথেন্টিকেশন স্টেট এবং ইউজার প্রোফাইল লোড করা ---
     auth.onAuthStateChanged(user => {
-        // হেডার UI আপডেট করুন
         const loginLinkSidebar = document.getElementById('login-link-sidebar');
         
         if (user) {
@@ -47,12 +46,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // প্রোফাইল তথ্য লোড করার ফাংশন
     function loadUserProfile(user) {
-        // ফায়ারস্টোর থেকে প্রোফাইল তথ্য লোড করুন
         db.collection('users').doc(user.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
                 displayNameEl.textContent = data.fullName || user.email;
-                // userPhoneEl.textContent আপডেট করার জন্য HTML এ <span class="data-placeholder"> যোগ করা হয়েছে
                 const phoneSpan = userPhoneEl.querySelector('.data-placeholder');
                 if (phoneSpan) {
                      phoneSpan.textContent = data.phoneNumber || 'যোগ করা হয়নি';
@@ -67,7 +64,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (data.profilePictureUrl) {
                     userAvatar.src = data.profilePictureUrl;
-                    // ✅ index.js এর জন্য হেডার প্রোফাইল ইমেজ সেট করা
+                    
+                    // হেডার প্রোফাইল ইমেজ সেট করা
                     const headerProfileImage = document.getElementById('profileImage');
                     const defaultProfileIcon = document.getElementById('defaultProfileIcon');
                     if (headerProfileImage && defaultProfileIcon) {
@@ -105,7 +103,6 @@ document.addEventListener('DOMContentLoaded', function() {
         emptyMessage.style.display = 'none';
 
         try {
-            // 'ownerId' ফিল্ড দিয়ে প্রপার্টি ফিল্টার করা
             const snapshot = await db.collection('properties')
                 .where('userId', '==', userId) 
                 .orderBy('timestamp', 'desc')
@@ -204,7 +201,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 profilePictureUrl: profilePictureUrl
             };
 
-            // merge: true ব্যবহার করা হয়েছে যাতে শুধুমাত্র পরিবর্তিত ফিল্ডগুলো আপডেট হয়
             await db.collection('users').doc(user.uid).set(userData, { merge: true });
 
             // ৩. Firebase Auth প্রোফাইল আপডেট (যদি নাম পরিবর্তন হয়)
@@ -220,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             userAvatar.src = profilePictureUrl;
             
-            // ✅ হেডার প্রোফাইল ইমেজ আপডেট
+            // হেডার প্রোফাইল ইমেজ আপডেট
             const headerProfileImage = document.getElementById('profileImage');
             const defaultProfileIcon = document.getElementById('defaultProfileIcon');
             if (headerProfileImage && defaultProfileIcon) {
@@ -244,9 +240,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // --- ৫. প্রোফাইল বাটন কার্যকারিতা (হেডার আইকন) - পুনরায় যুক্ত করা হলো ---
+    const profileImageWrapper = document.getElementById('profileImageWrapper');
+    if (profileImageWrapper) {
+        profileImageWrapper.addEventListener('click', () => {
+             // প্রোফাইল আইকনে ক্লিক করলে প্রোফাইল পেজে আসার লজিক
+             window.location.href = 'profile.html'; 
+        });
+    }
 
-    // --- ৫. প্রোফাইল বাটন কার্যকারিতা (হেডার আইকন) - সরিয়ে দেওয়া হয়েছে
+    // --- ৬. সাইডবার কার্যকারিতা - পুনরায় যুক্ত করা হলো ---
+    const menuButton = document.getElementById('menuButton');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    
+    if (menuButton) {
+        menuButton.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+    }
 
-    // --- ৬. সাইডবার কার্যকারিতা - সরিয়ে দেওয়া হয়েছে
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
     
 });
