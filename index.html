@@ -75,10 +75,11 @@
             display: flex;
             align-items: center;
             flex-shrink: 0; 
+            flex-grow: 0; /* ✅ সংশোধিত: অতিরিক্ত জায়গা দখল প্রতিরোধ */
         }
 
         .menu-icon {
-             margin-right: 0; 
+             margin-right: 10px; /* ✅ সংশোধিত: মেনু ও লোগোর মধ্যে ফাঁকা জায়গা */
              cursor: pointer;
         }
         
@@ -88,9 +89,7 @@
             font-size: 1.8em; 
             font-weight: bold;
             color: var(--primary-color);
-            /* ✅ সংশোধিত: লোগো বামে সরানোর জন্য মার্জিন 0px করা হলো */
-            margin-left: 0px; 
-            /* ------------------------------------------------ */
+            margin-left: 0px; /* ✅ সংশোধিত: বাম মার্জিন শূন্য */
             text-decoration: none; 
             white-space: nowrap; 
         }
@@ -175,9 +174,7 @@
             }
             .logo-title {
                  font-size: 1.5em; 
-                 /* ✅ সংশোধিত: মোবাইলেও বামে সরানোর জন্য মার্জিন 0px করা হলো */
-                 margin-left: 0px;
-                 /* ---------------------------------------------------- */
+                 margin-left: 0px; /* ✅ সংশোধিত: মোবাইলেও মার্জিন শূন্য */
             }
             .header-actions {
                  gap: 8px; 
@@ -289,4 +286,4 @@
     
     <script src="index.js"></script> 
 </body>
-                        </html>
+                    </html>
