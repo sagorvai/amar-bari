@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>আমার বাড়ি.কম</title>
-    
     <link rel="stylesheet" href="style.css">
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
@@ -29,6 +28,168 @@
       }
     </script>
     
+    <style>
+        /* CSS ভেরিয়েবল (style.css এ না থাকলে এখানে রাখা হলো) */
+        :root {
+            --primary-color: #007bff; /* লোগো ও অন্যান্য প্রধান রঙের জন্য */
+        }
+
+        /* গ্লোবাল ফিক্স */
+        body {
+            margin: 0; 
+            padding: 0;
+            font-family: Arial, sans-serif; 
+        }
+
+        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
+        .main-header {
+             position: fixed; 
+             top: 0;
+             left: 0;
+             right: 0;
+             background-color: white; 
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             z-index: 1000; 
+        }
+        
+        /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
+        .sidebar {
+            z-index: 1050; 
+        }
+        .overlay {
+            z-index: 1040; 
+        }
+        
+        .main-content {
+             padding-top: 150px; 
+        }
+        
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; 
+            padding: 8px 15px; 
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0; 
+        }
+
+        .menu-icon {
+             margin-right: 0; 
+             cursor: pointer;
+        }
+        
+        .logo-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.8em; 
+            font-weight: bold;
+            color: var(--primary-color);
+            /* ✅ সংশোধিত: লোগো বামে সরানোর জন্য মার্জিন 0px করা হলো */
+            margin-left: 0px; 
+            /* ------------------------------------------------ */
+            text-decoration: none; 
+            white-space: nowrap; 
+        }
+        .logo-title:visited {
+             color: var(--primary-color);
+        }
+        .logo-icon {
+            margin-right: 5px;
+        }
+
+        /* ডানের ব্লক (আইকন) ফিক্স */
+        .header-actions {
+             display: flex;
+             align-items: center;
+             gap: 12px; 
+             position: relative; 
+             flex-shrink: 0; 
+        }
+        
+        /* ✅ কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
+        .icon-wrapper {
+             position: relative;
+             display: inline-flex;
+             cursor: pointer;
+             align-items: center; 
+             justify-content: center;
+             height: 30px; 
+             width: 30px; 
+        }
+        
+        /* ✅ কমন নোটিফিকেশন কাউন্ট স্টাইল */
+        .notification-count {
+            position: absolute;
+            top: -5px; 
+            right: -8px; 
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 5px; 
+            font-size: 0.7em;
+            font-weight: bold;
+            min-width: 10px;
+            text-align: center;
+            line-height: 1; 
+            display: none; /* ডিফল্টভাবে লুকানো */
+        }
+        
+        /* আইকন কালার */
+        .notification-icon { color: var(--primary-color); }
+        .message-icon { color: var(--primary-color); }
+        .post-icon-header { color: #28a745; }
+
+        /* প্রোফাইল ইমেজ স্টাইল */
+        .profile-image-wrapper {
+            cursor: pointer;
+            width: 35px; /* আইকন থেকে সামান্য বড় */
+            height: 35px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary-color); /* রঙের বর্ডার */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #profileImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+
+        /* সার্চ বার এবং নেভিগেশন ফিল্টারগুলির প্যাডিং ফিক্স */
+        /* .search-bar, .nav-filters { /* <-- .nav-filters removed from here */
+        .search-bar {
+            padding: 0 15px 8px; 
+        }
+
+        
+        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স (সর্বাধিক 600px) --- */
+        @media (max-width: 600px) {
+            .main-content {
+                 padding-top: 140px; 
+            }
+            .logo-title {
+                 font-size: 1.5em; 
+                 /* ✅ সংশোধিত: মোবাইলেও বামে সরানোর জন্য মার্জিন 0px করা হলো */
+                 margin-left: 0px;
+                 /* ---------------------------------------------------- */
+            }
+            .header-actions {
+                 gap: 8px; 
+            }
+            .profile-image-wrapper {
+                 width: 30px; 
+                 height: 30px;
+            }
+        }
+        
+    </style>
     </head>
 <body>
     
@@ -75,14 +236,15 @@
             <button><i class="material-icons">search</i></button>
         </div>
         
-        <div class="nav-filters">
-            <button class="nav-button active" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
-            <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
-            <button class="nav-button" data-category="map" id="mapButton">
-                 <i class="material-icons">map</i> ম্যাপ
-            </button>
-        </div>
-    </header>
+        </header>
+    
+    <div class="nav-filters">
+        <button class="nav-button active" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
+        <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
+        <button class="nav-button" data-category="map" id="mapButton">
+             <i class="material-icons">map</i> ম্যাপ
+        </button>
+    </div>
     <div class="sidebar" id="sidebar">
         <nav>
             <a href="index.html" class="sidebar-logo">
@@ -96,7 +258,7 @@
             
             <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            <a href="contact.html" id="contact.html"><i class="material-icons">mail</i> যোগাযোগ</a>
             
             <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
             
@@ -129,4 +291,4 @@
     
     <script src="index.js"></script> 
 </body>
-                        </html>
+            </html>
