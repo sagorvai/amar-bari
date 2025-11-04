@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- ১. অথেন্টিকেশন স্টেট এবং ইউজার প্রোফাইল লোড করা ---
     auth.onAuthStateChanged(user => {
         // হেডার UI আপডেট করুন
-        const profileButton = document.getElementById('profileButton');
         const loginLinkSidebar = document.getElementById('login-link-sidebar');
         
         if (user) {
@@ -35,7 +34,6 @@ document.addEventListener('DOMContentLoaded', function() {
             loadUserProfile(user);
             fetchUserProperties(user.uid); 
             
-            if (profileButton) profileButton.style.display = 'inline-block';
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
                 loginLinkSidebar.href = '#';
@@ -69,6 +67,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (data.profilePictureUrl) {
                     userAvatar.src = data.profilePictureUrl;
+                    // ✅ index.js এর জন্য হেডার প্রোফাইল ইমেজ সেট করা
+                    const headerProfileImage = document.getElementById('profileImage');
+                    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+                    if (headerProfileImage && defaultProfileIcon) {
+                        headerProfileImage.src = data.profilePictureUrl;
+                        headerProfileImage.style.display = 'block';
+                        defaultProfileIcon.style.display = 'none';
+                    }
                 }
             } else {
                 displayNameEl.textContent = 'নতুন ব্যবহারকারী';
@@ -94,7 +100,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // --- ২. ব্যবহারকারীর পোস্ট লোড করা ---
-    // ... (পূর্বের কোড একই থাকবে)
     async function fetchUserProperties(userId) {
         propertiesList.innerHTML = '<p class="loading-message">পোস্ট লোড হচ্ছে...</p>';
         emptyMessage.style.display = 'none';
@@ -102,12 +107,11 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // 'ownerId' ফিল্ড দিয়ে প্রপার্টি ফিল্টার করা
             const snapshot = await db.collection('properties')
-                // প্রপার্টিতে userId ফিল্ড রাখা হয়েছিল post.js-এ
-                .where('userId', '==', userId) // পূর্বে 'ownerId' ছিল, post.js এ 'userId' ছিল। এখানে 'userId' ব্যবহার করা হলো।
+                .where('userId', '==', userId) 
                 .orderBy('timestamp', 'desc')
                 .get();
 
-            propertiesList.innerHTML = ''; // লোডিং মেসেজ সরান
+            propertiesList.innerHTML = ''; 
             
             if (snapshot.empty) {
                 emptyMessage.style.display = 'block';
@@ -135,8 +139,6 @@ document.addEventListener('DOMContentLoaded', function() {
         card.href = 'property-details.html?id=' + property.id; 
         card.classList.add('property-card');
         
-        // এখানে property.price, property.location, property.rooms, property.baths, property.size ইত্যাদি ফিল্ডগুলো post.js অনুযায়ী নাও থাকতে পারে।
-        // তাই একটি সাধারণ ডিসপ্লে ব্যবহার করা হলো।
         card.innerHTML = `
             <div class="property-image" style="background-image: url('${property.images[0] || 'https://via.placeholder.com/400x300?text=ছবি+নেই'}');"></div>
             <div class="property-info">
@@ -218,6 +220,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             userAvatar.src = profilePictureUrl;
             
+            // ✅ হেডার প্রোফাইল ইমেজ আপডেট
+            const headerProfileImage = document.getElementById('profileImage');
+            const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+            if (headerProfileImage && defaultProfileIcon) {
+                headerProfileImage.src = profilePictureUrl;
+                headerProfileImage.style.display = 'block';
+                defaultProfileIcon.style.display = 'none';
+            }
+            
             // ৫. ফর্ম লুকানো
             editProfileSection.style.display = 'none';
             editProfileShowBtn.style.display = 'inline-block';
@@ -234,32 +245,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    // --- ৫. প্রোফাইল বাটন কার্যকারিতা (হেডার আইকন) ---
-    const profileButton = document.getElementById('profileButton');
-    if (profileButton) {
-        profileButton.addEventListener('click', () => {
-            window.location.href = 'profile.html';
-        });
-    }
+    // --- ৫. প্রোফাইল বাটন কার্যকারিতা (হেডার আইকন) - সরিয়ে দেওয়া হয়েছে
 
-
-    // --- ৬. সাইডবার কার্যকারিতা ---
-    const menuButton = document.getElementById('menuButton');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-    
-    if (menuButton) {
-        menuButton.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        });
-    }
-
-    if (overlay) {
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
-    }
+    // --- ৬. সাইডবার কার্যকারিতা - সরিয়ে দেওয়া হয়েছে
     
 });
