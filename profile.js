@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- ১. অথেন্টিকেশন স্টেট এবং ইউজার প্রোফাইল লোড করা ---
     auth.onAuthStateChanged(user => {
         // হেডার UI আপডেট করুন
-        // profileButton এর বদলে profileImageWrapper ব্যবহার করা হয়েছে
         const profileImageWrapper = document.getElementById('profileImageWrapper'); 
         const loginLinkSidebar = document.getElementById('login-link-sidebar');
         
@@ -36,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loadUserProfile(user);
             fetchUserProperties(user.uid); 
             
-            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; // প্রোফাইল ইমেজ দেখান
+            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
                 loginLinkSidebar.href = '#';
@@ -70,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.profilePictureUrl) {
                     userAvatar.src = data.profilePictureUrl;
                     
-                    // ✅ হেডার প্রোফাইল ইমেজ আপডেট
+                    // হেডার প্রোফাইল ইমেজ আপডেট
                     const headerProfileImage = document.getElementById('profileImage');
                     const defaultProfileIcon = document.getElementById('defaultProfileIcon');
                     if (headerProfileImage && defaultProfileIcon) {
@@ -221,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             userAvatar.src = profilePictureUrl;
             
-            // ✅ হেডার প্রোফাইল ইমেজ আপডেট
+            // হেডার প্রোফাইল ইমেজ আপডেট
             const headerProfileImage = document.getElementById('profileImage');
             const defaultProfileIcon = document.getElementById('defaultProfileIcon');
             if (headerProfileImage && defaultProfileIcon) {
@@ -246,15 +245,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    // --- ৫. হেডার আইকন কার্যকারিতা ---
+    // --- ৫. হেডার আইকন কার্যকারিতা (ফিক্স করা হয়েছে) ---
     
     // নোটিফিকেশন আইকন
     const notificationButton = document.getElementById('notificationButton');
     if (notificationButton) {
         notificationButton.addEventListener('click', () => {
-             // টেম্পোরারি অ্যাকশন: কনসোলে লগ করুন বা নোটিফিকেশন পেজে রিডাইরেক্ট করুন
-             console.log('Notification button clicked: Redirecting to notifications page.');
-             // window.location.href = 'notifications.html';
+             // ✅ রিডাইরেক্ট সক্রিয় করা হলো
+             window.location.href = 'notifications.html'; 
         });
     }
 
@@ -270,17 +268,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageButton = document.getElementById('messageButton');
     if (messageButton) {
         messageButton.addEventListener('click', () => {
-             // টেম্পোরারি অ্যাকশন: কনসোলে লগ করুন বা ম্যাসেজ পেজে রিডাইরেক্ট করুন
-             console.log('Message button clicked: Redirecting to messages page.');
-             // window.location.href = 'messages.html';
+             // ✅ রিডাইরেক্ট সক্রিয় করা হলো
+             window.location.href = 'messages.html';
         });
     }
     
-    // প্রোফাইল ইমেজ (আগে profileButton ছিল, এখন HTML ID অনুযায়ী profileImageWrapper)
+    // প্রোফাইল ইমেজ
     const profileImageWrapper = document.getElementById('profileImageWrapper');
     if (profileImageWrapper) {
         profileImageWrapper.addEventListener('click', () => {
-             // যেহেতু এটি প্রোফাইল পেজ, তাই এটি পুনরায় লোড করবে বা ড্যাশবোর্ডে যাবে
              window.location.href = 'profile.html'; 
         });
     }
