@@ -28,148 +28,154 @@
         firebase.initializeApp(firebaseConfig);
       }
     </script>
-
+    
     <style>
-        /* ফিক্স করার জন্য যোগ করা CSS */
-        .post-form-container {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        /* CSS ভেরিয়েবল */
+        :root {
+            --primary-color: #007bff;
         }
-        .form-section {
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
+
+        /* গ্লোবাল ফিক্স */
+        body {
+            margin: 0; 
+            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
+            font-family: Arial, sans-serif; 
         }
-        .form-section h3 {
-            margin-top: 0;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #eee;
-            color: #007bff;
-        }
-        .input-group {
-            margin-bottom: 15px;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        .full-width-select, 
-        .input-group input:not([type="radio"]), 
-        .input-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
+
+        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
+        .main-header {
+             position: fixed; 
+             top: 0;
+             left: 0;
+             right: 0;
+             background-color: white; 
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             z-index: 1000; 
+             /* এই পেজে সার্চ/ফিল্টার নেই, তাই padding বটম কমানো হলো */
+             padding-bottom: 0; 
         }
         
-        /* Inline Grouping for better layout */
-        .input-inline-group {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 15px;
+        /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
+        .sidebar {
+            z-index: 1050; 
         }
-        .input-inline-group .input-group {
-            flex: 1;
-            margin-bottom: 0;
+        .overlay {
+            z-index: 1040; 
         }
         
-        /* Inline Input with Unit (e.g., land size + unit dropdown) */
-        /* Issue 3/4 Fix: Making the input field significantly larger */
-        .input-inline-unit {
+        .header-top {
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between; 
+            padding: 8px 15px; 
         }
-        .input-inline-unit label {
-            min-width: 120px;
-        }
-        .input-inline-unit input {
-            flex: 3; /* CHANGED: ইনপুট ফিল্ডটি আরও বেশি জায়গা নেবে (ইউনিটের চেয়ে ৩ গুণ বেশি) */
-            min-width: 0; 
-        }
-        .input-inline-unit .unit-select {
-            width: 80px; /* CHANGED: ইউনিট সিলেক্টরের প্রস্থ আরও কমানো হলো */
-            padding: 10px 5px; 
+
+        .header-left {
+            display: flex;
+            align-items: center;
             flex-shrink: 0; 
         }
 
-        /* Radio buttons styling */
-        .radio-group label {
-            display: inline-block;
-            margin-right: 15px;
-            font-weight: normal;
+        .menu-icon {
+             margin-right: 0; 
+             cursor: pointer;
         }
         
-        /* Smart Image Preview Area Styles */
-        .image-preview-area {
+        .logo-title {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 10px;
-            border: 1px dashed #ccc;
-            border-radius: 4px;
-            min-height: 100px;
-            margin-top: 10px;
+            align-items: center;
+            font-size: 1.8em; 
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 0px; 
+            text-decoration: none; 
+            white-space: nowrap; 
         }
-        .preview-item-container {
-            position: relative;
-            width: calc(33.33% - 10px); /* 3 in a row */
-            aspect-ratio: 1 / 1;
+        .logo-title:visited {
+             color: var(--primary-color);
+        }
+        .logo-icon {
+            margin-right: 5px;
+        }
+
+        /* ডানের ব্লক (আইকন) ফিক্স */
+        .header-actions {
+             display: flex;
+             align-items: center;
+             gap: 12px; 
+             position: relative; 
+             flex-shrink: 0; 
+        }
+        
+        /* কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
+        .icon-wrapper {
+             position: relative;
+             display: inline-flex;
+             cursor: pointer;
+             align-items: center; 
+             justify-content: center;
+             height: 30px; 
+             width: 30px; 
+        }
+        
+        /* কমন নোটিফিকেশন কাউন্ট স্টাইল */
+        .notification-count {
+            position: absolute;
+            top: -5px; 
+            right: -8px; 
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 5px; 
+            font-size: 0.7em;
+            font-weight: bold;
+            min-width: 10px;
+            text-align: center;
+            line-height: 1; 
+            display: none; 
+        }
+        
+        /* আইকন কালার */
+        .notification-icon { color: var(--primary-color); }
+        .message-icon { color: var(--primary-color); }
+        .post-icon-header { color: #28a745; }
+
+        /* প্রোফাইল ইমেজ স্টাইল */
+        .profile-image-wrapper {
+            cursor: pointer;
+            width: 35px; 
+            height: 35px;
+            border-radius: 50%;
             overflow: hidden;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            border: 2px solid var(--primary-color); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .preview-image {
+        #profileImage {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        .remove-image-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: #ff0000;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            line-height: 24px;
-            text-align: center;
-            font-size: 16px;
-            z-index: 10;
-            padding: 0;
-        }
-        .placeholder-text {
-            color: #999;
-            text-align: center;
-            width: 100%;
-            line-height: 80px; /* Center vertically in preview area */
-        }
-        .small-text {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 5px;
-        }
-
+        
+        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
         @media (max-width: 600px) {
-            .input-inline-group {
-                flex-direction: column;
-                gap: 0;
+            body {
+                padding-top: 46px; 
             }
-            .preview-item-container {
-                width: calc(50% - 5px); /* 2 in a row on mobile */
+            .logo-title {
+                 font-size: 1.5em; 
+                 margin-left: 0px;
+            }
+            .header-actions {
+                 gap: 8px; 
+            }
+            .profile-image-wrapper {
+                 width: 30px; 
+                 height: 30px;
             }
         }
-
+        
     </style>
 </head>
 <body>
@@ -177,32 +183,42 @@
     <header class="main-header">
         <div class="header-top">
             
-            <i class="material-icons menu-icon" id="menuButton">menu</i>
-            
-            <a href="index.html" class="logo-title">
-                <i class="material-icons logo-icon">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                
+                <a href="index.html" class="logo-title">
+                   <i class="material-icons logo-icon">home</i>  
+                    <span>আমার বাড়ি.কম</span>
+                </a>
+            </div>
             
             <div class="header-actions">
-                <i class="material-icons profile-icon" id="profileButton">person</i>
+                
+                <div class="icon-wrapper" id="notificationButton"> 
+                    <i class="material-icons notification-icon">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
+                </div>
+                
+                <div class="icon-wrapper" id="headerPostButton">
+                    <i class="material-icons post-icon-header">add_circle_outline</i>
+                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
+                </div>
+                
+                <div class="icon-wrapper" id="messageButton">
+                    <i class="material-icons message-icon">message</i>
+                    <span class="notification-count" id="message-count"></span>
+                </div>
+                
+                <div class="profile-image-wrapper" id="profileImageWrapper">
+                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
+                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
+                
+                <div class="notification-dropdown" id="notification-dropdown">
+                    </div>
             </div>
         </div>
-
-        <div class="search-bar">
-            <input type="text" id="globalSearchInput" placeholder="শহর, এলাকা বা প্রপার্টির নাম লিখে খুঁজুন..." disabled>
-            <button disabled><i class="material-icons">search</i></button>
-        </div>
-        
-        <div class="nav-filters">
-            <button class="nav-button" data-category="map" id="mapButton" disabled>
-                <i class="material-icons">map</i> ম্যাপ
-            </button>
-            <button class="nav-button" data-category="বিক্রয়" id="sellButton" disabled>বিক্রয়</button>
-            <button class="nav-button" data-category="ভাড়া" id="rentButton" disabled>ভাড়া</button>
-        </div>
     </header>
-
+    
     <div class="sidebar" id="sidebar">
         <nav>
             <a href="index.html" class="sidebar-logo">
@@ -211,9 +227,10 @@
             </a>
             
             <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
-            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu" class="active"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
             
             <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
             <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
             
@@ -225,41 +242,14 @@
     <div class="overlay" id="overlay"></div>
 
     <main class="main-content container">
-        <div class="post-form-container">
-            <h2>🏠 নতুন প্রপার্টি যোগ করুন</h2>
-            <p id="auth-warning-message" style="color: red; display: none; margin-bottom: 15px;">অনুগ্রহ করে প্রপার্টি যোগ করার জন্য লগইন করুন।</p>
-            <form id="property-form" style="display: none;">
-                
-                <div class="form-section lister-type-section">
-                    <h3>পোস্টকারী ধরন</h3>
-                    <div class="input-group">
-                        <label for="lister-type">আপনি কে:</label>
-                        <select id="lister-type" required class="full-width-select">
-                            <option value="">-- নির্বাচন করুন --</option>
-                            <option value="মালিক">মালিক (Owner)</option>
-                            <option value="এজেন্সী">এজেন্সী (Agency)</option>
-                            <option value="ডেভেলপার">ডেভেলপার (Developer)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-section primary-selection-section">
-                    <h3>পোস্টের ক্যাটাগরি</h3>
-                    <div class="input-group">
-                        <label for="post-category">ধরন:</label>
-                        <select id="post-category" required class="full-width-select">
-                            <option value="">-- নির্বাচন করুন --</option>
-                            <option value="বিক্রয়">বিক্রয়</option>
-                            <option value="ভাড়া">ভাড়া</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="dynamic-fields-container">
-                    <p class="placeholder-text">ক্যাটাগরি নির্বাচন করার পরে এখানে ফর্মের বাকি অংশ আসবে।</p>
-                </div>
-                
-                <button type="submit" class="submit-button">পোস্ট করুন</button>
-            </form>
+        <div id="auth-warning-message" class="warning-message" style="display: none; margin-top: 20px;">
+            <h3>⚠️ আপনাকে অবশ্যই লগইন করতে হবে</h3>
+            <p>প্রপার্টি যোগ করার জন্য অনুগ্রহ করে <a href="auth.html" class="inline-link">লগইন বা রেজিস্টার</a> করুন।</p>
+        </div>
+        
+        <div id="property-form-display">
+            <form id="property-form">
+                </form>
         </div>
     </main>
 
@@ -269,37 +259,6 @@
         </div>
     </footer>
     
-    <script src="post.js"></script> 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuButton = document.getElementById('menuButton');
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            const profileButton = document.getElementById('profileButton');
-
-            // প্রোফাইল বাটন ক্লিক লজিক (শুধুমাত্র 'profile.html' এ যাবে)
-            if (profileButton) {
-                profileButton.addEventListener('click', () => {
-                    window.location.href = 'profile.html';
-                });
-            }
-            
-            // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
-            if (menuButton) {
-                menuButton.addEventListener('click', () => {
-                    sidebar.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                });
-            }
-
-            // ওভারলেতে ক্লিক করলে সাইড মেনু বন্ধ হবে
-            if (overlay) {
-                overlay.addEventListener('click', () => {
-                    sidebar.classList.remove('active');
-                    overlay.classList.remove('active');
-                });
-            }
-        });
-    </script>
-</body>
+    <script src="post (5).js"></script> 
+    </body>
     </html>
