@@ -51,8 +51,7 @@
              background-color: white; 
              box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
              z-index: 1000; 
-             /* এই পেজে সার্চ/ফিল্টার নেই, তাই padding বটম কমানো হলো */
-             padding-bottom: 0; 
+             padding-bottom: 0;
         }
         
         /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
@@ -249,7 +248,67 @@
         
         <div id="property-form-display">
             <form id="property-form">
-                </form>
+                <h2 style="margin-top: 0;">আপনার প্রপার্টির বিবরণ</h2>
+        
+                <div class="input-group">
+                    <label for="post-category">বিভাগ নির্বাচন করুন:</label>
+                    <select id="post-category" required>
+                        <option value="" disabled selected>বিভাগ বেছে নিন</option>
+                        <option value="বিক্রয়">বিক্রয় (Sell)</option>
+                        <option value="ভাড়া">ভাড়া (Rent)</option>
+                    </select>
+                </div>
+        
+                <div id="dynamic-fields-container">
+                    <p style="text-align: center; color: #777;">প্রথমে বিভাগ নির্বাচন করুন</p>
+                </div>
+        
+                <h3 style="margin-top: 30px;">যোগাযোগ ও অবস্থান</h3>
+                <div class="input-group">
+                    <label for="primary-phone">আপনার প্রাথমিক ফোন নম্বর:</label>
+                    <input type="tel" id="primary-phone" placeholder="যেমন: 01712345678" required disabled>
+                </div>
+                
+                <div class="input-group">
+                    <label for="division">বিভাগ:</label>
+                    <select id="division" required>
+                        <option value="" disabled selected>বিভাগ নির্বাচন করুন</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="district">জেলা:</label>
+                    <select id="district" required disabled>
+                        <option value="" disabled selected>জেলা নির্বাচন করুন</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="upazila">উপজেলা/থানা:</label>
+                    <select id="upazila" required disabled>
+                        <option value="" disabled selected>উপজেলা/থানা নির্বাচন করুন</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="address">বিস্তারিত ঠিকানা/এলাকা:</label>
+                    <input type="text" id="address" placeholder="যেমন: রাস্তার নাম, হাউজিং, বা এলাকার নাম" required>
+                </div>
+
+                <h3 style="margin-top: 30px;">ছবি আপলোড (সর্বোচ্চ ১০টি)</h3>
+                <div class="input-group">
+                    <input type="file" id="property-images" accept="image/*" multiple required>
+                    <div id="image-preview" class="image-preview">
+                        </div>
+                </div>
+
+                <div class="input-group checkbox-group">
+                    <input type="checkbox" id="terms-agree" required>
+                    <label for="terms-agree">আমি <a href="terms.html">শর্তাবলী</a> পড়েছি এবং সম্মত।</label>
+                </div>
+
+                <button type="submit">এগিয়ে যান</button>
+            </form>
         </div>
     </main>
 
@@ -260,5 +319,5 @@
     </footer>
     
     <script src="post (5).js"></script> 
-    </body>
+</body>
     </html>
