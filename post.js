@@ -1072,15 +1072,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginLinkSidebar = document.getElementById('login-link-sidebar');
 
 
-    // --- অথেন্টিকেশন স্টেট চেঞ্জ লজিক (হেডার/সাইডবার UI আপডেট) ---
-    // ধরে নেওয়া হচ্ছে auth ভ্যারিয়েবল গ্লোবালি সংজ্ঞায়িত আছে।
-    if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                // লগইন অবস্থায়: প্রোফাইল ইমেজ লোড এবং সঠিক সাইডবার লিঙ্ক দেখানো
-                loadHeaderProfile(user); 
-                if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
-
                 
 
     // --- সাইডবার কার্যকারিতা ---
