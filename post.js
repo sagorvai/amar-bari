@@ -1151,3 +1151,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// --- সাইডবার কার্যকারিতা ---
+    const menuButton = document.getElementById('menuButton');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    
+    if (menuButton) {
+        menuButton.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+    }
+
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+    
+});
