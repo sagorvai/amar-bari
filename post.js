@@ -13,17 +13,17 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
 
 // Utility Function: Base64 Data URL to Blob (for preview display)
 const dataURLtoBlob = (dataurl) => {
-    const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+    const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],\
         bstr = atob(arr[1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
-    while(n--){
-        u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new Blob([u8arr], {type:mime});
+    while(n--){\
+        u8arr[n] = bstr.charCodeAt(n);\
+    }\
+    return new Blob([u8arr], {type:mime});\
 }
 
-// --- নতুন ফাংশন: হেডার প্রোফাইল লোড করার জন্য ---
+// --- ✅ নতুন ফাংশন: হেডার প্রোফাইল লোড করার জন্য ---
 function loadHeaderProfile(user) {
     const headerProfileImage = document.getElementById('profileImage');
     const defaultProfileIcon = document.getElementById('defaultProfileIcon');
@@ -42,7 +42,7 @@ function loadHeaderProfile(user) {
     });
 }
 
-// --- নতুন ফাংশন: লগআউট হ্যান্ডেলার ---
+// --- ✅ নতুন ফাংশন: লগআউট হ্যান্ডেলার ---
 const handleLogout = async (e) => {
     e.preventDefault();
     try {
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const primaryPhoneInput = document.getElementById('primary-phone');
     
-    // হেডার/সাইডবারের উপাদান
+    // ✅ হেডার/সাইডবারের উপাদান (নতুন)
     const menuButton = document.getElementById('menuButton');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (propertyFormDisplay) propertyFormDisplay.style.display = 'block';
             if (authWarningMessage) authWarningMessage.style.display = 'none';
             
-            // সাইডবার আপডেট
+            // ✅ সাইডবার আপডেট
             if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (propertyFormDisplay) propertyFormDisplay.style.display = 'none';
             if (authWarningMessage) authWarningMessage.style.display = 'block';
             
-            // সাইডবার আপডেট
+            // ✅ সাইডবার আপডেট
             if (postLinkSidebar) postLinkSidebar.style.display = 'none';
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগইন';
