@@ -1081,31 +1081,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadHeaderProfile(user); 
                 if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
 
-                // সাইডবার লিঙ্ক আপডেট
-                if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
-                if (loginLinkSidebar) {
-                    loginLinkSidebar.textContent = 'লগআউট';
-                    loginLinkSidebar.href = '#'; 
-                    loginLinkSidebar.onclick = handleLogout; 
-                }
-            } else {
-                // লগআউট অবস্থায়: ডিফল্ট আইকন দেখানো এবং সাইডবার লিঙ্ক আপডেট
-                if (headerProfileImage && defaultProfileIcon) {
-                    headerProfileImage.style.display = 'none';
-                    defaultProfileIcon.style.display = 'block';
-                }
-                if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
                 
-                // সাইডবার লিঙ্ক আপডেট
-                if (postLinkSidebar) postLinkSidebar.style.display = 'none';
-                if (loginLinkSidebar) {
-                    loginLinkSidebar.textContent = 'লগইন';
-                    loginLinkSidebar.href = 'auth.html';
-                    loginLinkSidebar.onclick = null;
-                }
-            }
-        });
-    }
 
     // --- সাইডবার কার্যকারিতা ---
     const menuButton = document.getElementById('menuButton');
