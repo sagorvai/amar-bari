@@ -1126,8 +1126,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-});
-
 
     // --- হেডার আইকন কার্যকারিতা ---
     
