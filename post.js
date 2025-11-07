@@ -1149,8 +1149,7 @@ document.addEventListener('DOMContentLoaded', function() {
         profileImageWrapper.addEventListener('click', () => {
              window.location.href = 'profile.html'; 
         });
-    }
-});
+    }              
 
 // --- সাইডবার কার্যকারিতা ---
     const menuButton = document.getElementById('menuButton');
