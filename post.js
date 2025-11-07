@@ -1108,20 +1108,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- হেডার আইকন কার্যকারিতা ---
-    
-    // মেনু বাটন এবং সাইডবার টগল
-    if (menuButton) {
-        menuButton.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        });
-    }
-    if (overlay) {
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
-    }
 
     // নোটিফিকেশন আইকন রিডাইরেক্ট
     if (notificationButton) {
