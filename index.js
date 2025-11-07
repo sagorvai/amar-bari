@@ -208,20 +208,16 @@ function updateIconCounts() {
 }
 
 
-// --- ৪. প্রোফাইল ছবি লোড করা ---
-async function loadProfilePicture(user) {
-    if (user.photoURL) {
-        profileImage.src = user.photoURL;
-        profileImage.style.display = 'block';
-        defaultProfileIcon.style.display = 'none';
-    } else {
-        profileImage.style.display = 'none';
-        defaultProfileIcon.style.display = 'block';
+// প্রোফাইল ইমেজ রিডাইরেক্ট
+    if (profileImageWrapper) {
+        profileImageWrapper.addEventListener('click', () => {
+             window.location.href = 'profile.html'; 
+        });
     }
-}
+});
 
 
-// --- ৫. লগআউট হ্যান্ডেলার ---
+// --- ৪. লগআউট হ্যান্ডেলার ---
 const handleLogout = async () => {
     try {
         await auth.signOut();
