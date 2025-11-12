@@ -54,40 +54,75 @@
              padding-bottom: 0;
         }
         
-        /* --- [ফিক্স: সাইডবার পজিশনিং এবং ট্রানজিশন] --- */
+        /* --- [START] সাইডবার ফিক্স: সম্পূর্ণ কার্যকারিতা, নতুন রঙ সহ --- */
         .sidebar {
             position: fixed; /* ফিক্সড পজিশন সেট করা হলো */
             top: 0;
-            left: -250px; /* ডিফল্টভাবে স্ক্রিনের বাইরে লুকিয়ে রাখা হলো (আপনার সাইডবারের প্রস্থ অনুযায়ী) */
-            width: 250px; /* আপনার সাইডবারের প্রস্থ */
+            left: -250px; /* ডিফল্টভাবে স্ক্রিনের বাইরে লুকিয়ে রাখা হলো */
+            width: 250px; /* সাইডবারের প্রস্থ */
             height: 100%;
-            background-color: #f8f9fa; /* আপনার সাইডবারের ব্যাকগ্রাউন্ড */
-            transition: left 0.3s ease; /* মসৃণ স্লাইড হওয়ার জন্য ট্রানজিশন যোগ করা হলো */
-            box-shadow: 2px 0 5px rgba(0,0,0,0.5); /* ছায়া যোগ করা হলো */
-            z-index: 1050; /* হেডার (1000) এবং ওভারলে (1040) এর উপরে */
+            
+            /* ⭐ ব্যাকগ্রাউন্ড কালার ফিক্সড: গাঢ় নীল/ধূসর (#34495e) ⭐ */
+            background-color: #34495e; 
+            
+            transition: left 0.3s ease; /* মসৃণ স্লাইড ট্রানজিশন */
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
+            z-index: 1050; 
             overflow-y: auto;
+            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
         }
         
         .sidebar.active {
-            left: 0; /* যখন 'active' ক্লাস যুক্ত হবে, তখন সাইডবার দৃশ্যমান হবে */
+            left: 0; 
         }
         
         .overlay {
-            position: fixed; /* ফিক্সড পজিশনে পুরো স্ক্রিন জুড়ে থাকবে */
+            position: fixed; 
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5); /* ডিম ব্যাকগ্রাউন্ডের জন্য */
-            z-index: 1040; /* সাইডবার (1050) এর নিচে */
-            display: none; /* ডিফল্টভাবে লুকানো থাকবে */
+            background: rgba(0, 0, 0, 0.5); 
+            z-index: 1040; 
+            display: none; 
         }
         
         .overlay.active {
-            display: block; /* যখন 'active' ক্লাস যুক্ত হবে, তখন ওভারলে দৃশ্যমান হবে */
+            display: block; 
         }
-        /* --- [ফিক্স শেষ] --- */
         
+        /* ⭐ সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা (#ffffff) ⭐ */
+        .sidebar a {
+            color: #ffffff; 
+            padding: 12px 15px; /* লিঙ্কগুলোর padding */
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .sidebar a i.material-icons {
+            color: #ffffff; /* আইকনগুলোর রঙ সাদা */
+            margin-right: 10px;
+        }
+
+        .sidebar a:hover {
+            background-color: #3e5369; /* হোভার ইফেক্টের জন্য একটু হালকা রঙ */
+        }
+        
+        /* সাইডবারের লোগো লিঙ্ক (প্রথম লিঙ্ক) */
+        .sidebar-logo {
+            padding: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white !important; /* নিশ্চিত সাদা */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+        }
+        
+        /* --- [END] সাইডবার ফিক্স: সম্পূর্ণ কার্যকারিতা, নতুন রঙ সহ --- */
+
+
         .header-top {
             display: flex;
             align-items: center;
@@ -264,11 +299,7 @@
             
         </nav>
     </div>
-    
     <div class="overlay" id="overlay"></div>
-    
-    <div class="nav-filters">
-        </div>
 
     <main class="main-content container policy-content">
         <h1>প্রাইভেসি পলিসি</h1>
@@ -308,7 +339,7 @@
         <ul>
             <li>আমাদের কাছে থাকা আপনার ব্যক্তিগত তথ্যের কপি অনুরোধ করার অধিকার।</li>
             <li>অসম্পূর্ণ বা ভুল তথ্য সংশোধন করার অধিকার।</li>
-            <li>কিছু পরিস্থিতিতে আপনার তথ্য মুছে ফেলার অনুরোধ করার অধিকার।</li>
+            <li>কিছু পরিস্থিতিতে আপনার তথ্য মুছে ফেলার অনুরোধ করার অধিকার।
         </ul>
         
         <h2>৬. পলিসি পরিবর্তন</h2>
@@ -466,4 +497,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
     </script>
 </body>
-    </html>
+                    </html>
