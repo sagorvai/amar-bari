@@ -84,15 +84,15 @@ function updateIconCounts() {
     // এই ফাংশন ফায়ারবেস থেকে নোটিফিকেশন/মেসেজ কাউন্ট লোড করবে
     // এখন এটি শুধু ডামি ডেটা দেখাচ্ছে
     if (notificationCount) {
-        notificationCount.textContent = 5;
+        notificationCount.textContent = 0;
         notificationCount.style.display = 'block';
     }
     if (messageCount) {
-        messageCount.textContent = 3;
+        messageCount.textContent = 0;
         messageCount.style.display = 'block';
     }
     if (postCount) {
-        postCount.textContent = 1;
+        postCount.textContent = 0;
         postCount.style.display = 'block';
     }
 }
