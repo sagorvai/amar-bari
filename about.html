@@ -27,6 +27,9 @@
       if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
       }
+      
+      const auth = firebase.auth();
+      const db = firebase.firestore();
     </script>
     
     <style>
@@ -54,14 +57,70 @@
              padding-bottom: 0;
         }
         
-        /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
+        /* --- [ফিক্স: সাইডবার পজিশনিং এবং ট্রানজিশন] --- */
         .sidebar {
+            position: fixed; 
+            top: 0;
+            left: -250px; 
+            width: 250px; 
+            height: 100%;
+            background-color: #34495e; /* আপনার পছন্দ করা গাঢ় নীল/ধূসর রঙ */
+            transition: left 0.3s ease; 
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
             z-index: 1050; 
-        }
-        .overlay {
-            z-index: 1040; 
+            overflow-y: auto;
+            padding-top: 50px; /* হেডার এর নিচে থেকে শুরু হবে */
         }
         
+        .sidebar.active {
+            left: 0; 
+        }
+        
+        .overlay {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); 
+            z-index: 1040; 
+            display: none; 
+        }
+        
+        .overlay.active {
+            display: block; 
+        }
+        
+        /* সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা */
+        .sidebar a {
+            color: #ffffff; 
+            padding: 12px 15px; 
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .sidebar a i.material-icons {
+            color: #ffffff; 
+            margin-right: 10px;
+        }
+
+        .sidebar a:hover {
+            background-color: #3e5369; 
+        }
+        
+        /* সাইডবারের লোগো লিঙ্ক (প্রথম লিঙ্ক) */
+        .sidebar-logo {
+            padding: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white !important; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+        }
+        /* --- [ফিক্স শেষ] --- */
+
         .header-top {
             display: flex;
             align-items: center;
@@ -139,7 +198,7 @@
         .message-icon { color: var(--primary-color); }
         .post-icon-header { color: #28a745; }
 
-        /* প্রোফাইল ইমেজ স্টাইল */
+        /* প্রোফাইল ইমেজ স্টাইল (ছবি লোড না হলেও ডিফল্ট আইকন দেখা যাবে) */
         .profile-image-wrapper {
             cursor: pointer;
             width: 35px; 
@@ -155,6 +214,14 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            /* ⭐ ফিক্স: ডিফল্টভাবে ছবি লুকানো থাকবে, জাভাস্ক্রিপ্ট লোড হলে দেখাবে ⭐ */
+            display: none; 
+        }
+        #defaultProfileIcon {
+            /* ⭐ ফিক্স: ছবি লোড না হলে আইকন দেখাবে ⭐ */
+            display: block; 
+            font-size: 24px;
+            color: var(--primary-color);
         }
         
         /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
@@ -209,8 +276,9 @@
                 </div>
                 
                 <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
-                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
+                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile">
+                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> 
+                </div>
                 
                 <div class="notification-dropdown" id="notification-dropdown">
                     </div>
@@ -238,85 +306,77 @@
             
         </nav>
     </div>
-
+    
     <div class="overlay" id="overlay"></div>
 
-    <main class="main-content container">
-
-        <section id="about-section">
-            <h2>আমরা কারা?</h2>
-            <p>আমার বাড়ি.কম হলো এমন একটি প্ল্যাটফর্ম যা ক্রেতা ও বিক্রেতাদের মধ্যে সহজে সংযোগ স্থাপন করে। আমাদের লক্ষ্য, বাংলাদেশে প্রপার্টি লেনদেন প্রক্রিয়াকে স্বচ্ছ, নিরাপদ এবং সহজ করা।</p>
-            <h3>আমাদের প্রতিশ্রুতি</h3>
+    <main class="main-content container about-us-content">
+        <h1>আমাদের সম্পর্কে</h1>
+        
+        <section class="mission">
+            <h2>আমাদের লক্ষ্য</h2>
+            <p>আমাদের বাড়ি.কম একটি প্ল্যাটফর্ম যা বাড়ি কেনা, বেচা এবং ভাড়া নেওয়ার প্রক্রিয়াকে সহজ ও বিশ্বাসযোগ্য করে তোলে। আমরা ক্রেতা, বিক্রেতা এবং ভাড়াটিয়াদের জন্য একটি উন্মুক্ত এবং স্বচ্ছ পরিবেশ তৈরি করতে প্রতিশ্রুতিবদ্ধ।</p>
+        </section>
+        
+        <section class="team">
+            <h2>আমাদের দল</h2>
+            <p>আমরা একদল প্রযুক্তি-প্রেমী এবং রিয়েল এস্টেট বিশেষজ্ঞদের সমন্বয়ে গঠিত, যারা বাংলাদেশে প্রযুক্তি ব্যবহার করে হাউজিং সেক্টরে পরিবর্তন আনতে বদ্ধপরিকর।</p>
+        </section>
+        
+        <section class="values">
+            <h2>আমাদের মূল্যবোধ</h2>
             <ul>
-                <li>স্বচ্ছ তথ্য সরবরাহ</li>
-                <li>নিরাপদ লেনদেনের পরিবেশ</li>
-                <li>২৪/৭ গ্রাহক সহায়তা</li>
+                <li>স্বচ্ছতা: প্রতিটি লেনদেনে সর্বোচ্চ স্বচ্ছতা বজায় রাখা।</li>
+                <li>বিশ্বাসযোগ্যতা: ব্যবহারকারীদের মধ্যে আস্থা তৈরি করা।</li>
+                <li>উদ্ভাবন: প্রক্রিয়া সহজ করার জন্য প্রযুক্তির ব্যবহার।</li>
             </ul>
         </section>
-
     </main>
-
-    <footer class="footer">
+<footer class="footer">
         <div class="container">
             <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
     
-    <script src="auth.js"></script> 
+    <script src="notifications.js"></script> 
+    
     <script>
-        // এই পেজে শুধুমাত্র সাইডবার কার্যকারিতা
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuButton = document.getElementById('menuButton');
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            
-            if (menuButton) {
-                menuButton.addEventListener('click', () => {
-                    sidebar.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                });
-            }
+  // header_logic.js
 
-            if (overlay) {
-                overlay.addEventListener('click', () => {
-                    sidebar.classList.remove('active');
-                    overlay.classList.remove('active');
-                });
-            }
-        });
-        
-        // header_logic.js
-
-// Firebase SDKs (আপনার মূল HTML ফাইলে লোড করা থাকতে হবে)
-// const db = firebase.firestore(); 
-// const auth = firebase.auth();
-// ধরে নেওয়া হচ্ছে db এবং auth ভ্যারিয়েবলগুলো বিশ্বব্যাপী (globally) সংজ্ঞায়িত আছে।
-
-// --- ফাংশন ১: হেডার প্রোফাইল লোড করার জন্য ---
+// ⭐ ফাংশন ১: হেডার প্রোফাইল লোড করার জন্য ⭐
 function loadHeaderProfile(user) {
     const headerProfileImage = document.getElementById('profileImage');
     const defaultProfileIcon = document.getElementById('defaultProfileIcon');
 
-    // db এর গ্লোবাল অ্যাক্সেস ধরে নেওয়া হয়েছে
-    db.collection('users').doc(user.uid).get().then(doc => {
-        if (doc.exists) {
-            const data = doc.data();
-            if (data.profilePictureUrl && headerProfileImage && defaultProfileIcon) {
-                headerProfileImage.src = data.profilePictureUrl;
-                headerProfileImage.style.display = 'block';
-                defaultProfileIcon.style.display = 'none';
-            }
+    if (headerProfileImage && defaultProfileIcon) {
+        // ফায়ারবেস লোড হয়েছে ধরে নিয়ে ডেটা লোড করার চেষ্টা
+        if (typeof db !== 'undefined' && db.collection) {
+             db.collection('users').doc(user.uid).get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.profilePictureUrl) {
+                        headerProfileImage.src = data.profilePictureUrl;
+                        headerProfileImage.style.display = 'block';
+                        defaultProfileIcon.style.display = 'none';
+                    } else {
+                        // যদি URL না থাকে, ডিফল্ট আইকন দেখান
+                        headerProfileImage.style.display = 'none';
+                        defaultProfileIcon.style.display = 'block';
+                    }
+                }
+            }).catch(error => {
+                console.error("Header profile load failed:", error);
+                // ফেইল হলেও ডিফল্ট আইকন দেখান
+                headerProfileImage.style.display = 'none';
+                defaultProfileIcon.style.display = 'block';
+            });
         }
-    }).catch(error => {
-        console.error("Header profile load failed:", error);
-    });
+    }
 }
 
-// --- ফাংশন ২: লগআউট হ্যান্ডেলার ---
+// ফাংশন ২: লগআউট হ্যান্ডেলার
 const handleLogout = async (e) => {
     e.preventDefault();
     try {
-        // auth এর গ্লোবাল অ্যাক্সেস ধরে নেওয়া হয়েছে
         await auth.signOut(); 
         alert('সফলভাবে লগআউট করা হয়েছে!');
         window.location.href = 'index.html'; 
@@ -343,8 +403,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginLinkSidebar = document.getElementById('login-link-sidebar');
 
 
-    // --- অথেন্টিকেশন স্টেট চেঞ্জ লজিক (হেডার/সাইডবার UI আপডেট) ---
-    // ধরে নেওয়া হচ্ছে auth ভ্যারিয়েবল গ্লোবালি সংজ্ঞায়িত আছে।
+    // ⭐ অথেন্টিকেশন স্টেট চেঞ্জ লজিক (প্রোফাইল ইমেজ এবং সাইডবার লিঙ্ক ম্যানেজ করে) ⭐
     if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -378,7 +437,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- হেডার আইকন কার্যকারিতা ---
+    // ⭐ হেডার আইকন কার্যকারিতা (মেনু এবং ওভারলে ফিক্স) ⭐
     
     // মেনু বাটন এবং সাইডবার টগল
     if (menuButton) {
@@ -424,4 +483,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
     </script>
 </body>
-                                                         </html>
+    </html>
