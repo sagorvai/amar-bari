@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>নটিফিকেশনস - আমার বাড়ি.কম</title>
+    <title>প্রপার্টি প্রিভিউ - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
@@ -27,22 +27,28 @@
       if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
       }
+      // auth এবং db ভ্যারিয়েবল গ্লোবালি সংজ্ঞায়িত করা হলো
+      const auth = firebase.auth();
+      const db = firebase.firestore();
     </script>
     
     <style>
         /* CSS ভেরিয়েবল */
         :root {
             --primary-color: #007bff;
+            --accent-color: #28a745;
+            --secondary-bg: #f8f9fa;
         }
 
         /* গ্লোবাল ফিক্স */
         body {
             margin: 0; 
-            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
+            padding-top: 50px; 
             font-family: Arial, sans-serif; 
+            background-color: var(--secondary-bg);
         }
 
-        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
+        /* --- হেডার এবং সাইডবার ফিক্স --- */
         .main-header {
              position: fixed; 
              top: 0;
@@ -51,172 +57,256 @@
              background-color: white; 
              box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
              z-index: 1000; 
-             padding-bottom: 0;
-        }
-        
-        /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
-        .sidebar {
-            z-index: 1050; 
-        }
-        .overlay {
-            z-index: 1040; 
-        }
-        
-        .header-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between; 
-            padding: 8px 15px; 
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            flex-shrink: 0; 
-        }
-
-        .menu-icon {
-             margin-right: 0; 
-             cursor: pointer;
-        }
-        
-        .logo-title {
-            display: flex;
-            align-items: center;
-            font-size: 1.8em; 
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-left: 0px; 
-            text-decoration: none; 
-            white-space: nowrap; 
-        }
-        .logo-title:visited {
-             color: var(--primary-color);
-        }
-        .logo-icon {
-            margin-right: 5px;
-        }
-
-        /* ডানের ব্লক (আইকন) ফিক্স */
-        .header-actions {
+             padding: 8px 15px; 
              display: flex;
              align-items: center;
-             gap: 12px; 
-             position: relative; 
-             flex-shrink: 0; 
+             justify-content: space-between;
         }
         
-        /* কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
-        .icon-wrapper {
-             position: relative;
-             display: inline-flex;
+        .header-left {
+             display: flex;
+             align-items: center;
+        }
+        .menu-icon {
              cursor: pointer;
-             align-items: center; 
-             justify-content: center;
-             height: 30px; 
-             width: 30px; 
+             color: var(--primary-color);
+             margin-right: 15px;
+        }
+        .logo-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        .logo-title i {
+            margin-right: 5px;
         }
         
-        /* কমন নোটিফিকেশন কাউন্ট স্টাইল */
-        .notification-count {
-            position: absolute;
-            top: -5px; 
-            right: -8px; 
-            background-color: red;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 5px; 
-            font-size: 0.7em;
-            font-weight: bold;
-            min-width: 10px;
-            text-align: center;
-            line-height: 1; 
+        /* সাইডবার CSS */
+        .sidebar {
+            position: fixed; 
+            top: 0;
+            left: -250px; 
+            width: 250px; 
+            height: 100%;
+            background-color: #34495e; 
+            transition: left 0.3s ease; 
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
+            z-index: 1050; 
+            overflow-y: auto;
+            padding-top: 50px; 
+        }
+        
+        .sidebar.active {
+            left: 0; 
+        }
+        
+        .overlay {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); 
+            z-index: 1040; 
             display: none; 
         }
         
-        /* আইকন কালার */
-        .notification-icon { color: var(--primary-color); }
-        .message-icon { color: var(--primary-color); }
-        .post-icon-header { color: #28a745; }
-
-        /* প্রোফাইল ইমেজ স্টাইল */
-        .profile-image-wrapper {
-            cursor: pointer;
-            width: 35px; 
-            height: 35px;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 2px solid var(--primary-color); 
+        .overlay.active {
+            display: block; 
+        }
+        
+        .sidebar a {
+            color: #ffffff; 
+            padding: 12px 15px; 
             display: flex;
             align-items: center;
-            justify-content: center;
+            text-decoration: none;
+            font-weight: 500;
         }
-        #profileImage {
+
+        .sidebar a i.material-icons {
+            color: #ffffff; 
+            margin-right: 10px;
+        }
+
+        .sidebar a:hover {
+            background-color: #3e5369; 
+        }
+        
+        .sidebar-logo {
+            padding: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white !important; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+        }
+        
+        /* --- ⭐ প্রিভিউ কন্টেন্ট স্টাইল ফিক্স ⭐ --- */
+        .main-content {
+             max-width: 900px;
+             margin: 20px auto;
+             padding: 15px;
+             background-color: white;
+             border-radius: 8px;
+             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        
+        .preview-header {
+             border-bottom: 3px solid var(--primary-color);
+             padding-bottom: 10px;
+             margin-bottom: 20px;
+        }
+
+        .property-title {
+            color: #333;
+            margin: 0;
+        }
+        
+        /* ছবির সাইজ এবং ডিসপ্লে ফিক্স */
+        #photo-preview-container {
+             display: grid;
+             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* ছোট স্ক্রিনের জন্য ১ কলাম */
+             gap: 10px;
+             margin-bottom: 20px;
+        }
+        
+        .photo-wrapper {
+             width: 100%;
+             padding-top: 75%; /* 4:3 অ্যাসপেক্ট রেশিও */
+             position: relative;
+             overflow: hidden;
+             border-radius: 6px;
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .photo-wrapper img {
+             position: absolute;
+             top: 0;
+             left: 0;
+             width: 100%;
+             height: 100%;
+             object-fit: cover; /* ছবি যেন সম্পূর্ণভাবে ফিট হয় */
+        }
+        
+        /* তথ্য টেবিলের স্টাইল */
+        .details-table {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .details-table th, .details-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .details-table th {
+            background-color: var(--secondary-bg);
+            color: #555;
+            width: 30%; /* বাম কলাম ছোট করা */
+            font-weight: bold;
+        }
+        .details-table tr:nth-child(even) {
+             background-color: #f9f9f9;
         }
         
-        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
+        /* সুবিধার তালিকা */
+        .utilities-list {
+             display: flex;
+             flex-wrap: wrap;
+             gap: 10px;
+             list-style: none;
+             padding: 0;
+             margin-bottom: 20px;
+        }
+        .utilities-list li {
+             background-color: var(--primary-color);
+             color: white;
+             padding: 5px 10px;
+             border-radius: 20px;
+             font-size: 0.9em;
+        }
+
+        /* অ্যাকশন বাটন ফিক্স */
+        .preview-actions {
+             display: flex;
+             justify-content: space-between;
+             gap: 15px;
+             padding: 15px 0;
+             border-top: 1px solid #eee;
+        }
+        .action-button {
+             padding: 10px 20px;
+             border: none;
+             border-radius: 5px;
+             cursor: pointer;
+             font-size: 1em;
+             font-weight: bold;
+             transition: background-color 0.3s;
+             flex-grow: 1;
+        }
+        
+        #edit-button {
+             background-color: #ffc107;
+             color: #333;
+        }
+        #edit-button:hover {
+             background-color: #e0a800;
+        }
+        
+        #confirm-post-button {
+             background-color: var(--accent-color);
+             color: white;
+        }
+        #confirm-post-button:disabled {
+             background-color: #adb5bd;
+             cursor: not-allowed;
+        }
+        #confirm-post-button:not(:disabled):hover {
+             background-color: #1e7e34;
+        }
+        
+        /* মোবাইল রেসপনসিভনেস */
         @media (max-width: 600px) {
-            body {
-                padding-top: 46px; 
+            .preview-actions {
+                 flex-direction: column;
             }
-            .logo-title {
-                 font-size: 1.5em; 
-                 margin-left: 0px;
+            #photo-preview-container {
+                 grid-template-columns: 1fr 1fr; /* মোবাইল এ ২ কলাম */
             }
-            .header-actions {
-                 gap: 8px; 
+            .details-table th, .details-table td {
+                 display: block;
+                 width: 100%;
+                 text-align: right;
             }
-            .profile-image-wrapper {
-                 width: 30px; 
-                 height: 30px;
+            .details-table th {
+                 text-align: left;
+                 background-color: var(--secondary-bg);
+                 border-bottom: none;
+                 padding-bottom: 0;
             }
         }
-        
     </style>
 </head>
 <body>
 
     <header class="main-header">
-        <div class="header-top">
+        <div class="header-left">
+            <i class="material-icons menu-icon" id="menuButton">menu</i>
             
-            <div class="header-left">
-                <i class="material-icons menu-icon" id="menuButton">menu</i>
-                
-                <a href="index.html" class="logo-title">
-                   <i class="material-icons logo-icon">home</i>  
-                    <span>আমার বাড়ি.কম</span>
-                </a>
-            </div>
-            
-            <div class="header-actions">
-                
-                <div class="icon-wrapper" id="notificationButton"> 
-                    <i class="material-icons notification-icon">notifications</i>
-                    <span class="notification-count" id="notification-count"></span>
-                </div>
-                
-                <div class="icon-wrapper" id="headerPostButton">
-                    <i class="material-icons post-icon-header">add_circle_outline</i>
-                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
-                </div>
-                
-                <div class="icon-wrapper" id="messageButton">
-                    <i class="material-icons message-icon">message</i>
-                    <span class="notification-count" id="message-count"></span>
-                </div>
-                
-                <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
-                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
-                
-                <div class="notification-dropdown" id="notification-dropdown">
-                    </div>
-            </div>
+            <a href="index.html" class="logo-title">
+               <i class="material-icons logo-icon">home</i>  
+                <span>আমার বাড়ি.কম</span>
+            </a>
         </div>
         
+        <div class="header-right">
+             <div class="profile-image-wrapper" id="profileImageWrapper">
+                <i class="material-icons profile-icon" id="profileButton">person</i> 
+             </div>
+        </div>
     </header>
     
     <div class="sidebar" id="sidebar">
@@ -238,25 +328,26 @@
             
         </nav>
     </div>
-
+    
     <div class="overlay" id="overlay"></div>
+
     <main class="main-content container">
-        <div class="preview-container">
-            <h2>✨ পোস্ট প্রিভিউ ও নিশ্চিতকরণ</h2>
-            <p>আপনার দেওয়া তথ্যগুলো যাচাই করুন। যদি কোনো ভুল থাকে, তবে "এডিট করুন" বাটনে ক্লিক করে ফিরে যান।</p>
-            
-            <div id="preview-content">
-                <p class="not-found">প্রিভিউ করার মতো কোনো ডেটা পাওয়া যায়নি। অনুগ্রহ করে <a href="post.html">পোস্ট ফর্মে</a> ফিরে যান।</p>
-            </div>
-            
-            <div class="action-buttons">
-                <button id="edit-button" class="edit-button">
-                    <i class="material-icons" style="font-size: 1.2em; vertical-align: middle;">edit</i> এডিট করুন
-                </button>
-                <button id="confirm-post-button" class="confirm-button" disabled>
-                    <i class="material-icons" style="font-size: 1.2em; vertical-align: middle;">check_circle</i> নিশ্চিত করে পোস্ট করুন
-                </button>
-            </div>
+        <div class="preview-header">
+            <h1 class="property-title">প্রপার্টি প্রিভিউ</h1>
+            <p>পোস্ট করার আগে আপনার দেওয়া তথ্যগুলো যাচাই করে নিন।</p>
+        </div>
+        
+        <div id="preview-content">
+            <p style="text-align: center; color: #555;">ডেটা লোড হচ্ছে...</p>
+        </div>
+        
+        <div class="preview-actions">
+            <button id="edit-button" class="action-button">
+                 <i class="material-icons" style="font-size: 1.2em; vertical-align: middle;">edit</i> এডিট করুন
+            </button>
+            <button id="confirm-post-button" class="action-button" disabled>
+                <i class="material-icons" style="font-size: 1.2em; vertical-align: middle;">check_circle</i> নিশ্চিত করে পোস্ট করুন
+            </button>
         </div>
     </main>
 
@@ -272,9 +363,10 @@
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
             const profileButton = document.getElementById('profileButton');
+            const profileImageWrapper = document.getElementById('profileImageWrapper'); // এইটা যোগ করা হলো
 
-            if (profileButton) {
-                profileButton.addEventListener('click', () => {
+            if (profileImageWrapper) {
+                profileImageWrapper.addEventListener('click', () => {
                     window.location.href = 'profile.html';
                 });
             }
