@@ -1,0 +1,434 @@
+// Firebase SDKs
+const db = firebase.firestore();
+const storage = firebase.storage();
+const auth = firebase.auth();
+
+document.addEventListener('DOMContentLoaded', function() {
+    const previewContent = document.getElementById('preview-content');
+    const editButton = document.getElementById('edit-button');
+    const confirmButton = document.getElementById('confirm-post-button');
+    const loginLinkSidebar = document.getElementById('login-link-sidebar');
+    const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
+
+    // Utility Function: Base64 to Blob (for final Firebase upload)
+    const dataURLtoBlob = (dataurl) => {
+        const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+            bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while(n--){
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], {type:mime});
+    }
+    
+    // Function to safely check and format data for display
+    const checkAndFormat = (value, unit = '', defaultValue = 'প্রদান করা হয়নি') => {
+        if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+            return defaultValue;
+        }
+        // Array handling for utilities (just display the list)
+        if (Array.isArray(value)) {
+             return value.length > 0 ? value.join(', ') : defaultValue;
+        }
+        return `${value} ${unit}`.trim();
+    };
+
+    // Function to render the preview data
+    function renderPreview(stagedData, stagedMetadata) {
+        let html = '';
+        
+        // 1. Image Preview Section (3 Main Images in Carousel)
+        // stagedData.base64Images এ ৩টি ছবি থাকবে (যদি post.js এ limit ৩ থাকে)
+        if (stagedData.base64Images && stagedData.base64Images.length > 0) {
+            html += `
+                <div class="preview-section">
+                    <h3>🖼️ প্রপার্টির ছবি (${stagedData.base64Images.length}টি)</h3>
+                    <p>ছবিগুলো স্লাইড করে দেখুন।</p>
+                    <div id="image-carousel">
+                        ${stagedData.base64Images.map(base64 => `
+                            <div class="preview-image-wrapper">
+                                <img src="${base64}" class="preview-image" alt="Property Image">
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 2. Main Details
+        html += `
+            <div class="preview-section">
+                <h3>📜 সাধারণ তথ্য</h3>
+                <div class="preview-item"><div class="preview-label">পোস্টকারী ধরন</div><div class="preview-value">${checkAndFormat(stagedData.listerType)}</div></div>
+                <div class="preview-item"><div class="preview-label">ক্যাটাগরি</div><div class="preview-value">${checkAndFormat(stagedData.category)}</div></div>
+                <div class="preview-item"><div class="preview-label">প্রপার্টির ধরন</div><div class="preview-value">${checkAndFormat(stagedData.type)}</div></div>
+                <div class="preview-item"><div class="preview-label">শিরোনাম</div><div class="preview-value">${checkAndFormat(stagedData.title)}</div></div>
+                
+                ${stagedData.propertyAge !== undefined ? `<div class="preview-item"><div class="preview-label">প্রপার্টির বয়স</div><div class="preview-value">${checkAndFormat(stagedData.propertyAge, 'বছর')}</div></div>` : ''}
+                ${stagedData.facing ? `<div class="preview-item"><div class="preview-label">প্রপার্টির দিক</div><div class="preview-value">${checkAndFormat(stagedData.facing)}</div></div>` : ''}
+                
+                ${stagedData.utilities && stagedData.utilities.length > 0 ? `
+                    <div class="preview-item">
+                        <div class="preview-label">অন্যান্য সুবিধা</div>
+                        <div class="preview-value"><ul class="utility-list">${stagedData.utilities.map(u => `<li>${u}</li>`).join('')}</ul></div>
+                    </div>
+                ` : ''}
+                
+                ${stagedData.rooms !== undefined ? `<div class="preview-item"><div class="preview-label">রুম সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.rooms)}টি</div></div>` : ''}
+                ${stagedData.bathrooms !== undefined ? `<div class="preview-item"><div class="preview-label">বাথরুম সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.bathrooms)}টি</div></div>` : ''}
+                ${stagedData.kitchen !== undefined ? `<div class="preview-item"><div class="preview-label">কিচেন সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.kitchen)}টি</div></div>` : ''}
+                ${stagedData.floors !== undefined ? `<div class="preview-item"><div class="preview-label">তলা সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.floors)}</div></div>` : ''}
+                ${stagedData.floorNo !== undefined ? `<div class="preview-item"><div class="preview-label">ফ্লোর নং</div><div class="preview-value">${checkAndFormat(stagedData.floorNo)}</div></div>` : ''}
+                ${stagedData.roadWidth !== undefined ? `<div class="preview-item"><div class="preview-label">রাস্তার প্রস্থ</div><div class="preview-value">${checkAndFormat(stagedData.roadWidth, 'ফিট')}</div></div>` : ''}
+                ${stagedData.parking !== undefined ? `<div class="preview-item"><div class="preview-label">পার্কিং সুবিধা</div><div class="preview-value">${checkAndFormat(stagedData.parking)}</div></div>` : ''}
+                ${stagedData.landType !== undefined ? `<div class="preview-item"><div class="preview-label">জমির ধরন</div><div class="preview-value">${checkAndFormat(stagedData.landType)}</div></div>` : ''}
+                ${stagedData.plotNo !== undefined ? `<div class="preview-item"><div class="preview-label">প্লট নং</div><div class="preview-value">${checkAndFormat(stagedData.plotNo)}</div></div>` : ''}
+                ${stagedData.shopCount !== undefined ? `<div class="preview-item"><div class="preview-label">দোকান সংখ্যা</div><div class="preview-value">${checkAndFormat(stagedData.shopCount)}টি</div></div>` : ''}
+                ${stagedData.rentType !== undefined ? `<div class="preview-item"><div class="preview-label">ভাড়ার ধরন</div><div class="preview-value">${checkAndFormat(stagedData.rentType)}</div></div>` : ''}
+                ${stagedData.moveInDate !== undefined ? `<div class="preview-item"><div class="preview-label">ওঠার তারিখ</div><div class="preview-value">${checkAndFormat(stagedData.moveInDate)}</div></div>` : ''}
+            </div>
+        `;
+
+        // 3. Price/Rent Section
+        html += `
+            <div class="preview-section">
+                <h3>💰 পরিমাণ ও দাম/ভাড়া</h3>
+                
+                ${stagedData.landArea ? `<div class="preview-item"><div class="preview-label">জমির পরিমাণ</div><div class="preview-value">${stagedData.landArea} ${stagedData.landAreaUnit}</div></div>` : ''}
+                ${stagedData.houseArea ? `<div class="preview-item"><div class="preview-label">বাড়ির/জমির পরিমাণ</div><div class="preview-value">${stagedData.houseArea} ${stagedData.houseAreaUnit}</div></div>` : ''}
+                ${stagedData.areaSqft ? `<div class="preview-item"><div class="preview-label">ফ্ল্যাটের পরিমাণ</div><div class="preview-value">${stagedData.areaSqft} স্কয়ার ফিট</div></div>` : ''}
+                ${stagedData.commercialArea ? `<div class="preview-item"><div class="preview-label">বাণিজ্যিক পরিমাণ</div><div class="preview-value">${stagedData.commercialArea} ${stagedData.commercialAreaUnit}</div></div>` : ''}
+                
+                ${stagedData.price ? `<div class="preview-item"><div class="preview-label">দাম</div><div class="preview-value">${stagedData.price} টাকা (${stagedData.priceUnit})</div></div>` : ''}
+                ${stagedData.monthlyRent ? `<div class="preview-item"><div class="preview-label">মাসিক ভাড়া</div><div class="preview-value">${stagedData.monthlyRent} টাকা</div></div>` : ''}
+                ${stagedData.advance ? `<div class="preview-item"><div class="preview-label">এডভান্স/জামানত</div><div class="preview-value">${stagedData.advance} টাকা</div></div>` : ''}
+            </div>
+        `;
+        
+        // 4. Ownership Documents (1 Khotian + 1 Sketch = 2 Images)
+        if (stagedData.category === 'বিক্রয়' && stagedData.owner) {
+             html += `
+                <div class="preview-section">
+                    <h3>⚖️ মালিকানা ও ডকুমেন্ট বিবরণ</h3>
+                    <div class="preview-item"><div class="preview-label">দাতার নাম</div><div class="preview-value">${checkAndFormat(stagedData.owner.donorName)}</div></div>
+                    <div class="preview-item"><div class="preview-label">দাগ নং</div><div class="preview-value">${checkAndFormat(stagedData.owner.dagNo)} (${checkAndFormat(stagedData.owner.dagNoType)})</div></div>
+                    <div class="preview-item"><div class="preview-label">মৌজা</div><div class="preview-value">${checkAndFormat(stagedData.owner.mouja)}</div></div>
+                    
+                    ${stagedData.owner.khotianBase64 ? `
+                        <div class="preview-item">
+                            <div class="preview-label">সর্বশেষ খতিয়ান (১/৫)</div>
+                            <div class="preview-value"><img src="${stagedData.owner.khotianBase64}" class="full-width-image" alt="খতিয়ানের ছবি"></div>
+                        </div>
+                    ` : ''}
+                    ${stagedData.owner.sketchBase64 ? `
+                        <div class="preview-item">
+                            <div class="preview-label">প্রপার্টি স্কেস (১/৫)</div>
+                            <div class="preview-value"><img src="${stagedData.owner.sketchBase64}" class="full-width-image" alt="স্কেসের ছবি"></div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // 5. Address & Contact
+        html += `
+            <div class="preview-section">
+                <h3>📍 ঠিকানা ও যোগাযোগ</h3>
+                <div class="preview-item"><div class="preview-label">বিভাগ</div><div class="preview-value">${checkAndFormat(stagedData.location.division)}</div></div>
+                <div class="preview-item"><div class="preview-label">জেলা</div><div class="preview-value">${checkAndFormat(stagedData.location.district)}</div></div>
+                <div class="preview-item"><div class="preview-label">এলাকার ধরন</div><div class="preview-value">${checkAndFormat(stagedData.location.areaType)}</div></div>
+                
+                ${stagedData.location.areaType === 'উপজেলা' ? `<div class="preview-item"><div class="preview-label">উপজেলা / ইউনিয়ন</div><div class="preview-value">${checkAndFormat(stagedData.location.upazila)} / ${checkAndFormat(stagedData.location.union)}</div></div>` : ''}
+                ${stagedData.location.areaType === 'সিটি কর্পোরেশন' ? `<div class="preview-item"><div class="preview-label">সিটি কর্পোরেশন</div><div class="preview-value">${checkAndFormat(stagedData.location.cityCorporation)}</div></div>` : ''}
+                
+                <div class="preview-item"><div class="preview-label">থানা / ওয়ার্ড</div><div class="preview-value">${checkAndFormat(stagedData.location.thana)} / ${checkAndFormat(stagedData.location.wardNo)}</div></div>
+                <div class="preview-item"><div class="preview-label">গ্রাম / রোড</div><div class="preview-value">${checkAndFormat(stagedData.location.village)} / ${checkAndFormat(stagedData.location.road)}</div></div>
+                
+                <div class="preview-item"><div class="preview-label">প্রাথমিক ফোন</div><div class="preview-value">${checkAndFormat(stagedData.phoneNumber)}</div></div>
+                <div class="preview-item"><div class="preview-label">অতিরিক্ত ফোন</div><div class="preview-value">${checkAndFormat(stagedData.secondaryPhone)}</div></div>
+                <div class="preview-item"><div class="preview-label">গুগল ম্যাপ পিন</div><div class="preview-value">${checkAndFormat(stagedData.googleMap)}</div></div>
+            </div>
+        `;
+
+        // 6. Full Description
+        html += `
+            <div class="preview-section">
+                <h3>📝 সম্পূর্ণ বিস্তারিত বিবরণ</h3>
+                <p>${checkAndFormat(stagedData.description).replace(/\n/g, '<br>')}</p>
+            </div>
+        `;
+
+        previewContent.innerHTML = html;
+        confirmButton.disabled = false; // Enable final post button
+    }
+
+
+    // Function to handle the final submission to Firebase (Unchanged)
+    async function handleFinalSubmission(stagedData, stagedMetadata) {
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'পোস্ট করা হচ্ছে... অনুগ্রহ করে অপেক্ষা করুন';
+        editButton.disabled = true;
+
+        try {
+            const user = auth.currentUser;
+            if (!user) {
+                alert("আপনার সেশন মেয়াদোত্তীর্ণ হয়েছে। চূড়ান্ত পোস্টের জন্য আবার লগইন করুন।");
+                window.location.href = 'auth.html';
+                return;
+            }
+            
+            // 1. Image Upload Function
+            const uploadFile = async (base64Data, metadata, path) => {
+                const blob = dataURLtoBlob(base64Data);
+                const storageRef = storage.ref(`${path}/${Date.now()}_${metadata.name}`);
+                const snapshot = await storageRef.put(blob);
+                return await snapshot.ref.getDownloadURL();
+            };
+
+            // 2. Upload Main Images (3 photos)
+            const imageUrls = [];
+            for (let i = 0; i < stagedData.base64Images.length; i++) {
+                const downloadURL = await uploadFile(stagedData.base64Images[i], stagedMetadata.images[i], 'property_images');
+                imageUrls.push(downloadURL);
+            }
+            stagedData.images = imageUrls;
+            delete stagedData.base64Images; // Clean up data object
+
+            // 3. Upload Ownership Documents (Khotian and Sketch - 2 photos)
+            if (stagedData.category === 'বিক্রয়' && stagedData.owner) {
+                if (stagedData.owner.khotianBase64) {
+                    stagedData.owner.khotianImageUrl = await uploadFile(stagedData.owner.khotianBase64, stagedMetadata.khotian, 'ownership_docs/khotian');
+                    delete stagedData.owner.khotianBase64;
+                }
+                if (stagedData.owner.sketchBase64) {
+                    stagedData.owner.sketchImageUrl = await uploadFile(stagedData.owner.sketchBase64, stagedMetadata.sketch, 'ownership_docs/sketch');
+                    delete stagedData.owner.sketchBase64;
+                }
+            }
+            
+            // 4. Add final metadata (timestamp and status)
+            stagedData.timestamp = firebase.firestore.FieldValue.serverTimestamp();
+            stagedData.status = 'pending'; 
+
+            // 5. Save to Firestore
+            await db.collection("properties").add(stagedData);
+
+            // 6. Success and Cleanup
+            sessionStorage.removeItem('stagedPropertyData');
+            sessionStorage.removeItem('stagedImageMetadata');
+
+            alert("প্রপার্টি সফলভাবে পোস্ট করা হয়েছে! এটি এখন অনুমোদনের অপেক্ষায় আছে।");
+            window.location.href = 'index.html'; 
+
+        } catch (error) {
+            console.error("চূড়ান্ত পোস্ট ব্যর্থ হয়েছে: ", error);
+            alert("পোস্ট ব্যর্থ হয়েছে: " + error.message);
+            confirmButton.disabled = false;
+            confirmButton.textContent = 'আবার পোস্ট করার চেষ্টা করুন';
+            editButton.disabled = false;
+        }
+    }
+
+
+    // --- Main Logic on Load & Auth State ---
+    
+    // Auth state change handler for UI updates (Sidebar Link)
+    const handleLogout = async () => {
+        try {
+            await auth.signOut();
+            alert('সফলভাবে লগআউট করা হয়েছে!');
+            window.location.href = 'index.html';
+        } catch (error) {
+            console.error("লগআউট ব্যর্থ হয়েছে:", error);
+            alert("লগআউট ব্যর্থ হয়েছে।");
+        }
+    };
+    
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগআউট';
+                loginLinkSidebar.href = '#';
+                loginLinkSidebar.onclick = handleLogout;
+            }
+        } else {
+            if (postLinkSidebar) postLinkSidebar.style.display = 'none';
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগইন';
+                loginLinkSidebar.href = 'auth.html';
+                loginLinkSidebar.onclick = null;
+            }
+        }
+    });
+    
+
+    const stagedDataString = sessionStorage.getItem('stagedPropertyData');
+    const stagedMetadataString = sessionStorage.getItem('stagedImageMetadata');
+    
+    if (stagedDataString && stagedMetadataString) {
+        try {
+            const stagedData = JSON.parse(stagedDataString);
+            const stagedMetadata = JSON.parse(stagedMetadataString);
+            previewContent.innerHTML = ''; 
+            renderPreview(stagedData, stagedMetadata);
+
+            // Event Listeners for action buttons
+            editButton.addEventListener('click', () => {
+                window.location.href = 'post.html'; 
+            });
+
+            confirmButton.addEventListener('click', () => {
+                handleFinalSubmission(stagedData, stagedMetadata);
+            });
+
+        } catch (error) {
+            console.error('Error parsing staged data:', error);
+            alert('সংরক্ষিত ডেটা লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার পোস্ট করুন।');
+        }
+    } else {
+        confirmButton.disabled = true;
+        editButton.addEventListener('click', () => {
+            window.location.href = 'post.html';
+        });
+    }
+});
+
+// header_logic.js
+
+// Firebase SDKs (আপনার মূল HTML ফাইলে লোড করা থাকতে হবে)
+// const db = firebase.firestore(); 
+// const auth = firebase.auth();
+// ধরে নেওয়া হচ্ছে db এবং auth ভ্যারিয়েবলগুলো বিশ্বব্যাপী (globally) সংজ্ঞায়িত আছে।
+
+// --- ফাংশন ১: হেডার প্রোফাইল লোড করার জন্য ---
+function loadHeaderProfile(user) {
+    const headerProfileImage = document.getElementById('profileImage');
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+
+    // db এর গ্লোবাল অ্যাক্সেস ধরে নেওয়া হয়েছে
+    db.collection('users').doc(user.uid).get().then(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            if (data.profilePictureUrl && headerProfileImage && defaultProfileIcon) {
+                headerProfileImage.src = data.profilePictureUrl;
+                headerProfileImage.style.display = 'block';
+                defaultProfileIcon.style.display = 'none';
+            }
+        }
+    }).catch(error => {
+        console.error("Header profile load failed:", error);
+    });
+}
+
+// --- ফাংশন ২: লগআউট হ্যান্ডেলার ---
+const handleLogout = async (e) => {
+    e.preventDefault();
+    try {
+        // auth এর গ্লোবাল অ্যাক্সেস ধরে নেওয়া হয়েছে
+        await auth.signOut(); 
+        alert('সফলভাবে লগআউট করা হয়েছে!');
+        window.location.href = 'index.html'; 
+    } catch (error) {
+        console.error("লগআউট ব্যর্থ হয়েছে:", error);
+        alert("লগআউট ব্যর্থ হয়েছে।");
+    }
+};
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- হেডার UI উপাদানগুলো ---
+    const menuButton = document.getElementById('menuButton');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const notificationButton = document.getElementById('notificationButton');
+    const headerPostButton = document.getElementById('headerPostButton');
+    const messageButton = document.getElementById('messageButton');
+    const profileImageWrapper = document.getElementById('profileImageWrapper'); 
+    const headerProfileImage = document.getElementById('profileImage');
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+    const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
+    const loginLinkSidebar = document.getElementById('login-link-sidebar');
+
+
+    // --- অথেন্টিকেশন স্টেট চেঞ্জ লজিক (হেডার/সাইডবার UI আপডেট) ---
+    // ধরে নেওয়া হচ্ছে auth ভ্যারিয়েবল গ্লোবালি সংজ্ঞায়িত আছে।
+    if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // লগইন অবস্থায়: প্রোফাইল ইমেজ লোড এবং সঠিক সাইডবার লিঙ্ক দেখানো
+                loadHeaderProfile(user); 
+                if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+
+                // সাইডবার লিঙ্ক আপডেট
+                if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
+                if (loginLinkSidebar) {
+                    loginLinkSidebar.textContent = 'লগআউট';
+                    loginLinkSidebar.href = '#'; 
+                    loginLinkSidebar.onclick = handleLogout; 
+                }
+            } else {
+                // লগআউট অবস্থায়: ডিফল্ট আইকন দেখানো এবং সাইডবার লিঙ্ক আপডেট
+                if (headerProfileImage && defaultProfileIcon) {
+                    headerProfileImage.style.display = 'none';
+                    defaultProfileIcon.style.display = 'block';
+                }
+                if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
+                
+                // সাইডবার লিঙ্ক আপডেট
+                if (postLinkSidebar) postLinkSidebar.style.display = 'none';
+                if (loginLinkSidebar) {
+                    loginLinkSidebar.textContent = 'লগইন';
+                    loginLinkSidebar.href = 'auth.html';
+                    loginLinkSidebar.onclick = null;
+                }
+            }
+        });
+    }
+
+    // --- হেডার আইকন কার্যকারিতা ---
+    
+    // মেনু বাটন এবং সাইডবার টগল
+    if (menuButton) {
+        menuButton.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+    }
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+
+    // নোটিফিকেশন আইকন রিডাইরেক্ট
+    if (notificationButton) {
+        notificationButton.addEventListener('click', () => {
+             window.location.href = 'notifications.html'; 
+        });
+    }
+
+    // পোস্ট আইকন রিডাইরেক্ট
+    if (headerPostButton) {
+        headerPostButton.addEventListener('click', () => {
+            window.location.href = 'post.html'; 
+        });
+    }
+
+    // ম্যাসেজ আইকন রিডাইরেক্ট
+    if (messageButton) {
+        messageButton.addEventListener('click', () => {
+             window.location.href = 'messages.html';
+        });
+    }
+    
+    // প্রোফাইল ইমেজ রিডাইরেক্ট
+    if (profileImageWrapper) {
+        profileImageWrapper.addEventListener('click', () => {
+             window.location.href = 'profile.html'; 
+        });
+    }
+});
