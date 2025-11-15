@@ -27,10 +27,9 @@
       if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
       }
-      // auth এবং db ভ্যারিয়েবল গ্লোবালি সংজ্ঞায়িত করা হলো
+      // auth, db, এবং storage ভ্যারিয়েবল গ্লোবালি সংজ্ঞায়িত করা হলো
       const auth = firebase.auth();
       const db = firebase.firestore();
-      // স্টোরেজ ইনিশিয়ালাইজ করা হলো
       const storage = firebase.storage();
     </script>
     
@@ -50,7 +49,7 @@
             background-color: var(--secondary-bg);
         }
 
-        /* --- হেডার ফিক্স --- */
+        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
         .main-header {
              position: fixed; 
              top: 0;
@@ -102,7 +101,7 @@
              flex-shrink: 0; 
         }
         
-        /* কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
+        /* কমন আইকন র‍্যাপার স্টাইল */
         .icon-wrapper {
              position: relative;
              display: inline-flex;
@@ -440,4 +439,4 @@
 
     <script src="preview.js"></script> 
 </body>
-        </html>
+    </html>
