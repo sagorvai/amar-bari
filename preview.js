@@ -4,7 +4,7 @@ const storage = firebase.storage();
 const auth = firebase.auth();
 
 document.addEventListener('DOMContentLoaded', function() {
-    // --- ১. UI Elements সংগ্রহ ---
+    // --- ১. UI Elements সংগ্রহ (হেডার সহ) ---
     const previewContent = document.getElementById('preview-content');
     const editButton = document.getElementById('edit-button');
     const confirmButton = document.getElementById('confirm-post-button');
@@ -51,8 +51,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // আইকন কাউন্টার আপডেট করার ডামি ফাংশন 
     function updateIconCounts() {
+        // এই লজিকটি Firebase থেকে ডেটা লোড করতে ব্যবহৃত হবে
         if (notificationCount) {
-            notificationCount.textContent = 5;
+            // আপাতত ডামি কাউন্ট:
+            notificationCount.textContent = 5; 
             notificationCount.style.display = 'block';
         }
         if (messageCount) {
@@ -65,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Base64 to Blob (for final Firebase upload)
+    // Base64 to Blob
     const dataURLtoBlob = (dataurl) => {
         const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
             bstr = atob(arr[1]);
@@ -82,18 +84,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
             return defaultValue;
         }
-        // Array handling for utilities (list)
         if (Array.isArray(value)) {
              return value.length > 0 ? `<ul class="utilities-list">${value.map(item => `<li>${item}</li>`).join('')}</ul>` : defaultValue;
         }
-        // Price formatting
         if (unit === 'টাকা' && typeof value === 'number') {
              return value.toLocaleString('bn-BD', { style: 'currency', currency: 'BDT', minimumFractionDigits: 0 });
         }
         return `${value} ${unit}`.trim();
     }
 
-    // --- ৩. ডেটা লোড ও রেন্ডার ফাংশন (sessionStorage কী ফিক্স করা হয়েছে) ---
+    // --- ৩. ডেটা লোড ও রেন্ডার ফাংশন (প্রধান ফিক্স) ---
     
     const renderPreview = (data) => {
         // ছবি রেন্ডার
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     };
 
-    // ⭐ FIX: post.js এ ব্যবহৃত সঠিক কী (stagedPropertyData ও stagedImageMetadata) ব্যবহার করা হলো ⭐
+    // ⭐ ডেটা লোডিং লজিক: post.js এ ব্যবহৃত সঠিক কী ব্যবহার করা হলো ⭐
     const storedDataString = sessionStorage.getItem('stagedPropertyData');
     const storedMetadataString = sessionStorage.getItem('stagedImageMetadata');
     let propertyData = null;
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (storedMetadataString) {
              const imageMetadata = JSON.parse(storedMetadataString);
-             // ফটো মেটাডেটা থেকে ডেটা ইউআরএলগুলো নিয়ে photos অ্যারে তৈরি করা হলো
+             // ডেটা ইউআরএলগুলো propertyData.photos এ যুক্ত করা হলো
              propertyData.photos = imageMetadata.map(meta => meta.dataURL); 
         } else {
              propertyData.photos = []; 
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
 
-    // --- ৪. ইভেন্ট লিসেনার্স (ক্লিক ফিক্স) ---
+    // --- ৪. ইভেন্ট লিসেনার্স (হেডার ক্লিক ফিক্স নিশ্চিত করা হলো) ---
     
     // মেনু এবং সাইডবার কার্যকারিতা
     if (menuButton) {
@@ -212,6 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (messageButton) {
         messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
     }
+    // ⭐ প্রোফাইল ইমেজ র‍্যাপার রিডাইরেক্ট ⭐
     if (profileImageWrapper) {
         profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
     }
@@ -255,8 +256,8 @@ document.addEventListener('DOMContentLoaded', function() {
             await db.collection('properties').add(newProperty);
 
             // ৩. পোস্ট সফল হলে Draft মুছে দেওয়া
-            sessionStorage.removeItem('stagedPropertyData'); // ⭐ FIX: সঠিক কী মুছে ফেলা হলো
-            sessionStorage.removeItem('stagedImageMetadata'); // ⭐ FIX: সঠিক কী মুছে ফেলা হলো
+            sessionStorage.removeItem('stagedPropertyData'); 
+            sessionStorage.removeItem('stagedImageMetadata'); 
             
             alert('সফলভাবে প্রপার্টি পোস্ট করা হয়েছে! এখন এটি ওয়েবসাইটে দেখা যাবে।');
             window.location.href = 'index.html';
