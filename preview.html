@@ -30,6 +30,8 @@
       // auth এবং db ভ্যারিয়েবল গ্লোবালি সংজ্ঞায়িত করা হলো
       const auth = firebase.auth();
       const db = firebase.firestore();
+      // স্টোরেজ ইনিশিয়ালাইজ করা হলো
+      const storage = firebase.storage();
     </script>
     
     <style>
@@ -48,7 +50,7 @@
             background-color: var(--secondary-bg);
         }
 
-        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
+        /* --- হেডার ফিক্স --- */
         .main-header {
              position: fixed; 
              top: 0;
@@ -57,7 +59,6 @@
              background-color: white; 
              box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
              z-index: 1000; 
-             padding-bottom: 0;
         }
 
         .header-top {
@@ -134,7 +135,7 @@
         .message-icon { color: var(--primary-color); }
         .post-icon-header { color: var(--accent-color); }
 
-        /* ⭐ প্রোফাইল ইমেজ স্টাইল ⭐ */
+        /* প্রোফাইল ইমেজ স্টাইল */
         .profile-image-wrapper {
             cursor: pointer;
             width: 35px; 
@@ -219,7 +220,7 @@
             margin-bottom: 5px;
         }
         
-        /* --- ⭐ প্রিভিউ কন্টেন্ট স্টাইল ফিক্স (যা আগের আপডেটে ছিল) ⭐ --- */
+        /* --- প্রিভিউ কন্টেন্ট স্টাইল --- */
         .main-content {
              max-width: 900px;
              margin: 20px auto;
@@ -341,17 +342,6 @@
             body {
                 padding-top: 46px; 
             }
-            .logo-title {
-                 font-size: 1.5em; 
-                 margin-left: 0px;
-            }
-            .header-actions {
-                 gap: 8px; 
-            }
-            .profile-image-wrapper {
-                 width: 30px; 
-                 height: 30px;
-            }
             .preview-actions {
                  flex-direction: column;
             }
@@ -396,12 +386,8 @@
                     <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile">
                     <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> 
                 </div>
-                
-                <div class="notification-dropdown" id="notification-dropdown">
-                    </div>
             </div>
         </div>
-        
     </header>
     
     <div class="sidebar" id="sidebar">
@@ -454,4 +440,4 @@
 
     <script src="preview.js"></script> 
 </body>
-    </html>
+        </html>
