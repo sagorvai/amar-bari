@@ -4,12 +4,12 @@ const storage = firebase.storage();
 const auth = firebase.auth();
 
 document.addEventListener('DOMContentLoaded', function() {
-    // UI Elements for main content
+    // --- ১. UI Elements সংগ্রহ ---
     const previewContent = document.getElementById('preview-content');
     const editButton = document.getElementById('edit-button');
     const confirmButton = document.getElementById('confirm-post-button');
     
-    // UI Elements for Header and Sidebar
+    // Header & Sidebar Elements
     const menuButton = document.getElementById('menuButton');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
@@ -25,7 +25,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginLinkSidebar = document.getElementById('login-link-sidebar');
     const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
 
-    // --- ⭐ FIX 1: হেডার প্রোফাইল লোড করার ফাংশন যোগ করা হলো ⭐ ---
+    // --- ২. ইউটিলিটি ফাংশন ---
+    
+    // প্রোফাইল ছবি লোড করার ফাংশন
     async function loadHeaderProfile(user) {
         if (profileImage && defaultProfileIcon) {
             try {
@@ -43,16 +45,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 console.error("Header profile load failed:", error);
-                profileImage.style.display = 'none';
-                defaultProfileIcon.style.display = 'block';
             }
         }
     }
     
-    // --- FIX 2: আইকন কাউন্টার আপডেট করার ডামি ফাংশন যোগ করা হলো ---
+    // আইকন কাউন্টার আপডেট করার ডামি ফাংশন 
     function updateIconCounts() {
-        // ফায়ারবেস থেকে লাইভ কাউন্ট আনার লজিক এখানে যুক্ত করা যেতে পারে।
-        // আপাতত এটি শুধু ডামি ডেটা দেখাচ্ছে
         if (notificationCount) {
             notificationCount.textContent = 5;
             notificationCount.style.display = 'block';
@@ -67,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Utility Function: Base64 to Blob (for final Firebase upload)
+    // Base64 to Blob (for final Firebase upload)
     const dataURLtoBlob = (dataurl) => {
         const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
             bstr = atob(arr[1]);
@@ -79,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return new Blob([u8arr], {type:mime});
     }
     
-    // Function to safely check and format data for display
+    // ডেটা ফরম্যাট করার ফাংশন
     const checkAndFormat = (value, unit = '', defaultValue = 'প্রদান করা হয়নি') => {
         if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
             return defaultValue;
@@ -95,7 +93,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${value} ${unit}`.trim();
     }
 
-    // ⭐ FIX 3: ডেটা লোড না হওয়ার ফিক্স - renderPreview ফাংশনটি আপডেট করা হলো ⭐
+    // --- ৩. ডেটা লোড ও রেন্ডার ফাংশন (sessionStorage কী ফিক্স করা হয়েছে) ---
+    
     const renderPreview = (data) => {
         // ছবি রেন্ডার
         const photoHTML = `
@@ -150,20 +149,32 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     };
 
-    const storedData = sessionStorage.getItem('propertyDraft');
+    // ⭐ FIX: post.js এ ব্যবহৃত সঠিক কী (stagedPropertyData ও stagedImageMetadata) ব্যবহার করা হলো ⭐
+    const storedDataString = sessionStorage.getItem('stagedPropertyData');
+    const storedMetadataString = sessionStorage.getItem('stagedImageMetadata');
     let propertyData = null;
 
-    if (storedData) {
-        propertyData = JSON.parse(storedData);
+    if (storedDataString) {
+        propertyData = JSON.parse(storedDataString);
+        
+        if (storedMetadataString) {
+             const imageMetadata = JSON.parse(storedMetadataString);
+             // ফটো মেটাডেটা থেকে ডেটা ইউআরএলগুলো নিয়ে photos অ্যারে তৈরি করা হলো
+             propertyData.photos = imageMetadata.map(meta => meta.dataURL); 
+        } else {
+             propertyData.photos = []; 
+        }
+        
         renderPreview(propertyData);
         confirmButton.disabled = false;
     } else {
-        previewContent.innerHTML = '<p style="color: red; text-align: center;">কোনো প্রিভিউ ডেটা পাওয়া যায়নি। অনুগ্রহ করে পোস্ট ফর্ম পূরণ করুন।</p>';
+        previewContent.innerHTML = '<p style="color: red; text-align: center;">কোনো প্রিভিউ ডেটা পাওয়া যায়নি। অনুগ্রহ করে পোস্ট ফর্মে ফিরে যান এবং তথ্য পূরণ করুন।</p>';
         confirmButton.disabled = true;
     }
     
     // লগআউট হ্যান্ডেলার
-    const handleLogout = async () => {
+    const handleLogout = async (e) => {
+        e.preventDefault();
         try {
             await auth.signOut();
             alert('সফলভাবে লগআউট করা হয়েছে!');
@@ -175,9 +186,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
 
-    // --- ইভেন্ট লিসেনার্স ---
+    // --- ৪. ইভেন্ট লিসেনার্স (ক্লিক ফিক্স) ---
     
-    // ⭐ FIX 4: হেডার আইকন এবং মেনু কার্যকারিতা পুনরায় যোগ করা হলো ⭐
+    // মেনু এবং সাইডবার কার্যকারিতা
     if (menuButton) {
         menuButton.addEventListener('click', () => {
             sidebar.classList.toggle('active');
@@ -191,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // হেডার আইকন রিডাইরেক্ট
     if (notificationButton) {
         notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
     }
@@ -210,7 +222,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     confirmButton.addEventListener('click', async () => {
-        // ... (আগের আপলোড লজিক একই থাকবে)
         if (!propertyData || !auth.currentUser) {
             alert("পোস্ট করার আগে লগইন করুন এবং ডেটা নিশ্চিত করুন।");
             return;
@@ -244,7 +255,8 @@ document.addEventListener('DOMContentLoaded', function() {
             await db.collection('properties').add(newProperty);
 
             // ৩. পোস্ট সফল হলে Draft মুছে দেওয়া
-            sessionStorage.removeItem('propertyDraft');
+            sessionStorage.removeItem('stagedPropertyData'); // ⭐ FIX: সঠিক কী মুছে ফেলা হলো
+            sessionStorage.removeItem('stagedImageMetadata'); // ⭐ FIX: সঠিক কী মুছে ফেলা হলো
             
             alert('সফলভাবে প্রপার্টি পোস্ট করা হয়েছে! এখন এটি ওয়েবসাইটে দেখা যাবে।');
             window.location.href = 'index.html';
@@ -257,12 +269,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- অথেন্টিকেশন স্টেট চেঞ্জ লজিক ---
+    // --- ৫. অথেন্টিকেশন স্টেট চেঞ্জ লজিক ---
     auth.onAuthStateChanged(user => {
         if (user) {
             // লগইন থাকলে
-            loadHeaderProfile(user); // প্রোফাইল ছবি লোড
-            updateIconCounts(); // আইকন কাউন্ট আপডেট
+            loadHeaderProfile(user); 
+            updateIconCounts(); 
             if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
 
             if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
