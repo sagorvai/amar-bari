@@ -266,35 +266,6 @@
         </div>
     </footer>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuButton = document.getElementById('menuButton');
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            const profileButton = document.getElementById('profileButton');
-
-            if (profileButton) {
-                profileButton.addEventListener('click', () => {
-                    window.location.href = 'profile.html';
-                });
-            }
-            
-            if (menuButton) {
-                menuButton.addEventListener('click', () => {
-                    sidebar.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                });
-            }
-
-            if (overlay) {
-                overlay.addEventListener('click', () => {
-                    sidebar.classList.remove('active');
-                    overlay.classList.remove('active');
-                });
-            }
-        });
-    </script>
-    
     <script src="preview.js"></script> 
 </body>
     </html>
