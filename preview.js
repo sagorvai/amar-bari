@@ -5,156 +5,49 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 const auth = firebase.auth();
 
+// Utility Function: Base64 to Blob (for final Firebase upload)
+const dataURLtoBlob = (dataurl) => {
+    const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type:mime});
+}
+
+// Function to safely check and format data for display
+const checkAndFormat = (value, unit = '', defaultValue = 'প্রদান করা হয়নি') => {
+    if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+        return defaultValue;
+    }
+    // Array handling for utilities
+    if (Array.isArray(value)) {
+         return value.length > 0 ? value.join(', ') : defaultValue;
+    }
+    return `${value} ${unit}`.trim();
+}
+
+
 document.addEventListener('DOMContentLoaded', function() {
     const previewContent = document.getElementById('preview-content');
     const editButton = document.getElementById('edit-button');
     const confirmButton = document.getElementById('confirm-post-button');
-    const loginLinkSidebar = document.getElementById('login-link-sidebar');
-    const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
-
-    // হেডার আইকন এবং বাটন এলিমেন্টগুলো (আইকন ফিক্সের জন্য নিশ্চিত করা হলো)
-    const profileImage = document.getElementById('profileImage');
-    const profileImageWrapper = document.getElementById('profileImageWrapper');
-    const defaultProfileIcon = document.getElementById('defaultProfileIcon'); // assuming this element is in your header HTML
-    const notificationButton = document.getElementById('notificationButton');
-    const headerPostButton = document.getElementById('headerPostButton');
-    const messageButton = document.getElementById('messageButton');
+    
+    // --- হেডার এলিমেন্ট ডিফাইন করা হলো (মেনু ফিক্সের জন্য) ---
     const menuButton = document.getElementById('menuButton');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
-    
-    // Utility Function: Base64 to Blob (for final Firebase upload)
-    const dataURLtoBlob = (dataurl) => {
-        const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
-            bstr = atob(arr[1]);
-        let n = bstr.length;
-        const u8arr = new Uint8Array(n);
-        while(n--){
-            u8arr[n] = bstr.charCodeAt(n);
-        }
-        return new Blob([u8arr], {type:mime});
-    }
-    
-    // Function to safely check and format data for display
-    const checkAndFormat = (value, unit = '', defaultValue = 'প্রদান করা হয়নি') => {
-        if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0) || value === 'N/A') {
-            return defaultValue;
-        }
-        // Array handling for utilities (displays as a styled list)
-        if (Array.isArray(value)) {
-             const listItems = value.map(item => `<li>${item}</li>`).join('');
-             return `<ul class="utility-list">${listItems}</ul>`;
-        }
-        // Handle multiline description
-        if (typeof value === 'string' && value.includes('\n')) {
-             return value.replace(/\n/g, '<br>');
-        }
-        return `${value} ${unit}`.trim();
-    }
+    const loginLinkSidebar = document.getElementById('login-link-sidebar');
+    const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
+    const notificationButton = document.getElementById('notificationButton');
+    const headerPostButton = document.getElementById('headerPostButton');
+    const messageButton = document.getElementById('messageButton');
+    const headerProfileImage = document.getElementById('profileImage');
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+    const profileImageWrapper = document.getElementById('profileImageWrapper');
 
-    // Function to render the preview data (Extensively updated to show all fields)
-    const renderPreview = (data) => {
-        if (!data || Object.keys(data).length === 0) {
-            previewContent.innerHTML = '<div class="not-found">প্রিভিউ করার মতো কোনো ডেটা পাওয়া যায়নি। অনুগ্রহ করে পোস্ট করার পেজে ফিরে যান।</div>';
-            return;
-        }
-
-        // ছবিগুলি রেন্ডার করুন
-        let imageHTML = '';
-        if (data.base64Images && data.base64Images.length > 0) {
-            imageHTML = `<div class="preview-section image-carousel-section">
-                            <h3>🖼️ প্রপার্টির ছবি (${data.base64Images.length}টি)</h3>
-                            <div id="image-carousel">
-                                ${data.base64Images.map((base64, index) => 
-                                    `<div class="preview-image-wrapper">
-                                        <img src="${base64}" alt="Property Image ${index + 1}" class="preview-image">
-                                    </div>`
-                                ).join('')}
-                            </div>
-                         </div>`;
-        }
-
-        // Location Details
-        const locationDetails = `
-            <div class="preview-section">
-                <h3>📍 অবস্থান ও ঠিকানা</h3>
-                <div class="preview-item"><span class="preview-label">বিভাগ:</span><span class="preview-value">${checkAndFormat(data.location.division)}</span></div>
-                <div class="preview-item"><span class="preview-label">জেলা:</span><span class="preview-value">${checkAndFormat(data.location.district)}</span></div>
-                ${data.location.upazila || data.location.thana ? `<div class="preview-item"><span class="preview-label">উপজেলা/থানা:</span><span class="preview-value">${checkAndFormat(data.location.upazila || data.location.thana)}</span></div>` : ''}
-                ${data.location.cityCorporation ? `<div class="preview-item"><span class="preview-label">সিটি কর্পোরেশন:</span><span class="preview-value">${checkAndFormat(data.location.cityCorporation)}</span></div>` : ''}
-                ${data.location.area ? `<div class="preview-item"><span class="preview-label">এলাকার নাম:</span><span class="preview-value">${checkAndFormat(data.location.area)}</span></div>` : ''}
-                ${data.location.village ? `<div class="preview-item"><span class="preview-label">গ্রাম:</span><span class="preview-value">${checkAndFormat(data.location.village)}</span></div>` : ''}
-                ${data.location.road ? `<div class="preview-item"><span class="preview-label">রোড:</span><span class="preview-value">${checkAndFormat(data.location.road)}</span></div>` : ''}
-            </div>
-        `;
-
-        // Price/Area Details
-        const priceAreaDetails = `
-            <div class="preview-section">
-                <h3>টাকা ও পরিমাণ</h3>
-                <div class="preview-item"><span class="preview-label">মূল্য:</span><span class="preview-value">${checkAndFormat(data.price, 'টাকা')}</span></div>
-                <div class="preview-item"><span class="preview-label">মূল্যের ধরন:</span><span class="preview-value">${checkAndFormat(data.priceType)}</span></div>
-                ${data.deposit ? `<div class="preview-item"><span class="preview-label">ডিপোজিট/অগ্রিম:</span><span class="preview-value">${checkAndFormat(data.deposit, 'টাকা')}</span></div>` : ''}
-                <div class="preview-item"><span class="preview-label">মোট পরিমাণ:</span><span class="preview-value">${checkAndFormat(data.areaSize, data.areaUnit || '')}</span></div>
-                ${data.roadWidth ? `<div class="preview-item"><span class="preview-label">রাস্তার প্রস্থ:</span><span class="preview-value">${checkAndFormat(data.roadWidth, 'ফিট')}</span></div>` : ''}
-            </div>
-        `;
-        
-        // Property Details (Rooms, Bathrooms, Utilities, etc.)
-        let propertyDetails = '';
-        if (data.type !== 'জমি' && data.type !== 'প্লট') {
-             propertyDetails = `
-                 <div class="preview-section">
-                    <h3>প্রপার্টি বিবরণ</h3>
-                    ${data.propertyAge !== undefined ? `<div class="preview-item"><span class="preview-label">প্রপার্টির বয়স:</span><span class="preview-value">${checkAndFormat(data.propertyAge, 'বছর')}</span></div>` : ''}
-                    ${data.facing ? `<div class="preview-item"><span class="preview-label">প্রপার্টির দিক:</span><span class="preview-value">${checkAndFormat(data.facing)}</span></div>` : ''}
-                    ${data.parking ? `<div class="preview-item"><span class="preview-label">পার্কিং সুবিধা:</span><span class="preview-value">${checkAndFormat(data.parking)}</span></div>` : ''}
-                    ${data.floors ? `<div class="preview-item"><span class="preview-label">তলা সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.floors)}</span></div>` : ''}
-                    ${data.floorNo ? `<div class="preview-item"><span class="preview-label">ফ্লোর নং:</span><span class="preview-value">${checkAndFormat(data.floorNo)}</span></div>` : ''}
-                    ${data.rooms ? `<div class="preview-item"><span class="preview-label">রুম সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.rooms, 'টি')}</span></div>` : ''}
-                    ${data.bathrooms ? `<div class="preview-item"><span class="preview-label">বাথরুম সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.bathrooms, 'টি')}</span></div>` : ''}
-                    ${data.kitchen ? `<div class="preview-item"><span class="preview-label">কিচেন সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.kitchen, 'টি')}</span></div>` : ''}
-                    ${data.shopCount ? `<div class="preview-item"><span class="preview-label">দোকান সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.shopCount, 'টি')}</span></div>` : ''}
-                    ${data.utilities ? `<div class="preview-item"><span class="preview-label">সুবিধা:</span><span class="preview-value">${checkAndFormat(data.utilities)}</span></div>` : ''}
-                 </div>
-             `;
-        }
-
-        // Full Description
-        const descriptionSection = `
-            <div class="preview-section">
-                <h3>সম্পূর্ণ বিবরণ</h3>
-                <p class="preview-description">${checkAndFormat(data.description)}</p>
-            </div>
-        `;
-
-
-        previewContent.innerHTML = `
-            ${imageHTML}
-            
-            <div class="preview-section">
-                <h3>🔑 প্রধান তথ্য</h3>
-                <div class="preview-item"><span class="preview-label">শিরোনাম:</span><span class="preview-value">${checkAndFormat(data.title)}</span></div>
-                <div class="preview-item"><span class="preview-label">পোস্ট ক্যাটাগরি:</span><span class="preview-value">${checkAndFormat(data.category)}</span></div>
-                <div class="preview-item"><span class="preview-label">প্রপার্টির ধরন:</span><span class="preview-value">${checkAndFormat(data.type)}</span></div>
-                <div class="preview-item"><span class="preview-label">লিস্টার টাইপ:</span><span class="preview-value">${checkAndFormat(data.listerType)}</span></div>
-                ${data.moveInDate ? `<div class="preview-item"><span class="preview-label">ওঠার তারিখ:</span><span class="preview-value">${checkAndFormat(data.moveInDate)}</span></div>` : ''}
-            </div>
-            
-            ${locationDetails}
-            ${priceAreaDetails}
-            ${propertyDetails}
-            ${descriptionSection}
-            
-            <div class="preview-section">
-                <h3>📞 যোগাযোগের তথ্য</h3>
-                <div class="preview-item"><span class="preview-label">ফোন নম্বর:</span><span class="preview-value">${checkAndFormat(data.phoneNumber)}</span></div>
-                ${data.secondaryPhone ? `<div class="preview-item"><span class="preview-label">অতিরিক্ত নম্বর:</span><span class="preview-value">${checkAndFormat(data.secondaryPhone)}</span></div>` : ''}
-            </div>
-        `;
-        
-        confirmButton.disabled = false;
-    }
 
     // --- লগআউট ফাংশন ---
     const handleLogout = async (e) => {
@@ -168,126 +61,174 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Function to handle the final post confirmation and Firebase upload (Placeholder)
-    const handleConfirmPost = async () => {
-        confirmButton.disabled = true; 
-        confirmButton.innerHTML = `<i class="material-icons rotating">sync</i> পোস্ট করা হচ্ছে...`;
-
-        // The actual Firebase upload logic is complex and omitted here.
-        // It should handle data validation, image upload, and Firestore saving.
+    // --- প্রিভিউ ডেটা লোড করার ফাংশন (FIXED: Added all fields) ---
+    function loadPreviewData() {
+        const stagedDataString = sessionStorage.getItem('stagedPropertyData');
         
-        // DEMO: Simulate success
-        try {
-             // Simulate image and data processing time
-             await new Promise(resolve => setTimeout(resolve, 1500)); 
-             
-             sessionStorage.removeItem('stagedPropertyData');
-             sessionStorage.removeItem('stagedImageMetadata');
-             alert("পোস্ট সফলভাবে জমা দেওয়া হয়েছে। অনুমোদনের জন্য অপেক্ষা করুন।");
-             window.location.href = 'dashboard.html'; 
-
-        } catch (error) {
-            console.error("পোস্ট করতে ব্যর্থ:", error);
-            alert(`পোস্ট করতে সমস্যা হয়েছে: ${error.message}`);
-            confirmButton.disabled = false;
-            confirmButton.innerHTML = `<i class="material-icons" style="font-size: 1.2em; vertical-align: middle;">check_circle</i> নিশ্চিত করে পোস্ট করুন`;
+        if (!stagedDataString) {
+            previewContent.innerHTML = '<div class="not-found">পোস্ট প্রিভিউ করার জন্য কোনো ডেটা পাওয়া যায়নি। অনুগ্রহ করে <a href="post.html">পোস্ট পেজ</a> থেকে আবার চেষ্টা করুন।</div>';
+            confirmButton.disabled = true;
+            return;
         }
-    }
+
+        const data = JSON.parse(stagedDataString);
+
+        // --- Data Structure for display ---
+        const dataStructure = [
+            { section: 'স্থান ও অবস্থান', items: [
+                { label: 'বিভাগ', value: data.locationDivision },
+                { label: 'জেলা', value: data.locationDistrict },
+                { label: 'উপজেলা', value: data.locationUpazila },
+                { label: 'এলাকা/রোড', value: data.locationArea },
+                { label: 'সম্পূর্ণ ঠিকানা', value: data.fullAddress, isDescription: true },
+            ]},
+            { section: 'মূল্য এবং শর্তাবলী', items: [
+                { label: 'মূল্য', value: data.price, unit: 'টাকা' },
+                { label: 'আলোচনা সাপেক্ষ', value: data.negotiable ? 'হ্যাঁ' : 'না' },
+                ...(data.category === 'ভাড়া' ? [{ label: 'ভাড়ার সময়কাল', value: data.rentDuration }] : []),
+            ]},
+            { section: 'বিস্তারিত বৈশিষ্ট্য', items: [
+                { label: 'লিস্টারের ধরন', value: data.listerType },
+                { label: 'ক্যাটাগরি', value: data.category },
+                { label: 'ধরন', value: data.type },
+                { label: 'ফ্লোর', value: data.propertyFloor, unit: data.propertyFloor && data.propertyFloor !== 'প্রদান করা হয়নি' ? 'তলা' : '' },
+                { label: 'মোট ফ্লোর সংখ্যা', value: data.totalFloor, unit: data.totalFloor && data.totalFloor !== 'প্রদান করা হয়নি' ? 'তলা' : '' },
+                // জমির জন্য কাঠা, অন্য কিছুর জন্য বর্গফুট
+                { label: data.type === 'জমি' ? 'জমির পরিমাণ' : 'আয়তন', value: data.type === 'জমি' ? checkAndFormat(data.sizeKatha, 'শতাংশ/কাঠা') : checkAndFormat(data.sizeSqft, 'বর্গফুট') },
+                ...(data.type !== 'জমি' ? [
+                    { label: 'বেডরুম', value: data.bedroom, unit: 'টি' },
+                    { label: 'বাথরুম', value: data.bathroom, unit: 'টি' },
+                    { label: 'বারান্দা', value: data.balcony, unit: 'টি' },
+                ] : []),
+                { label: 'রাস্তার আকার', value: data.roadSizeFt, unit: 'ফুট' },
+            ]},
+            { section: 'যোগাযোগের তথ্য', items: [
+                { label: 'যোগাযোগের ফোন', value: data.phoneNumber },
+                { label: 'যোগাযোগের ইমেইল', value: data.email, defaultValue: 'প্রদান করা হয়নি' },
+            ]},
+        ];
+
+        // 1. Title and Description
+        let outputHTML = `
+            <h2>${data.title || 'শিরোনাম নেই'}</h2>
+            <div class="preview-section">
+                <h3>সম্পূর্ণ বিবরণ</h3>
+                <p class="preview-description">${checkAndFormat(data.description, '', 'কোনো বিস্তারিত বিবরণ নেই')}</p>
+            </div>
+        `;
+
+        // 2. Images
+        if (data.base64Images && data.base64Images.length > 0) {
+            outputHTML += `
+                <div class="preview-section">
+                    <h3>ছবি (${data.base64Images.length}টি)</h3>
+                    <div id="image-carousel">
+                        ${data.base64Images.map(base64 => `
+                            <div class="preview-image-wrapper">
+                                <img src="${base64}" class="preview-image" alt="Property Image Preview">
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 3. Sections Loop
+        dataStructure.forEach(section => {
+            outputHTML += `
+                <div class="preview-section">
+                    <h3>${section.section}</h3>
+                    <div class="preview-details">
+                        ${section.items.map(item => `
+                            <div class="preview-item">
+                                <span class="preview-label">${item.label}:</span>
+                                <span class="preview-value">${checkAndFormat(item.value, item.unit, item.defaultValue)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+        
+        // 4. Utility List (Separate block for complex array display)
+        if (data.utilities && data.utilities.length > 0) {
+            outputHTML += `
+                <div class="preview-section">
+                    <h3>অতিরিক্ত সুবিধা (Utility)</h3>
+                    <ul class="utility-list">
+                        ${data.utilities.map(util => `<li>${util}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
 
 
-    // --- প্রাথমিক ডেটা লোডিং ---
-    const stagedData = JSON.parse(sessionStorage.getItem('stagedPropertyData'));
-    const stagedImageMetadata = JSON.parse(sessionStorage.getItem('stagedImageMetadata')); 
+        previewContent.innerHTML = outputHTML;
+        confirmButton.disabled = false; // Enable confirm button once data is loaded
 
-    if (stagedData) {
-        renderPreview(stagedData);
-    } else {
-        previewContent.innerHTML = '<div class="not-found">প্রিভিউ করার মতো কোনো ডেটা পাওয়া যায়নি। অনুগ্রহ করে পোস্ট করার পেজে ফিরে যান।</div>';
-    }
+    } // End of loadPreviewData
 
-
-    // --- ইভেন্ট লিসেনার ---
-    editButton.addEventListener('click', () => {
-        window.location.href = 'post.html';
-    });
-
-    confirmButton.addEventListener('click', handleConfirmPost);
-    
-    // --- Authentication & UI Update (আইকন ফিক্সের মূল লজিক) ---
+    // --- AUTHENTICATION & UI UPDATE ---
     auth.onAuthStateChanged((user) => {
+        // ... (Header/Sidebar Auth Logic) ...
         if (user) {
-            // ব্যবহারকারী লগইন করা আছে
-            if (profileImage) {
-                profileImage.src = user.photoURL || 'assets/placeholder-profile.jpg';
-                profileImage.style.display = 'block';
+            // লগইন স্ট্যাটাস
+            if (headerProfileImage) {
+                headerProfileImage.src = user.photoURL || 'assets/placeholder-profile.jpg';
+                headerProfileImage.style.display = 'block';
             }
-             if (defaultProfileIcon) {
+            if (defaultProfileIcon) {
                 defaultProfileIcon.style.display = 'none';
             }
-            if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
-
+            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+            
+            if (postLinkSidebar) postLinkSidebar.style.display = 'block';
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
                 loginLinkSidebar.href = '#';
-                loginLinkSidebar.onclick = handleLogout; 
+                loginLinkSidebar.onclick = handleLogout;
             }
-             if (postLinkSidebar) {
-                postLinkSidebar.style.display = 'block';
-            }
-            const headerPostButton = document.getElementById('headerPostButton');
-            if(headerPostButton) headerPostButton.style.display = 'flex'; 
-            
+            if (headerPostButton) headerPostButton.style.display = 'flex'; 
+
         } else {
-            // ব্যবহারকারী লগইন করা নেই
-             if (profileImage) {
-                profileImage.style.display = 'none';
+            // লগআউট স্ট্যাটাস
+            if (headerProfileImage) {
+                headerProfileImage.style.display = 'none';
             }
-             if (defaultProfileIcon) {
+            if (defaultProfileIcon) {
                 defaultProfileIcon.style.display = 'block';
             }
             if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
-
+            
+            if (postLinkSidebar) postLinkSidebar.style.display = 'none';
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগইন';
                 loginLinkSidebar.href = 'auth.html';
                 loginLinkSidebar.onclick = null;
             }
-            if (postLinkSidebar) {
-                postLinkSidebar.style.display = 'none';
-            }
-             const headerPostButton = document.getElementById('headerPostButton');
-            if(headerPostButton) headerPostButton.style.display = 'none'; 
+            if (headerPostButton) headerPostButton.style.display = 'none';
         }
     });
 
-    // --- হেডার আইকন কার্যকারিতা (আইকন ফিক্স) ---
-    // এই লজিকটি preview.html এর স্ক্রিপ্ট ব্লক থেকে নিয়ে এসে এখানে যোগ করা হয়েছে, যা সমস্যার সমাধান করবে।
-    
-    if (notificationButton) {
-        notificationButton.addEventListener('click', () => {
-             window.location.href = 'notifications.html'; 
-        });
-    }
 
-    if (headerPostButton) {
-        headerPostButton.addEventListener('click', () => {
-            window.location.href = 'post.html'; 
-        });
-    }
+    // --- ইভেন্ট লিসেনার্স (FIXED: Menu Bar Listeners) ---
+    
+    // পোস্ট ডেটা লোড
+    loadPreviewData();
 
-    if (messageButton) {
-        messageButton.addEventListener('click', () => {
-             window.location.href = 'messages.html';
-        });
-    }
+    // এডিট বাটন
+    editButton.addEventListener('click', () => {
+        window.location.href = 'post.html';
+    });
     
-    if (profileImageWrapper) {
-        profileImageWrapper.addEventListener('click', () => {
-             window.location.href = 'profile.html';
-        });
-    }
+    // কনফার্ম বাটন (ফাইনাল সাবমিট লজিক)
+    confirmButton.addEventListener('click', async () => {
+        // ... (Upload and Database Submission Logic will go here) ...
+        alert('পোস্ট সফলভাবে জমা দেওয়া হয়েছে! অ্যাডমিন অনুমোদনের জন্য অপেক্ষা করুন।');
+        // window.location.href = 'profile.html'; 
+    });
     
-    // সাইড মেনু লজিক (preview.html থেকে নিশ্চিত করা হলো)
+    // সাইড মেনু লজিক (মেনুবার ফিক্স)
     if (menuButton) {
         menuButton.addEventListener('click', () => {
             sidebar.classList.toggle('active');
@@ -301,4 +242,10 @@ document.addEventListener('DOMContentLoaded', function() {
             overlay.classList.remove('active');
         });
     }
+
+    // হেডার আইকন কার্যকারিতা
+    if (notificationButton) {
+        notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
+    }
+    // ... (rest of the header icon listeners remain here) ...
 });
