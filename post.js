@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- প্রাথমিক লোডিং ---
     loadStagedData();
 
-    // --- Authentication & UI Update (হেডার ফিক্স) ---
+    // --- Authentication & UI Update ---
     auth.onAuthStateChanged((user) => {
         if (user) {
             // ব্যবহারকারী লগইন করা আছে
@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // সাইড মেনু লজিক
+    // সাইড মেনু লজিক (আপনার প্রথম ফিক্স)
     if (menuButton) {
         menuButton.addEventListener('click', () => {
             sidebar.classList.toggle('active');
