@@ -12,10 +12,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginLinkSidebar = document.getElementById('login-link-sidebar');
     const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
 
-    // হেডার আইকন এবং বাটন এলিমেন্টগুলো (আইকন ফিক্সের জন্য নিশ্চিত করা হলো)
+    // হেডার আইকন এবং বাটন এলিমেন্টগুলো
     const profileImage = document.getElementById('profileImage');
     const profileImageWrapper = document.getElementById('profileImageWrapper');
-    const defaultProfileIcon = document.getElementById('defaultProfileIcon'); // assuming this element is in your header HTML
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon'); 
     const notificationButton = document.getElementById('notificationButton');
     const headerPostButton = document.getElementById('headerPostButton');
     const messageButton = document.getElementById('messageButton');
@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
     
+    // --- ইউটিলিটি ফাংশন ---
+
     // Utility Function: Base64 to Blob (for final Firebase upload)
     const dataURLtoBlob = (dataurl) => {
         const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
@@ -33,261 +35,331 @@ document.addEventListener('DOMContentLoaded', function() {
             u8arr[n] = bstr.charCodeAt(n);
         }
         return new Blob([u8arr], {type:mime});
-    }
-    
-    // Function to safely check and format data for display
-    const checkAndFormat = (value, unit = '', defaultValue = 'প্রদান করা হয়নি') => {
-        if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0) || value === 'N/A') {
-            return defaultValue;
-        }
-        // Array handling for utilities (displays as a styled list)
-        if (Array.isArray(value)) {
-             const listItems = value.map(item => `<li>${item}</li>`).join('');
-             return `<ul class="utility-list">${listItems}</ul>`;
-        }
-        // Handle multiline description
-        if (typeof value === 'string' && value.includes('\n')) {
-             return value.replace(/\n/g, '<br>');
+    };
+
+    // Utility Function: ডেটা চেক এবং ফরম্যাট (যদি ডেটা না থাকে তবে "প্রদান করা হয়নি" দেখাবে)
+    const checkAndFormat = (value, unit = '') => {
+        if (!value || (typeof value === 'string' && value.trim() === '') || value === 'undefined') {
+            return '<span class="not-available">তথ্য প্রদান করা হয়নি</span>';
         }
         return `${value} ${unit}`.trim();
-    }
+    };
 
-    // Function to render the preview data (Extensively updated to show all fields)
-    const renderPreview = (data) => {
-        if (!data || Object.keys(data).length === 0) {
-            previewContent.innerHTML = '<div class="not-found">প্রিভিউ করার মতো কোনো ডেটা পাওয়া যায়নি। অনুগ্রহ করে পোস্ট করার পেজে ফিরে যান।</div>';
-            return;
-        }
+    // --- প্রিভিউ রেন্ডারিং লজিক ---
 
-        // ছবিগুলি রেন্ডার করুন
-        let imageHTML = '';
-        if (data.base64Images && data.base64Images.length > 0) {
-            imageHTML = `<div class="preview-section image-carousel-section">
-                            <h3>🖼️ প্রপার্টির ছবি (${data.base64Images.length}টি)</h3>
-                            <div id="image-carousel">
-                                ${data.base64Images.map((base64, index) => 
-                                    `<div class="preview-image-wrapper">
-                                        <img src="${base64}" alt="Property Image ${index + 1}" class="preview-image">
-                                    </div>`
-                                ).join('')}
-                            </div>
-                         </div>`;
-        }
+    function renderPreview(data, imageMetadata, imageData) {
+        // 'প্রিভিউ করার মতো কোনো ডেটা পাওয়া যায়নি' বার্তাটি সরিয়ে দেওয়া
+        previewContent.innerHTML = ''; 
+        
+        // --- ১. ছবি প্রিভিউ সেকশন ---
+        const mainImagePreviews = imageData.mainImages.map((base64Url, index) => {
+            return `<div class="image-preview-item"><img src="${base64Url}" alt="Main Image ${index + 1}"><span>${imageMetadata.mainImagesMetadata[index]?.name || ''}</span></div>`;
+        }).join('');
 
-        // Location Details
-        const locationDetails = `
-            <div class="preview-section">
-                <h3>📍 অবস্থান ও ঠিকানা</h3>
-                <div class="preview-item"><span class="preview-label">বিভাগ:</span><span class="preview-value">${checkAndFormat(data.location.division)}</span></div>
-                <div class="preview-item"><span class="preview-label">জেলা:</span><span class="preview-value">${checkAndFormat(data.location.district)}</span></div>
-                ${data.location.upazila || data.location.thana ? `<div class="preview-item"><span class="preview-label">উপজেলা/থানা:</span><span class="preview-value">${checkAndFormat(data.location.upazila || data.location.thana)}</span></div>` : ''}
-                ${data.location.cityCorporation ? `<div class="preview-item"><span class="preview-label">সিটি কর্পোরেশন:</span><span class="preview-value">${checkAndFormat(data.location.cityCorporation)}</span></div>` : ''}
-                ${data.location.area ? `<div class="preview-item"><span class="preview-label">এলাকার নাম:</span><span class="preview-value">${checkAndFormat(data.location.area)}</span></div>` : ''}
-                ${data.location.village ? `<div class="preview-item"><span class="preview-label">গ্রাম:</span><span class="preview-value">${checkAndFormat(data.location.village)}</span></div>` : ''}
-                ${data.location.road ? `<div class="preview-item"><span class="preview-label">রোড:</span><span class="preview-value">${checkAndFormat(data.location.road)}</span></div>` : ''}
+        const khotianImagePreviews = imageData.khotianImages.map((base64Url, index) => {
+            return `<div class="image-preview-item"><img src="${base64Url}" alt="Khotian Image ${index + 1}"><span>${imageMetadata.khotianImagesMetadata[index]?.name || ''}</span></div>`;
+        }).join('');
+
+        const sketchImagePreviews = imageData.sketchImages.map((base64Url, index) => {
+            return `<div class="image-preview-item"><img src="${base64Url}" alt="Sketch Image ${index + 1}"><span>${imageMetadata.sketchImagesMetadata[index]?.name || ''}</span></div>`;
+        }).join('');
+
+
+        const imageSection = `
+            <div class="preview-section image-gallery">
+                <h3>🖼️ ছবিসমূহ</h3>
+                
+                <h4>প্রধান ছবি (${imageData.mainImages.length}টি)</h4>
+                <div class="image-previews-container">${mainImagePreviews || '<p class="not-available">কোনো ছবি প্রদান করা হয়নি।</p>'}</div>
+                
+                ${imageData.khotianImages.length > 0 ? `
+                <h4>খতিয়ান বা কাগজপত্র (${imageData.khotianImages.length}টি)</h4>
+                <div class="image-previews-container">${khotianImagePreviews}</div>` : ''}
+                
+                ${imageData.sketchImages.length > 0 ? `
+                <h4>ম্যাপ বা স্কেচ (${imageData.sketchImages.length}টি)</h4>
+                <div class="image-previews-container">${sketchImagePreviews}</div>` : ''}
+                
             </div>
+            <hr>
         `;
 
-        // Price/Area Details
+        // --- ২. প্রাথমিক ও ঠিকানা বিবরণ ---
+        const locationDetails = `
+            <div class="preview-section">
+                <h3>📍 অবস্থান ও প্রাথমিক বিবরণ</h3>
+                <div class="preview-item"><span class="preview-label">পোস্টের ক্যাটাগরি:</span><span class="preview-value">${checkAndFormat(data.category)}</span></div>
+                <div class="preview-item"><span class="preview-label">প্রপার্টির ধরন:</span><span class="preview-value">${checkAndFormat(data.type)}</span></div>
+                <div class="preview-item"><span class="preview-label">বিভাগ:</span><span class="preview-value">${checkAndFormat(data.division)}</span></div>
+                <div class="preview-item"><span class="preview-label">জেলা:</span><span class="preview-value">${checkAndFormat(data.district)}</span></div>
+                <div class="preview-item"><span class="preview-label">উপজেলা/সিটি কর্পোরেশন:</span><span class="preview-value">${checkAndFormat(data.upazilaOrCity)}</span></div>
+                <div class="preview-item full-width"><span class="preview-label">বিস্তারিত ঠিকানা:</span><span class="preview-value">${checkAndFormat(data.subAddress)}</span></div>
+            </div>
+            <hr>
+        `;
+
+        // --- ৩. মূল্য ও পরিমাণ বিবরণ (Key Mismatch Fix) ---
+        
+        const isForSale = data.category === 'বিক্রয়';
+        let priceLabel, priceValue, priceUnit, advanceValue, areaLabel, areaValue, areaUnit;
+
+        if (isForSale) {
+            priceLabel = 'বিক্রয় মূল্য:';
+            priceValue = data.price;
+            priceUnit = data.priceUnit || 'টাকা'; 
+            advanceValue = undefined;
+        } else {
+            priceLabel = 'মাসিক ভাড়া:';
+            priceValue = data.monthlyRent; 
+            priceUnit = 'টাকা';
+            advanceValue = data.advance; 
+        }
+
+        // এরিয়া/পরিমাণের জন্য ডাইনামিক হ্যান্ডলিং (post.js এ সেভ করা Key অনুযায়ী)
+        if (data.type === 'জমি' || data.type === 'প্লট') {
+            areaLabel = 'জমির পরিমাণ:';
+            areaValue = data.landArea;
+            areaUnit = data.landAreaUnit;
+        } else if (data.type === 'ফ্লাট' || data.type === 'বাড়ি') {
+            areaLabel = 'আয়তন (স্কয়ার ফিট):';
+            areaValue = data.areaSqft;
+            areaUnit = 'স্কয়ার ফিট';
+        } else if (data.type === 'দোকান' || data.type === 'অফিস') {
+            areaLabel = 'বাণিজ্যিক আয়তন:';
+            areaValue = data.commercialArea;
+            areaUnit = data.commercialAreaUnit || 'স্কয়ার ফিট';
+        }
+
         const priceAreaDetails = `
             <div class="preview-section">
                 <h3>টাকা ও পরিমাণ</h3>
-                <div class="preview-item"><span class="preview-label">মূল্য:</span><span class="preview-value">${checkAndFormat(data.price, 'টাকা')}</span></div>
-                <div class="preview-item"><span class="preview-label">মূল্যের ধরন:</span><span class="preview-value">${checkAndFormat(data.priceType)}</span></div>
-                ${data.deposit ? `<div class="preview-item"><span class="preview-label">ডিপোজিট/অগ্রিম:</span><span class="preview-value">${checkAndFormat(data.deposit, 'টাকা')}</span></div>` : ''}
-                <div class="preview-item"><span class="preview-label">মোট পরিমাণ:</span><span class="preview-value">${checkAndFormat(data.areaSize, data.areaUnit || '')}</span></div>
+                <div class="preview-item"><span class="preview-label">${priceLabel}</span><span class="preview-value">${checkAndFormat(priceValue, priceUnit)}</span></div>
+                ${advanceValue !== undefined && checkAndFormat(advanceValue) !== '<span class="not-available">তথ্য প্রদান করা হয়নি</span>' ? `<div class="preview-item"><span class="preview-label">ডিপোজিট/অগ্রিম:</span><span class="preview-value">${checkAndFormat(advanceValue, 'টাকা')}</span></div>` : ''}
+                
+                ${areaValue !== undefined && checkAndFormat(areaValue) !== '<span class="not-available">তথ্য প্রদান করা হয়নি</span>' ? `<div class="preview-item"><span class="preview-label">${areaLabel}</span><span class="preview-value">${checkAndFormat(areaValue, areaUnit || '')}</span></div>` : ''}
+                
                 ${data.roadWidth ? `<div class="preview-item"><span class="preview-label">রাস্তার প্রস্থ:</span><span class="preview-value">${checkAndFormat(data.roadWidth, 'ফিট')}</span></div>` : ''}
             </div>
+            <hr>
         `;
         
-        // Property Details (Rooms, Bathrooms, Utilities, etc.)
+        // --- ৪. প্রপার্টি বিবরণ (রুম, বয়স, ফ্লোর, ইত্যাদি) ---
+        
         let propertyDetails = '';
         if (data.type !== 'জমি' && data.type !== 'প্লট') {
              propertyDetails = `
                  <div class="preview-section">
                     <h3>প্রপার্টি বিবরণ</h3>
-                    ${data.propertyAge !== undefined ? `<div class="preview-item"><span class="preview-label">প্রপার্টির বয়স:</span><span class="preview-value">${checkAndFormat(data.propertyAge, 'বছর')}</span></div>` : ''}
+                    ${data.propertyAge ? `<div class="preview-item"><span class="preview-label">প্রপার্টির বয়স:</span><span class="preview-value">${checkAndFormat(data.propertyAge, 'বছর')}</span></div>` : ''}
                     ${data.facing ? `<div class="preview-item"><span class="preview-label">প্রপার্টির দিক:</span><span class="preview-value">${checkAndFormat(data.facing)}</span></div>` : ''}
+                    
+                    ${data.rooms ? `<div class="preview-item"><span class="preview-label">রুম সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.rooms)}</span></div>` : ''}
+                    ${data.bathrooms ? `<div class="preview-item"><span class="preview-label">বাথরুম সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.bathrooms)}</span></div>` : ''}
+                    ${data.kitchen ? `<div class="preview-item"><span class="preview-label">কিচেন সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.kitchen)}</span></div>` : ''}
+                    ${data.balconies ? `<div class="preview-item"><span class="preview-label">বারান্দা সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.balconies)}</span></div>` : ''}
+                    
+                    ${data.floors ? `<div class="preview-item"><span class="preview-label">মোট তলা সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.floors)}</span></div>` : ''}
+                    ${data.floorNo ? `<div class="preview-item"><span class="preview-label">ফ্লোর নং (আপনার ফ্লাট):</span><span class="preview-value">${checkAndFormat(data.floorNo)}</span></div>` : ''}
+                    
                     ${data.parking ? `<div class="preview-item"><span class="preview-label">পার্কিং সুবিধা:</span><span class="preview-value">${checkAndFormat(data.parking)}</span></div>` : ''}
-                    ${data.floors ? `<div class="preview-item"><span class="preview-label">তলা সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.floors)}</span></div>` : ''}
-                    ${data.floorNo ? `<div class="preview-item"><span class="preview-label">ফ্লোর নং:</span><span class="preview-value">${checkAndFormat(data.floorNo)}</span></div>` : ''}
-                    ${data.rooms ? `<div class="preview-item"><span class="preview-label">রুম সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.rooms, 'টি')}</span></div>` : ''}
-                    ${data.bathrooms ? `<div class="preview-item"><span class="preview-label">বাথরুম সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.bathrooms, 'টি')}</span></div>` : ''}
-                    ${data.kitchen ? `<div class="preview-item"><span class="preview-label">কিচেন সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.kitchen, 'টি')}</span></div>` : ''}
-                    ${data.shopCount ? `<div class="preview-item"><span class="preview-label">দোকান সংখ্যা:</span><span class="preview-value">${checkAndFormat(data.shopCount, 'টি')}</span></div>` : ''}
-                    ${data.utilities ? `<div class="preview-item"><span class="preview-label">সুবিধা:</span><span class="preview-value">${checkAndFormat(data.utilities)}</span></div>` : ''}
+                    ${data.landType ? `<div class="preview-item"><span class="preview-label">জমির ধরন:</span><span class="preview-value">${checkAndFormat(data.landType)}</span></div>` : ''}
+                    
+                    ${data.utilities ? `<div class="preview-item full-width"><span class="preview-label">অন্যান্য সুবিধা (ইউটিলিটি):</span><span class="preview-value">${checkAndFormat(data.utilities)}</span></div>` : ''}
                  </div>
+                 <hr>
              `;
         }
 
-        // Full Description
-        const descriptionSection = `
+        // --- ৫. মালিকের বিবরণ ---
+        const ownerDetails = `
             <div class="preview-section">
-                <h3>সম্পূর্ণ বিবরণ</h3>
-                <p class="preview-description">${checkAndFormat(data.description)}</p>
+                <h3>👤 মালিকের বিবরণ</h3>
+                <div class="preview-item"><span class="preview-label">নাম:</span><span class="preview-value">${checkAndFormat(data.ownerName)}</span></div>
+                <div class="preview-item"><span class="preview-label">ফোন নম্বর:</span><span class="preview-value">${checkAndFormat(data.ownerPhone)}</span></div>
+                <div class="preview-item"><span class="preview-label">ইমেইল:</span><span class="preview-value">${checkAndFormat(data.ownerEmail)}</span></div>
             </div>
         `;
 
 
+        // সব সেকশন একসাথে যুক্ত করা
         previewContent.innerHTML = `
-            ${imageHTML}
-            
-            <div class="preview-section">
-                <h3>🔑 প্রধান তথ্য</h3>
-                <div class="preview-item"><span class="preview-label">শিরোনাম:</span><span class="preview-value">${checkAndFormat(data.title)}</span></div>
-                <div class="preview-item"><span class="preview-label">পোস্ট ক্যাটাগরি:</span><span class="preview-value">${checkAndFormat(data.category)}</span></div>
-                <div class="preview-item"><span class="preview-label">প্রপার্টির ধরন:</span><span class="preview-value">${checkAndFormat(data.type)}</span></div>
-                <div class="preview-item"><span class="preview-label">লিস্টার টাইপ:</span><span class="preview-value">${checkAndFormat(data.listerType)}</span></div>
-                ${data.moveInDate ? `<div class="preview-item"><span class="preview-label">ওঠার তারিখ:</span><span class="preview-value">${checkAndFormat(data.moveInDate)}</span></div>` : ''}
-            </div>
-            
+            ${imageSection}
+            <h2 class="preview-title">${checkAndFormat(data.title)}</h2>
+            <p class="preview-description">${checkAndFormat(data.description)}</p>
+            <hr>
             ${locationDetails}
             ${priceAreaDetails}
             ${propertyDetails}
-            ${descriptionSection}
-            
-            <div class="preview-section">
-                <h3>📞 যোগাযোগের তথ্য</h3>
-                <div class="preview-item"><span class="preview-label">ফোন নম্বর:</span><span class="preview-value">${checkAndFormat(data.phoneNumber)}</span></div>
-                ${data.secondaryPhone ? `<div class="preview-item"><span class="preview-label">অতিরিক্ত নম্বর:</span><span class="preview-value">${checkAndFormat(data.secondaryPhone)}</span></div>` : ''}
-            </div>
+            ${ownerDetails}
         `;
-        
-        confirmButton.disabled = false;
+
+        // লগইন করা থাকলে কনফার্ম বাটন এনাবল করা
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                confirmButton.disabled = false;
+            } else {
+                confirmButton.disabled = true;
+            }
+        });
     }
 
-    // --- লগআউট ফাংশন ---
-    const handleLogout = async (e) => {
-        e.preventDefault();
-        try {
-            await auth.signOut();
-            window.location.href = 'index.html'; 
-        } catch (error) {
-            console.error("লগআউট ব্যর্থ:", error);
-            alert("লগআউট করতে সমস্যা হয়েছে।");
+
+    // --- ডেটা লোডিং ---
+    function loadPreviewData() {
+        const stagedDataString = sessionStorage.getItem('stagedPropertyData');
+        const stagedMetadataString = sessionStorage.getItem('stagedImageMetadata');
+
+        if (!stagedDataString || !stagedMetadataString) {
+            // ডেটা না পেলে ডিফল্ট বার্তা দেখাবে
+            confirmButton.disabled = true;
+            editButton.disabled = false;
+            return;
         }
-    };
-    
-    // Function to handle the final post confirmation and Firebase upload (Placeholder)
-    const handleConfirmPost = async () => {
-        confirmButton.disabled = true; 
-        confirmButton.innerHTML = `<i class="material-icons rotating">sync</i> পোস্ট করা হচ্ছে...`;
 
-        // The actual Firebase upload logic is complex and omitted here.
-        // It should handle data validation, image upload, and Firestore saving.
-        
-        // DEMO: Simulate success
         try {
-             // Simulate image and data processing time
-             await new Promise(resolve => setTimeout(resolve, 1500)); 
-             
-             sessionStorage.removeItem('stagedPropertyData');
-             sessionStorage.removeItem('stagedImageMetadata');
-             alert("পোস্ট সফলভাবে জমা দেওয়া হয়েছে। অনুমোদনের জন্য অপেক্ষা করুন।");
-             window.location.href = 'dashboard.html'; 
+            const data = JSON.parse(stagedDataString);
+            const metadata = JSON.parse(stagedMetadataString);
+            
+            // Base64 ডেটা পুনরুদ্ধার
+            const imageData = {
+                mainImages: JSON.parse(sessionStorage.getItem('stagedMainImages') || '[]'),
+                khotianImages: JSON.parse(sessionStorage.getItem('stagedKhotianImages') || '[]'),
+                sketchImages: JSON.parse(sessionStorage.getItem('stagedSketchImages') || '[]'),
+            };
 
+            // রেন্ডারিং শুরু
+            renderPreview(data, metadata, imageData);
+            
         } catch (error) {
-            console.error("পোস্ট করতে ব্যর্থ:", error);
-            alert(`পোস্ট করতে সমস্যা হয়েছে: ${error.message}`);
-            confirmButton.disabled = false;
-            confirmButton.innerHTML = `<i class="material-icons" style="font-size: 1.2em; vertical-align: middle;">check_circle</i> নিশ্চিত করে পোস্ট করুন`;
+            console.error("Error parsing staged data:", error);
+            // ত্রুটি হলে ডেটা না পাওয়ার বার্তা
+            previewContent.innerHTML = '<p class="not-found">সংরক্ষিত ডেটা পুনরুদ্ধার করা যায়নি। অনুগ্রহ করে <a href="post.html">পোস্ট ফর্মে</a> ফিরে যান।</p>';
+            confirmButton.disabled = true;
         }
     }
 
 
-    // --- প্রাথমিক ডেটা লোডিং ---
-    const stagedData = JSON.parse(sessionStorage.getItem('stagedPropertyData'));
-    const stagedImageMetadata = JSON.parse(sessionStorage.getItem('stagedImageMetadata')); 
+    // --- ইভেন্ট লিসেনার্স ---
 
-    if (stagedData) {
-        renderPreview(stagedData);
-    } else {
-        previewContent.innerHTML = '<div class="not-found">প্রিভিউ করার মতো কোনো ডেটা পাওয়া যায়নি। অনুগ্রহ করে পোস্ট করার পেজে ফিরে যান।</div>';
-    }
-
-
-    // --- ইভেন্ট লিসেনার ---
     editButton.addEventListener('click', () => {
+        // এডিটের জন্য post.html এ নিয়ে যাওয়া হবে। post.js স্বয়ংক্রিয়ভাবে ডেটা প্রি-ফিল করবে।
         window.location.href = 'post.html';
     });
 
-    confirmButton.addEventListener('click', handleConfirmPost);
-    
-    // --- Authentication & UI Update (আইকন ফিক্সের মূল লজিক) ---
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            // ব্যবহারকারী লগইন করা আছে
-            if (profileImage) {
-                profileImage.src = user.photoURL || 'assets/placeholder-profile.jpg';
-                profileImage.style.display = 'block';
-            }
-             if (defaultProfileIcon) {
-                defaultProfileIcon.style.display = 'none';
-            }
-            if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
+    confirmButton.addEventListener('click', postProperty);
 
-            if (loginLinkSidebar) {
-                loginLinkSidebar.textContent = 'লগআউট';
-                loginLinkSidebar.href = '#';
-                loginLinkSidebar.onclick = handleLogout; 
-            }
-             if (postLinkSidebar) {
-                postLinkSidebar.style.display = 'block';
-            }
-            const headerPostButton = document.getElementById('headerPostButton');
-            if(headerPostButton) headerPostButton.style.display = 'flex'; 
-            
-        } else {
-            // ব্যবহারকারী লগইন করা নেই
-             if (profileImage) {
-                profileImage.style.display = 'none';
-            }
-             if (defaultProfileIcon) {
-                defaultProfileIcon.style.display = 'block';
-            }
-            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
 
-            if (loginLinkSidebar) {
-                loginLinkSidebar.textContent = 'লগইন';
-                loginLinkSidebar.href = 'auth.html';
-                loginLinkSidebar.onclick = null;
-            }
-            if (postLinkSidebar) {
-                postLinkSidebar.style.display = 'none';
-            }
-             const headerPostButton = document.getElementById('headerPostButton');
-            if(headerPostButton) headerPostButton.style.display = 'none'; 
+    // --- চূড়ান্ত পোস্ট লজিক (Firebase এ আপলোড) ---
+
+    async function postProperty() {
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'পোস্ট করা হচ্ছে...';
+        
+        const stagedDataString = sessionStorage.getItem('stagedPropertyData');
+        const stagedMetadataString = sessionStorage.getItem('stagedImageMetadata');
+
+        if (!auth.currentUser || !stagedDataString || !stagedMetadataString) {
+            alert("আপলোড ব্যর্থ: লগইন করা নেই বা ডেটা অনুপস্থিত।");
+            confirmButton.disabled = false;
+            confirmButton.textContent = 'নিশ্চিত করে পোস্ট করুন';
+            return;
         }
-    });
 
-    // --- হেডার আইকন কার্যকারিতা (আইকন ফিক্স) ---
-    // এই লজিকটি preview.html এর স্ক্রিপ্ট ব্লক থেকে নিয়ে এসে এখানে যোগ করা হয়েছে, যা সমস্যার সমাধান করবে।
-    
-    if (notificationButton) {
-        notificationButton.addEventListener('click', () => {
-             window.location.href = 'notifications.html'; 
-        });
+        try {
+            const propertyData = JSON.parse(stagedDataString);
+            const imageMetadata = JSON.parse(stagedMetadataString);
+            
+            const imageData = {
+                mainImages: JSON.parse(sessionStorage.getItem('stagedMainImages') || '[]'),
+                khotianImages: JSON.parse(sessionStorage.getItem('stagedKhotianImages') || '[]'),
+                sketchImages: JSON.parse(sessionStorage.getItem('stagedSketchImages') || '[]'),
+            };
+
+            const userUid = auth.currentUser.uid;
+            const propertyId = db.collection('properties').doc().id; 
+            const uploadPromises = [];
+            const uploadedImageUrls = {};
+
+            // --- ১. ছবিগুলি Firebase Storage এ আপলোড করা ---
+            
+            for (const [key, base64List] of Object.entries(imageData)) {
+                uploadedImageUrls[key] = [];
+                const metadataList = imageMetadata[key.replace('Images', 'ImagesMetadata')] || [];
+
+                for (let i = 0; i < base64List.length; i++) {
+                    const base64 = base64List[i];
+                    const meta = metadataList[i];
+                    
+                    if (!base64 || !meta) continue;
+
+                    const blob = dataURLtoBlob(base64);
+                    const fileExtension = meta.name.split('.').pop();
+                    const storageRef = storage.ref(`property_images/${userUid}/${propertyId}/${key}/${i}.${fileExtension}`);
+                    
+                    const uploadTask = storageRef.put(blob);
+                    
+                    uploadPromises.push(
+                        uploadTask.then(snapshot => snapshot.ref.getDownloadURL())
+                            .then(downloadURL => {
+                                uploadedImageUrls[key].push(downloadURL);
+                            })
+                    );
+                }
+            }
+
+            await Promise.all(uploadPromises);
+            
+            // --- ২. Firestore এ ডেটা সেভ করা ---
+            
+            const finalData = {
+                ...propertyData,
+                ownerId: userUid,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                status: 'pending', // প্রাথমিক স্ট্যাটাস 
+                
+                // Base64 ডেটার পরিবর্তে আপলোড করা ছবির URL যোগ করা
+                mainImageUrls: uploadedImageUrls.mainImages || [],
+                khotianImageUrls: uploadedImageUrls.khotianImages || [],
+                sketchImageUrls: uploadedImageUrls.sketchImages || [],
+
+                // সেশন স্টোরেজের Base64 ডেটা সরিয়ে দেওয়া
+                stagedMainImages: firebase.firestore.FieldValue.delete(),
+                stagedKhotianImages: firebase.firestore.FieldValue.delete(),
+                stagedSketchImages: firebase.firestore.FieldValue.delete(),
+            };
+            
+            // আপলোড করার আগে বড় ছবি মেটাডেটা সরিয়ে দেওয়া
+            delete finalData.mainImagesMetadata;
+            delete finalData.khotianImagesMetadata;
+            delete finalData.sketchImagesMetadata;
+
+
+            await db.collection('properties').doc(propertyId).set(finalData);
+
+            // --- ৩. পরিষ্করণ ও সমাপ্তি ---
+            sessionStorage.removeItem('stagedPropertyData');
+            sessionStorage.removeItem('stagedImageMetadata');
+            sessionStorage.removeItem('stagedMainImages');
+            sessionStorage.removeItem('stagedKhotianImages');
+            sessionStorage.removeItem('stagedSketchImages');
+
+            alert("🎉 অভিনন্দন! আপনার প্রপার্টি সফলভাবে পোস্ট করা হয়েছে। অ্যাডমিন অনুমোদনের অপেক্ষায় রয়েছে।");
+            window.location.href = 'dashboard.html'; // ড্যাশবোর্ডে রিডাইরেক্ট
+
+        } catch (error) {
+            console.error("Firebase পোস্ট করার সময় ত্রুটি:", error);
+            alert(`পোস্ট করা যায়নি। ত্রুটি: ${error.message}`);
+            confirmButton.disabled = false;
+            confirmButton.textContent = 'নিশ্চিত করে পোস্ট করুন';
+        }
     }
 
-    if (headerPostButton) {
-        headerPostButton.addEventListener('click', () => {
-            window.location.href = 'post.html'; 
-        });
-    }
 
-    if (messageButton) {
-        messageButton.addEventListener('click', () => {
-             window.location.href = 'messages.html';
-        });
-    }
+    // --- ইনিশিয়ালাইজেশন ---
+    loadPreviewData();
     
-    if (profileImageWrapper) {
-        profileImageWrapper.addEventListener('click', () => {
-             window.location.href = 'profile.html';
-        });
-    }
-    
-    // সাইড মেনু লজিক (preview.html থেকে নিশ্চিত করা হলো)
+    // হেডার এবং সাইডবার লজিক (preview.html থেকে নিশ্চিত করা হলো)
+    // এই অংশটি post.js থেকে কপি করা হয়েছে যাতে হেডার এবং মেনু সঠিকভাবে কাজ করে।
     if (menuButton) {
         menuButton.addEventListener('click', () => {
             sidebar.classList.toggle('active');
@@ -301,4 +373,25 @@ document.addEventListener('DOMContentLoaded', function() {
             overlay.classList.remove('active');
         });
     }
+    if (notificationButton) {
+        notificationButton.addEventListener('click', () => {
+             window.location.href = 'notifications.html'; 
+        });
+    }
+    if (headerPostButton) {
+        headerPostButton.addEventListener('click', () => {
+            window.location.href = 'post.html'; 
+        });
+    }
+    if (messageButton) {
+        messageButton.addEventListener('click', () => {
+             window.location.href = 'messages.html';
+        });
+    }
+    if (profileImageWrapper) {
+        profileImageWrapper.addEventListener('click', () => {
+             window.location.href = 'profile.html'; 
+        });
+    }
+    
 });
