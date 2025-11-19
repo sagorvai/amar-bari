@@ -43,7 +43,7 @@
             font-weight: 600;
         }
         #descriptionDisplay {
-            white-space: pre-wrap; /* নতুন লাইন এবং স্পেস সংরক্ষণ করবে */
+            white-space: pre-wrap;
             background-color: #fff;
             padding: 15px;
             border-radius: 5px;
@@ -63,9 +63,6 @@
             border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             transition: transform 0.3s;
-        }
-        .image-gallery img:hover {
-            transform: scale(1.05);
         }
         .action-buttons {
             display: flex;
@@ -118,31 +115,37 @@
             
             <div id="previewContent" style="display:none;">
                 <div class="preview-section">
-                    <h3>১. আপলোড করা ছবিসমূহ</h3>
+                    <h3>১. প্রপার্টির ছবিসমূহ</h3>
                     <div id="imageGallery" class="image-gallery">
+                        </div>
+                </div>
+                
+                <div class="preview-section" id="ownershipImagesSection" style="display:none;">
+                    <h3>২. মালিকানা সংক্রান্ত ডকুমেন্ট (বিক্রয়ের জন্য)</h3>
+                    <div id="ownershipImagesGallery" class="image-gallery">
                         </div>
                 </div>
 
                 <div class="preview-section">
-                    <h3>২. প্রপার্টির মূল তথ্য</h3>
+                    <h3>৩. প্রপার্টির মূল তথ্য</h3>
                     <div id="basicInfo">
                         </div>
                 </div>
 
                 <div class="preview-section">
-                    <h3>৩. অবস্থান ও যোগাযোগ</h3>
+                    <h3>৪. অবস্থান ও যোগাযোগ</h3>
                     <div id="locationInfo">
                         </div>
                 </div>
 
                 <div class="preview-section">
-                    <h3>৪. ডাইনামিক বৈশিষ্ট্যসমূহ (আপনার ইনপুট অনুযায়ী)</h3>
+                    <h3>৫. ডাইনামিক বৈশিষ্ট্যসমূহ (আপনার ইনপুট অনুযায়ী)</h3>
                     <div id="dynamicFields">
                         </div>
                 </div>
                 
                  <div class="preview-section">
-                    <h3>৫. বিস্তারিত বিবরণ</h3>
+                    <h3>৬. বিস্তারিত বিবরণ</h3>
                     <p id="descriptionDisplay"></p>
                 </div>
                 
@@ -164,4 +167,4 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     
     <script src="post.js"></script> <script src="preview.js"></script> </body>
-</html>
+                    </html>
