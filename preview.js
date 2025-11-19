@@ -1,13 +1,14 @@
-// post.js থেকে: const db, storage, auth, fileToBase64, dataURLtoBlob ইত্যাদি ভ্যারিয়েবল এখানে পাওয়া যাবে।
+// নিশ্চিত করুন যে post.js এ সংজ্ঞায়িত 'db', 'auth', 'storage' ইত্যাদি ভ্যারিয়েবল এখানে উপলব্ধ।
 
 document.addEventListener('DOMContentLoaded', function() {
     const propertyData = JSON.parse(sessionStorage.getItem('stagedPropertyData'));
-    const imageMetadata = JSON.parse(sessionStorage.getItem('stagedImageMetadata'));
     
     const previewContent = document.getElementById('previewContent');
     const errorMessage = document.getElementById('errorMessage');
     
     const imageGallery = document.getElementById('imageGallery');
+    const ownershipImagesSection = document.getElementById('ownershipImagesSection');
+    const ownershipImagesGallery = document.getElementById('ownershipImagesGallery');
     const basicInfoDiv = document.getElementById('basicInfo');
     const descriptionDisplay = document.getElementById('descriptionDisplay');
     const locationInfoDiv = document.getElementById('locationInfo');
@@ -23,22 +24,49 @@ document.addEventListener('DOMContentLoaded', function() {
         return; 
     }
     
-    // ডেটা লোড হলে প্রিভিউ কন্টেন্ট দেখাও
     previewContent.style.display = 'block';
 
     // --- B. রেন্ডারিং ফাংশনসমূহ ---
 
-    // ছবি গ্যালারি রেন্ডারিং
+    // ছবি গ্যালারি রেন্ডারিং (URL ব্যবহার করে)
     function renderImageGallery() {
-        if (propertyData.base64Images && propertyData.base64Images.length > 0) {
-            propertyData.base64Images.forEach(base64Str => {
+        // ১. প্রধান ছবি
+        if (propertyData.imageUrls && propertyData.imageUrls.length > 0) {
+            propertyData.imageUrls.forEach(url => {
                 const img = document.createElement('img');
-                img.src = base64Str; // Base64 সরাসরি ইমেজ সোর্স
+                img.src = url;
                 img.alt = 'প্রপার্টির ছবি';
                 imageGallery.appendChild(img);
             });
         } else {
-            imageGallery.innerHTML = '<p style="color: #666;">কোনো ছবি আপলোড করা হয়নি।</p>';
+            imageGallery.innerHTML = '<p style="color: #666;">কোনো প্রধান ছবি আপলোড করা হয়নি।</p>';
+        }
+
+        // ২. মালিকানার ছবি (খতিয়ান, স্কেচ)
+        const owner = propertyData.owner || {};
+        const isSale = propertyData.type === 'বিক্রয়';
+
+        if (isSale && (owner.khotianUrl || owner.sketchUrl)) {
+            ownershipImagesSection.style.display = 'block';
+            let hasOwnershipImage = false;
+            
+            if (owner.khotianUrl) {
+                const img = document.createElement('img');
+                img.src = owner.khotianUrl;
+                img.alt = 'খতিয়ানের ছবি';
+                ownershipImagesGallery.appendChild(img);
+                hasOwnershipImage = true;
+            }
+            if (owner.sketchUrl) {
+                const img = document.createElement('img');
+                img.src = owner.sketchUrl;
+                img.alt = 'স্কেচ ছবি';
+                ownershipImagesGallery.appendChild(img);
+                hasOwnershipImage = true;
+            }
+             if (!hasOwnershipImage) {
+                 ownershipImagesGallery.innerHTML = '<p style="color: #666;">কোনো ডকুমেন্ট আপলোড করা হয়নি।</p>';
+             }
         }
     }
     
@@ -51,10 +79,13 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         // মূল্য/ভাড়া ডাইনামিকভাবে যোগ করা
-        if (propertyData.type === 'বিক্রয়' || propertyData.type === 'ইজারা') {
-            html += `<p class="preview-item"><strong>দাম (৳):</strong> ${propertyData.price ? propertyData.price.toLocaleString('bn-BD') : 'N/A'}</p>`;
-        } else if (propertyData.type === 'ভাড়া') {
-            html += `<p class="preview-item"><strong>মাসিক ভাড়া (৳):</strong> ${propertyData.monthlyRent ? propertyData.monthlyRent.toLocaleString('bn-BD') : 'N/A'}</p>`;
+        const price = propertyData.price || propertyData.monthlyRent;
+        const priceLabel = propertyData.type === 'ভাড়া' ? 'মাসিক ভাড়া (৳):' : 'দাম (৳):';
+        
+        if (price) {
+            html += `<p class="preview-item"><strong>${priceLabel}</strong> ${price.toLocaleString('bn-BD')}</p>`;
+        } else {
+            html += `<p class="preview-item"><strong>${priceLabel}</strong> N/A</p>`;
         }
         
         basicInfoDiv.innerHTML = html;
@@ -73,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    // ডাইনামিক ফিল্ড রেন্ডারিং (পোস্ট পেজের ইনপুট অনুযায়ী)
+    // ডাইনামিক ফিল্ড রেন্ডারিং
     function renderDynamicFields() {
         let html = '';
         const category = propertyData.category;
@@ -97,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p class="preview-item"><strong>জমির ধরন:</strong> ${propertyData.landType || 'N/A'}</p>
             `;
         }
+        
         // অন্যান্য সাধারণ ডাইনামিক ফিল্ড (যদি থাকে)
         if (propertyData.utilities && Array.isArray(propertyData.utilities) && propertyData.utilities.length > 0) {
              html += `<p class="preview-item"><strong>অন্যান্য সুবিধা:</strong> ${propertyData.utilities.join(', ')}</p>`;
@@ -117,55 +149,33 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // এডিট বাটন: পোস্ট ফর্মে ফিরে যান
     editButton.addEventListener('click', () => {
-        window.location.href = 'post.html';
+        // টেক্সট ডেটা loadStagedData() দিয়ে প্রি-ফিল হয়ে যাবে
+        window.location.href = 'post.html'; 
     });
 
-    // Firebase Storage-এ Base64 আপলোড করার ফাংশন
-    async function uploadBase64Image(base64Str, filePath) {
-        const blob = dataURLtoBlob(base64Str); // post.js থেকে dataURLtoBlob ব্যবহার করা হলো
-        const storageRef = storage.ref(filePath);
-        const snapshot = await storageRef.put(blob);
-        return await snapshot.ref.getDownloadURL();
-    }
-    
-    // নিশ্চিতকরণ বাটন: ডেটা সার্ভারে আপলোড করুন
+    // নিশ্চিতকরণ বাটন: ডেটা সার্ভারে (Firestore) আপলোড করুন
     confirmButton.addEventListener('click', async () => {
         confirmButton.disabled = true;
-        confirmButton.textContent = 'পোস্ট আপলোড হচ্ছে... 🚀';
+        confirmButton.textContent = 'পোস্ট নিশ্চিত হচ্ছে... ✅';
         
         try {
-            // ১. ছবি আপলোড করে URL সংগ্রহ করা
-            const uploadedImageUrls = [];
-            const uploadPromises = propertyData.base64Images.map((base64Str, index) => {
-                const imageName = imageMetadata[index].name;
-                const timestamp = Date.now();
-                const filePath = `properties/${propertyData.uid}/${timestamp}_${imageName}`;
-                return uploadBase64Image(base64Str, filePath);
-            });
-            
-            const urls = await Promise.all(uploadPromises);
-            uploadedImageUrls.push(...urls);
-
-            // ২. চূড়ান্ত ডেটা অবজেক্ট তৈরি করা
+            // ১. চূড়ান্ত ডেটা অবজেক্ট তৈরি করা
             const finalData = {
                 ...propertyData,
-                imageUrls: uploadedImageUrls, // নতুন URL অ্যারে যোগ করা
-                base64Images: firebase.firestore.FieldValue.delete(), // Base64 ডেটা মুছে ফেলা
+                isStaged: firebase.firestore.FieldValue.delete(), // স্টেজ করা ডেটা ফ্ল্যাগ মুছে ফেলা
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                isApproved: false, // প্রথমে অনুমোদনের জন্য পেন্ডিং রাখা
-                // আপনি এখানে অন্য কোনো মেটাডেটা (যেমন user UID) যোগ করতে পারেন
+                isApproved: false, // অনুমোদনের জন্য পেন্ডিং রাখা
             };
             
-            // ৩. Firestore-এ সেভ করা
+            // ২. Firestore-এ সেভ করা
             await db.collection('properties').add(finalData);
             
-            // ৪. সেশন স্টোরেজ ক্লিন করা
+            // ৩. সেশন স্টোরেজ ক্লিন করা
             sessionStorage.removeItem('stagedPropertyData');
-            sessionStorage.removeItem('stagedImageMetadata');
             
-            // ৫. সফলতার বার্তা ও রিডাইরেক্ট
+            // ৪. সফলতার বার্তা ও রিডাইরেক্ট
             alert('আপনার পোস্টটি সফলভাবে জমা দেওয়া হয়েছে! এটি অনুমোদনের অপেক্ষায় রয়েছে।');
-            window.location.href = 'profile.html'; // ড্যাশবোর্ড বা প্রোফাইলে ফেরত পাঠানো হলো
+            window.location.href = 'profile.html'; 
 
         } catch (error) {
             console.error('পোস্ট আপলোডে সমস্যা:', error);
