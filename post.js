@@ -3,7 +3,7 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 const auth = firebase.auth();
 
-// Utility Function: File to Base64 (এই ফাংশনটি এখন আর ব্যবহার করা হবে না, তবে ফাইলের অংশ হিসেবে রাখা হলো)
+// Utility Function: File to Base64 (for staging)
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -11,7 +11,7 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
     reader.onerror = (error) => reject(error);
 });
 
-// Utility Function: Base64 Data URL to Blob (preview.js-এ ব্যবহৃত হতে পারে)
+// Utility Function: Base64 Data URL to Blob (for preview display)
 const dataURLtoBlob = (dataurl) => {
     const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
         bstr = atob(arr[1]);
@@ -30,17 +30,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const propertyForm = document.getElementById('property-form');
     const submitBtn = document.querySelector('#property-form button[type="submit"]');
 
-    // --- NEW: Function to load and pre-fill data from session storage for editing (সংশোধিত) ---
+    // --- NEW: Function to load and pre-fill data from session storage for editing ---
     function loadStagedData() {
         const stagedDataString = sessionStorage.getItem('stagedPropertyData');
-        // const stagedMetadataString = sessionStorage.getItem('stagedImageMetadata'); // Base64 Metadata আর লোড করা হবে না
+        const stagedMetadataString = sessionStorage.getItem('stagedImageMetadata');
         
-        // if (!stagedDataString || !stagedMetadataString) return; // শুধু ডেটা চেক করা হলো
-        if (!stagedDataString) return;
+        if (!stagedDataString || !stagedMetadataString) return;
 
         try {
             const stagedData = JSON.parse(stagedDataString);
-            // const stagedMetadata = JSON.parse(stagedMetadataString); // বাদ দেওয়া হলো
+            const stagedMetadata = JSON.parse(stagedMetadataString);
 
             // Set simple fields
             document.getElementById('lister-type').value = stagedData.listerType || '';
@@ -54,15 +53,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => {
                     const postTypeSelect = document.getElementById('post-type');
                     if (postTypeSelect && stagedData.type) {
-                        // stagedMetadata-এর জায়গায় null পাস করা হলো
                         postTypeSelect.value = stagedData.type;
-                        generateSpecificFields(stagedData.category, stagedData.type, stagedData, null); 
+                        generateSpecificFields(stagedData.category, stagedData.type, stagedData, stagedMetadata);
                     }
                 }, 100); 
             }
             
-            // Show a message (বার্তার পরিবর্তন)
-            alert('আপনার সংরক্ষিত তথ্য এডিটের জন্য লোড করা হয়েছে। ছবিগুলো Firebase এ থাকায় পুনরায় আপলোড করতে হবে।');
+            // Show a message
+            alert('আপনার সংরক্ষিত তথ্য এডিটের জন্য লোড করা হয়েছে।');
 
         } catch (error) {
             console.error('Error loading staged data:', error);
@@ -104,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Function to generate specific input fields based on type (PRE-FILL LOGIC MODIFIED)
+    // Function to generate specific input fields based on type (PRE-FILL LOGIC ADDED HERE)
     function generateSpecificFields(category, type, stagedData = null, stagedMetadata = null) {
         const specificFieldsContainer = document.getElementById('specific-fields-container');
         let fieldsHTML = '';
@@ -160,12 +158,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             
-            // 2. Utilities/Amenities
+            // 2. Utilities/Amenities (PARKING MERGED HERE)
+            
+            // Logic for pre-filling parking if it was saved as a separate 'parking' field (for edit compatibility)
+            const parkingUtilityValue = 'পার্কিং সুবিধা';
+            let parkingChecked = stagedData?.utilities?.includes(parkingUtilityValue) ? 'checked' : '';
+            if (!parkingChecked && stagedData?.parking === 'হ্যাঁ') {
+                parkingChecked = 'checked'; // Compatibility check for old separate field
+            }
+            
             descriptionHTML += `
                 <div class="input-group">
                     <label>অন্যান্য সুবিধা:</label>
                     <div class="radio-group utility-checkbox-group" style="display: flex; flex-wrap: wrap; gap: 15px;">
                         ${(type === 'ফ্লাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="লিফট" id="utility-lift" ${stagedData?.utilities?.includes('লিফট') ? 'checked' : ''}> লিফট</label>` : ''}
+                        
+                        ${(type === 'ফ্লাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="${parkingUtilityValue}" id="utility-parking" ${parkingChecked}> ${parkingUtilityValue}</label>` : ''}
+
                         <label><input type="checkbox" name="utility" value="গ্যাস সংযোগ" id="utility-gas" ${stagedData?.utilities?.includes('গ্যাস সংযোগ') ? 'checked' : ''}> গ্যাস সংযোগ</label>
                         <label><input type="checkbox" name="utility" value="জেনারেটর" id="utility-generator" ${stagedData?.utilities?.includes('জেনারেটর') ? 'checked' : ''}> জেনারেটর/পাওয়ার ব্যাকআপ</label>
                         <label><input type="checkbox" name="utility" value="ওয়াসা পানি" id="utility-wasa" ${stagedData?.utilities?.includes('ওয়াসা পানি') ? 'checked' : ''}> ওয়াসা পানি</label>
@@ -204,18 +213,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                  `;
             }
-        } else if (type === 'বাড়ি' || type === 'ফ্লাট' || type === 'অফিস') {
-            const parkingYesChecked = stagedData?.parking === 'হ্যাঁ' ? 'checked' : '';
-            const parkingNoChecked = stagedData?.parking === 'না' ? 'checked' : '';
-             descriptionHTML += `
-                <div class="input-group">
-                    <label>পার্কিং সুবিধা:</label>
-                    <div class="radio-group">
-                        <input type="radio" id="parking-yes" name="parking" value="হ্যাঁ" ${parkingYesChecked} required><label for="parking-yes">হ্যাঁ</label>
-                        <input type="radio" id="parking-no" name="parking" value="না" ${parkingNoChecked}><label for="parking-no">না</label>
-                    </div>
-                </div>
-            `;
+        } else if (type === 'বাড়ি' || type === 'ফ্লাট' || type === 'অফিস' || type === 'দোকান') {
+            
+            // **পার্কিং ফিল্ডটি এখান থেকে সরানো হয়েছে**
+            // if (type === 'বাড়ি' || type === 'ফ্লাট' || type === 'অফিস') {
+            //     const parkingYesChecked = stagedData?.parking === 'হ্যাঁ' ? 'checked' : '';
+            //     const parkingNoChecked = stagedData?.parking === 'না' ? 'checked' : '';
+            //      descriptionHTML += `
+            //         <div class="input-group">
+            //             <label>পার্কিং সুবিধা:</label>
+            //             <div class="radio-group">
+            //                 <input type="radio" id="parking-yes" name="parking" value="হ্যাঁ" ${parkingYesChecked} required><label for="parking-yes">হ্যাঁ</label>
+            //                 <input type="radio" id="parking-no" name="parking" value="না" ${parkingNoChecked}><label for="parking-no">না</label>
+            //             </div>
+            //         </div>
+            //     `;
+            // } 
             
             if (type === 'বাড়ি' || type === 'ফ্লাট') {
                 descriptionHTML += `
@@ -509,27 +522,36 @@ document.addEventListener('DOMContentLoaded', function() {
              }
         }
         
-        // --- NEW: Image Pre-fill Warning (Base64 logic removed) ---
-        // যেহেতু ছবিগুলি সেশন স্টোরেজে Base64 হিসেবে সেভ করা সম্ভব নয়, তাই এডিটের সময় ছবিগুলো পুনরায় আপলোড করতে হবে। 
-        if (stagedData && (stagedData.imageUrls || stagedData.owner?.khotianUrl || stagedData.owner?.sketchUrl)) {
-            const previewArea = document.getElementById('image-preview-area');
-            if (previewArea) {
-                previewArea.innerHTML = '<p class="placeholder-text" style="color: orange; font-weight: 600;">আপনার ছবিগুলো Firebase এ আপলোড করা আছে। এডিটের জন্য ছবি পুনরায় নির্বাচন করুন।</p>';
+        // --- NEW: Pre-fill Image Preview Logic ---
+        if (stagedData && stagedMetadata) {
+            const tempDt = new DataTransfer();
+            
+            // Main Images
+            const imagesInput = document.getElementById('images');
+            stagedData.base64Images?.forEach((base64, index) => {
+                const metadata = stagedMetadata.images[index];
+                const blob = dataURLtoBlob(base64);
+                const file = new File([blob], metadata.name, {type: metadata.type});
+                tempDt.items.add(file);
+                // Also show preview
+                handleImagePreviewFromBase64(base64, metadata.name, 'image-preview-area', 3);
+            });
+            if (imagesInput) imagesInput.files = tempDt.files;
+
+            // Khotian Image
+            if (stagedData.owner?.khotianBase64 && stagedMetadata.khotian) {
+                handleImagePreviewFromBase64(stagedData.owner.khotianBase64, stagedMetadata.khotian.name, 'khotian-preview-area', 1);
             }
-             // Khotian and Sketch warning
-            if (stagedData.owner?.khotianUrl) {
-                const khotianPreview = document.getElementById('khotian-preview-area');
-                if (khotianPreview) khotianPreview.innerHTML = '<p class="placeholder-text" style="color: orange; font-weight: 600;">খতিয়ানের ছবি এডিটের জন্য পুনরায় নির্বাচন করুন।</p>';
-            }
-            if (stagedData.owner?.sketchUrl) {
-                const sketchPreview = document.getElementById('sketch-preview-area');
-                if (sketchPreview) sketchPreview.innerHTML = '<p class="placeholder-text" style="color: orange; font-weight: 600;">স্কেচের ছবি এডিটের জন্য পুনরায় নির্বাচন করুন।</p>';
+            
+            // Sketch Image
+            if (stagedData.owner?.sketchBase64 && stagedMetadata.sketch) {
+                handleImagePreviewFromBase64(stagedData.owner.sketchBase64, stagedMetadata.sketch.name, 'sketch-preview-area', 1);
             }
         }
-        // --- END Image Pre-fill Warning ---
+        // --- END Pre-fill Image Preview Logic ---
 
 
-        // Image Preview Handler and Cross Button Logic (kept the same logic)
+        // Image Preview Handler and Cross Button Logic
         const imageInput = document.getElementById('images');
         if (imageInput) {
             imageInput.addEventListener('change', (e) => handleImagePreview(e, 'image-preview-area', 3));
@@ -548,7 +570,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Function to generate Sub-Address Fields (kept the same logic)
+    // Function to generate Sub-Address Fields (MODIFIED to accept stagedData)
     function generateSubAddressFields(areaType, stagedData = null) {
         const subAddressFieldsContainer = document.getElementById('sub-address-fields');
         let subFieldsHTML = '';
@@ -616,9 +638,9 @@ document.addEventListener('DOMContentLoaded', function() {
         subAddressFieldsContainer.innerHTML = subFieldsHTML;
     }
 
-    // Function to handle Image Preview (From File Object) - Kept the same
+    // Function to handle Image Preview (From File Object)
     function handleImagePreview(event, previewAreaId, maxFiles = 3) {
-        // ... (Existing implementation remains the same)
+        // ... (Existing implementation remains the same, but remove Base64 pre-fill logic)
         const previewArea = document.getElementById(previewAreaId);
         
         // Clear preview area if it's not a multi-file append
@@ -655,10 +677,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // NEW: Function to display Base64 image in preview (for editing) - REMOVED BASE64 PRE-FILL LOGIC
-    // function handleImagePreviewFromBase64(base64Data, fileName, previewAreaId, maxFiles) { /* REMOVED */ }
+    // NEW: Function to display Base64 image in preview (for editing)
+    function handleImagePreviewFromBase64(base64Data, fileName, previewAreaId, maxFiles) {
+        const previewArea = document.getElementById(previewAreaId);
+        // We use the Base64 data as the source URL
+        handleImagePreviewDisplay(base64Data, fileName, previewArea, null, maxFiles, true);
+    }
     
-    // Reusable function to render the preview image and button (Kept the same logic)
+    // Reusable function to render the preview image and button
     function handleImagePreviewDisplay(src, fileName, previewArea, inputElement = null, maxFiles = 3, isStaged = false) {
         const previewWrapper = document.createElement('div');
         previewWrapper.className = 'image-preview-wrapper';
@@ -730,18 +756,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- MODIFIED FORM SUBMIT: UPLOAD FILES TO FIREBASE AND STAGE URLS ---
+    // --- MODIFIED FORM SUBMIT: STAGE DATA IN SESSION STORAGE ---
     propertyForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         submitBtn.disabled = true;
-        submitBtn.textContent = 'ডেটা প্রক্রিয়াকরণ ও ছবি আপলোড হচ্ছে... 🚀'; // Updated text
+        submitBtn.textContent = 'ডেটা প্রক্রিয়াকরণ হচ্ছে...';
 
         try {
             const user = auth.currentUser;
             if (!user) {
                 alert("পোস্ট করার আগে আপনাকে লগইন করতে হবে!");
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'এগিয়ে যান'; 
+                submitBtn.textContent = 'পোস্ট করুন';
                 return;
             }
 
@@ -754,7 +780,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!imageFiles || imageFiles.length === 0) {
                  alert("অনুগ্রহ করে কমপক্ষে একটি ছবি আপলোড করুন।");
                  submitBtn.disabled = false;
-                 submitBtn.textContent = 'এগিয়ে যান';
+                 submitBtn.textContent = 'পোস্ট করুন';
                  return;
             }
 
@@ -800,7 +826,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 facing: type !== 'জমি' && type !== 'প্লট' ? getValue('facing') : undefined,
                 utilities: type !== 'জমি' && type !== 'প্লট' ? getUtilityValues() : undefined
             };
-
+            
             // ঠিকানা উপ-ফিল্ড যুক্ত করা
             if (propertyData.location.areaType === 'উপজেলা') {
                 propertyData.location.upazila = getValue('upazila-name');
@@ -828,7 +854,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     propertyData.landType = getValue('land-type');
                     if (type === 'প্লট') propertyData.plotNo = getValue('plot-no');
                 } else if (type === 'বাড়ি' || type === 'ফ্লাট' || type === 'অফিস') {
-                    propertyData.parking = document.querySelector('input[name="parking"]:checked')?.value;
+                    // **propertyData.parking সংগ্রহের লাইনটি এখান থেকে সরানো হয়েছে**
+                    
                     if (type === 'বাড়ি') {
                         propertyData.rooms = getValue('rooms');
                         propertyData.bathrooms = getValue('bathrooms');
@@ -867,7 +894,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.moveInDate = getValue('move-in-date');
                 
                  if (type === 'বাড়ি' || type === 'ফ্লাট' || type === 'অফিস') {
-                    propertyData.parking = document.querySelector('input[name="parking"]:checked')?.value;
+                    // **propertyData.parking সংগ্রহের লাইনটি এখান থেকে সরানো হয়েছে**
+                    
                     if (type === 'বাড়ি' || type === 'ফ্লাট') {
                          propertyData.roadWidth = getValue('road-width');
                          propertyData.rooms = getValue('rooms');
@@ -898,72 +926,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // *** নতুন লজিক: ফাইলগুলি সরাসরি Firebase Storage-এ আপলোড করা ***
-            submitBtn.textContent = 'ছবিগুলি আপলোড হচ্ছে... 📤';
-
-            const fileUploadPromises = [];
-            // প্রতিটি আপলোডের জন্য একটি ইউনিক পাথ তৈরি করা হলো
-            const baseStoragePath = `staged_properties/${user.uid}/${Date.now()}`; 
-
-            // ইউটিলিটি ফাংশন: ফাইল আপলোড করে URL রিটার্ন করা
-            const uploadFile = async (file, path) => {
-                const storageRef = storage.ref(`${path}/${file.name}`);
-                const snapshot = await storageRef.put(file);
-                return await snapshot.ref.getDownloadURL();
+            // --- NEW: Convert all files to Base64 strings for staging ---
+            const base64Images = [];
+            const imageMetadata = {
+                 images: Array.from(imageFiles).map(f => ({name: f.name, type: f.type})),
+                 khotian: khotianFile ? {name: khotianFile.name, type: khotianFile.type} : null,
+                 sketch: sketchFile ? {name: sketchFile.name, type: sketchFile.type} : null
             };
-
-            // মূল ছবিগুলি আপলোড করা
-            for (const file of imageFiles) {
-                fileUploadPromises.push(uploadFile(file, `${baseStoragePath}/main_images`));
-            }
-
-            // খতিয়ানের ছবি আপলোড (যদি প্রযোজ্য হয়)
-            if (category === 'বিক্রয়' && khotianFile) {
-                fileUploadPromises.push(uploadFile(khotianFile, `${baseStoragePath}/khotian`));
-            }
-
-            // স্কেচ ছবি আপলোড (যদি প্রযোজ্য হয়)
-            if (category === 'বিক্রয়' && sketchFile) {
-                fileUploadPromises.push(uploadFile(sketchFile, `${baseStoragePath}/sketch`));
-            }
-
-            // সবগুলো আপলোড হওয়া পর্যন্ত অপেক্ষা করা
-            const allUrls = await Promise.all(fileUploadPromises);
             
-            // --- আপলোড হওয়া URL গুলো propertyData-এ যুক্ত করা ---
-            let urlIndex = 0;
-            propertyData.imageUrls = allUrls.slice(urlIndex, urlIndex + imageFiles.length);
-            urlIndex += imageFiles.length;
-
-            // মালিকানা সংক্রান্ত ছবির URL যোগ করা
-            if (category === 'বিক্রয়' && propertyData.owner) {
+            // Main Images
+            for (const file of imageFiles) {
+                base64Images.push(await fileToBase64(file));
+            }
+            propertyData.base64Images = base64Images;
+            
+            // Ownership documents
+            if (category === 'বিক্রয়') {
                 if (khotianFile) {
-                    propertyData.owner.khotianUrl = allUrls[urlIndex++];
-                    propertyData.owner.khotianBase64 = undefined; // Base64 key মুছে ফেলা হলো
+                    propertyData.owner.khotianBase64 = await fileToBase64(khotianFile);
                 }
                 if (sketchFile) {
-                    propertyData.owner.sketchUrl = allUrls[urlIndex++];
-                    propertyData.owner.sketchBase64 = undefined; // Base64 key মুছে ফেলা হলো
+                    propertyData.owner.sketchBase64 = await fileToBase64(sketchFile);
                 }
             }
-
-            // Base64 ইমেজ ডাটা মুছে ফেলা হলো
-            propertyData.base64Images = undefined; 
             
-            // --- সেশন স্টোরেজে শুধুমাত্র টেক্সচুয়াল ডেটা এবং URL সংরক্ষণ করা ---
+            // 2. Save the complete property data and metadata to Session Storage
             sessionStorage.setItem('stagedPropertyData', JSON.stringify(propertyData));
-            sessionStorage.removeItem('stagedImageMetadata'); // নিশ্চিত করা হলো যে পুরনো Base64 মেটাডেটা মুছে গেছে
+            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(imageMetadata));
 
-            // প্রিভিউ পেজে রিডাইরেক্ট করা
+            // 3. Redirect to the preview page
+            alert("ডেটা সংরক্ষণ করা হয়েছে। প্রিভিউ পেজে নিয়ে যাওয়া হচ্ছে...");
             window.location.href = 'preview.html'; 
             
             
         } catch (error) {
-            console.error("ডেটা প্রক্রিয়া বা ছবি আপলোডে সমস্যা হয়েছে: ", error);
-            alert("ডেটা প্রক্রিয়াকরণ ব্যর্থ হয়েছে। Firebase Storage ত্রুটি: " + error.message);
+            console.error("ডেটা প্রক্রিয়া করতে সমস্যা হয়েছে: ", error);
+            alert("ডেটা প্রক্রিয়াকরণ ব্যর্থ হয়েছে: " + error.message);
         } finally {
             submitBtn.disabled = false;
-            submitBtn.textContent = 'এগিয়ে যান'; 
+            submitBtn.textContent = 'প্রিভিউ দেখুন'; // Change button text to reflect staging
         }
     });
 
