@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const stagedDataString = sessionStorage.getItem('stagedPropertyData');
         const stagedMetadataString = sessionStorage.getItem('stagedImageMetadata');
         
-        // ✅ সংশোধিত লজিক: শুধু প্রধান ডেটা string যাচাই করুন।
+        // ✅ সংশোধিত লজিক: শুধু প্রধান ডেটা string যাচাই করুন। (Base64 ডেটা না থাকলেও লোড হবে)
         if (!stagedDataString) return; 
 
         try {
@@ -46,8 +46,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const stagedMetadata = stagedMetadataString ? JSON.parse(stagedMetadataString) : {};
 
             // Set simple fields
-            document.getElementById('lister-type').value = stagedData.listerType || '';
-            document.getElementById('post-category').value = stagedData.category || '';
+            // Assuming the simple fields exist in the form
+            const listerTypeElement = document.getElementById('lister-type');
+            if (listerTypeElement) listerTypeElement.value = stagedData.listerType || '';
+            if (postCategorySelect) postCategorySelect.value = stagedData.category || '';
 
             // Trigger dynamic field generation
             if (stagedData.category) {
@@ -58,8 +60,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     const postTypeSelect = document.getElementById('post-type');
                     if (postTypeSelect && stagedData.type) {
                         postTypeSelect.value = stagedData.type;
-                        // stagedMetadata পাস করা হলো
+                        // stagedMetadata সহ নির্দিষ্ট ফিল্ড জেনারেশন
                         generateSpecificFields(stagedData.category, stagedData.type, stagedData, stagedMetadata); 
+                    } else if (stagedData.type) {
+                        // যদি postTypeSelect না পাওয়া যায়, তবুও ডেটা লোড করার চেষ্টা করা
+                        generateSpecificFields(stagedData.category, stagedData.type, stagedData, stagedMetadata);
                     }
                 }, 100); 
             }
@@ -69,6 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('Error loading staged data:', error);
+            // ডেটা ত্রুটিপূর্ণ হলে মুছে ফেলা
             sessionStorage.removeItem('stagedPropertyData');
             sessionStorage.removeItem('stagedImageMetadata');
         }
@@ -77,20 +83,63 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOM লোড হওয়ার সাথে সাথে সংরক্ষিত ডেটা লোড করার চেষ্টা করা
     loadStagedData();
 
-    // --- ২. ডাইনামিক ফিল্ড তৈরির লজিক (আপনার ফাইল অনুযায়ী যুক্ত করা হয়েছে) ---
-    
+    // --- ২. ডাইনামিক ফিল্ড তৈরির লজিক (আপনার ফাইল অনুযায়ী অনুমান করা কাঠামো) ---
+
     // প্রপার্টির প্রকারভেদ (Type) এর ড্রপডাউন তৈরি করা
     function generateTypeDropdown(category) {
         // এই ফাংশনটি category এর উপর ভিত্তি করে post-type ড্রপডাউন তৈরি করে
-        // উদাহরণস্বরূপ: category 'বিক্রয়' হলে, অপশনগুলো হবে 'জমি', 'ফ্ল্যাট', 'বাড়ি' ইত্যাদি।
-        // এই ফাংশনটির সম্পূর্ণ কোড আপনার আসল post.js ফাইলে থাকতে পারে, এখানে এটি একটি প্লেসহোল্ডার।
-        console.log(`Generating type dropdown for: ${category}`);
-        // ... typeDropdown তৈরির লজিক ...
-        // ইভেন্ট লিসেনার যোগ করা
+        
+        let typeOptions = [];
+        if (category === 'বিক্রয়') {
+            typeOptions = ['জমি', 'ফ্ল্যাট', 'বাড়ি', 'প্লট', 'কমার্শিয়াল'];
+        } else if (category === 'ভাড়া') {
+            typeOptions = ['ফ্ল্যাট', 'বাড়ি', 'রুম', 'অফিস', 'দোকান'];
+        } else {
+             dynamicFieldsContainer.innerHTML = '';
+             return;
+        }
+
+        const postTypeHtml = `
+            <div class="form-group">
+                <label for="post-type">প্রপার্টির প্রকারভেদ *</label>
+                <select id="post-type" name="type" required>
+                    <option value="">নির্বাচন করুন</option>
+                    ${typeOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                </select>
+            </div>
+        `;
+        
+        // dynamicFieldsContainer-এর শুরুতেই যুক্ত করা
+        const typeDropdownDiv = document.createElement('div');
+        typeDropdownDiv.innerHTML = postTypeHtml;
+        const existingType = document.getElementById('post-type-wrapper');
+        if (existingType) existingType.remove();
+        
+        const typeWrapper = document.createElement('div');
+        typeWrapper.id = 'post-type-wrapper';
+        typeWrapper.appendChild(typeDropdownDiv.firstChild);
+        
+        // existingType এর ঠিক পরেই এটি ঢুকানো উচিত।
+        postCategorySelect.parentNode.insertBefore(typeWrapper, postCategorySelect.nextSibling);
+
         const postTypeSelect = document.getElementById('post-type');
         if (postTypeSelect) {
              postTypeSelect.removeEventListener('change', typeChangeHandler);
              postTypeSelect.addEventListener('change', typeChangeHandler);
+        }
+        
+        // পূর্বের ডেটা থাকলে সেট করা
+        const stagedDataString = sessionStorage.getItem('stagedPropertyData');
+        if (stagedDataString) {
+             const stagedData = JSON.parse(stagedDataString);
+             if (postTypeSelect && stagedData.type) {
+                 postTypeSelect.value = stagedData.type;
+             }
+        }
+        
+        // প্রথমবার জেনারেট হওয়ার পরে, নির্দিষ্ট ফিল্ডগুলোও জেনারেট করা
+        if (postTypeSelect && postTypeSelect.value) {
+            generateSpecificFields(category, postTypeSelect.value);
         }
     }
     
@@ -101,21 +150,65 @@ document.addEventListener('DOMContentLoaded', function() {
         generateSpecificFields(category, type);
     };
 
-    // নির্দিষ্ট ফিল্ড তৈরি করা (যেমন: রুম সংখ্যা, ফ্লোর নং ইত্যাদি)
+    // নির্দিষ্ট ফিল্ড তৈরি করা
     function generateSpecificFields(category, type, stagedData = {}, stagedMetadata = {}) {
-        // এই ফাংশনটি category এবং type এর উপর ভিত্তি করে ডাইনামিক ফিল্ড তৈরি করে
-        // উদাহরণস্বরূপ: type 'ফ্ল্যাট' হলে, 'রুম', 'বাথরুম', 'ফ্লোর নং' ইত্যাদি ফিল্ড তৈরি হবে।
-        console.log(`Generating specific fields for: ${category} - ${type}`);
-        dynamicFieldsContainer.innerHTML = ''; // পূর্ববর্তী ফিল্ড মুছে ফেলা
-        // ... নির্দিষ্ট ফিল্ড তৈরির লজিক ...
+        // এই ফাংশনটি আপনার আসল ফাইলে থাকা সবচেয়ে বড় এবং গুরুত্বপূর্ণ লজিক।
+        // এখানে শুধু একটি প্লেসহোল্ডার কাঠামো দেওয়া হলো।
         
-        // Staged Data থাকলে ফিল্ডে মান সেট করা
-        if (Object.keys(stagedData).length > 0) {
-            // উদাহরণ: document.getElementById('rooms').value = stagedData.rooms;
-            // ছবি প্রিভিউ দেখানোর লজিক: stagedData.base64Images ব্যবহার করে
-            // ...
+        let fieldsHtml = '';
+        
+        // ১. সাধারণ ফিল্ড (সমস্ত প্রকারের জন্য)
+        fieldsHtml += `<h3 class="dynamic-heading">অবস্থান ও দাম</h3>`;
+        fieldsHtml += `
+            <div class="form-group">
+                <label for="price">দাম/ভাড়া *</label>
+                <input type="number" id="price" name="price" value="${stagedData.price || ''}" required>
+            </div>
+            `;
+        
+        // ২. প্রকারভেদের উপর ভিত্তি করে ফিল্ড
+        if (type === 'ফ্ল্যাট' || type === 'বাড়ি') {
+             fieldsHtml += `<h3 class="dynamic-heading">আবাসিক বৈশিষ্ট্য</h3>`;
+             fieldsHtml += `
+                <div class="form-group">
+                    <label for="rooms">রুম সংখ্যা *</label>
+                    <input type="number" id="rooms" name="rooms" value="${stagedData.rooms || ''}" required>
+                </div>
+                `;
+        } else if (type === 'জমি' || type === 'প্লট') {
+             fieldsHtml += `<h3 class="dynamic-heading">জমির বৈশিষ্ট্য</h3>`;
+             fieldsHtml += `
+                <div class="form-group">
+                    <label for="landArea">জমির পরিমাণ (শতাংশ/কাঠা) *</label>
+                    <input type="number" id="landArea" name="landArea" value="${stagedData.landArea || ''}" required>
+                </div>
+                `;
         }
-        // এই ফাংশনটির সম্পূর্ণ কোড আপনার আসল post.js ফাইলে থাকতে পারে, এখানে এটি একটি প্লেসহোল্ডার।
+        
+        // ৩. ছবি এবং মালিকানা তথ্য (বিক্রয়ের জন্য)
+        fieldsHtml += `<h3 class="dynamic-heading">ছবি আপলোড</h3>`;
+        fieldsHtml += `
+             <div class="form-group">
+                <label for="images">প্রপার্টির ছবি (সর্বোচ্চ ৫টি)</label>
+                <input type="file" id="images" name="images" accept="image/*" multiple>
+             </div>
+             `;
+        
+        if (category === 'বিক্রয়') {
+             fieldsHtml += `<h3 class="dynamic-heading">মালিকানা ও ডকুমেন্ট</h3>`;
+             fieldsHtml += `
+                <div class="form-group">
+                    <label for="khotian-image">সর্বশেষ খতিয়ানের ছবি</label>
+                    <input type="file" id="khotian-image" name="khotian-image" accept="image/*">
+                </div>
+                `;
+        }
+        
+        dynamicFieldsContainer.innerHTML = fieldsHtml;
+        
+        // **পুনরায় ডেটা সেট করা:** generateSpecificFields তৈরি হওয়ার পর stagedData থেকে মান সেট করা হয়।
+        // যেহেতু এটি একটি প্লেসহোল্ডার, আপনাকে এখানে আপনার মূল ফাইলের লজিক অনুযায়ী সকল ইনপুট ফিল্ডে মান সেট করার কোড যোগ করতে হবে।
+        // উদাহরণ: if (stagedData.description) document.getElementById('description').value = stagedData.description;
     }
     
     // ক্যাটাগরি পরিবর্তনের ইভেন্ট
@@ -127,11 +220,12 @@ document.addEventListener('DOMContentLoaded', function() {
     propertyForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
+        // ইনপুট ডিজেবল করে লোডিং স্টেট দেখানো
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'প্রিভিউ তৈরি হচ্ছে...';
+
         // ফর্ম ডেটা সংগ্রহ
         const formData = new FormData(propertyForm);
-        // Object.fromEntries() ব্যবহার করে ফর্ম ডেটাকে JavaScript অবজেক্টে রূপান্তর করা। 
-        // মালিকানা তথ্যের মতো নেস্টেড ডেটা (owner[donorName]) সঠিকভাবে হ্যান্ডেল করার জন্য
-        // এটি একটু জটিল হতে পারে, তবে এখানে সরলীকৃত ভার্সন ব্যবহার করা হলো:
         const data = Object.fromEntries(formData.entries()); 
         
         // ফাইল ইনপুট সংগ্রহ
@@ -154,10 +248,10 @@ document.addEventListener('DOMContentLoaded', function() {
             imageMetadata.images.push({ name: file.name, type: file.type });
         }
 
-        // মালিকানা ডেটা স্ট্রাকচার তৈরি
-        if (data.ownerName) { // Assuming 'ownerName' exists if ownership info is submitted
+        // মালিকানা ডেটা স্ট্রাকচার তৈরি (যদি ফর্ম ডেটাতে মালিকানা সংক্রান্ত ফিল্ড থাকে)
+        if (data.ownerName) { // Assuming 'ownerName' is a submitted field
             data.owner = {
-                donorName: data.ownerName, // Temporary assignment
+                donorName: data.ownerName, 
                 dagNoType: data.dagNoType,
                 dagNo: data.dagNo,
                 mouja: data.mouja
@@ -210,7 +304,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (user) {
                 // ইউজার লগইন করা আছে
                 if (headerProfileImage && defaultProfileIcon) {
-                    // user.photoURL একটি ডামি পাথ হতে পারে যদি ইউজার ছবিটি আপলোড না করে থাকেন
                     headerProfileImage.src = user.photoURL || 'path/to/default/profile.png'; 
                     headerProfileImage.style.display = 'block';
                     defaultProfileIcon.style.display = 'none';
