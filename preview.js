@@ -25,7 +25,8 @@ function loadAndRenderPreview() {
     const actionButtons = document.getElementById('action-buttons');
     const pageTitle = document.getElementById('page-title');
 
-    if (!dataString || !metadataString) {
+    // ✅ সংশোধিত লজিক: শুধুমাত্র প্রধান ডেটা ('stagedPropertyData') যাচাই করুন। 
+    if (!dataString) {
         // ডেটা না পেলে পোস্ট পেজে ফেরত
         alert("কোনো প্রিভিউ ডেটা পাওয়া যায়নি। আপনাকে পোস্ট পেজে নিয়ে যাওয়া হচ্ছে।");
         window.location.href = 'post.html';
@@ -34,7 +35,8 @@ function loadAndRenderPreview() {
 
     try {
         const stagedData = JSON.parse(dataString);
-        const stagedMetadata = JSON.parse(metadataString);
+        // ✅ সংশোধিত লজিক: যদি metadataString না থাকে, তাহলে একটি খালি অবজেক্ট ({}) ব্যবহার করুন।
+        const stagedMetadata = metadataString ? JSON.parse(metadataString) : {}; 
         
         // টাইটেল আপডেট
         pageTitle.textContent = `${stagedData.title} - পোস্ট প্রিভিউ`;
@@ -42,7 +44,7 @@ function loadAndRenderPreview() {
         // প্রিভিউ HTML জেনারেট এবং ডিসপ্লে
         previewContainer.innerHTML = generatePreviewHTML(stagedData);
         
-        // Base64 ছবিগুলো রেন্ডার করা
+        // Base64 ছবিগুলো রেন্ডার করা (stagedData-এ base64Images না থাকলেও এটি কাজ করবে)
         renderImages(stagedData);
 
         // অ্যাকশন বাটন সেটআপ
@@ -134,40 +136,36 @@ function generatePreviewHTML(data) {
                 ${data.floorNo ? `<div class="info-item"><strong>ফ্লোর নং:</strong> ${data.floorNo}</div>` : ''}
                 
                 ${data.roadWidth ? `<div class="info-item"><strong>চলাচলের রাস্তা:</strong> ${data.roadWidth} ফিট</div>` : ''}
-                
                 ${data.landType ? `<div class="info-item"><strong>জমির ধরন:</strong> ${data.landType}</div>` : ''}
                 ${data.plotNo ? `<div class="info-item"><strong>প্লট নং:</strong> ${data.plotNo}</div>` : ''}
+                
+                ${isSale ? `
+                    <div class="info-item"><strong>দামের ধরন:</strong> ${data.priceUnit}</div>
+                    <div class="info-item price-item"><strong>দাম:</strong> ${data.price} টাকা</div>
+                ` : `
+                    <div class="info-item"><strong>ভাড়ার ধরন:</strong> ${data.rentUnit}</div>
+                    <div class="info-item price-item"><strong>ভাড়া:</strong> ${data.monthlyRent} টাকা</div>
+                `}
+                
+                ${data.advance ? `<div class="info-item"><strong>অগ্রিম (Advance):</strong> ${data.advance} টাকা</div>` : ''}
+                ${data.rentType ? `<div class="info-item"><strong>ভাড়ার জন্য:</strong> ${data.rentType}</div>` : ''}
+                ${data.moveInDate ? `<div class="info-item"><strong>ওঠার তারিখ:</strong> ${data.moveInDate}</div>` : ''}
                 ${data.shopCount ? `<div class="info-item"><strong>দোকান সংখ্যা:</strong> ${data.shopCount}টি</div>` : ''}
             </div>
-        </div>
+            
+            ${data.utilities && data.utilities.length > 0 ? `
+                <div class="info-item full-width-item">
+                    <strong>সুবিধাসমূহ:</strong>
+                    <ul class="utility-list">
+                        ${data.utilities.map(u => `<li>${u}</li>`).join('')}
+                    </ul>
+                </div>
+            ` : ''}
 
-        <div class="preview-section price-rent-section">
-            <h3 class="section-title">💰 ${isSale ? 'দাম' : 'ভাড়া ও শর্তাবলী'}</h3>
-            <div class="info-grid">
-                ${isSale ? 
-                    `<div class="info-item info-highlight"><strong>বিক্রয় মূল্য:</strong> ${data.price} টাকা (${data.priceUnit} প্রতি)</div>` :
-                    `
-                    <div class="info-item info-highlight"><strong>মাসিক ভাড়া:</strong> ${data.monthlyRent} টাকা</div>
-                    <div class="info-item"><strong>এডভান্স / জামানত:</strong> ${data.advance} টাকা</div>
-                    <div class="info-item"><strong>ওঠার তারিখ:</strong> ${data.moveInDate}</div>
-                    ${data.rentType ? `<div class="info-item"><strong>ভাড়ার ধরন:</strong> ${data.rentType}</div>` : ''}
-                    `
-                }
-            </div>
         </div>
-
-        ${isBuiltProperty ? `
-            <div class="preview-section utilities-section">
-                <h3 class="section-title">🛠️ অন্যান্য সুবিধা</h3>
-                ${data.utilities && data.utilities.length > 0 ? 
-                    `<div class="utility-list">${data.utilities.map(u => `<span class="utility-tag">${u}</span>`).join('')}</div>` :
-                    `<p>কোনো সুবিধা উল্লেখ করা হয়নি।</p>`
-                }
-            </div>
-        ` : ''}
         
-        <div class="preview-section address-section">
-            <h3 class="section-title">📍 ঠিকানা ও অবস্থান</h3>
+        <div class="preview-section location-section">
+            <h3 class="section-title">📍 অবস্থান</h3>
             <div class="info-grid">
                 <div class="info-item"><strong>বিভাগ:</strong> ${data.location.division}</div>
                 <div class="info-item"><strong>জেলা:</strong> ${data.location.district}</div>
@@ -175,31 +173,33 @@ function generatePreviewHTML(data) {
                 ${data.location.upazila ? `<div class="info-item"><strong>উপজেলা:</strong> ${data.location.upazila}</div>` : ''}
                 ${data.location.union ? `<div class="info-item"><strong>ইউনিয়ন:</strong> ${data.location.union}</div>` : ''}
                 ${data.location.cityCorporation ? `<div class="info-item"><strong>সিটি কর্পোরেশন:</strong> ${data.location.cityCorporation}</div>` : ''}
-                <div class="info-item"><strong>থানা:</strong> ${data.location.thana}</div>
-                ${data.location.wardNo ? `<div class="info-item"><strong>ওয়ার্ড নং:</strong> ${data.location.wardNo}</div>` : ''}
-                <div class="info-item"><strong>গ্রাম:</strong> ${data.location.village}</div>
-                <div class="info-item"><strong>রোড:</strong> ${data.location.road}</div>
-                ${data.googleMap ? `<div class="info-item google-map-link"><strong>গুগল ম্যাপ:</strong> <a href="${data.googleMap}" target="_blank">ম্যাপে দেখুন</a></div>` : ''}
+                <div class="info-item"><strong>গ্রাম/রোড:</strong> ${data.location.village || data.location.road}</div>
+                <div class="info-item full-width-item">
+                    <strong>Google ম্যাপ:</strong> <a href="${data.googleMap}" target="_blank">Google ম্যাপে দেখুন</a>
+                </div>
             </div>
         </div>
 
-        ${isSale ? `
+        ${isSale && data.owner ? `
             <div class="preview-section ownership-section">
-                <h3 class="section-title">📜 মালিকানা বিবরণ (বিক্রয়ের জন্য)</h3>
+                <h3 class="section-title">⚖️ মালিকানা তথ্য</h3>
                 <div class="info-grid">
                     <div class="info-item"><strong>দাতার নাম:</strong> ${data.owner.donorName}</div>
+                    <div class="info-item"><strong>দাগ নং (${data.owner.dagNoType}):</strong> ${data.owner.dagNo}</div>
                     <div class="info-item"><strong>মৌজা:</strong> ${data.owner.mouja}</div>
-                    <div class="info-item"><strong>দাগ নং:</strong> ${data.owner.dagNo} (${data.owner.dagNoType})</div>
                 </div>
-                <h4 class="section-title" style="border:none; margin-top: 20px;">ডকুমেন্টের প্রিভিউ</h4>
                 <div class="doc-preview-area">
                     <div>
                         <p>সর্বশেষ খতিয়ানের ছবি:</p>
-                        <div id="khotian-image-preview"></div>
+                        <div id="khotian-image-preview">
+                            ${!data.owner.khotianBase64 ? '<p class="placeholder-text">ছবি আপলোড করা হয়নি।</p>' : ''}
+                        </div>
                     </div>
                     <div>
                         <p>প্রপার্টি স্কেস/নকশা:</p>
-                        <div id="sketch-image-preview"></div>
+                        <div id="sketch-image-preview">
+                            ${!data.owner.sketchBase64 ? '<p class="placeholder-text">ছবি আপলোড করা হয়নি।</p>' : ''}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -213,7 +213,7 @@ function generatePreviewHTML(data) {
             </div>
         </div>
     `;
-    
+
     return html;
 }
 
@@ -222,7 +222,7 @@ async function handleFinalSubmission(stagedData, stagedMetadata) {
     const postButton = document.getElementById('post-button');
     postButton.disabled = true;
     postButton.textContent = 'পোস্ট হচ্ছে... অপেক্ষা করুন';
-    
+
     if (!auth.currentUser) {
         alert("পোস্ট করার আগে আপনাকে আবার লগইন করতে হবে।");
         postButton.disabled = false;
@@ -230,55 +230,54 @@ async function handleFinalSubmission(stagedData, stagedMetadata) {
         window.location.href = 'auth.html';
         return;
     }
-    
+
     try {
         const imageURLs = [];
-        // Firestore-এ একটি নতুন ডকুমেন্ট রেফারেন্স তৈরি করে আইডি নেওয়া
+        
+        // Firestore-এ একটি নতুন ডকুমেন্ট রেফারেন্স তৈরি করা
         const propertyRef = db.collection('properties').doc();
-        const propertyID = propertyRef.id;
-        const uploadPath = `property_images/${propertyID}`;
+        const postId = propertyRef.id;
+        const userId = auth.currentUser.uid;
+        const uploadPath = `properties/${userId}/${postId}/`;
+        
+        // ১. Base64 ছবিগুলো আপলোড করা এবং URL সংগ্রহ করা
+        const imagesToUpload = [
+            // stagedMetadata যদি {} হয়, তবুও map function কাজ করবে না। base64Images এ মূল ডেটা আছে।
+            ...stagedMetadata.images ? stagedMetadata.images.map(meta => ({ base64: stagedData.base64Images.find(b => b.includes(meta.name)), meta, type: 'main' })) : [],
+            (stagedMetadata.khotian && stagedData.owner?.khotianBase64) ? { base64: stagedData.owner.khotianBase64, meta: stagedMetadata.khotian, type: 'khotian' } : null,
+            (stagedMetadata.sketch && stagedData.owner?.sketchBase64) ? { base64: stagedData.owner.sketchBase64, meta: stagedMetadata.sketch, type: 'sketch' } : null,
+        ].filter(item => item && item.base64);
 
-        // ১. মূল ছবিগুলো আপলোড
-        for (let i = 0; i < stagedData.base64Images.length; i++) {
-            const base64 = stagedData.base64Images[i];
-            const meta = stagedMetadata.images[i];
-            const blob = dataURLtoBlob(base64);
-            const fileName = `main_${i}_${meta.name}`;
-            const storageRef = storage.ref(`${uploadPath}/${fileName}`);
-            
-            await storageRef.put(blob, { contentType: meta.type });
-            const url = await storageRef.getDownloadURL();
-            imageURLs.push(url);
+        for (const item of imagesToUpload) {
+            const blob = dataURLtoBlob(item.base64);
+            const storageRef = storage.ref().child(uploadPath + item.meta.name);
+            const snapshot = await storageRef.put(blob);
+            const url = await snapshot.ref.getDownloadURL();
+
+            if (item.type === 'main') {
+                imageURLs.push(url);
+            } else if (item.type === 'khotian') {
+                if (stagedData.owner) {
+                    stagedData.owner.khotianURL = url;
+                }
+            } else if (item.type === 'sketch') {
+                 if (stagedData.owner) {
+                    stagedData.owner.sketchURL = url;
+                }
+            }
         }
         
-        // ২. মালিকানার ডকুমেন্ট আপলোড (যদি থাকে)
-        if (stagedData.category === 'বিক্রয়') {
-            const owner = stagedData.owner;
-            const khotianMeta = stagedMetadata.khotian;
-            const sketchMeta = stagedMetadata.sketch;
-            
-            if (owner.khotianBase64 && khotianMeta) {
-                const khotianBlob = dataURLtoBlob(owner.khotianBase64);
-                const storageRef = storage.ref(`${uploadPath}/khotian_${khotianMeta.name}`);
-                await storageRef.put(khotianBlob, { contentType: khotianMeta.type });
-                owner.khotianUrl = await storageRef.getDownloadURL();
-            }
-             if (owner.sketchBase64 && sketchMeta) {
-                const sketchBlob = dataURLtoBlob(owner.sketchBase64);
-                const storageRef = storage.ref(`${uploadPath}/sketch_${sketchMeta.name}`);
-                await storageRef.put(sketchBlob, { contentType: sketchMeta.type });
-                owner.sketchUrl = await storageRef.getDownloadURL();
-            }
-            
-            // Base64 ডেটা মুছে ফেলা
-            delete owner.khotianBase64;
-            delete owner.sketchBase64;
-        }
-
-        // ৩. Firestore-এর জন্য চূড়ান্ত ডেটা প্রস্তুত করা
+        // ২. চূড়ান্ত ডেটা প্রস্তুত করা (Base64 ডেটা সরিয়ে URL যোগ করা)
         const finalData = { ...stagedData };
-        delete finalData.base64Images; // Base64 ডেটা সরিয়ে দেওয়া
-        finalData.imageURLs = imageURLs; // Firebase Storage URL যুক্ত করা
+        delete finalData.base64Images;
+        if (finalData.owner) {
+            delete finalData.owner.khotianBase64;
+            delete finalData.owner.sketchBase64;
+        }
+        finalData.imageURLs = imageURLs;
+        finalData.postId = postId;
+
+        // ৩. টাইমস্ট্যাম্প যোগ করা
         finalData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
         finalData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
         
@@ -315,5 +314,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // headerPostButton, notificationButton, login-link-sidebar ইত্যাদি ইভেন্ট হ্যান্ডেলিং প্রয়োজন হলে এখানে যোগ করুন।
+    // headerPostButton, notificationButton, login-link-sidebar ইত্যাদি ইভেন্ট হ্যান্ডেলিং প্রয়োজন...
 });
