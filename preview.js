@@ -1,4 +1,4 @@
-// preview.js - Updated with all Location fields made Mandatory in Preview
+// preview.js - Updated to ensure all dynamic fields are mirrored exactly
 
 // Firebase SDKs
 const db = firebase.firestore();
@@ -18,8 +18,10 @@ const dataURLtoBlob = (dataurl) => {
 }
 
 
-// --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর (সংশোধিত) ---
+// --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর (চূড়ান্ত সংশোধন) ---
 function generatePreviewHTML(data) {
+    
+    const NA = 'N/A';
     
     // সেফটি: অনুপস্থিত ডেটা হ্যান্ডেল করা
     const isSale = data.category === 'বিক্রয়';
@@ -34,18 +36,23 @@ function generatePreviewHTML(data) {
         priceText += data.rentUnit ? ` (${data.rentUnit})` : ' (মাসিক)';
     }
 
-    // অবস্থান ডেটা বাধ্যতামূলকভাবে লোড করা
-    const division = data.location?.division || 'N/A';
-    const district = data.location?.district || 'N/A';
-    const areaType = data.location?.areaType || 'N/A';
-    const upazila = data.location?.upazila || 'N/A';
-    const thana = data.location?.thana || 'N/A';
-    const cityCorporation = data.location?.cityCorporation || 'N/A';
-    const union = data.location?.union || 'N/A';
-    // 'wardNo' অথবা 'ward' উভয় Key-এর জন্য চেক করা হয়েছে
-    const wardNo = data.location?.wardNo || data.location?.ward || 'N/A'; 
-    const village = data.location?.village || 'N/A';
-    const road = data.location?.road || 'N/A';
+    // ✅ নতুন: এরিয়া/সাইজ ডেটা বাধ্যতামূলকভাবে লোড করা
+    const areaSqft = data.areaSqft || NA;
+    const landArea = data.landArea ? `${data.landArea} ${data.landAreaUnit || ''}` : NA;
+    const houseArea = data.houseArea ? `${data.houseArea} ${data.houseAreaUnit || ''}` : NA;
+    const commercialArea = data.commercialArea ? `${data.commercialArea} ${data.commercialAreaUnit || ''}` : NA;
+    
+    // অবস্থান ডেটা বাধ্যতামূলকভাবে লোড করা (পূর্বের ফিক্স)
+    const division = data.location?.division || NA;
+    const district = data.location?.district || NA;
+    const areaType = data.location?.areaType || NA;
+    const upazila = data.location?.upazila || NA;
+    const thana = data.location?.thana || NA;
+    const cityCorporation = data.location?.cityCorporation || NA;
+    const union = data.location?.union || NA;
+    const wardNo = data.location?.wardNo || data.location?.ward || NA; 
+    const village = data.location?.village || NA;
+    const road = data.location?.road || NA;
     const googleMapLink = data.googleMap || '#';
     const googleMapText = data.googleMap ? 'Google ম্যাপে দেখুন' : 'লিঙ্ক নেই';
 
@@ -53,7 +60,7 @@ function generatePreviewHTML(data) {
     let html = `
         <div class="preview-header-section stylish-card">
             <h2 class="preview-title">${data.title || 'শিরোনাম নেই'}</h2>
-            <p class="preview-meta-info">পোস্টকারী: <strong class="highlight-text">${data.listerType || 'N/A'}</strong> | ${data.category || 'N/A'} > ${data.type || 'N/A'}</p>
+            <p class="preview-meta-info">পোস্টকারী: <strong class="highlight-text">${data.listerType || NA}</strong> | ${data.category || NA} > ${data.type || NA}</p>
         </div>
         
         <div class="preview-section stylish-card image-gallery-section">
@@ -70,10 +77,10 @@ function generatePreviewHTML(data) {
         <div class="preview-section stylish-card property-info-section">
             <h3 class="section-title"><i class="fas fa-home icon-styling"></i> প্রপার্টির তথ্য</h3>
             <div class="info-grid">
-                ${data.areaSqft ? `<div class="info-item"><strong>পরিমাণ (স্কয়ার ফিট):</strong> <span class="info-value">${data.areaSqft}</span></div>` : ''}
-                ${data.landArea ? `<div class="info-item"><strong>পরিমাণ:</strong> <span class="info-value">${data.landArea} ${data.landAreaUnit || ''}</span></div>` : ''}
-                ${data.houseArea ? `<div class="info-item"><strong>জমির পরিমাণ:</strong> <span class="info-value">${data.houseArea} ${data.houseAreaUnit || ''}</span></div>` : ''}
-                ${data.commercialArea ? `<div class="info-item"><strong>পরিমাণ:</strong> <span class="info-value">${data.commercialArea} ${data.commercialAreaUnit || ''}</span></div>` : ''}
+                <div class="info-item"><strong>ফ্ল্যাটের সাইজ (স্ক. ফিট):</strong> <span class="info-value">${areaSqft}</span></div>
+                <div class="info-item"><strong>জমি (Land Area):</strong> <span class="info-value">${landArea}</span></div>
+                <div class="info-item"><strong>হাউস এরিয়া (Area):</strong> <span class="info-value">${houseArea}</span></div>
+                <div class="info-item"><strong>কমার্শিয়াল এরিয়া (Area):</strong> <span class="info-value">${commercialArea}</span></div>
 
                 ${isBuiltProperty && data.propertyAge !== undefined ? `<div class="info-item"><strong>বয়স:</strong> <span class="info-value">${data.propertyAge} বছর</span></div>` : ''}
                 ${isBuiltProperty && data.facing ? `<div class="info-item"><strong>দিক:</strong> <span class="info-value">${data.facing}</span></div>` : ''}
@@ -90,7 +97,7 @@ function generatePreviewHTML(data) {
                 ${data.plotNo ? `<div class="info-item"><strong>প্লট নং:</strong> <span class="info-value">${data.plotNo}</span></div>` : ''}
                 
                 ${isSale ? `
-                    <div class="info-item"><strong>দামের ধরন:</strong> <span class="info-value">${data.priceUnit || 'N/A'}</span></div>
+                    <div class="info-item"><strong>দামের ধরন:</strong> <span class="info-value">${data.priceUnit || NA}</span></div>
                     <div class="info-item price-item"><strong>দাম:</strong> <span class="info-value price-highlight">${priceText}</span></div>
                 ` : `
                     <div class="info-item"><strong>ভাড়ার ধরন:</strong> <span class="info-value">${data.rentUnit || 'মাসিক'}</span></div>
@@ -141,9 +148,9 @@ function generatePreviewHTML(data) {
             <div class="preview-section stylish-card ownership-section">
                 <h3 class="section-title"><i class="fas fa-file-alt icon-styling"></i> মালিকানা তথ্য</h3>
                 <div class="info-grid">
-                    <div class="info-item"><strong>দাতার নাম:</strong> <span class="info-value">${data.owner.donorName || 'N/A'}</span></div>
-                    <div class="info-item"><strong>দাগ নং (${data.owner.dagNoType || 'N/A'}):</strong> <span class="info-value">${data.owner.dagNo || 'N/A'}</span></div>
-                    <div class="info-item"><strong>মৌজা:</strong> <span class="info-value">${data.owner.mouja || 'N/A'}</span></div>
+                    <div class="info-item"><strong>দাতার নাম:</strong> <span class="info-value">${data.owner.donorName || NA}</span></div>
+                    <div class="info-item"><strong>দাগ নং (${data.owner.dagNoType || NA}):</strong> <span class="info-value">${data.owner.dagNo || NA}</span></div>
+                    <div class="info-item"><strong>মৌজা:</strong> <span class="info-value">${data.owner.mouja || NA}</span></div>
                 </div>
                 <div class="doc-preview-area image-grid-container">
                     <div class="doc-item">
@@ -165,7 +172,7 @@ function generatePreviewHTML(data) {
         <div class="preview-section stylish-card contact-section">
             <h3 class="section-title"><i class="fas fa-phone-alt icon-styling"></i> যোগাযোগের তথ্য</h3>
             <div class="info-grid">
-                <div class="info-item"><strong>প্রাথমিক ফোন:</strong> <span class="info-value">${data.phoneNumber || 'N/A'}</span></div>
+                <div class="info-item"><strong>প্রাথমিক ফোন:</strong> <span class="info-value">${data.phoneNumber || NA}</span></div>
                 ${data.secondaryPhone ? `<div class="info-item"><strong>অতিরিক্ত ফোন:</strong> <span class="info-value">${data.secondaryPhone}</span></div>` : ''}
             </div>
         </div>
@@ -210,56 +217,43 @@ function loadAndRenderPreview() {
     const actionButtons = document.getElementById('action-buttons');
     const pageTitle = document.getElementById('page-title');
 
-    // ✅ সংশোধিত লজিক: শুধুমাত্র প্রধান ডেটা ('stagedPropertyData') যাচাই করুন। 
     if (!dataString) {
-        // ডেটা না পেলে পোস্ট পেজে ফেরত
         alert("কোনো প্রিভিউ ডেটা পাওয়া যায়নি। আপনাকে পোস্ট পেজে নিয়ে যাওয়া হচ্ছে।");
         window.location.href = 'post.html';
         return;
     }
 
     try {
-        // **সম্ভাব্য ত্রুটি পয়েন্ট ১: JSON parsing ফেইল**
-        const stagedData = JSON.parse(dataString); // এই লাইনটি এখন try...catch দ্বারা সুরক্ষিত
-        // ✅ সংশোধিত লজিক: যদি metadataString না থাকে, তাহলে একটি খালি অবজেক্ট ({}) ব্যবহার করুন।
+        const stagedData = JSON.parse(dataString);
         const stagedMetadata = metadataString ? JSON.parse(metadataString) : {}; 
         
-        // টাইটেল আপডেট
         if (pageTitle) {
             pageTitle.textContent = `${stagedData.title || 'শিরোনাম নেই'} - পোস্ট প্রিভিউ`;
         }
         
-        // **সম্ভাব্য ত্রুটি পয়েন্ট ২: রেন্ডারিং এর সময় TypeError**
-        // প্রিভিউ HTML জেনারেট এবং ডিসপ্লে
         if (previewContainer) {
             previewContainer.innerHTML = generatePreviewHTML(stagedData);
         }
         
-        // Base64 ছবিগুলো রেন্ডার করা 
         renderImages(stagedData);
 
-        // অ্যাকশন বাটন সেটআপ
         const editButton = document.getElementById('edit-button');
         const postButton = document.getElementById('post-button');
         
         if (editButton) {
             editButton.addEventListener('click', () => {
-                window.location.href = 'post.html'; // এডিট করার জন্য post.html-এ ফেরত
+                window.location.href = 'post.html';
             });
         }
         if (postButton) {
-            // চূড়ান্ত পোস্ট ফাংশনটি নিচে আছে
             postButton.addEventListener('click', () => handleFinalSubmission(stagedData, stagedMetadata));
         }
         
-        // বাটনগুলো দেখানো
         if (actionButtons) actionButtons.style.display = 'flex';
 
     } catch (error) {
-        // **ত্রুটি ক্যাচ হলে:**
         console.error('Error loading or rendering staged data:', error);
         
-        // ব্যবহারকারীকে ডিটেইলড এরর দেখান (যেমনটা আমি প্রথম সমাধানে দিয়েছিলাম)
         const errorMessageHtml = `
             <div class="error-box">
                 <h3>প্রিভিউ লোড করার সময় সমস্যা হয়েছে।</h3>
@@ -271,11 +265,6 @@ function loadAndRenderPreview() {
         if (previewContainer) {
              previewContainer.innerHTML = errorMessageHtml;
         }
-
-        // ডেটা মুছে ফেলা (তাও যদি সমস্যা না কমে)
-        // sessionStorage.removeItem('stagedPropertyData');
-        // sessionStorage.removeItem('stagedImageMetadata');
-        
         if (actionButtons) actionButtons.style.display = 'none';
     }
 }
@@ -301,17 +290,12 @@ async function handleFinalSubmission(stagedData, stagedMetadata) {
 
     try {
         const imageURLs = [];
-        
-        // Firestore-এ একটি নতুন ডকুমেন্ট রেফারেন্স তৈরি করা
         const propertyRef = db.collection('properties').doc();
         const postId = propertyRef.id;
         const userId = auth.currentUser.uid;
         const uploadPath = `properties/${userId}/${postId}/`;
         
-        // ১. Base64 ছবিগুলো আপলোড করা এবং URL সংগ্রহ করা
         const imagesToUpload = [
-            // stagedMetadata যদি {} হয়, তবুও map function কাজ করবে না। base64Images এ মূল ডেটা আছে।
-            // stagedMetadata.images সেফলি অ্যাক্সেস করা হয়েছে।
             ...(stagedMetadata.images || []).map(meta => ({ base64: stagedData.base64Images?.find(b => b.includes(meta.name)), meta, type: 'main' })).filter(item => item.base64),
             (stagedMetadata.khotian && stagedData.owner?.khotianBase64) ? { base64: stagedData.owner.khotianBase64, meta: stagedMetadata.khotian, type: 'khotian' } : null,
             (stagedMetadata.sketch && stagedData.owner?.sketchBase64) ? { base64: stagedData.owner.sketchBase64, meta: stagedMetadata.sketch, type: 'sketch' } : null,
@@ -332,7 +316,6 @@ async function handleFinalSubmission(stagedData, stagedMetadata) {
             }
         }
         
-        // ২. চূড়ান্ত ডেটা প্রস্তুত করা (Base64 ডেটা সরিয়ে URL যোগ করা)
         const finalData = { ...stagedData };
         delete finalData.base64Images;
         if (finalData.owner) {
@@ -342,14 +325,11 @@ async function handleFinalSubmission(stagedData, stagedMetadata) {
         finalData.imageURLs = imageURLs;
         finalData.postId = postId;
 
-        // ৩. টাইমস্ট্যাম্প যোগ করা
         finalData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
         finalData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
         
-        // ৪. Firestore-এ সেভ করা
         await propertyRef.set(finalData);
         
-        // ৫. সাফল্য এবং ক্লিনআপ
         sessionStorage.removeItem('stagedPropertyData');
         sessionStorage.removeItem('stagedImageMetadata');
         
@@ -369,7 +349,7 @@ async function handleFinalSubmission(stagedData, stagedMetadata) {
 
 // DOM লোড হওয়ার পর প্রিভিউ রেন্ডার শুরু করা
 document.addEventListener('DOMContentLoaded', function() {
-    // অ্যাকশন বাটনগুলির ইভেন্ট লিসেনার সেট আপ করা
+    
     const editButton = document.getElementById('edit-button');
     const postButton = document.getElementById('post-button');
 
@@ -381,14 +361,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadAndRenderPreview();
     
-    // Auth state handler (আপনার post.js থেকে নেওয়া লজিক)
-    // প্রোফাইল আইকনে ক্লিক ইভেন্ট যোগ করা হয়েছে, যদিও অন্য ফাংশনও প্রয়োজন হতে পারে।
     const profileImageWrapper = document.getElementById('profileImageWrapper'); 
     if (profileImageWrapper) {
         profileImageWrapper.addEventListener('click', () => {
              window.location.href = 'profile.html'; 
         });
     }
-    
-    // headerPostButton, notificationButton, login-link-sidebar ইত্যাদি ইভেন্ট হ্যান্ডেলিং প্রয়োজন...
 });
