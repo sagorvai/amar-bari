@@ -1,4 +1,4 @@
-// preview.js - Updated with proper Location fields (Thana, Ward, Village, Road separated)
+// preview.js - Updated with proper Location fields (Thana, Ward No., Village, Road separated)
 
 // Firebase SDKs
 const db = firebase.firestore();
@@ -10,7 +10,7 @@ const dataURLtoBlob = (dataurl) => {
     const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
         bstr = atob(arr[1]);
     let n = bstr.length;
-    const u8arr = new Uint8Array(n);
+    const u8arr = new Uint8arr(n);
     while(n--){
         u8arr[n] = bstr.charCodeAt(n);
     }
@@ -18,7 +18,7 @@ const dataURLtoBlob = (dataurl) => {
 }
 
 
-// --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর (সংশোধিত) ---
+// --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর (ওয়ার্ড নং সহ সংশোধিত) ---
 function generatePreviewHTML(data) {
     
     // সেফটি: অনুপস্থিত ডেটা হ্যান্ডেল করা
@@ -111,7 +111,8 @@ function generatePreviewHTML(data) {
                 
                 ${data.location?.cityCorporation ? `<div class="info-item"><strong>সিটি কর্পোরেশন:</strong> <span class="info-value">${data.location.cityCorporation}</span></div>` : ''}
                 ${data.location?.union ? `<div class="info-item"><strong>ইউনিয়ন:</strong> <span class="info-value">${data.location.union}</span></div>` : ''}
-                ${data.location?.ward ? `<div class="info-item"><strong>ওয়ার্ড:</strong> <span class="info-value">${data.location.ward}</span></div>` : ''} 
+                
+                ${data.location?.wardNo || data.location?.ward ? `<div class="info-item"><strong>ওয়ার্ড নং:</strong> <span class="info-value">${data.location.wardNo || data.location.ward}</span></div>` : ''} 
                 
                 ${data.location?.village ? `<div class="info-item"><strong>গ্রাম:</strong> <span class="info-value">${data.location.village}</span></div>` : ''}
                 ${data.location?.road ? `<div class="info-item"><strong>রাস্তা/রোড:</strong> <span class="info-value">${data.location.road}</span></div>` : ''}
