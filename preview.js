@@ -1,4 +1,4 @@
-// preview.js - Updated to ensure all dynamic fields are mirrored exactly
+// preview.js - Updated for strict dynamic rendering based on post.js input
 
 // Firebase SDKs
 const db = firebase.firestore();
@@ -18,10 +18,8 @@ const dataURLtoBlob = (dataurl) => {
 }
 
 
-// --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর (চূড়ান্ত সংশোধন) ---
+// --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর (শুধুমাত্র ইনপুট করা ডেটা দেখাবে) ---
 function generatePreviewHTML(data) {
-    
-    const NA = 'N/A';
     
     // সেফটি: অনুপস্থিত ডেটা হ্যান্ডেল করা
     const isSale = data.category === 'বিক্রয়';
@@ -36,31 +34,70 @@ function generatePreviewHTML(data) {
         priceText += data.rentUnit ? ` (${data.rentUnit})` : ' (মাসিক)';
     }
 
-    // ✅ নতুন: এরিয়া/সাইজ ডেটা বাধ্যতামূলকভাবে লোড করা
-    const areaSqft = data.areaSqft || NA;
-    const landArea = data.landArea ? `${data.landArea} ${data.landAreaUnit || ''}` : NA;
-    const houseArea = data.houseArea ? `${data.houseArea} ${data.houseAreaUnit || ''}` : NA;
-    const commercialArea = data.commercialArea ? `${data.commercialArea} ${data.commercialAreaUnit || ''}` : NA;
+    // সমস্ত সম্ভাব্য প্রপার্টি ইনফো আইটেম জেনারেট করা (শুধুমাত্র যদি ডেটা থাকে)
+    const propertyInfoItems = `
+        ${data.areaSqft ? `<div class="info-item"><strong>ফ্ল্যাটের সাইজ (স্ক. ফিট):</strong> <span class="info-value">${data.areaSqft}</span></div>` : ''}
+        ${data.landArea ? `<div class="info-item"><strong>জমির পরিমাণ:</strong> <span class="info-value">${data.landArea} ${data.landAreaUnit || ''}</span></div>` : ''}
+        ${data.houseArea ? `<div class="info-item"><strong>জমির পরিমাণ (হাউস):</strong> <span class="info-value">${data.houseArea} ${data.houseAreaUnit || ''}</span></div>` : ''}
+        ${data.commercialArea ? `<div class="info-item"><strong>কমার্শিয়াল এরিয়া:</strong> <span class="info-value">${data.commercialArea} ${data.commercialAreaUnit || ''}</span></div>` : ''}
+
+        ${isBuiltProperty && data.propertyAge ? `<div class="info-item"><strong>বয়স:</strong> <span class="info-value">${data.propertyAge} বছর</span></div>` : ''}
+        ${isBuiltProperty && data.facing ? `<div class="info-item"><strong>দিক:</strong> <span class="info-value">${data.facing}</span></div>` : ''}
+        
+        ${data.rooms ? `<div class="info-item"><strong>রুম সংখ্যা:</strong> <span class="info-value">${data.rooms}টি</span></div>` : ''}
+        ${data.bathrooms ? `<div class="info-item"><strong>বাথরুম:</strong> <span class="info-value">${data.bathrooms}টি</span></div>` : ''}
+        ${data.kitchen ? `<div class="info-item"><strong>কিচেন:</strong> <span class="info-value">${data.kitchen}টি</span></div>` : ''}
+        
+        ${data.floors ? `<div class="info-item"><strong>তলা সংখ্যা:</strong> <span class="info-value">${data.floors}টি</span></div>` : ''}
+        ${data.floorNo ? `<div class="info-item"><strong>ফ্লোর নং:</strong> <span class="info-value">${data.floorNo}</span></div>` : ''}
+        
+        ${data.roadWidth ? `<div class="info-item"><strong>চলাচলের রাস্তা:</strong> <span class="info-value">${data.roadWidth} ফিট</span></div>` : ''}
+        ${data.landType ? `<div class="info-item"><strong>জমির ধরন:</strong> <span class="info-value">${data.landType}</span></div>` : ''}
+        ${data.plotNo ? `<div class="info-item"><strong>প্লট নং:</strong> <span class="info-value">${data.plotNo}</span></div>` : ''}
+        
+        ${isSale ? `
+            ${data.priceUnit ? `<div class="info-item"><strong>দামের ধরন:</strong> <span class="info-value">${data.priceUnit}</span></div>` : ''}
+            <div class="info-item price-item"><strong>দাম:</strong> <span class="info-value price-highlight">${priceText}</span></div>
+        ` : `
+            ${data.rentUnit ? `<div class="info-item"><strong>ভাড়ার ধরন:</strong> <span class="info-value">${data.rentUnit}</span></div>` : ''}
+            <div class="info-item price-item"><strong>ভাড়া:</strong> <span class="info-value price-highlight">${priceText}</span></div>
+        `}
+        
+        ${data.advance ? `<div class="info-item"><strong>অগ্রিম (Advance):</strong> <span class="info-value">${data.advance} টাকা</span></div>` : ''}
+        ${data.rentType ? `<div class="info-item"><strong>ভাড়ার জন্য:</strong> <span class="info-value">${data.rentType}</span></div>` : ''}
+        ${data.moveInDate ? `<div class="info-item"><strong>ওঠার তারিখ:</strong> <span class="info-value">${data.moveInDate}</span></div>` : ''}
+        ${data.shopCount ? `<div class="info-item"><strong>দোকান সংখ্যা:</strong> <span class="info-value">${data.shopCount}টি</span></div>` : ''}
+    `;
     
-    // অবস্থান ডেটা বাধ্যতামূলকভাবে লোড করা (পূর্বের ফিক্স)
-    const division = data.location?.division || NA;
-    const district = data.location?.district || NA;
-    const areaType = data.location?.areaType || NA;
-    const upazila = data.location?.upazila || NA;
-    const thana = data.location?.thana || NA;
-    const cityCorporation = data.location?.cityCorporation || NA;
-    const union = data.location?.union || NA;
-    const wardNo = data.location?.wardNo || data.location?.ward || NA; 
-    const village = data.location?.village || NA;
-    const road = data.location?.road || NA;
-    const googleMapLink = data.googleMap || '#';
-    const googleMapText = data.googleMap ? 'Google ম্যাপে দেখুন' : 'লিঙ্ক নেই';
+    // সমস্ত সম্ভাব্য অবস্থান আইটেম জেনারেট করা (শুধুমাত্র যদি ডেটা থাকে)
+    const locationInfoItems = `
+        ${data.location?.division ? `<div class="info-item"><strong>বিভাগ:</strong> <span class="info-value">${data.location.division}</span></div>` : ''}
+        ${data.location?.district ? `<div class="info-item"><strong>জেলা:</strong> <span class="info-value">${data.location.district}</span></div>` : ''}
+        ${data.location?.areaType ? `<div class="info-item"><strong>এলাকার ধরন:</strong> <span class="info-value">${data.location.areaType}</span></div>` : ''}
+        
+        ${data.location?.upazila ? `<div class="info-item"><strong>উপজেলা:</strong> <span class="info-value">${data.location.upazila}</span></div>` : ''}
+        ${data.location?.thana ? `<div class="info-item"><strong>থানা:</strong> <span class="info-value">${data.location.thana}</span></div>` : ''} 
+        
+        ${data.location?.cityCorporation ? `<div class="info-item"><strong>সিটি কর্পোরেশন:</strong> <span class="info-value">${data.location.cityCorporation}</span></div>` : ''}
+        ${data.location?.union ? `<div class="info-item"><strong>ইউনিয়ন:</strong> <span class="info-value">${data.location.union}</span></div>` : ''}
+        
+        ${data.location?.wardNo || data.location?.ward ? `<div class="info-item"><strong>ওয়ার্ড নং:</strong> <span class="info-value">${data.location.wardNo || data.location.ward}</span></div>` : ''} 
+        
+        ${data.location?.village ? `<div class="info-item"><strong>গ্রাম:</strong> <span class="info-value">${data.location.village}</span></div>` : ''}
+        ${data.location?.road ? `<div class="info-item"><strong>রাস্তা/রোড:</strong> <span class="info-value">${data.location.road}</span></div>` : ''}
 
+        ${data.googleMap ? `
+            <div class="info-item full-width-item google-map-link-container">
+                <strong>Google ম্যাপ:</strong> <a href="${data.googleMap}" target="_blank" class="map-link">Google ম্যাপে দেখুন</a>
+            </div>
+        ` : ''}
+    `;
 
+    // মূল HTML স্ট্রাকচার
     let html = `
         <div class="preview-header-section stylish-card">
             <h2 class="preview-title">${data.title || 'শিরোনাম নেই'}</h2>
-            <p class="preview-meta-info">পোস্টকারী: <strong class="highlight-text">${data.listerType || NA}</strong> | ${data.category || NA} > ${data.type || NA}</p>
+            <p class="preview-meta-info">পোস্টকারী: <strong class="highlight-text">${data.listerType || 'N/A'}</strong> | ${data.category || 'N/A'} > ${data.type || 'N/A'}</p>
         </div>
         
         <div class="preview-section stylish-card image-gallery-section">
@@ -69,88 +106,47 @@ function generatePreviewHTML(data) {
                 </div>
         </div>
         
-        <div class="preview-section stylish-card details-section">
-            <h3 class="section-title"><i class="fas fa-info-circle icon-styling"></i> বিস্তারিত বিবরণ</h3>
-            <p class="description-text">${data.description || 'কোনো বিবরণ দেওয়া হয়নি।'}</p>
-        </div>
-        
-        <div class="preview-section stylish-card property-info-section">
-            <h3 class="section-title"><i class="fas fa-home icon-styling"></i> প্রপার্টির তথ্য</h3>
-            <div class="info-grid">
-                <div class="info-item"><strong>ফ্ল্যাটের সাইজ (স্ক. ফিট):</strong> <span class="info-value">${areaSqft}</span></div>
-                <div class="info-item"><strong>জমি (Land Area):</strong> <span class="info-value">${landArea}</span></div>
-                <div class="info-item"><strong>হাউস এরিয়া (Area):</strong> <span class="info-value">${houseArea}</span></div>
-                <div class="info-item"><strong>কমার্শিয়াল এরিয়া (Area):</strong> <span class="info-value">${commercialArea}</span></div>
-
-                ${isBuiltProperty && data.propertyAge !== undefined ? `<div class="info-item"><strong>বয়স:</strong> <span class="info-value">${data.propertyAge} বছর</span></div>` : ''}
-                ${isBuiltProperty && data.facing ? `<div class="info-item"><strong>দিক:</strong> <span class="info-value">${data.facing}</span></div>` : ''}
-                
-                ${data.rooms ? `<div class="info-item"><strong>রুম সংখ্যা:</strong> <span class="info-value">${data.rooms}টি</span></div>` : ''}
-                ${data.bathrooms ? `<div class="info-item"><strong>বাথরুম:</strong> <span class="info-value">${data.bathrooms}টি</span></div>` : ''}
-                ${data.kitchen ? `<div class="info-item"><strong>কিচেন:</strong> <span class="info-value">${data.kitchen}টি</span></div>` : ''}
-                
-                ${data.floors ? `<div class="info-item"><strong>তলা সংখ্যা:</strong> <span class="info-value">${data.floors}টি</span></div>` : ''}
-                ${data.floorNo ? `<div class="info-item"><strong>ফ্লোর নং:</strong> <span class="info-value">${data.floorNo}</span></div>` : ''}
-                
-                ${data.roadWidth ? `<div class="info-item"><strong>চলাচলের রাস্তা:</strong> <span class="info-value">${data.roadWidth} ফিট</span></div>` : ''}
-                ${data.landType ? `<div class="info-item"><strong>জমির ধরন:</strong> <span class="info-value">${data.landType}</span></div>` : ''}
-                ${data.plotNo ? `<div class="info-item"><strong>প্লট নং:</strong> <span class="info-value">${data.plotNo}</span></div>` : ''}
-                
-                ${isSale ? `
-                    <div class="info-item"><strong>দামের ধরন:</strong> <span class="info-value">${data.priceUnit || NA}</span></div>
-                    <div class="info-item price-item"><strong>দাম:</strong> <span class="info-value price-highlight">${priceText}</span></div>
-                ` : `
-                    <div class="info-item"><strong>ভাড়ার ধরন:</strong> <span class="info-value">${data.rentUnit || 'মাসিক'}</span></div>
-                    <div class="info-item price-item"><strong>ভাড়া:</strong> <span class="info-value price-highlight">${priceText}</span></div>
-                `}
-                
-                ${data.advance ? `<div class="info-item"><strong>অগ্রিম (Advance):</strong> <span class="info-value">${data.advance} টাকা</span></div>` : ''}
-                ${data.rentType ? `<div class="info-item"><strong>ভাড়ার জন্য:</strong> <span class="info-value">${data.rentType}</span></div>` : ''}
-                ${data.moveInDate ? `<div class="info-item"><strong>ওঠার তারিখ:</strong> <span class="info-value">${data.moveInDate}</span></div>` : ''}
-                ${data.shopCount ? `<div class="info-item"><strong>দোকান সংখ্যা:</strong> <span class="info-value">${data.shopCount}টি</span></div>` : ''}
+        ${data.description ? `
+            <div class="preview-section stylish-card details-section">
+                <h3 class="section-title"><i class="fas fa-info-circle icon-styling"></i> বিস্তারিত বিবরণ</h3>
+                <p class="description-text">${data.description}</p>
             </div>
-            
-            ${data.utilities && data.utilities.length > 0 ? `
-                <div class="info-item full-width-item utility-section">
-                    <strong>সুবিধাসমূহ:</strong>
-                    <ul class="utility-list">
-                        ${data.utilities.map(u => `<li><i class="fas fa-check-circle utility-icon"></i> ${u}</li>`).join('')}
-                    </ul>
-                </div>
-            ` : ''}
-
-        </div>
+        ` : ''}
         
-        <div class="preview-section stylish-card location-section">
-            <h3 class="section-title"><i class="fas fa-map-marker-alt icon-styling"></i> অবস্থান</h3>
-            <div class="info-grid">
-                <div class="info-item"><strong>বিভাগ:</strong> <span class="info-value">${division}</span></div>
-                <div class="info-item"><strong>জেলা:</strong> <span class="info-value">${district}</span></div>
-                <div class="info-item"><strong>এলাকার ধরন:</strong> <span class="info-value">${areaType}</span></div>
+        ${propertyInfoItems.trim() || (data.utilities && data.utilities.length > 0) ? `
+            <div class="preview-section stylish-card property-info-section">
+                <h3 class="section-title"><i class="fas fa-home icon-styling"></i> প্রপার্টির তথ্য</h3>
+                <div class="info-grid">
+                    ${propertyInfoItems}
+                </div>
                 
-                <div class="info-item"><strong>উপজেলা:</strong> <span class="info-value">${upazila}</span></div>
-                <div class="info-item"><strong>থানা:</strong> <span class="info-value">${thana}</span></div> 
-                
-                <div class="info-item"><strong>সিটি কর্পোরেশন:</strong> <span class="info-value">${cityCorporation}</span></div>
-                <div class="info-item"><strong>ইউনিয়ন:</strong> <span class="info-value">${union}</span></div>
-                <div class="info-item"><strong>ওয়ার্ড নং:</strong> <span class="info-value">${wardNo}</span></div> 
-                
-                <div class="info-item"><strong>গ্রাম:</strong> <span class="info-value">${village}</span></div>
-                <div class="info-item"><strong>রাস্তা/রোড:</strong> <span class="info-value">${road}</span></div>
-
-                <div class="info-item full-width-item google-map-link-container">
-                    <strong>Google ম্যাপ:</strong> <a href="${googleMapLink}" target="_blank" class="map-link">${googleMapText}</a>
+                ${data.utilities && data.utilities.length > 0 ? `
+                    <div class="info-item full-width-item utility-section">
+                        <strong>সুবিধাসমূহ:</strong>
+                        <ul class="utility-list">
+                            ${data.utilities.map(u => `<li><i class="fas fa-check-circle utility-icon"></i> ${u}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+            </div>
+        ` : ''}
+        
+        ${locationInfoItems.trim() ? `
+            <div class="preview-section stylish-card location-section">
+                <h3 class="section-title"><i class="fas fa-map-marker-alt icon-styling"></i> অবস্থান</h3>
+                <div class="info-grid">
+                    ${locationInfoItems}
                 </div>
             </div>
-        </div>
+        ` : ''}
 
         ${isSale && data.owner ? `
             <div class="preview-section stylish-card ownership-section">
                 <h3 class="section-title"><i class="fas fa-file-alt icon-styling"></i> মালিকানা তথ্য</h3>
                 <div class="info-grid">
-                    <div class="info-item"><strong>দাতার নাম:</strong> <span class="info-value">${data.owner.donorName || NA}</span></div>
-                    <div class="info-item"><strong>দাগ নং (${data.owner.dagNoType || NA}):</strong> <span class="info-value">${data.owner.dagNo || NA}</span></div>
-                    <div class="info-item"><strong>মৌজা:</strong> <span class="info-value">${data.owner.mouja || NA}</span></div>
+                    ${data.owner.donorName ? `<div class="info-item"><strong>দাতার নাম:</strong> <span class="info-value">${data.owner.donorName}</span></div>` : ''}
+                    ${data.owner.dagNo ? `<div class="info-item"><strong>দাগ নং (${data.owner.dagNoType || 'N/A'}):</strong> <span class="info-value">${data.owner.dagNo}</span></div>` : ''}
+                    ${data.owner.mouja ? `<div class="info-item"><strong>মৌজা:</strong> <span class="info-value">${data.owner.mouja}</span></div>` : ''}
                 </div>
                 <div class="doc-preview-area image-grid-container">
                     <div class="doc-item">
@@ -172,7 +168,7 @@ function generatePreviewHTML(data) {
         <div class="preview-section stylish-card contact-section">
             <h3 class="section-title"><i class="fas fa-phone-alt icon-styling"></i> যোগাযোগের তথ্য</h3>
             <div class="info-grid">
-                <div class="info-item"><strong>প্রাথমিক ফোন:</strong> <span class="info-value">${data.phoneNumber || NA}</span></div>
+                <div class="info-item"><strong>প্রাথমিক ফোন:</strong> <span class="info-value">${data.phoneNumber || 'N/A'}</span></div>
                 ${data.secondaryPhone ? `<div class="info-item"><strong>অতিরিক্ত ফোন:</strong> <span class="info-value">${data.secondaryPhone}</span></div>` : ''}
             </div>
         </div>
