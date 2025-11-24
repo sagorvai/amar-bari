@@ -1,4 +1,4 @@
-// preview.js - Updated with proper Location fields (Thana, Ward No., Village, Road separated)
+// preview.js - Updated with all Location fields made Mandatory in Preview
 
 // Firebase SDKs
 const db = firebase.firestore();
@@ -10,7 +10,7 @@ const dataURLtoBlob = (dataurl) => {
     const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
         bstr = atob(arr[1]);
     let n = bstr.length;
-    const u8arr = new Uint8arr(n);
+    const u8arr = new Uint8Array(n);
     while(n--){
         u8arr[n] = bstr.charCodeAt(n);
     }
@@ -18,7 +18,7 @@ const dataURLtoBlob = (dataurl) => {
 }
 
 
-// --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর (ওয়ার্ড নং সহ সংশোধিত) ---
+// --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর (সংশোধিত) ---
 function generatePreviewHTML(data) {
     
     // সেফটি: অনুপস্থিত ডেটা হ্যান্ডেল করা
@@ -33,6 +33,21 @@ function generatePreviewHTML(data) {
         priceText = `${data.monthlyRent || 'আলোচনা সাপেক্ষে'} টাকা`;
         priceText += data.rentUnit ? ` (${data.rentUnit})` : ' (মাসিক)';
     }
+
+    // অবস্থান ডেটা বাধ্যতামূলকভাবে লোড করা
+    const division = data.location?.division || 'N/A';
+    const district = data.location?.district || 'N/A';
+    const areaType = data.location?.areaType || 'N/A';
+    const upazila = data.location?.upazila || 'N/A';
+    const thana = data.location?.thana || 'N/A';
+    const cityCorporation = data.location?.cityCorporation || 'N/A';
+    const union = data.location?.union || 'N/A';
+    // 'wardNo' অথবা 'ward' উভয় Key-এর জন্য চেক করা হয়েছে
+    const wardNo = data.location?.wardNo || data.location?.ward || 'N/A'; 
+    const village = data.location?.village || 'N/A';
+    const road = data.location?.road || 'N/A';
+    const googleMapLink = data.googleMap || '#';
+    const googleMapText = data.googleMap ? 'Google ম্যাপে দেখুন' : 'লিঙ্ক নেই';
 
 
     let html = `
@@ -102,23 +117,22 @@ function generatePreviewHTML(data) {
         <div class="preview-section stylish-card location-section">
             <h3 class="section-title"><i class="fas fa-map-marker-alt icon-styling"></i> অবস্থান</h3>
             <div class="info-grid">
-                <div class="info-item"><strong>বিভাগ:</strong> <span class="info-value">${data.location?.division || 'N/A'}</span></div>
-                <div class="info-item"><strong>জেলা:</strong> <span class="info-value">${data.location?.district || 'N/A'}</span></div>
-                ${data.location?.areaType ? `<div class="info-item"><strong>এলাকার ধরন:</strong> <span class="info-value">${data.location.areaType}</span></div>` : ''}
+                <div class="info-item"><strong>বিভাগ:</strong> <span class="info-value">${division}</span></div>
+                <div class="info-item"><strong>জেলা:</strong> <span class="info-value">${district}</span></div>
+                <div class="info-item"><strong>এলাকার ধরন:</strong> <span class="info-value">${areaType}</span></div>
                 
-                ${data.location?.upazila ? `<div class="info-item"><strong>উপজেলা:</strong> <span class="info-value">${data.location.upazila}</span></div>` : ''}
-                ${data.location?.thana ? `<div class="info-item"><strong>থানা:</strong> <span class="info-value">${data.location.thana}</span></div>` : ''} 
+                <div class="info-item"><strong>উপজেলা:</strong> <span class="info-value">${upazila}</span></div>
+                <div class="info-item"><strong>থানা:</strong> <span class="info-value">${thana}</span></div> 
                 
-                ${data.location?.cityCorporation ? `<div class="info-item"><strong>সিটি কর্পোরেশন:</strong> <span class="info-value">${data.location.cityCorporation}</span></div>` : ''}
-                ${data.location?.union ? `<div class="info-item"><strong>ইউনিয়ন:</strong> <span class="info-value">${data.location.union}</span></div>` : ''}
+                <div class="info-item"><strong>সিটি কর্পোরেশন:</strong> <span class="info-value">${cityCorporation}</span></div>
+                <div class="info-item"><strong>ইউনিয়ন:</strong> <span class="info-value">${union}</span></div>
+                <div class="info-item"><strong>ওয়ার্ড নং:</strong> <span class="info-value">${wardNo}</span></div> 
                 
-                ${data.location?.wardNo || data.location?.ward ? `<div class="info-item"><strong>ওয়ার্ড নং:</strong> <span class="info-value">${data.location.wardNo || data.location.ward}</span></div>` : ''} 
-                
-                ${data.location?.village ? `<div class="info-item"><strong>গ্রাম:</strong> <span class="info-value">${data.location.village}</span></div>` : ''}
-                ${data.location?.road ? `<div class="info-item"><strong>রাস্তা/রোড:</strong> <span class="info-value">${data.location.road}</span></div>` : ''}
+                <div class="info-item"><strong>গ্রাম:</strong> <span class="info-value">${village}</span></div>
+                <div class="info-item"><strong>রাস্তা/রোড:</strong> <span class="info-value">${road}</span></div>
 
                 <div class="info-item full-width-item google-map-link-container">
-                    <strong>Google ম্যাপ:</strong> <a href="${data.googleMap || '#'}" target="_blank" class="map-link">${data.googleMap ? 'Google ম্যাপে দেখুন' : 'লিঙ্ক নেই'}</a>
+                    <strong>Google ম্যাপ:</strong> <a href="${googleMapLink}" target="_blank" class="map-link">${googleMapText}</a>
                 </div>
             </div>
         </div>
