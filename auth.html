@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>লগইন/সাইনআপ - আমার বাড়ি.কম</title>
-    <link rel="stylesheet" href="style.css">
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
-    
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -32,69 +31,252 @@
     </script>
 
     <style>
-        /* New stylish blue header area */
-        .auth-header-jumbotron {
-            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); /* Blue gradient */
-            color: white;
-            padding: 20px 15px;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000; /* Ensure it is on top */
-        }
-
-        .auth-branding h1 {
-            font-size: 1.8em;
+        /* Base styles from style.css might be included or linked here. */
+        /* For this specific page, we're overriding heavily. */
+        body {
+            font-family: 'Arial', sans-serif;
             margin: 0;
-            font-weight: 600;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Full viewport height */
+            background: linear-gradient(135deg, #a8dadc 0%, #457b9d 100%); /* Blue gradient */
+            color: #333;
+            overflow-x: hidden; /* Prevent horizontal scroll due to sidebar */
         }
 
-        .auth-branding p {
-            margin: 5px 0 0;
-            font-size: 0.9em;
-            opacity: 0.8;
-            font-weight: 300;
+        /* --- Sidebar & Overlay Styles --- */
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #1a2c38; /* Darker blue for sidebar */
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            z-index: 2000; /* Above everything else */
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
         }
 
-        /* Ensure menu and profile buttons look right in the new context */
-        .auth-controls button {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            margin-left: 5px;
-            padding: 8px;
-            border-radius: 50%;
-            transition: background 0.3s;
+        .sidebar.active {
+            width: 250px;
+        }
+
+        .sidebar nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar nav ul li a {
+            padding: 15px 25px;
+            text-decoration: none;
+            font-size: 18px;
+            color: #f1f1f1;
+            display: flex;
+            align-items: center;
+            transition: 0.3s;
+        }
+
+        .sidebar nav ul li a .material-icons {
+            margin-right: 15px;
             font-size: 24px;
         }
 
-        .auth-controls button:hover {
-            background: rgba(255, 255, 255, 0.1);
+        .sidebar nav ul li a:hover {
+            background-color: #007bff; /* Highlight on hover */
+            color: white;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1500; /* Between content and sidebar */
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* --- Header for Menu Button Only (no main header bar) --- */
+        .menu-only-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px 20px;
+            z-index: 1000;
+            display: flex;
+            justify-content: flex-start; /* Align menu button to the left */
+        }
+
+        .menu-only-header .menu-icon-button {
+            background: none;
+            border: none;
+            color: white; /* White icon on blue background */
+            font-size: 32px; /* Larger icon */
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.3s;
         }
         
-        /* Make sure the main content is below the new header area */
-        .content-container {
-            padding-top: 20px;
+        .menu-only-header .menu-icon-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+
+        /* --- Main Content Container (centered card) --- */
+        .content-wrapper {
+            flex-grow: 1; /* Allows content to take up available space */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px; /* Padding around the card */
+            box-sizing: border-box;
+            position: relative; /* For z-index to work with sidebar */
+            z-index: 500;
+        }
+
+        .auth-card {
+            background-color: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 100%;
+            max-width: 400px; /* Max width for the card */
+            box-sizing: border-box;
+        }
+
+        .auth-card h2 {
+            color: #007bff; /* Primary blue for heading */
+            margin-bottom: 25px;
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .auth-card .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .auth-card label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95em;
+        }
+
+        .auth-card input[type="email"],
+        .auth-card input[type="password"],
+        .auth-card input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .auth-card input[type="email"]:focus,
+        .auth-card input[type="password"]:focus,
+        .auth-card input[type="text"]:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        .auth-card .error-message {
+            color: #dc3545; /* Red for errors */
+            font-size: 0.85em;
+            margin-top: 10px;
+            text-align: left;
+        }
+
+        .auth-card button[type="submit"] {
+            width: 100%;
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 15px;
+        }
+
+        .auth-card button[type="submit"]:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .auth-card .toggle-link,
+        .auth-card .forgot-password-link {
+            margin-top: 20px;
+            font-size: 0.95em;
+        }
+
+        .auth-card .toggle-link a,
+        .auth-card .forgot-password-link a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-card .toggle-link a:hover,
+        .auth-card .forgot-password-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Footer Styles --- */
+        .footer {
+            background-color: rgba(0, 0, 0, 0.1); /* Slightly transparent footer */
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+            padding: 15px;
+            font-size: 0.85em;
+            margin-top: auto; /* Pushes footer to the bottom */
+            z-index: 500;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .auth-card {
+                padding: 25px 20px;
+                margin: 0 15px; /* Add some side margin on smaller screens */
+            }
+
+            .auth-card h2 {
+                font-size: 1.8em;
+            }
+
+            .menu-only-header .menu-icon-button {
+                font-size: 28px;
+            }
+            .sidebar.active {
+                width: 200px;
+            }
         }
     </style>
 </head>
 <body>
     
-    <div class="auth-header-jumbotron">
-        <div class="auth-branding">
-            <h1>আমার বাড়ি.কম</h1>
-            <p>লগইন অথবা নতুন অ্যাকাউন্ট তৈরি করুন</p>
-        </div>
-        
-        <div class="auth-controls">
-            <button id="menuButton" class="material-icons">menu</button>
-            <button id="profileButton" class="material-icons">account_circle</button>
-        </div>
+    <div class="menu-only-header">
+        <button id="menuButton" class="material-icons menu-icon-button">menu</button>
     </div>
-    
+
     <div id="sidebar" class="sidebar">
         <nav>
             <ul>
@@ -109,8 +291,8 @@
     </div>
     <div id="overlay" class="overlay"></div>
 
-    <div class="content-container">
-        <div id="auth-container" class="auth-box">
+    <div class="content-wrapper">
+        <div id="auth-container" class="auth-card">
             <h2 id="auth-heading">লগইন</h2>
             <form id="auth-form">
                 <div class="input-group">
@@ -151,19 +333,12 @@
     
     <script src="auth.js"></script> 
     <script>
-        // Auth পেইজের জন্য সাইডবার ও প্রোফাইল কার্যকারিতা
         document.addEventListener('DOMContentLoaded', () => {
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
-            const profileButton = document.getElementById('profileButton'); // ✅ নতুন ভেরিয়েবল
-
-            // প্রোফাইল বাটন ক্লিক লজিক
-            if (profileButton) {
-                profileButton.addEventListener('click', () => {
-                    window.location.href = 'profile.html';
-                });
-            }
+            // Profile button functionality is not needed here as there's no visible profile button, 
+            // but the link exists in the sidebar
             
             // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
             if (menuButton) {
@@ -183,4 +358,4 @@
         });
     </script>
 </body>
-    </html>
+</html>
