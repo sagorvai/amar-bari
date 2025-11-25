@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>লগইন/সাইনআপ - আমার বাড়ি.কম</title>
     
-    <link rel="stylesheet" href="style.css"> 
-    
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -15,362 +13,215 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <script>
+      // Firebase কনফিগারেশন অপরিবর্তিত রাখা হলো
       const firebaseConfig = {
         apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
         authDomain: "amar-bari-website.firebaseapp.com",
         projectId: "amar-bari-website",
         storageBucket: "amar-bari-website.firebasestorage.app",
         messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765..." // আপনার অ্যাপ আইডি
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
       };
       
-      // Firebase initialization
       if (!firebase.apps.length) {
-          firebase.initializeApp(firebaseConfig);
-      } else {
-          firebase.app(); // if already initialized
+        firebase.initializeApp(firebaseConfig);
       }
     </script>
-
+    
     <style>
-        /* --- গ্লোবাল এবং ব্যাকগ্রাউন্ড স্টাইল --- */
-        body {
-            font-family: 'Arial', sans-serif;
+        /* পুরো পেজের ব্যাকগ্রাউন্ড কালার ব্লু করা হয়েছে */
+        .auth-body {
             margin: 0;
             padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #2c3e50; /* ডিপ ব্লু ব্যাকগ্রাউন্ড */
+            color: #fff; /* সাদা টেক্সট */
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            /* সম্পূর্ণ নীল গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড */
-            background: linear-gradient(135deg, #4F77AA 0%, #153F77 100%); 
-            color: #333;
-            overflow-x: hidden;
         }
 
-        /* --- নতুন: সাইটের নাম এবং মেনু বাটন সহ টপ ব্যানার --- */
-        .top-branding-banner {
-            position: relative; /* মেনু বাটন পজিশন করার জন্য */
-            padding: 50px 20px 30px; /* উপরে বেশি জায়গা */
+        /* সাইট নেম হেডার */
+        .auth-header-title {
+            padding: 20px 0;
             text-align: center;
-            color: white;
-            z-index: 1000;
+            background: transparent;
+            box-shadow: none;
         }
 
-        .site-title {
-            font-size: 2.5em;
-            font-weight: 700;
-            margin: 0;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .site-slogan {
-            font-size: 1em;
-            opacity: 0.8;
-            margin-top: 5px;
-        }
-        
-        /* মেনু আইকন পজিশন */
-        .menu-icon-button {
-            position: absolute;
-            top: 25px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: white; 
-            font-size: 32px; 
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: background 0.3s;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            z-index: 1001; /* ensure it's on top of everything */
-        }
-        
-        .menu-icon-button:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        /* প্রোফাইল বাটন (কার্যকারিতার জন্য রাখা হয়েছে, কিন্তু লুকানো/বাদ দেওয়া যেতে পারে) */
-        /* যদি আপনি প্রোফাইল বাটন না চান, তবে এটিকে style.css থেকে display:none করতে পারেন */
-        
-        /* --- সাইডবার স্টাইল (কার্যকারিতা অক্ষুণ্ণ) --- */
-        .sidebar {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: #1a2c38; 
-            overflow-x: hidden;
-            transition: 0.5s;
-            padding-top: 60px;
-            z-index: 2000; 
-            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-        }
-
-        .sidebar.active {
-            width: 250px;
-        }
-
-        .sidebar nav ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .sidebar nav ul li a {
-            padding: 15px 25px;
+        .auth-logo-title {
             text-decoration: none;
-            font-size: 18px;
-            color: #f1f1f1;
+            color: #f1c40f; /* উজ্জ্বল গোল্ডেন/হলুদ রং */
+            font-size: 2.5em;
+            font-weight: bold;
             display: flex;
             align-items: center;
-            transition: 0.3s;
+            justify-content: center;
+            letter-spacing: 2px;
         }
 
-        .sidebar nav ul li a .material-icons {
-            margin-right: 15px;
-            font-size: 24px;
+        .auth-logo-title .logo-icon {
+            font-size: 1.2em;
+            margin-right: 10px;
+            color: #ecf0f1;
         }
 
-        .sidebar nav ul li a:hover {
-            background-color: #4F77AA; 
-            color: white;
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1500; 
-            display: none;
-        }
-
-        .overlay.active {
-            display: block;
-        }
-
-        /* --- মূল কন্টেন্ট (ফর্ম কার্ড) --- */
-        .content-container {
-            flex-grow: 1; 
+        /* লগইন/সাইনআপ মেইন কন্টেইনার */
+        .auth-main-content {
+            flex-grow: 1;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* ফর্ম কার্ডকে উপরে রাখতে */
-            padding: 20px; 
-            box-sizing: border-box;
-            position: relative; 
-            z-index: 500;
-        }
-        
-        .auth-box {
-            background-color: #ffffff;
-            padding: 40px 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-            text-align: center;
-            width: 100%;
-            max-width: 400px; 
-            box-sizing: border-box;
-            margin-top: -30px; /* টপ ব্যানারের সাথে overlap করার জন্য */
-        }
-        
-        .auth-box h2 {
-            color: #153F77; 
-            margin-top: 0;
-            margin-bottom: 30px;
-            font-size: 2.2em;
-            font-weight: 700;
+            align-items: center;
+            padding: 20px;
         }
 
-        /* --- ফর্ম এলিমেন্ট স্টাইল (আধুনিক) --- */
-        .auth-box .input-group {
-            margin-bottom: 25px;
+        /* Auth বক্সের দৃষ্টিনন্দন স্টাইল */
+        .auth-box-stylish {
+            background-color: rgba(255, 255, 255, 0.95); /* প্রায় সাদা স্বচ্ছ ব্যাকগ্রাউন্ড */
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            color: #333; /* বক্সের ভিতরের টেক্সটের রং */
+            transform: scale(1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .auth-box-stylish:hover {
+            transform: scale(1.02);
+        }
+
+        #auth-title {
+            color: #3498db; /* উজ্জ্বল ব্লু রং */
+            margin-bottom: 30px;
+            font-size: 1.8em;
+        }
+
+        /* ইনপুট গ্রুপ স্টাইল */
+        .input-group {
+            margin-bottom: 20px;
             text-align: left;
         }
 
-        .auth-box label {
+        .input-group label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #333;
-            font-size: 1em;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
         }
 
-        .auth-box input[type="email"],
-        .auth-box input[type="password"],
-        .auth-box input[type="text"] {
+        .input-group input {
             width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            font-size: 1em;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
             box-sizing: border-box;
+            font-size: 1em;
             transition: border-color 0.3s;
         }
 
-        .auth-box input:focus {
-            border-color: #4F77AA;
+        .input-group input:focus {
+            border-color: #3498db;
             outline: none;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
         }
 
-        .auth-box .error-message {
-            color: #dc3545; 
-            font-size: 0.85em;
-            margin-top: 10px;
-            text-align: left;
-        }
-
-        .auth-box button[type="submit"] {
-            width: 100%;
-            padding: 14px 20px;
-            background-color: #153F77; 
+        /* বাটন স্টাইল */
+        .submit-button {
+            background-color: #e74c3c; /* কালারফুল লাল রং */
             color: white;
+            padding: 12px 20px;
             border: none;
             border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: 600;
             cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
             transition: background-color 0.3s, transform 0.2s;
-            margin-top: 25px;
         }
 
-        .auth-box button[type="submit"]:hover {
-            background-color: #4F77AA;
-            transform: translateY(-1px);
+        .submit-button:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
         }
-        
-        .auth-box .toggle-link,
-        .auth-box .forgot-password-link {
+
+        /* ফর্ম পরিবর্তন লিঙ্ক */
+        .switch-form {
             margin-top: 20px;
-            font-size: 0.95em;
+            font-size: 0.9em;
+            color: #777;
         }
 
-        .auth-box .toggle-link a,
-        .auth-box .forgot-password-link a {
-            color: #4F77AA;
+        .switch-form a {
+            color: #2980b9; /* লিঙ্ক কালার */
             text-decoration: none;
-            font-weight: 600;
+            font-weight: bold;
+            transition: color 0.3s;
         }
-        
-        /* --- ফুটার স্টাইল --- */
-        .footer {
-            background-color: rgba(255, 255, 255, 0.1); 
-            color: white;
+
+        .switch-form a:hover {
+            color: #3498db;
+            text-decoration: underline;
+        }
+
+        /* ফুটার স্টাইল */
+        .auth-footer-min {
             text-align: center;
-            padding: 15px;
-            font-size: 0.85em;
-            margin-top: auto; 
-            z-index: 500;
-        }
-        
-        /* রেসপনসিভ অ্যাডজাস্টমেন্ট */
-        @media (max-width: 600px) {
-            .auth-box {
-                padding: 30px 20px;
-                margin: 0 10px;
-                margin-top: 0; /* ছোট স্ক্রিনে overlap দরকার নেই */
-            }
-            .top-branding-banner {
-                 padding: 40px 20px 20px;
-            }
+            padding: 15px 0;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.8em;
         }
     </style>
+
 </head>
-<body>
-    
-    <div class="top-branding-banner">
-        <button id="menuButton" class="material-icons menu-icon-button">menu</button>
-        <h1 class="site-title">আমার বাড়ি.কম</h1>
-        <p class="site-slogan">আপনার স্বপ্নের ঠিকানায় প্রবেশ করুন</p>
-    </div>
+<body class="auth-body">
 
-    <div id="sidebar" class="sidebar">
-        <nav>
-            <ul>
-                <li><a href="index.html"><i class="material-icons">home</i> হোম</a></li>
-                <li><a href="post.html"><i class="material-icons">post_add</i> নতুন পোস্ট</a></li>
-                <li><a href="messages.html"><i class="material-icons">message</i> ম্যাসেজ</a></li>
-                <li><a href="notifications.html"><i class="material-icons">notifications</i> নোটিফিকেশন</a></li>
-                <li><a href="profile.html"><i class="material-icons">account_circle</i> প্রোফাইল</a></li>
-                <li><a href="auth.html" id="login-link-sidebar"><i class="material-icons">login</i> লগইন</a></li>
-            </ul>
-        </nav>
-    </div>
-    <div id="overlay" class="overlay"></div>
+    <header class="auth-header-title">
+        <a href="index.html" class="auth-logo-title">
+            <i class="material-icons logo-icon">home</i> 
+            <span>আমার বাড়ি.কম</span>
+        </a>
+    </header>
 
-    <div class="content-container">
-        <div id="auth-container" class="auth-box">
-            <h2 id="auth-heading">লগইন</h2>
-            <form id="auth-form">
+    <main class="auth-main-content">
+        <div class="auth-box-stylish">
+            <h2 id="auth-title">লগইন করুন</h2>
+            
+            <form id="login-form">
                 <div class="input-group">
-                    <label for="email">ইমেইল:</label>
-                    <input type="email" id="email" required>
-                </div>
-                <div class="input-group" id="name-group" style="display:none;">
-                    <label for="name">নাম (ঐচ্ছিক):</label>
-                    <input type="text" id="name">
+                    <label for="login-email">ইমেইল:</label>
+                    <input type="email" id="login-email" required>
                 </div>
                 <div class="input-group">
-                    <label for="password">পাসওয়ার্ড:</label>
-                    <input type="password" id="password" required>
+                    <label for="login-password">পাসওয়ার্ড:</label>
+                    <input type="password" id="login-password" required>
                 </div>
-                
-                <p class="error-message" id="auth-error"></p>
-                
-                <button type="submit" id="auth-submit-btn">লগইন করুন</button>
+                <button type="submit" class="submit-button">লগইন করুন</button>
             </form>
-            
-            <p class="toggle-link">
-                <span id="toggle-text">কোনো অ্যাকাউন্ট নেই?</span> 
-                <a href="#" id="toggle-auth-mode">সাইনআপ করুন</a>
-            </p>
-            
-            <div class="forgot-password-link">
-                <a href="#" id="forgot-password-link">পাসওয়ার্ড ভুলে গেছেন?</a>
-            </div>
+
+            <form id="signup-form" style="display: none;">
+                <div class="input-group">
+                    <label for="signup-email">ইমেইল:</label>
+                    <input type="email" id="signup-email" required>
+                </div>
+                <div class="input-group">
+                    <label for="signup-password">পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর):</label>
+                    <input type="password" id="signup-password" required>
+                </div>
+                <button type="submit" class="submit-button">সাইনআপ করুন</button>
+            </form>
+
+            <p class="switch-form"><a href="#" id="switch-link">আপনার কি একটি অ্যাকাউন্ট নেই? সাইনআপ করুন</a></p>
         </div>
-    </div>
-    
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
-        </div>
+    </main>
+
+    <footer class="auth-footer-min">
+        <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
     </footer>
     
     <script src="auth.js"></script> 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuButton = document.getElementById('menuButton');
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            const profileButton = document.getElementById('profileButton'); 
-            
-            // প্রোফাইল বাটন ক্লিক লজিক (যদি profileButton HTML-এ থাকে)
-            if (profileButton) {
-                profileButton.addEventListener('click', () => {
-                    window.location.href = 'profile.html';
-                });
-            }
-
-            // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
-            if (menuButton) {
-                menuButton.addEventListener('click', () => {
-                    sidebar.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                });
-            }
-
-            // ওভারলেতে ক্লিক করলে সাইড মেনু বন্ধ হবে
-            if (overlay) {
-                overlay.addEventListener('click', () => {
-                    sidebar.classList.remove('active');
-                    overlay.classList.remove('active');
-                });
-            }
-        });
-    </script>
 </body>
-    </html>
+</html>
