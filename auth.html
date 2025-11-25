@@ -20,99 +20,129 @@
         projectId: "amar-bari-website",
         storageBucket: "amar-bari-website.firebasestorage.app",
         messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+        appId: "1:719084789035:web:f4da765..." // আপনার অ্যাপ আইডি
       };
       
+      // Firebase initialization
       if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
+          firebase.initializeApp(firebaseConfig);
+      } else {
+          firebase.app(); // if already initialized
       }
     </script>
 
+    <style>
+        /* New stylish blue header area */
+        .auth-header-jumbotron {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); /* Blue gradient */
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000; /* Ensure it is on top */
+        }
+
+        .auth-branding h1 {
+            font-size: 1.8em;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .auth-branding p {
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+
+        /* Ensure menu and profile buttons look right in the new context */
+        .auth-controls button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            margin-left: 5px;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.3s;
+            font-size: 24px;
+        }
+
+        .auth-controls button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Make sure the main content is below the new header area */
+        .content-container {
+            padding-top: 20px;
+        }
+    </style>
 </head>
 <body>
-
-    <header class="main-header">
-        <div class="header-top">
-            
-            <i class="material-icons menu-icon" id="menuButton">menu</i>
-            
-            <a href="index.html" class="logo-title">
-                <i class="material-icons logo-icon">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
-            
-            <div class="header-actions">
-                <i class="material-icons profile-icon" id="profileButton">person</i>
-            </div>
-        </div>
-
-        <div class="search-bar">
-            <input type="text" id="globalSearchInput" placeholder="শহর, এলাকা বা প্রপার্টির নাম লিখে খুঁজুন...">
-            <button><i class="material-icons">search</i></button>
+    
+    <div class="auth-header-jumbotron">
+        <div class="auth-branding">
+            <h1>আমার বাড়ি.কম</h1>
+            <p>লগইন অথবা নতুন অ্যাকাউন্ট তৈরি করুন</p>
         </div>
         
-        <div class="nav-filters">
-            <button class="nav-button" data-category="map" id="mapButton">
-                <i class="material-icons">map</i> ম্যাপ
-            </button>
-            <button class="nav-button" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
-            <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
+        <div class="auth-controls">
+            <button id="menuButton" class="material-icons">menu</button>
+            <button id="profileButton" class="material-icons">account_circle</button>
         </div>
-    </header>
-
-    <div class="sidebar" id="sidebar">
+    </div>
+    
+    <div id="sidebar" class="sidebar">
         <nav>
-            <a href="index.html" class="sidebar-logo">
-                <i class="material-icons">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
-            
-            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
-            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            
-            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
-            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            
-            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
+            <ul>
+                <li><a href="index.html"><i class="material-icons">home</i> হোম</a></li>
+                <li><a href="post.html"><i class="material-icons">post_add</i> নতুন পোস্ট</a></li>
+                <li><a href="messages.html"><i class="material-icons">message</i> ম্যাসেজ</a></li>
+                <li><a href="notifications.html"><i class="material-icons">notifications</i> নোটিফিকেশন</a></li>
+                <li><a href="profile.html"><i class="material-icons">account_circle</i> প্রোফাইল</a></li>
+                <li><a href="auth.html" id="login-link-sidebar"><i class="material-icons">login</i> লগইন</a></li>
+            </ul>
         </nav>
     </div>
+    <div id="overlay" class="overlay"></div>
 
-    <div class="overlay" id="overlay"></div>
-
-    <main class="main-content container">
-        <div class="auth-box">
-            <h2 id="auth-title">লগইন করুন</h2>
+    <div class="content-container">
+        <div id="auth-container" class="auth-box">
+            <h2 id="auth-heading">লগইন</h2>
+            <form id="auth-form">
+                <div class="input-group">
+                    <label for="email">ইমেইল:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="input-group" id="name-group" style="display:none;">
+                    <label for="name">নাম (ঐচ্ছিক):</label>
+                    <input type="text" id="name">
+                </div>
+                <div class="input-group">
+                    <label for="password">পাসওয়ার্ড:</label>
+                    <input type="password" id="password" required>
+                </div>
+                
+                <p class="error-message" id="auth-error"></p>
+                
+                <button type="submit" id="auth-submit-btn">লগইন করুন</button>
+            </form>
             
-            <form id="login-form">
-                <div class="input-group">
-                    <label for="login-email">ইমেইল:</label>
-                    <input type="email" id="login-email" required>
-                </div>
-                <div class="input-group">
-                    <label for="login-password">পাসওয়ার্ড:</label>
-                    <input type="password" id="login-password" required>
-                </div>
-                <button type="submit">লগইন করুন</button>
-            </form>
-
-            <form id="signup-form" style="display: none;">
-                <div class="input-group">
-                    <label for="signup-email">ইমেইল:</label>
-                    <input type="email" id="signup-email" required>
-                </div>
-                <div class="input-group">
-                    <label for="signup-password">পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর):</label>
-                    <input type="password" id="signup-password" required>
-                </div>
-                <button type="submit">সাইনআপ করুন</button>
-            </form>
-
-            <p class="switch-form"><a href="#" id="switch-link">আপনার কি একটি অ্যাকাউন্ট নেই? সাইনআপ করুন</a></p>
+            <p class="toggle-link">
+                <span id="toggle-text">কোনো অ্যাকাউন্ট নেই?</span> 
+                <a href="#" id="toggle-auth-mode">সাইনআপ করুন</a>
+            </p>
+            
+            <div class="forgot-password-link">
+                <a href="#" id="forgot-password-link">পাসওয়ার্ড ভুলে গেছেন?</a>
+            </div>
+            
         </div>
-    </main>
-
+    </div>
+    
     <footer class="footer">
         <div class="container">
             <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
@@ -153,4 +183,4 @@
         });
     </script>
 </body>
-                </html>
+    </html>
