@@ -6,7 +6,7 @@
     <title>লগইন/সাইনআপ - আমার বাড়ি.কম</title>
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
-
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -31,32 +31,178 @@
     </script>
 
     <style>
-        /* Base styles from style.css might be included or linked here. */
-        /* For this specific page, we're overriding heavily. */
+        /* --- Global & Background Styles --- */
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
-            min-height: 100vh; /* Full viewport height */
-            background: linear-gradient(135deg, #a8dadc 0%, #457b9d 100%); /* Blue gradient */
+            min-height: 100vh; 
+            /* Full Blue Gradient Background */
+            background: linear-gradient(135deg, #4F77AA 0%, #153F77 100%); 
             color: #333;
-            overflow-x: hidden; /* Prevent horizontal scroll due to sidebar */
+            overflow-x: hidden; 
         }
 
-        /* --- Sidebar & Overlay Styles --- */
+        /* --- Menu Icon (No Header Bar) --- */
+        .menu-icon-wrapper {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .menu-icon-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white; 
+            font-size: 32px; 
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .menu-icon-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* --- Main Content Wrapper (Centered) --- */
+        .content-wrapper {
+            flex-grow: 1; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px; 
+            box-sizing: border-box;
+            position: relative; 
+            z-index: 500;
+        }
+
+        /* --- Auth Card Style (Modern & Clean) --- */
+        .auth-card {
+            background-color: #ffffff;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            width: 100%;
+            max-width: 400px; 
+            box-sizing: border-box;
+            position: relative; /* For heading positioning */
+        }
+
+        /* Heading (Login/Signup) Style */
+        .auth-card h2 {
+            color: #153F77; /* Deep blue from the gradient */
+            margin-top: 0;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        /* --- Form Elements --- */
+        .auth-card .input-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .auth-card label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+            font-size: 1em;
+        }
+
+        .auth-card input[type="email"],
+        .auth-card input[type="password"],
+        .auth-card input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .auth-card input:focus {
+            border-color: #4F77AA;
+            outline: none;
+        }
+
+        .auth-card .error-message {
+            color: #dc3545; 
+            font-size: 0.85em;
+            margin-top: 10px;
+            text-align: left;
+        }
+
+        /* Submit Button Style */
+        .auth-card button[type="submit"] {
+            width: 100%;
+            padding: 14px 20px;
+            background-color: #153F77; /* Deep blue button */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 25px;
+        }
+
+        .auth-card button[type="submit"]:hover {
+            background-color: #4F77AA;
+            transform: translateY(-1px);
+        }
+        
+        /* Links below the form */
+        .auth-card .toggle-link,
+        .auth-card .forgot-password-link {
+            margin-top: 20px;
+            font-size: 0.95em;
+        }
+
+        .auth-card .toggle-link a,
+        .auth-card .forgot-password-link a {
+            color: #4F77AA;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-card .toggle-link a:hover,
+        .auth-card .forgot-password-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Footer Styles --- */
+        .footer {
+            background-color: rgba(255, 255, 255, 0.1); 
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 0.85em;
+            margin-top: auto; 
+            z-index: 500;
+        }
+        
+        /* --- Sidebar Styles (Same as before, ensuring it sits on top) --- */
         .sidebar {
             height: 100%;
             width: 0;
             position: fixed;
             top: 0;
             left: 0;
-            background-color: #1a2c38; /* Darker blue for sidebar */
+            background-color: #1a2c38; 
             overflow-x: hidden;
             transition: 0.5s;
             padding-top: 60px;
-            z-index: 2000; /* Above everything else */
+            z-index: 2000; 
             box-shadow: 2px 0 10px rgba(0,0,0,0.3);
         }
 
@@ -86,7 +232,7 @@
         }
 
         .sidebar nav ul li a:hover {
-            background-color: #007bff; /* Highlight on hover */
+            background-color: #4F77AA; 
             color: white;
         }
 
@@ -97,183 +243,26 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1500; /* Between content and sidebar */
+            z-index: 1500; 
             display: none;
         }
 
         .overlay.active {
             display: block;
         }
-
-        /* --- Header for Menu Button Only (no main header bar) --- */
-        .menu-only-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 10px 20px;
-            z-index: 1000;
-            display: flex;
-            justify-content: flex-start; /* Align menu button to the left */
-        }
-
-        .menu-only-header .menu-icon-button {
-            background: none;
-            border: none;
-            color: white; /* White icon on blue background */
-            font-size: 32px; /* Larger icon */
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
         
-        .menu-only-header .menu-icon-button:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-
-        /* --- Main Content Container (centered card) --- */
-        .content-wrapper {
-            flex-grow: 1; /* Allows content to take up available space */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px; /* Padding around the card */
-            box-sizing: border-box;
-            position: relative; /* For z-index to work with sidebar */
-            z-index: 500;
-        }
-
-        .auth-card {
-            background-color: #ffffff;
-            padding: 30px 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            width: 100%;
-            max-width: 400px; /* Max width for the card */
-            box-sizing: border-box;
-        }
-
-        .auth-card h2 {
-            color: #007bff; /* Primary blue for heading */
-            margin-bottom: 25px;
-            font-size: 2em;
-            font-weight: 700;
-        }
-
-        .auth-card .input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .auth-card label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-            font-size: 0.95em;
-        }
-
-        .auth-card input[type="email"],
-        .auth-card input[type="password"],
-        .auth-card input[type="text"] {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ced4da;
-            border-radius: 8px;
-            font-size: 1em;
-            box-sizing: border-box;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        .auth-card input[type="email"]:focus,
-        .auth-card input[type="password"]:focus,
-        .auth-card input[type="text"]:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-            outline: none;
-        }
-
-        .auth-card .error-message {
-            color: #dc3545; /* Red for errors */
-            font-size: 0.85em;
-            margin-top: 10px;
-            text-align: left;
-        }
-
-        .auth-card button[type="submit"] {
-            width: 100%;
-            padding: 12px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            margin-top: 15px;
-        }
-
-        .auth-card button[type="submit"]:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-        }
-
-        .auth-card .toggle-link,
-        .auth-card .forgot-password-link {
-            margin-top: 20px;
-            font-size: 0.95em;
-        }
-
-        .auth-card .toggle-link a,
-        .auth-card .forgot-password-link a {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .auth-card .toggle-link a:hover,
-        .auth-card .forgot-password-link a:hover {
-            text-decoration: underline;
-        }
-
-        /* --- Footer Styles --- */
-        .footer {
-            background-color: rgba(0, 0, 0, 0.1); /* Slightly transparent footer */
-            color: rgba(255, 255, 255, 0.7);
-            text-align: center;
-            padding: 15px;
-            font-size: 0.85em;
-            margin-top: auto; /* Pushes footer to the bottom */
-            z-index: 500;
-        }
-
         /* Responsive adjustments */
         @media (max-width: 600px) {
             .auth-card {
-                padding: 25px 20px;
-                margin: 0 15px; /* Add some side margin on smaller screens */
-            }
-
-            .auth-card h2 {
-                font-size: 1.8em;
-            }
-
-            .menu-only-header .menu-icon-button {
-                font-size: 28px;
-            }
-            .sidebar.active {
-                width: 200px;
+                padding: 30px 20px;
+                margin: 0 10px;
             }
         }
     </style>
 </head>
 <body>
     
-    <div class="menu-only-header">
+    <div class="menu-icon-wrapper">
         <button id="menuButton" class="material-icons menu-icon-button">menu</button>
     </div>
 
@@ -321,7 +310,6 @@
             <div class="forgot-password-link">
                 <a href="#" id="forgot-password-link">পাসওয়ার্ড ভুলে গেছেন?</a>
             </div>
-            
         </div>
     </div>
     
@@ -333,13 +321,13 @@
     
     <script src="auth.js"></script> 
     <script>
+        // Auth পেইজের জন্য সাইডবার কার্যকারিতা (কার্যক্রম অক্ষুণ্ণ)
         document.addEventListener('DOMContentLoaded', () => {
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
-            // Profile button functionality is not needed here as there's no visible profile button, 
-            // but the link exists in the sidebar
-            
+            // প্রোফাইল বাটন এখানে দৃশ্যমান না হলেও, সাইডবারে লিঙ্ক আছে।
+
             // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
             if (menuButton) {
                 menuButton.addEventListener('click', () => {
@@ -358,4 +346,4 @@
         });
     </script>
 </body>
-</html>
+        </html>
