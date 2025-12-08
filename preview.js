@@ -137,7 +137,7 @@ function generatePreviewHTML(data) {
 }
 
 
-// --- ২. স্লাইডশো কার্যকারিতা (Pre-defined for preview.html) ---
+// --- ২. স্লাইডশো কার্যকারিতা ---
 let slideIndex = 1;
 
 window.changeSlide = (n) => {
@@ -163,6 +163,8 @@ function loadAndRenderPreview() {
     const metadataString = sessionStorage.getItem('stagedImageMetadata');
     const previewContainer = document.getElementById('property-preview-container');
 
+    // "প্রিভিউ লোড হচ্ছে..." বার্তাটি এখানেই তৈরি হয়। 
+    // যদি dataString বা metadataString না পাওয়া যায়, তবে ব্যর্থতার বার্তা দেখানো হবে।
     if (!dataString || !metadataString) {
         previewContainer.innerHTML = '<p class="error-box">পোস্ট করার ডেটা খুঁজে পাওয়া যায়নি। দয়া করে আবার <a href="post.html">পোস্ট পেজে</a> যান।</p>';
         return;
@@ -212,8 +214,9 @@ async function uploadImagesAndGetURLs(metadata, userId) {
 window.postProperty = async () => {
     const postButton = document.getElementById('post-button');
     if (postButton) {
+        // ক্লিক করার সাথে সাথেই লোডিং অবস্থা সেট করা
         postButton.disabled = true;
-        postButton.textContent = 'পোস্ট হচ্ছে...';
+        postButton.textContent = 'পোস্ট হচ্ছে...'; 
     }
     
     const user = auth.currentUser;
@@ -243,7 +246,8 @@ window.postProperty = async () => {
         const finalData = JSON.parse(dataString);
         const metadata = JSON.parse(metadataString);
         
-        // ১. ছবি আপলোড করা এবং URL সংগ্রহ করা
+        // ১. ছবি আপলোড করা এবং URL সংগ্রহ করা (সম্ভাব্য ত্রুটির উৎস)
+        // যদি Storage Rules ভুল হয়, তাহলে এখানেই error throw হবে।
         const imageURLs = await uploadImagesAndGetURLs(metadata, user.uid);
         
         // ২. Firestore ডকুমেন্ট তৈরি
@@ -258,22 +262,24 @@ window.postProperty = async () => {
         finalData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
         finalData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
         
-        // ⭐ প্রয়োজনীয় পরিবর্তন: অটো-অনুমোদন যুক্ত করা হলো ⭐
+        // ✅ অটো-অনুমোদন যুক্ত করা হলো
         finalData.isApproved = true; 
         
-        await propertyRef.set(finalData);
-        
+        await propertyRef.set(finalData); // Firestore আপলোড
+
         // ৪. সেশন স্টোরেজ ক্লিয়ার করা
         sessionStorage.removeItem('stagedPropertyData');
         sessionStorage.removeItem('stagedImageMetadata');
         
-        // ⭐ সফলতার বার্তা পরিবর্তন করা হলো ⭐
+        // ✅ সফলতার বার্তা
         alert("আপনার প্রপার্টি সফলভাবে পোস্ট করা হয়েছে! এটি এখন প্রকাশিত।"); 
         window.location.href = `profile.html`; 
         
     } catch (error) {
+        // ✅ ত্রুটি হ্যান্ডলিং আপডেট করা হলো
         console.error("পোস্ট করার সময় সমস্যা হয়েছে:", error);
         
+        // ত্রুটি বার্তা স্পষ্ট করা
         let errorMessage = "পোস্ট করতে ব্যর্থতা।";
         if (error.code && error.code.includes('permission-denied')) {
              errorMessage += " কারণ: Firebase Storage বা Firestore Rules এ অনুমতির সমস্যা।";
@@ -298,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const editButton = document.getElementById('edit-button');
     const postButton = document.getElementById('post-button');
 
-    // পোস্ট বাটন ক্লিক হ্যান্ডলার
+    // ⭐ FIX: পোস্ট বাটন ক্লিক হ্যান্ডলার যোগ করা হলো ⭐
     if (postButton) {
         postButton.addEventListener('click', window.postProperty);
     }
@@ -309,17 +315,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    loadAndRenderPreview();
+    loadAndRenderPreview(); // প্রিভিউ রেন্ডার শুরু করা
     
-    // হেডার ও সাইডবার কার্যকারিতা (অন্যান্য ফাইলের মতো)
+    
+    // Auth State Change Handler for UI updates in preview.html
     const profileImageWrapper = document.getElementById('profileImageWrapper'); 
-    if (profileImageWrapper) {
-        profileImageWrapper.addEventListener('click', () => {
-             window.location.href = 'profile.html'; 
-        });
-    }
-
-    // অথেন্টিকেশন স্টেট পরিবর্তন (Auth state change handler)
     const postLinkSidebar = document.getElementById('post-link'); 
     const loginLinkSidebar = document.getElementById('login-link-sidebar'); 
     
@@ -358,4 +358,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // প্রোফাইল ইমেজ ক্লিক লজিক
+    if (profileImageWrapper) {
+        profileImageWrapper.addEventListener('click', () => {
+             window.location.href = 'profile.html'; 
+        });
+    }
+
 });
