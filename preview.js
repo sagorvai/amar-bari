@@ -18,7 +18,7 @@ const dataURLtoBlob = (dataurl) => {
 }
 
 
-// --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর ---
+// --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর (শুধুমাত্র ইনপুট করা ডেটা দেখাবে) ---
 function generatePreviewHTML(data) {
     
     // সেফটি: অনুপস্থিত ডেটা হ্যান্ডেল করা
@@ -137,7 +137,7 @@ function generatePreviewHTML(data) {
 }
 
 
-// --- ২. স্লাইডশো কার্যকারিতা ---
+// --- ২. স্লাইডশো কার্যকারিতা (Pre-defined for preview.html) ---
 let slideIndex = 1;
 
 window.changeSlide = (n) => {
@@ -258,7 +258,7 @@ window.postProperty = async () => {
         finalData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
         finalData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
         
-        // ✅ অটো-অনুমোদন যুক্ত করা হলো
+        // ⭐ প্রয়োজনীয় পরিবর্তন: অটো-অনুমোদন যুক্ত করা হলো ⭐
         finalData.isApproved = true; 
         
         await propertyRef.set(finalData);
@@ -267,15 +267,13 @@ window.postProperty = async () => {
         sessionStorage.removeItem('stagedPropertyData');
         sessionStorage.removeItem('stagedImageMetadata');
         
-        // ✅ সফলতার বার্তা পরিবর্তন করা হলো
+        // ⭐ সফলতার বার্তা পরিবর্তন করা হলো ⭐
         alert("আপনার প্রপার্টি সফলভাবে পোস্ট করা হয়েছে! এটি এখন প্রকাশিত।"); 
         window.location.href = `profile.html`; 
         
     } catch (error) {
-        // ✅ ত্রুটি হ্যান্ডলিং আপডেট করা হলো
         console.error("পোস্ট করার সময় সমস্যা হয়েছে:", error);
         
-        // ত্রুটি বার্তা স্পষ্ট করা
         let errorMessage = "পোস্ট করতে ব্যর্থতা।";
         if (error.code && error.code.includes('permission-denied')) {
              errorMessage += " কারণ: Firebase Storage বা Firestore Rules এ অনুমতির সমস্যা।";
@@ -313,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadAndRenderPreview();
     
-    // হেডার ও সাইডবার কার্যকারিতা
+    // হেডার ও সাইডবার কার্যকারিতা (অন্যান্য ফাইলের মতো)
     const profileImageWrapper = document.getElementById('profileImageWrapper'); 
     if (profileImageWrapper) {
         profileImageWrapper.addEventListener('click', () => {
