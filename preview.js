@@ -86,8 +86,8 @@ function generatePreviewHTML(data) {
                 ${imagesHTML}
             </div>
             ${data.imagePreviews && data.imagePreviews.length > 1 ? `
-                <a class="prev-slide" onclick="changeSlide(-1)">&#10094;</a>
-                <a class="next-slide" onclick="changeSlide(1)">&#10095;</a>
+                <a class="prev-slide" onclick="changeSlide(-1)">❮</a>
+                <a class="next-slide" onclick="changeSlide(1)">❯</a>
             ` : ''}
         </div>
         
@@ -220,6 +220,7 @@ window.postProperty = async () => {
     if (!user) {
         alert("পোস্ট করার জন্য আপনাকে লগইন করতে হবে।");
         if (postButton) {
+            // ত্রুটি ঘটলে বাটন আবার চালু করা হলো
             postButton.disabled = false;
             postButton.textContent = 'পোস্ট করুন';
         }
@@ -233,6 +234,7 @@ window.postProperty = async () => {
     if (!dataString || !metadataString) {
         alert("পোস্ট করার ডেটা অনুপস্থিত।");
         if (postButton) {
+            // ত্রুটি ঘটলে বাটন আবার চালু করা হলো
             postButton.disabled = false;
             postButton.textContent = 'পোস্ট করুন';
         }
@@ -272,9 +274,21 @@ window.postProperty = async () => {
         window.location.href = `profile.html`; 
         
     } catch (error) {
+        // ✅ ত্রুটি হ্যান্ডলিং আপডেট করা হলো
         console.error("পোস্ট করার সময় সমস্যা হয়েছে:", error);
-        alert("পোস্ট করতে ব্যর্থতা: " + error.message);
+        
+        // ত্রুটি বার্তা স্পষ্ট করা
+        let errorMessage = "পোস্ট করতে ব্যর্থতা।";
+        if (error.code && error.code.includes('permission-denied')) {
+             errorMessage += " ডেটাবেস বা স্টোরেজ রুলসে সমস্যা। লগইন নিশ্চিত করুন।";
+        } else if (error.message) {
+             errorMessage += " বিস্তারিত: " + error.message;
+        }
+
+        alert(errorMessage);
+
         if (postButton) {
+            // ত্রুটি ঘটলে বাটন আবার চালু করা হলো
             postButton.disabled = false;
             postButton.textContent = 'আবার চেষ্টা করুন';
         }
