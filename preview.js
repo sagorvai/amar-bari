@@ -18,7 +18,7 @@ const dataURLtoBlob = (dataurl) => {
 }
 
 
-// --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর (শুধুমাত্র ইনপুট করা ডেটা দেখাবে) ---
+// --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর ---
 function generatePreviewHTML(data) {
     
     // সেফটি: অনুপস্থিত ডেটা হ্যান্ডেল করা
@@ -137,7 +137,7 @@ function generatePreviewHTML(data) {
 }
 
 
-// --- ২. স্লাইডশো কার্যকারিতা (Pre-defined for preview.html) ---
+// --- ২. স্লাইডশো কার্যকারিতা ---
 let slideIndex = 1;
 
 window.changeSlide = (n) => {
@@ -220,7 +220,6 @@ window.postProperty = async () => {
     if (!user) {
         alert("পোস্ট করার জন্য আপনাকে লগইন করতে হবে।");
         if (postButton) {
-            // ত্রুটি ঘটলে বাটন আবার চালু করা হলো
             postButton.disabled = false;
             postButton.textContent = 'পোস্ট করুন';
         }
@@ -234,7 +233,6 @@ window.postProperty = async () => {
     if (!dataString || !metadataString) {
         alert("পোস্ট করার ডেটা অনুপস্থিত।");
         if (postButton) {
-            // ত্রুটি ঘটলে বাটন আবার চালু করা হলো
             postButton.disabled = false;
             postButton.textContent = 'পোস্ট করুন';
         }
@@ -260,7 +258,7 @@ window.postProperty = async () => {
         finalData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
         finalData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
         
-        // ✅ অটো-অনুমোদন যুক্ত করা হলো: অনুমোদনের অপেক্ষা বাদ দিয়ে সরাসরি প্রকাশ
+        // ✅ অটো-অনুমোদন যুক্ত করা হলো
         finalData.isApproved = true; 
         
         await propertyRef.set(finalData);
@@ -269,7 +267,7 @@ window.postProperty = async () => {
         sessionStorage.removeItem('stagedPropertyData');
         sessionStorage.removeItem('stagedImageMetadata');
         
-        // ✅ সফলতার বার্তা পরিবর্তন করা হলো (অনুমোদনের অপেক্ষা বার্তাটি সরানো হলো)
+        // ✅ সফলতার বার্তা পরিবর্তন করা হলো
         alert("আপনার প্রপার্টি সফলভাবে পোস্ট করা হয়েছে! এটি এখন প্রকাশিত।"); 
         window.location.href = `profile.html`; 
         
@@ -280,7 +278,7 @@ window.postProperty = async () => {
         // ত্রুটি বার্তা স্পষ্ট করা
         let errorMessage = "পোস্ট করতে ব্যর্থতা।";
         if (error.code && error.code.includes('permission-denied')) {
-             errorMessage += " ডেটাবেস বা স্টোরেজ রুলসে সমস্যা। লগইন নিশ্চিত করুন।";
+             errorMessage += " কারণ: Firebase Storage বা Firestore Rules এ অনুমতির সমস্যা।";
         } else if (error.message) {
              errorMessage += " বিস্তারিত: " + error.message;
         }
@@ -315,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadAndRenderPreview();
     
-    // হেডার ও সাইডবার কার্যকারিতা (অন্যান্য ফাইলের মতো)
+    // হেডার ও সাইডবার কার্যকারিতা
     const profileImageWrapper = document.getElementById('profileImageWrapper'); 
     if (profileImageWrapper) {
         profileImageWrapper.addEventListener('click', () => {
