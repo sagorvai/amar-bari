@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>প্রপার্টি প্রিভিউ - আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <script>
+      // আপনার বিদ্যমান Firebase কনফিগারেশন এখানে যুক্ত করুন
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA", // আপনার আসল কী
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:..." 
+      };
+
+      // নিশ্চিত করুন Firebase ইনিশিয়ালাইজ হয়েছে
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
+</head>
+<body>
+    <header class="main-header">
+        </header>
+    <div class="sidebar" id="sidebar">
+        </div>
+    <div class="overlay" id="overlay"></div>
+
+    <main class="main-content container">
+        <h2 class="form-title">✨ আপনার পোস্ট প্রিভিউ করুন</h2>
+        
+        <div id="preview-container" class="preview-display">
+            <p id="loading-message">ডেটা লোড হচ্ছে...</p>
+        </div>
+
+        <div class="preview-actions">
+            <button id="edit-button" class="submit-button secondary">সম্পাদনা করুন</button>
+            
+            <button id="publish-button" class="submit-button">চুরান্ত পোস্ট করুন</button>
+        </div>
+    </main>
+
+    <footer class="footer">
+        </footer>
+    
+    <script src="preview.js"></script> 
+    <script>
+        // সাইডবার এবং প্রোফাইল বাটন লজিক (post.html থেকে কপি করুন)
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
+            if (menuButton) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+            }
+
+            // ওভারলেতে ক্লিক করলে সাইড মেনু বন্ধ হবে
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
