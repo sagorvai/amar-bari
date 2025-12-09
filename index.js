@@ -1,3 +1,5 @@
+// index.js
+
 // Firebase SDKs
 const db = firebase.firestore();
 const auth = firebase.auth();
@@ -25,7 +27,7 @@ const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
 const globalSearchInput = document.getElementById('globalSearchInput');
 
-// --- ⭐ FIX: প্রোফাইল ইমেজ লোড করার ফাংশন যোগ করা হলো ⭐ ---
+// --- ⭐ FIX: প্রোফাইল ইমেজ লোড করার ফাংশন ⭐ ---
 async function loadProfilePicture(user) {
     if (profileImage && defaultProfileIcon) {
         try {
@@ -50,21 +52,70 @@ async function loadProfilePicture(user) {
         }
     }
 }
-// --- FIX: প্রোফাইল ইমেজ লোড করার ফাংশন শেষ ---
+// --- প্রোফাইল ইমেজ লোড করার ফাংশন শেষ ---
 
 
-// --- অন্যান্য ফাংশন ---
-
+// --- প্রধান ফাংশন: প্রপার্টি লোড ও প্রদর্শন (ফিক্সড) ---
 async function fetchAndDisplayProperties(category, searchTerm = '') {
-    // ... (পূর্বের কোড)
     
-    propertyG.innerHTML = '<p class=\"loading-message\">প্রপার্টি লোড হচ্ছে...</p>';
+    propertyG.innerHTML = '<p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>';
     
-    let query = db.collection('properties').where('category', '==', category);
+    let query = db.collection('properties');
     
-    // ... (পূর্বের কোড)
+    // ১. ক্যাটাগরি ফিল্টার: ক্যাটাগরি ধরে ডেটা ফিল্টার করা
+    if (category && category !== 'সকল') {
+        query = query.where('category', '==', category);
+    }
     
+    // ⭐ ২. স্ট্যাটাস ফিল্টার: শুধুমাত্র 'published' পোস্ট লোড করা (আপনার সমস্যার সমাধান) ⭐
+    query = query.where('status', '==', 'published');
+    
+    // ৩. সার্চ টার্ম ফিল্টার (যদি থাকে)
+    if (searchTerm) {
+        // বর্তমানে এটি শুধুমাত্র ডামি লজিক হিসেবে রাখা হলো। 
+        // ফায়ারস্টোরে উন্নত টেক্সট সার্চের জন্য তৃতীয় পক্ষের টুল (যেমন Algolia) ব্যবহার করা উচিত।
+    }
+
+    try {
+        // ৪. সময় অনুসারে সাজানো এবং কোয়েরি চালানো
+        const snapshot = await query.orderBy('createdAt', 'desc').get();
+        
+        // প্রপার্টি গ্রিড পরিষ্কার করা
+        propertyG.innerHTML = '';
+        
+        if (snapshot.empty) {
+            propertyG.innerHTML = `<p class="empty-message">এই ক্যাটাগরিতে কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।</p>`;
+            return;
+        }
+
+        // ৫. ডেটা রেন্ডারিং
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            
+            // ডিফল্ট বা প্রথম ছবি ব্যবহার করা
+            const imageUrl = (data.images && data.images.length > 0 && data.images[0].url) ? data.images[0].url : 'placeholder.jpg';
+            // দাম বা ভাড়ার জন্য টেক্সট তৈরি করা
+            const priceText = data.price ? `৳ ${data.price}` : data.monthlyRent ? `৳ ${data.monthlyRent}/মাস` : 'দাম আলোচনা সাপেক্ষ';
+            
+            const cardHtml = `
+                <div class="property-card" data-id="${doc.id}" onclick="window.location.href='details.html?id=${doc.id}'">
+                    <img src="${imageUrl}" alt="${data.title}">
+                    <div class="card-info">
+                        <h3>${data.title}</h3>
+                        <p class="location"><i class="material-icons">location_on</i> ${data.location && data.location.district ? data.location.district : 'অজানা জেলা'}</p>
+                        <p class="price">${priceText}</p>
+                    </div>
+                </div>
+            `;
+            propertyG.innerHTML += cardHtml;
+        });
+        
+    } catch (error) {
+        console.error("প্রপার্টি লোড করতে ব্যর্থ হয়েছে:", error);
+        propertyG.innerHTML = '<p class="error-message" style="color: red;">প্রপার্টি লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে পরে চেষ্টা করুন।</p>';
+    }
 }
+// --- প্রধান ফাংশন শেষ ---
 
 // লগআউট হ্যান্ডেলার
 const handleLogout = async (e) => {
@@ -85,15 +136,15 @@ function updateIconCounts() {
     // এখন এটি শুধু ডামি ডেটা দেখাচ্ছে
     if (notificationCount) {
         notificationCount.textContent = 0;
-        notificationCount.style.display = 'block';
+        notificationCount.style.display = 'none'; // এখন শূন্য হলে লুকিয়ে রাখা
     }
     if (messageCount) {
         messageCount.textContent = 0;
-        messageCount.style.display = 'block';
+        messageCount.style.display = 'none'; // এখন শূন্য হলে লুকিয়ে রাখা
     }
     if (postCount) {
         postCount.textContent = 0;
-        postCount.style.display = 'block';
+        postCount.style.display = 'none'; // এখন শূন্য হলে লুকিয়ে রাখা
     }
 }
 
