@@ -254,7 +254,6 @@ function loadAndRenderPreview() {
 
 
 // --- ৪. চূড়ান্ত পোস্ট ফাংশন (সরাসরি লাইভ) ---
-// ছবিগুলো post.js-এ ইতিমধ্যেই আপলোড করা হয়েছে। এখানে শুধু ডেটাবেসে পোস্ট করা হবে।
 async function uploadImagesAndPost(postData, stagedMetadata, postButton) {
     
     if (postButton) {
@@ -344,7 +343,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadAndRenderPreview();
     
+    // Auth Check for Profile Image Display (Simplified for preview.js)
     const profileImageWrapper = document.getElementById('profileImageWrapper'); 
+    const headerProfileImage = document.getElementById('profileImage'); 
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon'); 
+
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
+            // Fetch user data for image (Similar to post.js)
+            db.collection('users').doc(user.uid).get().then(doc => {
+                const userData = doc.data();
+                if (headerProfileImage && defaultProfileIcon) {
+                    const profileURL = userData?.profileImageURL || user.photoURL;
+                    if (profileURL) {
+                        headerProfileImage.src = profileURL; 
+                        headerProfileImage.style.display = 'block';
+                        defaultProfileIcon.style.display = 'none';
+                    } else {
+                        headerProfileImage.style.display = 'none';
+                        defaultProfileIcon.style.display = 'block';
+                    }
+                }
+            }).catch(error => {
+                console.error("Failed to fetch user data for profile image:", error);
+            });
+        } else {
+             if (headerProfileImage && defaultProfileIcon) {
+                headerProfileImage.style.display = 'none';
+                defaultProfileIcon.style.display = 'block';
+            }
+        }
+    });
+
     if (profileImageWrapper) {
         profileImageWrapper.addEventListener('click', () => {
              window.location.href = 'profile.html'; 
