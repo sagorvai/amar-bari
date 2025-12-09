@@ -1,11 +1,12 @@
-// preview.js - Updated for Firebase URL Preview and Direct Publishing
+// preview.js - Updated for Firebase URL Preview and Direct Publishing (Cleaned up Base64 function)
 
 // Firebase SDKs
 const db = firebase.firestore();
 const storage = firebase.storage();
 const auth = firebase.auth();
 
-// --- REMOVED: dataURLtoBlob utility function ---
+// --- REMOVED: dataURLtoBlob utility function (This line ensures the problematic function is gone) ---
+
 
 // --- ১. ডাইনামিক প্রিভিউ HTML জেনারেটর (শুধুমাত্র ইনপুট করা ডেটা দেখাবে) ---
 function generatePreviewHTML(data) {
@@ -190,8 +191,8 @@ function renderImages(stagedMetadata) {
 
     // মূল ছবি (Main Images)
     if (mainImages.length > 0) {
-        galleryContainer.innerHTML = mainImages.map((meta) => {
-             // Base64 এর বদলে meta.url ব্যবহার করা হচ্ছে
+        if (galleryContainer) galleryContainer.innerHTML = mainImages.map((meta) => {
+             // meta.url ব্যবহার করা হচ্ছে
             return `<img src="${meta.url}" alt="${meta.fileName || 'Property Image'}" class="preview-gallery-image">`;
         }).join('');
     } else if (galleryContainer) {
@@ -201,7 +202,7 @@ function renderImages(stagedMetadata) {
     // মালিকানার ডকুমেন্ট (যদি থাকে)
     if (stagedMetadata.khotian) {
         if (khotianContainer) {
-             // Base64 এর বদলে meta.url ব্যবহার করা হচ্ছে
+             // meta.url ব্যবহার করা হচ্ছে
             khotianContainer.innerHTML = `<img src="${stagedMetadata.khotian.url}" alt="${stagedMetadata.khotian.fileName}" class="ownership-doc-image">`;
         }
     } else if (khotianContainer) {
@@ -210,7 +211,7 @@ function renderImages(stagedMetadata) {
 
     if (stagedMetadata.sketch) {
         if (sketchContainer) {
-             // Base64 এর বদলে meta.url ব্যবহার করা হচ্ছে
+             // meta.url ব্যবহার করা হচ্ছে
             sketchContainer.innerHTML = `<img src="${stagedMetadata.sketch.url}" alt="${stagedMetadata.sketch.fileName}" class="ownership-doc-image">`;
         }
     } else if (sketchContainer) {
@@ -226,7 +227,8 @@ function loadAndRenderPreview() {
     const stagedMetadataString = sessionStorage.getItem('stagedImageMetadata');
     
     if (!stagedDataString || !stagedMetadataString) {
-        previewContainer.innerHTML = '<div class="stylish-card" style="padding: 20px;"><p style="color: red;">প্রিভিউ ডেটা পাওয়া যায়নি। অনুগ্রহ করে <a href="post.html">পোস্ট পেজে</a> ফিরে যান এবং ডেটা পুনরায় পূরণ করুন।</p></div>';
+        // যদি সেশন স্টোরেজে ডেটা না থাকে
+        if (previewContainer) previewContainer.innerHTML = '<div class="stylish-card" style="padding: 20px;"><p style="color: red;">প্রিভিউ ডেটা পাওয়া যায়নি। অনুগ্রহ করে <a href="post.html">পোস্ট পেজে</a> ফিরে যান এবং ডেটা পুনরায় পূরণ করুন।</p></div>';
         const postButton = document.getElementById('post-button');
         if (postButton) postButton.disabled = true;
         return;
@@ -237,7 +239,7 @@ function loadAndRenderPreview() {
         const stagedMetadata = JSON.parse(stagedMetadataString);
         
         // রেন্ডারিং
-        previewContainer.innerHTML = generatePreviewHTML(stagedData);
+        if (previewContainer) previewContainer.innerHTML = generatePreviewHTML(stagedData);
         renderImages(stagedMetadata); 
         
         // পোস্ট বাটন কার্যকারিতা যোগ করা
@@ -247,8 +249,9 @@ function loadAndRenderPreview() {
         }
 
     } catch (error) {
-         console.error('Error parsing staged data:', error);
-         previewContainer.innerHTML = '<div class="stylish-card" style="padding: 20px;"><p style="color: red;">সংরক্ষিত ডেটা লোড করতে সমস্যা হয়েছে।</p></div>';
+         // ডেটা পার্সিং বা রেন্ডারিং-এ কোনো ত্রুটি হলে
+         console.error('Error parsing staged data or rendering preview:', error);
+         if (previewContainer) previewContainer.innerHTML = '<div class="stylish-card" style="padding: 20px;"><p style="color: red;">সংরক্ষিত ডেটা লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে ব্রাউজারের কনসোল (F12) চেক করুন।</p></div>';
     }
 }
 
@@ -349,11 +352,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const defaultProfileIcon = document.getElementById('defaultProfileIcon'); 
 
     auth.onAuthStateChanged(user => {
+        // ... (Header UI update logic is here, same as before) ...
+        const handleLogout = async () => {
+            try {
+                await auth.signOut();
+                alert('সফলভাবে লগআউট করা হয়েছে!');
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error("লগআউট ব্যর্থ হয়েছে:", error);
+                alert("লগআউট ব্যর্থ হয়েছে।");
+            }
+        };
+
+        const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
+        const loginLinkSidebar = document.getElementById('login-link-sidebar');
+        
         if (user) {
-            if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
             // Fetch user data for image (Similar to post.js)
             db.collection('users').doc(user.uid).get().then(doc => {
                 const userData = doc.data();
+                if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
+                
+                // Header UI update
                 if (headerProfileImage && defaultProfileIcon) {
                     const profileURL = userData?.profileImageURL || user.photoURL;
                     if (profileURL) {
@@ -365,13 +385,30 @@ document.addEventListener('DOMContentLoaded', function() {
                         defaultProfileIcon.style.display = 'block';
                     }
                 }
+
+                 // Sidebar links
+                if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
+                if (loginLinkSidebar) {
+                    loginLinkSidebar.textContent = 'লগআউট';
+                    loginLinkSidebar.href = '#';
+                    loginLinkSidebar.onclick = handleLogout;
+                }
+                
             }).catch(error => {
                 console.error("Failed to fetch user data for profile image:", error);
+                 if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
             });
         } else {
+            // Not logged in
              if (headerProfileImage && defaultProfileIcon) {
                 headerProfileImage.style.display = 'none';
                 defaultProfileIcon.style.display = 'block';
+            }
+             if (postLinkSidebar) postLinkSidebar.style.display = 'none';
+             if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগইন';
+                loginLinkSidebar.href = 'auth.html';
+                loginLinkSidebar.onclick = null;
             }
         }
     });
