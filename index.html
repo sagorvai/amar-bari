@@ -14,21 +14,21 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <script>
-      // ✅ ফিক্সড: Firebase কনফিগারেশন
       const firebaseConfig = {
         apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
         authDomain: "amar-bari-website.firebaseapp.com",
         projectId: "amar-bari-website",
         storageBucket: "amar-bari-website.firebasestorage.app",
         messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765290b35118f6c342"
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe" // আপনার App ID ঠিক রাখা হলো
       };
-      // Firebase অ্যাপ ইনিশিয়ালাইজ করা
+      
       if (!firebase.apps.length) {
-          firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
       }
     </script>
-</head>
+    
+    </head>
 <body>
     
     <header class="header">
@@ -68,7 +68,7 @@
     <nav class="navigation container">
         <div class="nav-filters">
             <button class="nav-button active" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
-            <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
+            <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
             <button class="nav-button" data-category="map" id="mapButton">
                 <i class="material-icons">map</i> ম্যাপ
             </button>
