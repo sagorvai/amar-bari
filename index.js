@@ -27,7 +27,7 @@ const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
 const globalSearchInput = document.getElementById('globalSearchInput');
 
-// --- ⭐ FIX: প্রোফাইল ইমেজ লোড করার ফাংশন ⭐ ---
+// --- ⭐ ফিক্সড: প্রোফাইল ইমেজ লোড করার ফাংশন ⭐ ---
 async function loadProfilePicture(user) {
     if (profileImage && defaultProfileIcon) {
         try {
@@ -55,25 +55,25 @@ async function loadProfilePicture(user) {
 // --- প্রোফাইল ইমেজ লোড করার ফাংশন শেষ ---
 
 
-// --- প্রধান ফাংশন: প্রপার্টি লোড ও প্রদর্শন (ফিক্সড) ---
+// --- প্রধান ফাংশন: প্রপার্টি লোড ও প্রদর্শন (ফিক্সড রেন্ডারিং) ---
 async function fetchAndDisplayProperties(category, searchTerm = '') {
     
+    // লোডিং মেসেজ সেট করা
     propertyG.innerHTML = '<p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>';
     
     let query = db.collection('properties');
     
-    // ১. ক্যাটাগরি ফিল্টার: ক্যাটাগরি ধরে ডেটা ফিল্টার করা
+    // ১. ক্যাটাগরি ফিল্টার
     if (category && category !== 'সকল') {
         query = query.where('category', '==', category);
     }
     
-    // ⭐ ২. স্ট্যাটাস ফিল্টার: শুধুমাত্র 'published' পোস্ট লোড করা (আপনার সমস্যার সমাধান) ⭐
+    // ২. স্ট্যাটাস ফিল্টার: শুধুমাত্র 'published' পোস্ট লোড করা
     query = query.where('status', '==', 'published');
     
     // ৩. সার্চ টার্ম ফিল্টার (যদি থাকে)
     if (searchTerm) {
-        // বর্তমানে এটি শুধুমাত্র ডামি লজিক হিসেবে রাখা হলো। 
-        // ফায়ারস্টোরে উন্নত টেক্সট সার্চের জন্য তৃতীয় পক্ষের টুল (যেমন Algolia) ব্যবহার করা উচিত।
+        // ... (সার্চ লজিক) ...
     }
 
     try {
@@ -88,6 +88,8 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
             return;
         }
 
+        let htmlContent = ''; // ⬅️ ফিক্স: HTML স্ট্রিং জমা রাখার জন্য ভেরিয়েবল
+        
         // ৫. ডেটা রেন্ডারিং
         snapshot.forEach(doc => {
             const data = doc.data();
@@ -107,8 +109,12 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
                     </div>
                 </div>
             `;
-            propertyG.innerHTML += cardHtml;
+            // propertyG.innerHTML += cardHtml; ❌ পুরাতন লাইন
+            htmlContent += cardHtml; // ✅ ফিক্স: স্ট্রিং-এ HTML যোগ করা
         });
+        
+        // ✅ ফিক্স: লুপের বাইরে একবার মাত্র DOM আপডেট করা
+        propertyG.innerHTML = htmlContent; 
         
     } catch (error) {
         console.error("প্রপার্টি লোড করতে ব্যর্থ হয়েছে:", error);
