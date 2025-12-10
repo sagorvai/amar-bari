@@ -53,21 +53,21 @@ async function loadProfilePicture(user) {
 // --- প্রোফাইল ইমেজ লোড করার ফাংশন শেষ ---
 
 
-// --- প্রধান ফাংশন: প্রপার্টি লোড ও প্রদর্শন (স্থায়ী ফিক্স) ---
+// --- প্রধান ফাংশন: প্রপার্টি লোড ও প্রদর্শন (ইনডেক্স নির্ভর ফিক্স) ---
 async function fetchAndDisplayProperties(category, searchTerm = '') {
     
-    // লোডিং মেসেজ সেট করা
     propertyG.innerHTML = '<p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>';
     
     let query = db.collection('properties');
     
     // ১. ক্যাটাগরি ফিল্টার: শুধুমাত্র 'সকল' বা খালি না হলে ক্যাটাগরি দ্বারা ফিল্টার করা হবে
     if (category && category !== 'সকল' && category !== '' && category !== 'map') {
-        // 🔥 ফিক্সড: index.html থেকে আসা data-category মান ব্যবহার করা হচ্ছে
+        // ✅ নিশ্চিত ক্যাটাগরি মান ব্যবহার করা হচ্ছে
         query = query.where('category', '==', category);
     }
     
-    // ২. স্ট্যাটাস ফিল্টার: শুধুমাত্র 'published' পোস্ট লোড করা (preview.js থেকে নিশ্চিত)
+    // ২. স্ট্যাটাস ফিল্টার: শুধুমাত্র 'published' পোস্ট লোড করা
+    // ✅ নিশ্চিত স্ট্যাটাস মান ব্যবহার করা হচ্ছে
     query = query.where('status', '==', 'published');
     
     // ৩. সার্চ টার্ম ফিল্টার (যদি থাকে)
@@ -76,10 +76,9 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
     }
 
     try {
-        // ৪. সময় অনুসারে সাজানো এবং কোয়েরি চালানো
+        // ৪. সময় অনুসারে সাজানো এবং কোয়েরি চালানো (আপনার তৈরি করা ইনডেক্স ব্যবহার করে)
         const snapshot = await query.orderBy('createdAt', 'desc').get();
         
-        // প্রপার্টি গ্রিড পরিষ্কার করা
         propertyG.innerHTML = '';
         
         if (snapshot.empty) {
@@ -93,10 +92,8 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
         snapshot.forEach(doc => {
             const data = doc.data();
             
-            // ডিফল্ট বা প্রথম ছবি ব্যবহার করা
             const imageUrl = (data.images && data.images.length > 0 && data.images[0].url) ? data.images[0].url : 'placeholder.jpg';
             
-            // দাম বা ভাড়ার জন্য টেক্সট তৈরি করা
             let priceText = '';
             if (data.price) {
                 priceText = `${data.price}`;
@@ -121,28 +118,45 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
             htmlContent += cardHtml; 
         });
         
-        // লুপের বাইরে একবার মাত্র DOM আপডেট করা
         propertyG.innerHTML = htmlContent; 
         
     } catch (error) {
-        // 🚨 সবচেয়ে গুরুত্বপূর্ণ অংশ: ফায়ারবেস ইনডেক্স মিসিং!
-        if (error.code === 'failed-precondition' && error.message.includes('The query requires an index')) {
-             console.error("🔥🔥 মারাত্মক ত্রুটি: ফায়ারস্টোর ইনডেক্স প্রয়োজন 🔥🔥", error);
-             propertyG.innerHTML = `
-                <p class="error-message" style="color: red; font-weight: bold;">ইনডেক্সিং সমস্যা: ডেটাবেস থেকে ডেটা আনতে আপনার ফায়ারস্টোর কনসোলে একটি কম্পোজিট ইনডেক্স তৈরি করা প্রয়োজন।</p>
-                <p style="color: black; font-size: 0.9em;">ত্রুটিটি ফায়ারস্টোর কনসোলে দেখুন এবং ইনডেক্স লিংকটি অনুসরণ করে তৈরি করুন।</p>
-             `;
-             // যদি এই error.message এ কোনো ইনডেক্স লিংক থাকে, তাহলে আপনি সেটি এখানে দেখাতে পারেন।
-        } else {
-            console.error("প্রপার্টি লোড করতে ব্যর্থ হয়েছে:", error);
-            propertyG.innerHTML = '<p class="error-message" style="color: red;">প্রপার্টি লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে কনসোল চেক করুন।</p>';
-        }
+        // এই ব্লকটি এখন আর ইনডেক্স ত্রুটি দেখাবে না, কারণ আপনি ইনডেক্স তৈরি করেছেন।
+        // যদি ইনডেক্সটি এখনো 'Building' অবস্থায় থাকে তবে এটি দেখাতে পারে।
+        console.error("প্রপার্টি লোড করতে ব্যর্থ হয়েছে:", error);
+        propertyG.innerHTML = '<p class="error-message" style="color: red;">প্রপার্টি লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে কনসোল চেক করুন।</p>';
     }
 }
 // --- প্রধান ফাংশন শেষ ---
 
+// লগআউট হ্যান্ডেলার
+const handleLogout = async (e) => {
+    e.preventDefault();
+    try {
+        await auth.signOut();
+        alert('সফলভাবে লগআউট করা হয়েছে!');
+        window.location.href = 'index.html'; 
+    } catch (error) {
+        console.error("লগআউট ব্যর্থ হয়েছে:", error);
+        alert("লগআউট ব্যর্থ হয়েছে।");
+    }
+};
 
-// ... (লগআউট, কাউন্টার, ইভেন্ট লিসেনার ফাংশনগুলো অপরিবর্তিত) ...
+// আইকন কাউন্টার আপডেট করার ডামি ফাংশন 
+function updateIconCounts() {
+    if (notificationCount) {
+        notificationCount.textContent = 0;
+        notificationCount.style.display = 'none'; 
+    }
+    if (messageCount) {
+        messageCount.textContent = 0;
+        messageCount.style.display = 'none'; 
+    }
+    if (postCount) {
+        postCount.textContent = 0;
+        postCount.style.display = 'none'; 
+    }
+}
 
 // ইভেন্ট লিসেনার সেটআপ
 function setupUIEventListeners() {
@@ -159,7 +173,29 @@ function setupUIEventListeners() {
         });
     }
     
-    // ... (অন্যান্য বাটন রিডাইরেক্ট) ...
+    if (notificationButton) {
+         notificationButton.addEventListener('click', () => {
+             window.location.href = 'notifications.html'; 
+        });
+    }
+
+    if (headerPostButton) {
+        headerPostButton.addEventListener('click', () => {
+            window.location.href = 'post.html'; 
+        });
+    }
+
+    if (messageButton) {
+        messageButton.addEventListener('click', () => {
+             window.location.href = 'messages.html';
+        });
+    }
+    
+    if (profileImageWrapper) {
+        profileImageWrapper.addEventListener('click', () => {
+             window.location.href = 'profile.html'; 
+        });
+    }
     
     // প্রপার্টি ক্যাটাগরি ফিল্টার
     navButtons.forEach(button => {
@@ -193,13 +229,40 @@ function setupUIEventListeners() {
 document.addEventListener('DOMContentLoaded', () => {
     setupUIEventListeners();
     
-    // 🔥 চূড়ান্ত ফিক্স: প্রাথমিক লোড
-    // ডিফল্টভাবে 'বিক্রয়' ক্যাটাগরি সহ স্ট্যাটাস 'published' ফিল্টার করা হবে
-    fetchAndDisplayProperties('বিক্রয়', ''); 
+    // ✅ প্রাথমিক লোড: ডিফল্টভাবে 'বিক্রয়' ক্যাটাগরি দেখাবে (যা HTML-এ Active আছে)
+    fetchAndDisplayProperties('বিক্রয়', ''); 
     
     // Auth State Change Handler 
     auth.onAuthStateChanged(user => {
-        // ... (Auth লজিক) ...
+        
+        if (user) {
+            loadProfilePicture(user); 
+            updateIconCounts(); 
+            
+            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+            
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগআউট';
+                loginLinkSidebar.href = '#';
+                
+                loginLinkSidebar.removeEventListener('click', handleLogout);
+                loginLinkSidebar.addEventListener('click', handleLogout);
+            }
+        } else {
+            profileImage.style.display = 'none';
+            defaultProfileIcon.style.display = 'block';
+            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+
+            notificationCount.style.display = 'none';
+            messageCount.style.display = 'none';
+            postCount.style.display = 'none';
+            
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগইন';
+                loginLinkSidebar.href = 'auth.html';
+                loginLinkSidebar.removeEventListener('click', handleLogout); 
+            }
+        }
     });
 
 });
