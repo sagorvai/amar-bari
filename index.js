@@ -39,14 +39,12 @@ async function loadProfilePicture(user) {
                     profileImage.style.display = 'block';
                     defaultProfileIcon.style.display = 'none';
                 } else {
-                    // যদি URL না থাকে, ডিফল্ট আইকন দেখান
                     profileImage.style.display = 'none';
                     defaultProfileIcon.style.display = 'block';
                 }
             }
         } catch (error) {
             console.error("Profile picture load failed:", error);
-            // কোনো সমস্যা হলে ডিফল্ট আইকন দেখান
             profileImage.style.display = 'none';
             defaultProfileIcon.style.display = 'block';
         }
@@ -55,17 +53,16 @@ async function loadProfilePicture(user) {
 // --- প্রোফাইল ইমেজ লোড করার ফাংশন শেষ ---
 
 
-// --- প্রধান ফাংশন: প্রপার্টি লোড ও প্রদর্শন (স্থায়ী ফিক্স) ---
+// --- প্রধান ফাংশন: প্রপার্টি লোড ও প্রদর্শন (চূড়ান্ত ফিক্স) ---
 async function fetchAndDisplayProperties(category, searchTerm = '') {
     
-    // লোডিং মেসেজ সেট করা
     propertyG.innerHTML = '<p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>';
     
     let query = db.collection('properties');
     
-    // ১. ক্যাটাগরি ফিল্টার: ডেটাবেস ভ্যালু অনুযায়ী ক্যাটাগরি ধরে ডেটা ফিল্টার করা
-    if (category && category !== 'সকল') {
-        // 🔥 ফিক্স: এখানে আশা করা হচ্ছে যে category ভেরিয়েবলের মান ডাটাবেসের "বিক্রয়" বা "ভাড়া" মানের সাথে হুবহু মিলবে।
+    // ১. ক্যাটাগরি ফিল্টার: শুধুমাত্র 'সকল' না হলে বা খালি না হলে ক্যাটাগরি দ্বারা ফিল্টার করা হবে
+    if (category && category !== 'সকল' && category !== '') {
+        // 🔥 ফিক্সড: index.html থেকে আসা data-category মান (যেমন "বিক্রয়" বা "ভাড়া") ব্যবহার করবে।
         query = query.where('category', '==', category);
     }
     
@@ -74,32 +71,26 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
     
     // ৩. সার্চ টার্ম ফিল্টার (যদি থাকে)
     if (searchTerm) {
-        // ফায়ারস্টোরে উন্নত টেক্সট সার্চের লজিক এখানে যুক্ত করা যেতে পারে।
+        // ... (সার্চ লজিক) ...
     }
 
     try {
-        // ৪. সময় অনুসারে সাজানো এবং কোয়েরি চালানো
         const snapshot = await query.orderBy('createdAt', 'desc').get();
         
-        // প্রপার্টি গ্রিড পরিষ্কার করা
         propertyG.innerHTML = '';
         
         if (snapshot.empty) {
-            propertyG.innerHTML = `<p class="empty-message">এই ক্যাটাগরিতে কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।</p>`;
+            propertyG.innerHTML = `<p class="empty-message">এই ফিল্টারে কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।</p>`;
             return;
         }
 
         let htmlContent = ''; 
         
-        // ৫. ডেটা রেন্ডারিং
         snapshot.forEach(doc => {
             const data = doc.data();
             
-            // ডিফল্ট বা প্রথম ছবি ব্যবহার করা
             const imageUrl = (data.images && data.images.length > 0 && data.images[0].url) ? data.images[0].url : 'placeholder.jpg';
             
-            // দাম বা ভাড়ার জন্য টেক্সট তৈরি করা
-            // price এবং monthlyRent উভয়ই string হিসেবে আসে।
             let priceText = '';
             if (data.price) {
                 priceText = `${data.price}`;
@@ -109,7 +100,6 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
                 priceText = 'দাম আলোচনা সাপেক্ষ';
             }
             
-            // নিশ্চিত করুন যে দামের সামনে '৳' প্রতীক যোগ করা হয়েছে, তবে যদি priceText নিজেই 'দাম আলোচনা সাপেক্ষ' হয় তবে নয়।
             const finalPriceText = priceText.includes('আলোচনা সাপেক্ষ') ? priceText : `৳ ${priceText}`;
             
             const cardHtml = `
@@ -125,7 +115,6 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
             htmlContent += cardHtml; 
         });
         
-        // লুপের বাইরে একবার মাত্র DOM আপডেট করা
         propertyG.innerHTML = htmlContent; 
         
     } catch (error) {
@@ -150,8 +139,6 @@ const handleLogout = async (e) => {
 
 // আইকন কাউন্টার আপডেট করার ডামি ফাংশন 
 function updateIconCounts() {
-    // এই ফাংশন ফায়ারবেস থেকে নোটিফিকেশন/মেসেজ কাউন্ট লোড করবে
-    // এখন এটি শুধু ডামি ডেটা দেখাচ্ছে
     if (notificationCount) {
         notificationCount.textContent = 0;
         notificationCount.style.display = 'none'; 
@@ -168,7 +155,6 @@ function updateIconCounts() {
 
 // ইভেন্ট লিসেনার সেটআপ
 function setupUIEventListeners() {
-    // মেনু বাটন এবং সাইডবার টগল
     if (menuButton) {
         menuButton.addEventListener('click', () => {
             sidebar.classList.toggle('active');
@@ -182,7 +168,6 @@ function setupUIEventListeners() {
         });
     }
     
-    // নেভিগেশন আইকন রিডাইরেক্ট
     if (notificationButton) {
         notificationButton.addEventListener('click', () => {
              window.location.href = 'notifications.html'; 
@@ -227,17 +212,16 @@ function setupUIEventListeners() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // সকল ইভেন্ট লিসেনার সেটআপ করা হলো
     setupUIEventListeners();
     
-    // প্রাথমিক লোড: ডিফল্টভাবে 'বিক্রয়' ক্যাটাগরি দেখাবে 
-    fetchAndDisplayProperties('বিক্রয়', ''); 
+    // 🔥🔥 চূড়ান্ত ফিক্স: প্রাথমিক লোড
+    // কোনো ক্যাটাগরি ফিল্টার ছাড়া শুরু করা হলো, শুধুমাত্র status: 'published' পোস্ট লোড হবে।
+    fetchAndDisplayProperties('', ''); 
     
     // Auth State Change Handler 
     auth.onAuthStateChanged(user => {
         
         if (user) {
-            // লগইন থাকলে
             loadProfilePicture(user); 
             updateIconCounts(); 
             
@@ -251,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginLinkSidebar.addEventListener('click', handleLogout);
             }
         } else {
-            // লগইন না থাকলে
             profileImage.style.display = 'none';
             defaultProfileIcon.style.display = 'block';
             if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
