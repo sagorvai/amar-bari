@@ -29,19 +29,17 @@
     </script>
     
     <style>
-        /* CSS ভেরিয়েবল */
+        /* CSS অংশ অপরিবর্তিত রাখা হলো */
         :root {
             --primary-color: #007bff; 
         }
 
-        /* গ্লোবাল ফিক্স */
         body {
             margin: 0; 
             padding: 0;
             font-family: Arial, sans-serif; 
         }
 
-        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
         .main-header {
              position: fixed; 
              top: 0;
@@ -52,16 +50,11 @@
              z-index: 1000; 
         }
         
-        /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
         .sidebar {
             z-index: 1050; 
         }
         .overlay {
             z-index: 1040; 
-        }
-        
-        .main-content {
-             /* এটি style.css ফাইলে সরানো হয়েছে */
         }
         
         .header-top {
@@ -99,7 +92,6 @@
             margin-right: 5px;
         }
 
-        /* ডানের ব্লক (আইকন) ফিক্স */
         .header-actions {
              display: flex;
              align-items: center;
@@ -108,7 +100,6 @@
              flex-shrink: 0; 
         }
         
-        /* ✅ কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
         .icon-wrapper {
              position: relative;
              display: inline-flex;
@@ -119,7 +110,6 @@
              width: 30px; 
         }
         
-        /* ✅ কমন নোটিফিকেশন কাউন্ট স্টাইল */
         .notification-count {
             position: absolute;
             top: -5px; 
@@ -133,22 +123,20 @@
             min-width: 10px;
             text-align: center;
             line-height: 1; 
-            display: none; /* ডিফল্টভাবে লুকানো */
+            display: none; 
         }
         
-        /* আইকন কালার */
         .notification-icon { color: var(--primary-color); }
         .message-icon { color: var(--primary-color); }
         .post-icon-header { color: #28a745; }
 
-        /* প্রোফাইল ইমেজ স্টাইল */
         .profile-image-wrapper {
             cursor: pointer;
-            width: 35px; /* আইকন থেকে সামান্য বড় */
+            width: 35px; 
             height: 35px;
             border-radius: 50%;
             overflow: hidden;
-            border: 2px solid var(--primary-color); /* রঙের বর্ডার */
+            border: 2px solid var(--primary-color); 
             display: flex;
             align-items: center;
             justify-content: center;
@@ -160,13 +148,10 @@
         }
 
 
-        /* সার্চ বার এবং নেভিগেশন ফিল্টারগুলির প্যাডিং ফিক্স */
         .search-bar { 
             padding: 0 15px 8px; 
         }
 
-        
-        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স (সর্বাধিক 600px) --- */
         @media (max-width: 600px) {
             .logo-title {
                  font-size: 1.5em; 
@@ -231,7 +216,7 @@
     </header>
     
     <div class="nav-filters">
-        <button class="nav-button active" data-category="বিক্রয়" id="sellButton">বিক্রয়</button> 
+        <button class="nav-button active" data-category="বিক্রয়" id="sellButton">বিক্রয়</button> 
         <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
         <button class="nav-button" data-category="map" id="mapButton">
              <i class="material-icons">map</i> ম্যাপ
@@ -283,4 +268,4 @@
     
     <script src="index.js"></script> 
 </body>
-            </html>
+    </html>
