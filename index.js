@@ -56,6 +56,7 @@ async function loadProfilePicture(user) {
 // --- প্রধান ফাংশন: প্রপার্টি লোড ও প্রদর্শন (ইনডেক্স নির্ভর ফিক্স) ---
 async function fetchAndDisplayProperties(category, searchTerm = '') {
     
+    // লোডিং মেসেজ দেখান
     propertyG.innerHTML = '<p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>';
     
     let query = db.collection('properties');
@@ -70,16 +71,20 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
     // ✅ নিশ্চিত স্ট্যাটাস মান ব্যবহার করা হচ্ছে
     query = query.where('status', '==', 'published');
     
-    // ৩. সার্চ টার্ম ফিল্টার (যদি থাকে)
+    // ⭐ ৩. সার্চ টার্ম ফিল্টার (যদি থাকে) - আপাতত নিষ্ক্রিয়, কারণ এটি ইনডেক্স ত্রুটি দিচ্ছিল
     if (searchTerm) {
-        // ... (সার্চ লজিক) ...
+        // নতুন ইনডেক্সিং কনফ্লিক্ট এড়াতে, আমরা বর্তমানে সার্ভার-সাইড ফিল্টারিং এড়িয়ে যাচ্ছি।
+        // যদি সার্চ ফিচার যোগ করতে চান, তবে আপনাকে ফায়ারবেসে location.district এর উপর কম্পোজিট ইনডেক্স তৈরি করতে হবে।
+        console.warn("সার্চ টার্ম ইনপুট দেওয়া হয়েছে, কিন্তু ইনডেক্সিং কনফ্লিক্টের কারণে এই ভার্সনে তা কাজ করবে না।");
+        // অতিরিক্ত ইনডেক্স দরকার বার্তাটি মুছে দিতে এই লজিকটি বাদ দেওয়া হলো।
     }
 
     try {
         // ৪. সময় অনুসারে সাজানো এবং কোয়েরি চালানো (আপনার তৈরি করা ইনডেক্স ব্যবহার করে)
+        // ইনডেক্স: category (Asc), status (Asc), createdAt (Desc)
         const snapshot = await query.orderBy('createdAt', 'desc').get();
         
-        propertyG.innerHTML = '';
+        propertyG.innerHTML = ''; // লোডিং মেসেজ মুছে দিন
         
         if (snapshot.empty) {
             propertyG.innerHTML = `<p class="empty-message">এই ফিল্টারে কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।</p>`;
@@ -121,10 +126,11 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
         propertyG.innerHTML = htmlContent; 
         
     } catch (error) {
-        // এই ব্লকটি এখন আর ইনডেক্স ত্রুটি দেখাবে না, কারণ আপনি ইনডেক্স তৈরি করেছেন।
-        // যদি ইনডেক্সটি এখনো 'Building' অবস্থায় থাকে তবে এটি দেখাতে পারে।
         console.error("প্রপার্টি লোড করতে ব্যর্থ হয়েছে:", error);
-        propertyG.innerHTML = '<p class="error-message" style="color: red;">প্রপার্টি লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে কনসোল চেক করুন।</p>';
+        
+        // ইনডেক্স ত্রুটি হ্যান্ডেলিং
+        // এই মেসেজটি এখন শুধুমাত্র প্রকৃত ব্যর্থতা দেখালে আসবে।
+        propertyG.innerHTML = '<p class="error-message" style="color: red;">পোস্ট লোড করা যায়নি। অনুগ্রহ করে কনসোল এবং ফায়ারবেস ইনডেক্স স্ট্যাটাস পরীক্ষা করুন।</p>';
     }
 }
 // --- প্রধান ফাংশন শেষ ---
@@ -212,6 +218,7 @@ function setupUIEventListeners() {
             } else {
                 document.getElementById('property-grid-container').style.display = 'block';
                 document.getElementById('map-section').style.display = 'none';
+                // সার্চ টার্ম সহ লোড করার চেষ্টা (যদি সার্চ কোড পরে যুক্ত করা হয়)
                 fetchAndDisplayProperties(category, globalSearchInput.value); 
             }
         });
@@ -221,6 +228,7 @@ function setupUIEventListeners() {
     globalSearchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const activeCategory = document.querySelector('.nav-filters .nav-button.active').dataset.category;
+            // এই ভার্সনে সার্চ কাজ করবে না, কিন্তু ফাংশন কল করা হলো
             fetchAndDisplayProperties(activeCategory, globalSearchInput.value);
         }
     });
@@ -266,98 +274,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 });
-
-// ... (অন্যান্য কোড অপরিবর্তিত) ...
-
-// --- প্রধান ফাংশন: প্রপার্টি লোড ও প্রদর্শন (সার্চ লজিক সহ ফিক্স) ---
-async function fetchAndDisplayProperties(category, searchTerm = '') {
-    
-    // লোডিং মেসেজ দেখান
-    propertyG.innerHTML = '<p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>';
-    
-    let query = db.collection('properties');
-    
-    // ১. ক্যাটাগরি ফিল্টার:
-    if (category && category !== 'সকল' && category !== '' && category !== 'map') {
-        query = query.where('category', '==', category);
-    }
-    
-    // ২. স্ট্যাটাস ফিল্টার:
-    query = query.where('status', '==', 'published');
-    
-    let finalQuery;
-
-    try {
-        // ৩. সার্চ টার্ম ফিল্টার (যদি থাকে)
-        if (searchTerm) {
-            // যদি সার্চ টার্ম থাকে, আমরা location.district এর উপর ভিত্তি করে রেঞ্জ কোয়েরি ব্যবহার করব।
-            // এই কোয়েরির জন্য একটি নতুন ইনডেক্স (category, status, location.district) তৈরি করতে হবে।
-            const searchLower = searchTerm.toLowerCase();
-            
-            finalQuery = query
-                // district এর ওপর প্রিফিক্স সার্চ
-                .where('location.district', '>=', searchLower) 
-                .where('location.district', '<=', searchLower + '\uf8ff') 
-                .orderBy('location.district', 'asc'); // সার্চ ক্যোয়ারির জন্য orderBy পরিবর্তন
-                
-        } else {
-            // ৪. কোনো সার্চ টার্ম না থাকলে, আপনার তৈরি করা ইনডেক্স (category, status, createdAt) ব্যবহার করে সাজানো হবে।
-            finalQuery = query.orderBy('createdAt', 'desc');
-        }
-
-        // ✅ কোয়েরি চালান
-        const snapshot = await finalQuery.get();
-        
-        // লোডিং মেসেজ মুছে দিন
-        propertyG.innerHTML = '';
-        
-        if (snapshot.empty) {
-            propertyG.innerHTML = `<p class="empty-message">এই ফিল্টার বা খোঁজে কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।</p>`;
-            return;
-        }
-
-        let htmlContent = ''; 
-        
-        // ৫. ডেটা রেন্ডারিং
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            
-            const imageUrl = (data.images && data.images.length > 0 && data.images[0].url) ? data.images[0].url : 'placeholder.jpg';
-            
-            let priceText = '';
-            if (data.price) {
-                priceText = `${data.price}`;
-            } else if (data.monthlyRent) {
-                priceText = `${data.monthlyRent}/মাস`;
-            } else {
-                priceText = 'দাম আলোচনা সাপেক্ষ';
-            }
-            
-            const finalPriceText = priceText.includes('আলোচনা সাপেক্ষ') ? priceText : `৳ ${priceText}`;
-            
-            const cardHtml = `
-                <div class="property-card" data-id="${doc.id}" onclick="window.location.href='details.html?id=${doc.id}'">
-                    <img src="${imageUrl}" alt="${data.title}">
-                    <div class="card-info">
-                        <h3>${data.title}</h3>
-                        <p class="location"><i class="material-icons">location_on</i> ${data.location && data.location.district ? data.location.district : 'অজানা জেলা'}</p>
-                        <p class="price">${finalPriceText}</p>
-                    </div>
-                </div>
-            `;
-            htmlContent += cardHtml; 
-        });
-        
-        propertyG.innerHTML = htmlContent; 
-        
-    } catch (error) {
-        // যদি ফায়ারবেস ইনডেক্সিং এর ত্রুটি থাকে, তা কনসোলে দেখাবে।
-        console.error("প্রপার্টি লোড করতে ব্যর্থ হয়েছে:", error);
-        
-        // ফায়ারবেস একটি লিংক দেবে যেখানে গিয়ে নতুন ইনডেক্স তৈরি করতে হবে।
-        propertyG.innerHTML = '<p class="error-message" style="color: red;">প্রপার্টি লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে ব্রাউজারের কনসোল (Console) চেক করুন। (যদি নতুন সার্চ ফিচার ব্যবহার করতে চান, তবে সম্ভবত ফায়ারবেসে অতিরিক্ত ইনডেক্স দরকার।)</p>';
-    }
-}
-// --- প্রধান ফাংশন শেষ ---
-
-// ... (অন্যান্য কোড অপরিবর্তিত) ...
