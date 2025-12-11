@@ -1,3 +1,28 @@
+// index.js (চূড়ান্ত ডায়াগনস্টিক: শুধু ৫টি ডেটা লোড করা)
+
+// ... (অন্যান্য কোড অপরিবর্তিত) ...
+
+// --- প্রধান ফাংশন: ফায়ারবেস থেকে সব ডেটা লোড করা (ONLY LIMIT 5) ---
+async function fetchAllPublishedProperties() {
+    
+    propertyG.innerHTML = '<p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>';
+    
+    let query = db.collection('properties');
+    
+    // ⭐⭐ চূড়ান্ত পরীক্ষা: শুধুমাত্র প্রথম ৫টি ডকুমেন্ট লোড করা হবে, কোনো ফিল্টার বা অর্ডারিং নয় ⭐⭐
+    try {
+        const snapshot = await query.limit(5).get(); 
+        
+        // ⭐ গ্লোবাল ভ্যারিয়েবলে ডেটা সংরক্ষণ
+        allPropertyDocs = snapshot.docs;
+        
+    } catch (error) {
+        console.error("সমস্ত প্রপার্টি লোড করতে ব্যর্থ হয়েছে:", error);
+        propertyG.innerHTML = '<p class="error-message" style="color: red;">পোস্ট লোড করা যায়নি। ফায়ারবেস সংযোগ বা সিকিউরিটি রুলস চেক করুন।</p>';
+    }
+}
+// ... (বাকি কোড অপরিবর্তিত থাকবে) ...
+
 // index.js (চূড়ান্ত ফিক্স ২: orderBy ক্লজ বাদ দিয়ে ক্লায়েন্ট-সাইড ফিল্টারিং)
 
 // Firebase SDKs
