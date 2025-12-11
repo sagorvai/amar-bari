@@ -53,24 +53,33 @@ async function loadProfilePicture(user) {
 // --- প্রোফাইল ইমেজ লোড করার ফাংশন শেষ ---
 
 
-// --- প্রধান ফাংশন: প্রপার্টি লোড ও প্রদর্শন (পরীক্ষামূলক: সব ইনডেক্স বাইপাস) ---
+// --- প্রধান ফাংশন: প্রপার্টি লোড ও প্রদর্শন (ফিল্টারিং পুনরুদ্ধার) ---
 async function fetchAndDisplayProperties(category, searchTerm = '') {
     
-    // লোডিং মেসেজ দেখান
     propertyG.innerHTML = '<p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>';
     
-    // ⭐⭐ পরীক্ষামূলক কোড: শুধুমাত্র কালেকশন থেকে প্রথম ১০টি ডকুমেন্ট আনুন ⭐⭐
     let query = db.collection('properties');
-
+    
+    // ১. ক্যাটাগরি ফিল্টার: শুধুমাত্র 'সকল' বা খালি না হলে ক্যাটাগরি দ্বারা ফিল্টার করা হবে
+    if (category && category !== 'সকল' && category !== '' && category !== 'map') {
+        // ✅ ক্যাটাগরি শর্ত পুনরুদ্ধার করা হলো
+        query = query.where('category', '==', category);
+    }
+    
+    // ২. স্ট্যাটাস ফিল্টার: শুধুমাত্র 'published' পোস্ট লোড করা
+    // ✅ স্ট্যাটাস শর্ত পুনরুদ্ধার করা হলো
+    query = query.where('status', '==', 'published');
+    
     try {
-        // কোনো where() বা orderBy() ব্যবহার করা হচ্ছে না। 
-        // এটি ইনডেক্সিং কনফ্লিক্ট এড়িয়ে যাবে এবং Firebase সংযোগ পরীক্ষা করবে।
-        const snapshot = await query.limit(10).get(); 
+        // ৩. সময় অনুসারে সাজানো এবং কোয়েরি চালানো (আপনার ইনডেক্স অনুযায়ী)
+        // ✅ ইনডেক্স ব্যবহার করে সাজানো পুনরুদ্ধার করা হলো (category, status, createdAt)
+        const snapshot = await query.orderBy('createdAt', 'desc').get();
         
-        propertyG.innerHTML = ''; // লোডিং মেসেজ মুছে দিন
+        propertyG.innerHTML = ''; 
         
         if (snapshot.empty) {
-            propertyG.innerHTML = `<p class="empty-message">ডেটাবেসে কোনো পোস্ট খুঁজে পাওয়া যায়নি (অথবা প্রথম ১০টি লোড হয়নি)।</p>`;
+            const message = (category === 'সকল' || category === 'বিক্রয়') ? 'এই ক্যাটাগরিতে কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।' : `"${category}" ক্যাটাগরিতে কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।`;
+            propertyG.innerHTML = `<p class="empty-message">${message}</p>`;
             return;
         }
 
@@ -80,7 +89,6 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
         snapshot.forEach(doc => {
             const data = doc.data();
             
-            // ডিফল্ট ইমেজ প্লেসহোল্ডার
             const imageUrl = (data.images && data.images.length > 0 && data.images[0].url) ? data.images[0].url : 'placeholder.jpg';
             
             let priceText = '';
@@ -112,8 +120,8 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
     } catch (error) {
         console.error("প্রপার্টি লোড করতে ব্যর্থ হয়েছে:", error);
         
-        // এই মেসেজটি এখন শুধুমাত্র প্রকৃত ব্যর্থতা দেখালে আসবে।
-        propertyG.innerHTML = '<p class="error-message" style="color: red;">পোস্ট লোড করা যায়নি। অনুগ্রহ করে ব্রাউজারের কনসোল (F12) চেক করুন। ফায়ারবেস সংযোগে সমস্যা থাকতে পারে।</p>';
+        // যদি এখনও ত্রুটি দেখা যায়, তবে এটি নিশ্চিত ইনডেক্সিং সমস্যা।
+        propertyG.innerHTML = '<p class="error-message" style="color: red;">পোস্ট লোড করা যায়নি। ফায়ারবেস ইনডেক্সিং বা ডেটার "status" ফিল্ড (published) পরীক্ষা করুন।</p>';
     }
 }
 // --- প্রধান ফাংশন শেষ ---
@@ -133,6 +141,7 @@ const handleLogout = async (e) => {
 
 // আইকন কাউন্টার আপডেট করার ডামি ফাংশন 
 function updateIconCounts() {
+    // এই ফাংশনটি এখন পর্যন্ত ডামি, ফায়ারস্টোর থেকে কাউন্ট যোগ করতে হবে
     if (notificationCount) {
         notificationCount.textContent = 0;
         notificationCount.style.display = 'none'; 
@@ -197,11 +206,11 @@ function setupUIEventListeners() {
             if (category === 'map') {
                 document.getElementById('property-grid-container').style.display = 'none';
                 document.getElementById('map-section').style.display = 'block';
-                // ম্যাপ লোড করার ফাংশন এখানে কল করতে হবে
+                // এখানে ম্যাপ লোড করার ফাংশনটি কল করতে হবে
             } else {
                 document.getElementById('property-grid-container').style.display = 'block';
                 document.getElementById('map-section').style.display = 'none';
-                // পরীক্ষামূলক কোডটিতে ক্যাটাগরি ফিল্টার কাজ করবে না, কিন্তু ডেটা লোড করার চেষ্টা করবে
+                // ✅ এখন এই ফাংশন ক্যাটাগরি দ্বারা ফিল্টার করবে
                 fetchAndDisplayProperties(category, globalSearchInput.value); 
             }
         });
@@ -211,9 +220,9 @@ function setupUIEventListeners() {
     globalSearchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const activeCategory = document.querySelector('.nav-filters .nav-button.active').dataset.category;
-            // পরীক্ষামূলক কোডটিতে সার্চ ইনপুট ব্যবহার করা হবে না
+            // এই ভার্সনে সার্চ লজিক নিষ্ক্রিয়, তাই এটি শুধু ক্যাটাগরি লোড করবে
             fetchAndDisplayProperties(activeCategory, globalSearchInput.value);
-            console.log("সার্চ ফিচার বর্তমানে নিষ্ক্রিয় রয়েছে।");
+            console.warn("সার্চ লজিক বর্তমানে নিষ্ক্রিয় রয়েছে। এটি কাজ করাতে নতুন ইনডেক্স দরকার।");
         }
     });
 }
@@ -221,8 +230,7 @@ function setupUIEventListeners() {
 document.addEventListener('DOMContentLoaded', () => {
     setupUIEventListeners();
     
-    // ✅ প্রাথমিক লোড: ডিফল্টভাবে 'বিক্রয়' ক্যাটাগরি দেখাবে (যা HTML-এ Active আছে)
-    // এই ফাংশনটি এখন প্রথম ১০টি পোস্ট লোড করবে (ক্যাটাগরি নির্বিশেষে)
+    // ✅ প্রাথমিক লোড: ডিফল্টভাবে 'বিক্রয়' ক্যাটাগরি লোড করবে
     fetchAndDisplayProperties('বিক্রয়', ''); 
     
     // Auth State Change Handler 
