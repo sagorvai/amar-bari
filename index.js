@@ -53,24 +53,30 @@ async function loadProfilePicture(user) {
 // --- FIX: প্রোফাইল ইমেজ লোড করার ফাংশন শেষ ---
 
 
-// --- ✅ নতুন: প্রপার্টি কার্ডের HTML তৈরি করার ফাংশন ---
+// --- ✅ আপডেট: প্রপার্টি কার্ডের HTML তৈরি করার ফাংশন ---
 function createPropertyCardHTML(property) {
     const propertyId = property.id;
     const title = property.title || 'শিরোনামবিহীন প্রপার্টি';
     const city = property.location?.city || 'অজানা শহর';
     const area = property.location?.area || 'অজানা এলাকা';
+    
     // টাকার অঙ্কের জন্য বাংলা ফরম্যাট ব্যবহার করা হলো
     const price = property.price ? new Intl.NumberFormat('bn-BD', { style: 'currency', currency: 'BDT', minimumFractionDigits: 0 }).format(property.price) : 'আলোচনা সাপেক্ষে';
     const category = property.category || 'বিক্রয়';
-    const mainImageUrl = property.mainImageUrl || 'https://via.placeholder.com/300x200?text=No+Image';
+    
+    // ⭐ FIX 1: images অ্যারে থেকে ছবির URL লোড করা
+    const mainImageUrl = (property.images && property.images.length > 0)
+        ? property.images[0].downloadURL // ধরে নেওয়া হলো images অ্যারেতে downloadURL আছে
+        : 'https://via.placeholder.com/300x200?text=No+Image';
 
     // অন্যান্য তথ্য
     const bedrooms = property.bedrooms || '-';
     const bathrooms = property.bathrooms || '-';
     const sizeSqft = property.sizeSqft ? `${property.sizeSqft} sqft` : '-';
     
-    // post.html এ রিডাইরেক্ট করা হলো, সাথে প্রপার্টির ID query parameter হিসেবে পাঠানো হলো।
-    const detailLink = `post.html?id=${propertyId}`; 
+    // ⭐ FIX 3: ডিটেইলস পেইজে রিডাইরেক্ট করা 
+    // ধরে নেওয়া হলো আপনার ডিটেইলস পেজটি হলো details.html
+    const detailLink = `details.html?id=${propertyId}`; 
 
     return `
         <a href="${detailLink}" class="property-card" data-id="${propertyId}">
@@ -115,8 +121,12 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
         mapSection.style.display = 'none';
     }
 
-    // ফায়ারবেস কোয়েরি: ক্যাটাগরি অনুযায়ী ফিল্টার করে এবং তৈরির সময় (createdAt) অনুযায়ী সাজানো হয়েছে
-    let query = db.collection('properties').where('category', '==', category).orderBy('createdAt', 'desc');
+    // ফায়ারবেস কোয়েরি: ক্যাটাগরি অনুযায়ী ফিল্টার করে, স্ট্যাটাস 'published' এবং তৈরির সময় অনুযায়ী সাজানো
+    let query = db.collection('properties')
+                  .where('category', '==', category)
+                  // ⭐ FIX 2: শুধুমাত্র প্রকাশিত প্রপার্টি দেখানোর জন্য নতুন শর্ত
+                  .where('status', '==', 'published') 
+                  .orderBy('createdAt', 'desc');
     
     try {
         const snapshot = await query.get();
