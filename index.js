@@ -2,25 +2,58 @@
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// UI elements (Previous setup remains)
+// UI elements
 const menuButton = document.getElementById('menuButton');
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
 
-// ... (কাউন্টার এবং অন্যান্য উপাদানগুলি অপরিবর্তিত) ...
+// নেভিগেশন ও প্রোফাইল উপাদান
+const notificationButton = document.getElementById('notificationButton'); 
+const messageButton = document.getElementById('messageButton');
+const headerPostButton = document.getElementById('headerPostButton'); 
+const profileImageWrapper = document.getElementById('profileImageWrapper'); 
+const profileImage = document.getElementById('profileImage'); 
+const defaultProfileIcon = document.getElementById('defaultProfileIcon'); 
+
+// কাউন্টার উপাদান
+const notificationCount = document.getElementById('notification-count');
+const messageCount = document.getElementById('message-count');
+const postCount = document.getElementById('post-count'); 
 
 const navButtons = document.querySelectorAll('.nav-filters .nav-button'); 
 const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
 const globalSearchInput = document.getElementById('globalSearchInput');
 
-// --- প্রোফাইল ইমেজ লোড করার ফাংশন (অপরিবর্তিত) ---
-async function loadProfilePicture(user) { /* ... */ }
+// --- প্রোফাইল ইমেজ লোড করার ফাংশন ---
+async function loadProfilePicture(user) {
+    if (profileImage && defaultProfileIcon) {
+        try {
+            const doc = await db.collection('users').doc(user.uid).get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.profilePictureUrl) {
+                    profileImage.src = data.profilePictureUrl;
+                    profileImage.style.display = 'block';
+                    defaultProfileIcon.style.display = 'none';
+                } else {
+                    profileImage.style.display = 'none';
+                    defaultProfileIcon.style.display = 'block';
+                }
+            }
+        } catch (error) {
+            console.error("Profile picture load failed:", error);
+            profileImage.style.display = 'none';
+            defaultProfileIcon.style.display = 'block';
+        }
+    }
+}
 
-// --- স্লাইডার নেভিগেশন লজিক (অপরিবর্তিত) ---
-function setupSliderLogic() { 
-    // ... (আপনার দেওয়া স্লাইডার লজিক) ...
+// --- ⭐ স্লাইডার নেভিগেশন লজিক ⭐ ---
+function setupSliderLogic() {
+    // প্রপার্টি গ্রিড লোড হওয়ার পরে এই লজিকটি রান করা হয়
     document.querySelectorAll('.slider-nav-btn').forEach(button => {
+        // e.preventDefault() এবং e.stopPropagation() ব্যবহার করা হলো যাতে কার্ডে ক্লিক ইভেন্ট না হয়
         button.addEventListener('click', (e) => {
             e.preventDefault(); 
             e.stopPropagation(); 
@@ -29,6 +62,10 @@ function setupSliderLogic() {
             const slider = card.querySelector('.image-slider');
             const slides = slider.querySelectorAll('.slider-item');
             const totalSlides = parseInt(slider.dataset.totalSlides);
+            
+            // যদি একটির বেশি ছবি না থাকে, তবে কোনো কাজ হবে না
+            if (totalSlides <= 1) return;
+
             let currentIndex = parseInt(slider.dataset.currentIndex);
             
             // পরবর্তী স্লাইডে যাওয়া
@@ -41,13 +78,12 @@ function setupSliderLogic() {
             }
             
             // UI আপডেট
-            slides.forEach(slide => slide.style.display = 'none');
-            slides[currentIndex].style.display = 'block';
-            slider.dataset.currentIndex = currentIndex; 
+            slides.forEach(slide => slide.style.display = 'none'); // সব স্লাইড লুকিয়ে ফেলুন
+            slides[currentIndex].style.display = 'block'; // বর্তমান স্লাইডটি দেখান
+            slider.dataset.currentIndex = currentIndex; // ইনডেক্স আপডেট করুন
         });
     });
 }
-// --- স্লাইডার নেভিগেশন লজিক শেষ ---
 
 
 // --- ✅ আপডেট: প্রপার্টি কার্ডের HTML তৈরি করার ফাংশন (ডাইনামিক কন্টেন্ট) ---
@@ -62,8 +98,9 @@ function createPropertyCardHTML(property) {
     const fullLocation = `${village}, ${thana}, ${district}`;
 
     const category = property.category || 'বিক্রয়';
-    const propertyType = property.propertyType || 'প্রপার্টি'; // প্রপার্টির ধরন
+    const propertyType = property.propertyType || 'প্রপার্টি';
     
+    // প্রপার্টির পরিমাপ
     const sizeSqft = property.sizeSqft || property.landArea || '-'; 
     const sizeUnit = property.sizeUnit || 'স্কয়ার ফিট'; 
     const displaySize = sizeSqft !== '-' ? `${sizeSqft} ${sizeUnit}` : '-';
@@ -71,10 +108,10 @@ function createPropertyCardHTML(property) {
     const bedrooms = property.bedrooms || '-';
     const bathrooms = property.bathrooms || '-';
     
-    // --- ডাইনামিক প্রাইস/ডিটেইলস লজিক ---
+    // --- ডাইনামিক প্রাইস/স্পেকস লজিক ---
     const priceValue = property.price ? new Intl.NumberFormat('bn-BD', { minimumFractionDigits: 0 }).format(property.price) : 'আলোচনা সাপেক্ষে';
     let priceDetailsHTML = '';
-    let specsHTML = ''; // নতুন স্পেকস (Specs) কন্টেইনার
+    let specsHTML = ''; 
     
     if (category === 'বিক্রয়') {
         // বিক্রয়ের জন্য: মূল্য (৳), ধরন, পরিমান (Size), বেডরুম
@@ -97,18 +134,22 @@ function createPropertyCardHTML(property) {
          specsHTML = `<span title="প্রপার্টির ধরন"><i class="material-icons">home</i> ${propertyType}</span>`;
     }
 
-    // --- স্লাইডার HTML জেনারেশন (অপরিবর্তিত) ---
+    // --- স্লাইডার HTML জেনারেশন ---
     const images = property.images || [];
     const sliderItemsHTML = images.map((imageMeta, index) => {
+        // preview.js অনুযায়ী 'url' ফিল্ড ব্যবহার করা হলো
         const imageUrl = imageMeta.url; 
+        // স্লাইডারের CSS দ্বারা সঠিক সাইজ এবং পজিশন নিশ্চিত করতে হবে
         return `<div class="slider-item" style="background-image: url('${imageUrl}'); ${index === 0 ? 'display: block;' : 'display: none;'}"></div>`;
     }).join('');
 
+    // একাধিক ছবি থাকলে নেভিগেশন বাটন দেখানো হবে
     const sliderNavigationHTML = images.length > 1 ? `
         <button class="slider-nav-btn prev-btn" data-id="${propertyId}">&#10094;</button>
         <button class="slider-nav-btn next-btn" data-id="${propertyId}">&#10095;</button>
     ` : '';
     
+    // ডিটেইলস পেইজে রিডাইরেক্ট করা
     const detailLink = `details.html?id=${propertyId}`; 
 
     return `
@@ -126,21 +167,35 @@ function createPropertyCardHTML(property) {
                     <i class="material-icons location-icon">location_on</i> ${fullLocation}
                 </p>
                 <div class="property-specs">
-                    ${specsHTML} </div>
+                    ${specsHTML} 
+                </div>
                 ${priceDetailsHTML}
             </div>
         </a>
     `;
 }
 
-// --- fetchAndDisplayProperties ফাংশন (অপরিবর্তিত) ---
+// --- fetchAndDisplayProperties ফাংশন ---
 async function fetchAndDisplayProperties(category, searchTerm = '') {
     
     propertyG.innerHTML = '<p class=\"loading-message\">প্রপার্টি লোড হচ্ছে...</p>';
     
-    // ... (map ভিউ লজিক) ...
+    // 'map' ক্যাটাগরি হ্যান্ডেলিং
+    const isMapView = category === 'map';
+    const propertyGridContainer = document.getElementById('property-grid-container');
+    const mapSection = document.getElementById('map-section');
     
-    // ফায়ারবেস কোয়েরি
+    if (isMapView) {
+        propertyGridContainer.style.display = 'none';
+        mapSection.style.display = 'block';
+        propertyG.innerHTML = ''; 
+        return;
+    } else {
+        propertyGridContainer.style.display = 'block';
+        mapSection.style.display = 'none';
+    }
+
+    // ফায়ারবেস কোয়েরি (ইন্ডেক্সিং প্রয়োজন)
     let query = db.collection('properties')
                   .where('category', '==', category)
                   .where('status', '==', 'published') 
@@ -190,4 +245,134 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
     }
 }
 
-// ... (handleLogout, updateIconCounts, setupUIEventListeners, DOMContentLoaded লজিকগুলি অপরিবর্তিত) ...
+
+// লগআউট হ্যান্ডেলার
+const handleLogout = async (e) => {
+    e.preventDefault();
+    try {
+        await auth.signOut();
+        alert('সফলভাবে লগআউট করা হয়েছে!');
+        window.location.href = 'index.html'; 
+    } catch (error) {
+        console.error("লগআউট ব্যর্থ হয়েছে:", error);
+        alert("লগআউট ব্যর্থ হয়েছে।");
+    }
+};
+
+// আইকন কাউন্টার আপডেট করার ডামি ফাংশন 
+function updateIconCounts() {
+    if (notificationCount) {
+        notificationCount.style.display = 'none';
+    }
+    if (messageCount) {
+        messageCount.style.display = 'none';
+    }
+    if (postCount) {
+        postCount.style.display = 'none';
+    }
+}
+
+// ইভেন্ট লিসেনার সেটআপ
+function setupUIEventListeners() {
+    // মেনু বাটন এবং সাইডবার টগল
+    if (menuButton) {
+        menuButton.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+    }
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+    
+    // নেভিগেশন আইকন রিডাইরেক্ট
+    if (notificationButton) {
+        notificationButton.addEventListener('click', () => {
+             window.location.href = 'notifications.html'; 
+        });
+    }
+
+    if (headerPostButton) {
+        headerPostButton.addEventListener('click', () => {
+            window.location.href = 'post.html'; 
+        });
+    }
+
+    if (messageButton) {
+        messageButton.addEventListener('click', () => {
+             window.location.href = 'messages.html';
+        });
+    }
+    
+    if (profileImageWrapper) {
+        profileImageWrapper.addEventListener('click', () => {
+             window.location.href = 'profile.html'; 
+        });
+    }
+    
+    // প্রপার্টি ক্যাটাগরি ফিল্টার
+    navButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            const category = button.dataset.category;
+            fetchAndDisplayProperties(category, globalSearchInput.value);
+        });
+    });
+
+    // গ্লোবাল সার্চ ইনপুট ইভেন্ট
+    if (globalSearchInput) {
+        globalSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const activeCategory = document.querySelector('.nav-filters .nav-button.active').dataset.category;
+                fetchAndDisplayProperties(activeCategory, globalSearchInput.value);
+            }
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    setupUIEventListeners();
+    
+    // প্রাথমিক লোড: ডিফল্টভাবে 'বিক্রয়' ক্যাটাগরি দেখাবে
+    fetchAndDisplayProperties('বিক্রয়', ''); 
+    
+    // Auth State Change Handler 
+    auth.onAuthStateChanged(user => {
+        
+        if (user) {
+            // লগইন থাকলে
+            loadProfilePicture(user); 
+            updateIconCounts(); 
+            
+            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+            
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগআউট';
+                loginLinkSidebar.href = '#';
+                
+                loginLinkSidebar.removeEventListener('click', handleLogout);
+                loginLinkSidebar.addEventListener('click', handleLogout);
+            }
+        } else {
+            // লগইন না থাকলে
+            profileImage.style.display = 'none';
+            defaultProfileIcon.style.display = 'block';
+            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+
+            notificationCount.style.display = 'none';
+            messageCount.style.display = 'none';
+            postCount.style.display = 'none';
+            
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগইন';
+                loginLinkSidebar.href = 'auth.html';
+                loginLinkSidebar.removeEventListener('click', handleLogout); 
+            }
+        }
+    });
+
+});
