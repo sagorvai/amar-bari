@@ -37,14 +37,12 @@ async function loadProfilePicture(user) {
                     profileImage.style.display = 'block';
                     defaultProfileIcon.style.display = 'none';
                 } else {
-                    // যদি URL না থাকে, ডিফল্ট আইকন দেখান
                     profileImage.style.display = 'none';
                     defaultProfileIcon.style.display = 'block';
                 }
             }
         } catch (error) {
             console.error("Profile picture load failed:", error);
-            // কোনো সমস্যা হলে ডিফল্ট আইকন দেখান
             profileImage.style.display = 'none';
             defaultProfileIcon.style.display = 'block';
         }
@@ -53,29 +51,37 @@ async function loadProfilePicture(user) {
 // --- FIX: প্রোফাইল ইমেজ লোড করার ফাংশন শেষ ---
 
 
-// --- ✅ আপডেট: প্রপার্টি কার্ডের HTML তৈরি করার ফাংশন ---
+// --- ✅ আপডেট: প্রপার্টি কার্ডের HTML তৈরি করার ফাংশন (ছবি, লোকেশন, পরিমাণ ফিক্স করা হয়েছে) ---
 function createPropertyCardHTML(property) {
     const propertyId = property.id;
     const title = property.title || 'শিরোনামবিহীন প্রপার্টি';
-    const city = property.location?.city || 'অজানা শহর';
-    const area = property.location?.area || 'অজানা এলাকা';
     
+    // ⭐ FIX 2: লোকেশনের তথ্য সংগ্রহ ও একত্রিত করা
+    const district = property.location?.district || 'অজানা জেলা';
+    const thana = property.location?.thana || 'অজানা থানা';
+    // যদি গ্রাম (village) ফিল্ড না থাকে, তবে এলাকা (area) ফিল্ড ব্যবহার করা
+    const village = property.location?.village || property.location?.area || 'অজানা গ্রাম/এলাকা'; 
+    const fullLocation = `${village}, ${thana}, ${district}`;
+
     // টাকার অঙ্কের জন্য বাংলা ফরম্যাট ব্যবহার করা হলো
     const price = property.price ? new Intl.NumberFormat('bn-BD', { style: 'currency', currency: 'BDT', minimumFractionDigits: 0 }).format(property.price) : 'আলোচনা সাপেক্ষে';
     const category = property.category || 'বিক্রয়';
     
-    // ⭐ FIX 1: images অ্যারে থেকে ছবির URL লোড করা
+    // ⭐ FIX 3: পরিমাপ (Size/Amount) এর জন্য sizeSqft এবং unit ব্যবহার করা
+    const sizeSqft = property.sizeSqft || property.landArea || '-'; 
+    const sizeUnit = property.sizeUnit || 'স্কয়ার ফিট';
+    const displaySize = sizeSqft !== '-' ? `${sizeSqft} ${sizeUnit}` : '-';
+    
+    // ⭐ FIX 1: images অ্যারে থেকে ছবির URL লোড করা (preview.js অনুযায়ী .url ফিল্ড ব্যবহার করা হয়েছে)
     const mainImageUrl = (property.images && property.images.length > 0)
-        ? property.images[0].downloadURL // ধরে নেওয়া হলো images অ্যারেতে downloadURL আছে
+        ? property.images[0].url // এখন .url ফিল্ড ব্যবহার করা হচ্ছে
         : 'https://via.placeholder.com/300x200?text=No+Image';
 
     // অন্যান্য তথ্য
     const bedrooms = property.bedrooms || '-';
     const bathrooms = property.bathrooms || '-';
-    const sizeSqft = property.sizeSqft ? `${property.sizeSqft} sqft` : '-';
     
-    // ⭐ FIX 3: ডিটেইলস পেইজে রিডাইরেক্ট করা 
-    // ধরে নেওয়া হলো আপনার ডিটেইলস পেজটি হলো details.html
+    // ডিটেইলস পেইজে রিডাইরেক্ট করা 
     const detailLink = `details.html?id=${propertyId}`; 
 
     return `
@@ -87,13 +93,12 @@ function createPropertyCardHTML(property) {
             <div class="property-details">
                 <h3 class="property-title">${title}</h3>
                 <p class="property-location">
-                    <i class="material-icons location-icon">location_on</i> ${area}, ${city}
+                    <i class="material-icons location-icon">location_on</i> ${fullLocation}
                 </p>
                 <div class="property-specs">
                     <span><i class="material-icons">king_bed</i> ${bedrooms}</span>
                     <span><i class="material-icons">bathtub</i> ${bathrooms}</span>
-                    <span><i class="material-icons">square_foot</i> ${sizeSqft}</span>
-                </div>
+                    <span><i class="material-icons">square_foot</i> ${displaySize}</span> </div>
                 <div class="property-price">${price}</div>
             </div>
         </a>
@@ -113,8 +118,7 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
     if (isMapView) {
         propertyGridContainer.style.display = 'none';
         mapSection.style.display = 'block';
-        propertyG.innerHTML = ''; // গ্রিড পরিষ্কার
-        // ম্যাপ লজিক এখানে যাবে
+        propertyG.innerHTML = ''; 
         return;
     } else {
         propertyGridContainer.style.display = 'block';
@@ -124,7 +128,6 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
     // ফায়ারবেস কোয়েরি: ক্যাটাগরি অনুযায়ী ফিল্টার করে, স্ট্যাটাস 'published' এবং তৈরির সময় অনুযায়ী সাজানো
     let query = db.collection('properties')
                   .where('category', '==', category)
-                  // ⭐ FIX 2: শুধুমাত্র প্রকাশিত প্রপার্টি দেখানোর জন্য নতুন শর্ত
                   .where('status', '==', 'published') 
                   .orderBy('createdAt', 'desc');
     
@@ -186,8 +189,6 @@ const handleLogout = async (e) => {
 
 // আইকন কাউন্টার আপডেট করার ডামি ফাংশন (যদি ফায়ারবেস লজিক থাকে)
 function updateIconCounts() {
-    // এই ফাংশন ফায়ারবেস থেকে নোটিফিকেশন/মেসেজ কাউন্ট লোড করবে
-    // এখন এটি শুধু ডামি ডেটা দেখাচ্ছে
     if (notificationCount) {
         notificationCount.style.display = 'none';
     }
