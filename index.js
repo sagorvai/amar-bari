@@ -25,7 +25,7 @@ const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
 const globalSearchInput = document.getElementById('globalSearchInput');
 
-// --- ⭐ FIX: প্রোফাইল ইমেজ লোড করার ফাংশন যোগ করা হলো ⭐ ---
+// --- প্রোফাইল ইমেজ লোড করার ফাংশন ---
 async function loadProfilePicture(user) {
     if (profileImage && defaultProfileIcon) {
         try {
@@ -48,46 +48,100 @@ async function loadProfilePicture(user) {
         }
     }
 }
-// --- FIX: প্রোফাইল ইমেজ লোড করার ফাংশন শেষ ---
+// --- প্রোফাইল ইমেজ লোড করার ফাংশন শেষ ---
+
+// --- ⭐ নতুন ফাংশন: স্লাইডার নেভিগেশন লজিক ⭐ ---
+function setupSliderLogic() {
+    // প্রপার্টি গ্রিড লোড হওয়ার পরে এই লজিকটি রান করা হয়
+    document.querySelectorAll('.slider-nav-btn').forEach(button => {
+        // e.preventDefault() এবং e.stopPropagation() ব্যবহার করা হলো যাতে কার্ডে ক্লিক ইভেন্ট না হয়
+        button.addEventListener('click', (e) => {
+            e.preventDefault(); 
+            e.stopPropagation(); 
+
+            const card = e.target.closest('.property-card');
+            const slider = card.querySelector('.image-slider');
+            const slides = slider.querySelectorAll('.slider-item');
+            const totalSlides = parseInt(slider.dataset.totalSlides);
+            let currentIndex = parseInt(slider.dataset.currentIndex);
+            
+            // পরবর্তী স্লাইডে যাওয়া
+            if (e.target.classList.contains('next-btn')) {
+                currentIndex = (currentIndex + 1) % totalSlides;
+            } 
+            // পূর্ববর্তী স্লাইডে যাওয়া
+            else if (e.target.classList.contains('prev-btn')) {
+                currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+            }
+            
+            // UI আপডেট
+            slides.forEach(slide => slide.style.display = 'none'); // সব স্লাইড লুকিয়ে ফেলুন
+            slides[currentIndex].style.display = 'block'; // বর্তমান স্লাইডটি দেখান
+            slider.dataset.currentIndex = currentIndex; // ইনডেক্স আপডেট করুন
+        });
+    });
+}
+// --- স্লাইডার নেভিগেশন লজিক শেষ ---
 
 
-// --- ✅ আপডেট: প্রপার্টি কার্ডের HTML তৈরি করার ফাংশন (ছবি, লোকেশন, পরিমাণ ফিক্স করা হয়েছে) ---
+// --- ✅ আপডেট: প্রপার্টি কার্ডের HTML তৈরি করার ফাংশন (ডাইনামিক কন্টেন্ট ও স্লাইডার সহ) ---
 function createPropertyCardHTML(property) {
     const propertyId = property.id;
     const title = property.title || 'শিরোনামবিহীন প্রপার্টি';
     
-    // ⭐ FIX 2: লোকেশনের তথ্য সংগ্রহ ও একত্রিত করা
+    // লোকেশনের তথ্য সংগ্রহ ও একত্রিত করা
     const district = property.location?.district || 'অজানা জেলা';
     const thana = property.location?.thana || 'অজানা থানা';
-    // যদি গ্রাম (village) ফিল্ড না থাকে, তবে এলাকা (area) ফিল্ড ব্যবহার করা
     const village = property.location?.village || property.location?.area || 'অজানা গ্রাম/এলাকা'; 
     const fullLocation = `${village}, ${thana}, ${district}`;
 
-    // টাকার অঙ্কের জন্য বাংলা ফরম্যাট ব্যবহার করা হলো
-    const price = property.price ? new Intl.NumberFormat('bn-BD', { style: 'currency', currency: 'BDT', minimumFractionDigits: 0 }).format(property.price) : 'আলোচনা সাপেক্ষে';
     const category = property.category || 'বিক্রয়';
+    const propertyType = property.propertyType || 'প্রপার্টি'; // প্রপার্টির ধরন
     
-    // ⭐ FIX 3: পরিমাপ (Size/Amount) এর জন্য sizeSqft এবং unit ব্যবহার করা
+    // পরিমাপ (Size/Amount)
     const sizeSqft = property.sizeSqft || property.landArea || '-'; 
-    const sizeUnit = property.sizeUnit || 'স্কয়ার ফিট';
+    // যদি জমি হয়, তবে sizeUnit পরিবর্তন হতে পারে (যেমন কাঠা/বিঘা)
+    const sizeUnit = property.sizeUnit || 'স্কয়ার ফিট'; 
     const displaySize = sizeSqft !== '-' ? `${sizeSqft} ${sizeUnit}` : '-';
     
-    // ⭐ FIX 1: images অ্যারে থেকে ছবির URL লোড করা (preview.js অনুযায়ী .url ফিল্ড ব্যবহার করা হয়েছে)
-    const mainImageUrl = (property.images && property.images.length > 0)
-        ? property.images[0].url // এখন .url ফিল্ড ব্যবহার করা হচ্ছে
-        : 'https://via.placeholder.com/300x200?text=No+Image';
+    // --- ডাইনামিক প্রাইস/ডিটেইলস লজিক ---
+    const priceValue = property.price ? new Intl.NumberFormat('bn-BD', { minimumFractionDigits: 0 }).format(property.price) : 'আলোচনা সাপেক্ষে';
+    let priceDetailsHTML = '';
+    
+    if (category === 'বিক্রয়') {
+        // বিক্রয়ের জন্য: শিরোনাম, লোকেশন, প্রপার্টি ধরন, পরিমান, দাম
+        priceDetailsHTML = `<div class="property-price sale-price">৳ ${priceValue}</div>`;
+    } else if (category === 'ভাড়া') {
+        // ভাড়ার জন্য: শিরোনাম, লোকেশন, প্রপার্টি ধরন, পরিমান, ভাড়া
+        priceDetailsHTML = `<div class="property-price rent-price">৳ ${priceValue} <span class="unit">/মাস</span></div>`;
+    } else {
+        priceDetailsHTML = `<div class="property-price">৳ ${priceValue}</div>`;
+    }
 
-    // অন্যান্য তথ্য
-    const bedrooms = property.bedrooms || '-';
-    const bathrooms = property.bathrooms || '-';
+    // --- স্লাইডার HTML জেনারেশন ---
+    const images = property.images || [];
+    const sliderItemsHTML = images.map((imageMeta, index) => {
+        const imageUrl = imageMeta.url; 
+        // প্রথম স্লাইডটি দেখানোর জন্য display: block ব্যবহার করা হয়েছে।
+        return `<div class="slider-item" style="background-image: url('${imageUrl}'); ${index === 0 ? 'display: block;' : 'display: none;'}"></div>`;
+    }).join('');
+
+    // একাধিক ছবি থাকলে নেভিগেশন বাটন দেখানো হবে
+    const sliderNavigationHTML = images.length > 1 ? `
+        <button class="slider-nav-btn prev-btn" data-id="${propertyId}">&#10094;</button>
+        <button class="slider-nav-btn next-btn" data-id="${propertyId}">&#10095;</button>
+    ` : '';
     
     // ডিটেইলস পেইজে রিডাইরেক্ট করা 
     const detailLink = `details.html?id=${propertyId}`; 
 
     return `
         <a href="${detailLink}" class="property-card" data-id="${propertyId}">
-            <div class="property-image-container">
-                <img src="${mainImageUrl}" alt="${title}" loading="lazy">
+            <div class="property-image-container slider-container">
+                <div class="image-slider" data-current-index="0" data-total-slides="${images.length}">
+                    ${sliderItemsHTML}
+                </div>
+                ${sliderNavigationHTML}
                 <span class="property-category">${category}</span>
             </div>
             <div class="property-details">
@@ -96,10 +150,10 @@ function createPropertyCardHTML(property) {
                     <i class="material-icons location-icon">location_on</i> ${fullLocation}
                 </p>
                 <div class="property-specs">
-                    <span><i class="material-icons">king_bed</i> ${bedrooms}</span>
-                    <span><i class="material-icons">bathtub</i> ${bathrooms}</span>
-                    <span><i class="material-icons">square_foot</i> ${displaySize}</span> </div>
-                <div class="property-price">${price}</div>
+                    <span title="প্রপার্টির ধরন"><i class="material-icons">home</i> ${propertyType}</span> 
+                    <span title="পরিমাপ"><i class="material-icons">square_foot</i> ${displaySize}</span> 
+                </div>
+                ${priceDetailsHTML}
             </div>
         </a>
     `;
@@ -125,7 +179,7 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
         mapSection.style.display = 'none';
     }
 
-    // ফায়ারবেস কোয়েরি: ক্যাটাগরি অনুযায়ী ফিল্টার করে, স্ট্যাটাস 'published' এবং তৈরির সময় অনুযায়ী সাজানো
+    // ফায়ারবেস কোয়েরি
     let query = db.collection('properties')
                   .where('category', '==', category)
                   .where('status', '==', 'published') 
@@ -149,12 +203,11 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
                 ...doc.data()
             };
             
-            // ✅ সাধারণ সার্চ ফিল্টার (JS-এ): সার্চ টার্ম থাকলে টাইটেল বা লোকেশন ফিল্ডে তা খুঁজুন
+            // সার্চ ফিল্টার
             const titleMatch = propertyData.title && propertyData.title.toLowerCase().includes(sTerm);
             const cityMatch = propertyData.location?.city && propertyData.location.city.toLowerCase().includes(sTerm);
             const areaMatch = propertyData.location?.area && propertyData.location.area.toLowerCase().includes(sTerm);
             
-            // যদি সার্চ টার্ম না থাকে অথবা কোনো ফিল্ডের সাথে মেলে
             if (sTerm === '' || titleMatch || cityMatch || areaMatch) {
                 propertiesHTML += createPropertyCardHTML(propertyData);
                 foundCount++;
@@ -166,6 +219,9 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
         if (foundCount === 0) {
              propertyG.innerHTML = `<p class="no-results-message">আপনার খোঁজা (<b>${searchTerm}</b>) সাথে মেলানো কোনো প্রপার্টি এই ক্যাটাগরিতে (<b>${category}</b>) খুঁজে পাওয়া যায়নি।</p>`;
         }
+        
+        // ⭐ নতুন সংযোজন: প্রপার্টি লোড হওয়ার পর স্লাইডার লজিক সেটআপ করা ⭐
+        setupSliderLogic();
 
     } catch (error) {
         console.error("প্রপার্টি লোড করতে ব্যর্থ:", error);
@@ -174,7 +230,7 @@ async function fetchAndDisplayProperties(category, searchTerm = '') {
 }
 
 
-// লগআউট হ্যান্ডেলার
+// লগআউট হ্যান্ডেলার (পরিবর্তন হয়নি)
 const handleLogout = async (e) => {
     e.preventDefault();
     try {
@@ -187,7 +243,7 @@ const handleLogout = async (e) => {
     }
 };
 
-// আইকন কাউন্টার আপডেট করার ডামি ফাংশন (যদি ফায়ারবেস লজিক থাকে)
+// আইকন কাউন্টার আপডেট করার ডামি ফাংশন (পরিবর্তন হয়নি)
 function updateIconCounts() {
     if (notificationCount) {
         notificationCount.style.display = 'none';
@@ -200,9 +256,8 @@ function updateIconCounts() {
     }
 }
 
-// ইভেন্ট লিসেনার সেটআপ
+// ইভেন্ট লিসেনার সেটআপ (পরিবর্তন হয়নি)
 function setupUIEventListeners() {
-    // মেনু বাটন এবং সাইডবার টগল
     if (menuButton) {
         menuButton.addEventListener('click', () => {
             sidebar.classList.toggle('active');
@@ -216,7 +271,6 @@ function setupUIEventListeners() {
         });
     }
     
-    // নেভিগেশন আইকন রিডাইরেক্ট
     if (notificationButton) {
         notificationButton.addEventListener('click', () => {
              window.location.href = 'notifications.html'; 
@@ -241,7 +295,6 @@ function setupUIEventListeners() {
         });
     }
     
-    // প্রপার্টি ক্যাটাগরি ফিল্টার
     navButtons.forEach(button => {
         button.addEventListener('click', () => {
             navButtons.forEach(btn => btn.classList.remove('active'));
@@ -251,7 +304,6 @@ function setupUIEventListeners() {
         });
     });
 
-    // গ্লোবাল সার্চ ইনপুট ইভেন্ট
     if (globalSearchInput) {
         globalSearchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -263,17 +315,12 @@ function setupUIEventListeners() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // সকল ইভেন্ট লিসেনার সেটআপ করা হলো
     setupUIEventListeners();
-    
-    // প্রাথমিক লোড: ডিফল্টভাবে 'বিক্রয়' ক্যাটাগরি দেখাবে
     fetchAndDisplayProperties('বিক্রয়', ''); 
     
-    // Auth State Change Handler 
     auth.onAuthStateChanged(user => {
         
         if (user) {
-            // লগইন থাকলে
             loadProfilePicture(user); 
             updateIconCounts(); 
             
@@ -287,7 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginLinkSidebar.addEventListener('click', handleLogout);
             }
         } else {
-            // লগইন না থাকলে
             profileImage.style.display = 'none';
             defaultProfileIcon.style.display = 'block';
             if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
