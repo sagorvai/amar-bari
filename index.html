@@ -29,17 +29,19 @@
     </script>
     
     <style>
-        /* CSS অংশ অপরিবর্তিত রাখা হলো */
+        /* CSS ভেরিয়েবল (style.css এ না থাকলে এখানে রাখা হলো) */
         :root {
-            --primary-color: #007bff; 
+            --primary-color: #007bff; /* লোগো ও অন্যান্য প্রধান রঙের জন্য */
         }
 
+        /* গ্লোবাল ফিক্স */
         body {
             margin: 0; 
             padding: 0;
             font-family: Arial, sans-serif; 
         }
 
+        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
         .main-header {
              position: fixed; 
              top: 0;
@@ -50,11 +52,17 @@
              z-index: 1000; 
         }
         
+        /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
         .sidebar {
             z-index: 1050; 
         }
         .overlay {
             z-index: 1040; 
+        }
+        
+        /* এই padding-top টি এখন শুধু .nav-filters এর উচ্চতার জন্য, main-content এ ব্যবহৃত হবে না */
+        .main-content {
+             /* এটি style.css ফাইলে সরানো হয়েছে */
         }
         
         .header-top {
@@ -92,6 +100,7 @@
             margin-right: 5px;
         }
 
+        /* ডানের ব্লক (আইকন) ফিক্স */
         .header-actions {
              display: flex;
              align-items: center;
@@ -100,6 +109,7 @@
              flex-shrink: 0; 
         }
         
+        /* ✅ কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
         .icon-wrapper {
              position: relative;
              display: inline-flex;
@@ -110,6 +120,7 @@
              width: 30px; 
         }
         
+        /* ✅ কমন নোটিফিকেশন কাউন্ট স্টাইল */
         .notification-count {
             position: absolute;
             top: -5px; 
@@ -123,20 +134,22 @@
             min-width: 10px;
             text-align: center;
             line-height: 1; 
-            display: none; 
+            display: none; /* ডিফল্টভাবে লুকানো */
         }
         
+        /* আইকন কালার */
         .notification-icon { color: var(--primary-color); }
         .message-icon { color: var(--primary-color); }
         .post-icon-header { color: #28a745; }
 
+        /* প্রোফাইল ইমেজ স্টাইল */
         .profile-image-wrapper {
             cursor: pointer;
-            width: 35px; 
+            width: 35px; /* আইকন থেকে সামান্য বড় */
             height: 35px;
             border-radius: 50%;
             overflow: hidden;
-            border: 2px solid var(--primary-color); 
+            border: 2px solid var(--primary-color); /* রঙের বর্ডার */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -148,11 +161,136 @@
         }
 
 
+        /* সার্চ বার এবং নেভিগেশন ফিল্টারগুলির প্যাডিং ফিক্স */
         .search-bar { 
             padding: 0 15px 8px; 
         }
+        
+        
+        /* --- ✅ নতুন: প্রপার্টি গ্রিড ও কার্ডের স্টাইল --- */
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* responsive grid */
+            gap: 20px;
+            padding: 20px 0; 
+        }
 
+        .property-card {
+            text-decoration: none; 
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            background-color: white;
+            min-height: 350px; 
+        }
+
+        .property-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .property-image-container {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .property-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .property-category {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .property-details {
+            padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .property-title {
+            font-size: 1.2em;
+            margin: 0 0 10px 0;
+            color: #333;
+            /* Truncate long titles */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .property-location {
+            display: flex;
+            align-items: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .property-location .location-icon {
+            font-size: 18px;
+            margin-right: 4px;
+            color: var(--primary-color);
+        }
+
+        .property-specs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        .property-specs span {
+            display: flex;
+            align-items: center;
+        }
+
+        .property-specs .material-icons {
+            font-size: 18px;
+            margin-right: 3px;
+            color: #007bff;
+        }
+
+        .property-price {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #28a745; 
+            margin-top: auto; /* মূল্যকে নিচে ঠেলে দেয় */
+            padding-top: 10px; 
+            border-top: 1px solid #eee;
+        }
+        
+        /* লোডিং এবং ত্রুটি বার্তা */
+        .loading-message, .no-results-message, .error-message {
+            grid-column: 1 / -1; 
+            text-align: center;
+            padding: 50px 20px;
+            color: #6c757d;
+            font-size: 1.1em;
+        }
+
+
+        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স (সর্বাধিক 600px) --- */
         @media (max-width: 600px) {
+            .main-content {
+                 /* ✅ padding-top এখন style.css দ্বারা নিয়ন্ত্রিত হবে */
+            }
             .logo-title {
                  font-size: 1.5em; 
                  margin-left: 0px;
@@ -163,6 +301,10 @@
             .profile-image-wrapper {
                  width: 30px; 
                  height: 30px;
+            }
+            .property-grid {
+                grid-template-columns: 1fr; /* মোবাইল এ একক কলাম */
+                padding: 10px 0;
             }
         }
         
@@ -213,11 +355,11 @@
             <button><i class="material-icons">search</i></button>
         </div>
         
-    </header>
+        </header>
     
     <div class="nav-filters">
-        <button class="nav-button active" data-category="বিক্রয়" id="sellButton">বিক্রয়</button> 
-        <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
+        <button class="nav-button active" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
+        <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
         <button class="nav-button" data-category="map" id="mapButton">
              <i class="material-icons">map</i> ম্যাপ
         </button>
@@ -268,4 +410,4 @@
     
     <script src="index.js"></script> 
 </body>
-</html>
+    </html>
