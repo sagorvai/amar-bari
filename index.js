@@ -1,5 +1,3 @@
-// index.js (চূড়ান্ত ফিক্স: onSnapshot এবং ক্লায়েন্ট-সাইড ফিল্টারিং)
-
 // Firebase SDKs
 const db = firebase.firestore();
 const auth = firebase.auth();
@@ -27,14 +25,8 @@ const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
 const globalSearchInput = document.getElementById('globalSearchInput');
 
-// ⭐ গ্লোবাল ভ্যারিয়েবল: লোড হওয়া সমস্ত প্রপার্টি ডেটা এখানে থাকবে
-let allPropertyDocs = []; 
-let isInitialLoad = true; // প্রথম লোডিং ট্র্যাক করার জন্য
-
-
-// --- ⭐ প্রোফাইল ইমেজ লোড করার ফাংশন ⭐ ---
+// --- ⭐ FIX: প্রোফাইল ইমেজ লোড করার ফাংশন যোগ করা হলো ⭐ ---
 async function loadProfilePicture(user) {
-    // ফাংশন অপরিবর্তিত
     if (profileImage && defaultProfileIcon) {
         try {
             const doc = await db.collection('users').doc(user.uid).get();
@@ -45,127 +37,131 @@ async function loadProfilePicture(user) {
                     profileImage.style.display = 'block';
                     defaultProfileIcon.style.display = 'none';
                 } else {
+                    // যদি URL না থাকে, ডিফল্ট আইকন দেখান
                     profileImage.style.display = 'none';
                     defaultProfileIcon.style.display = 'block';
                 }
             }
         } catch (error) {
             console.error("Profile picture load failed:", error);
+            // কোনো সমস্যা হলে ডিফল্ট আইকন দেখান
             profileImage.style.display = 'none';
             defaultProfileIcon.style.display = 'block';
         }
     }
 }
-// --- প্রোফাইল ইমেজ লোড করার ফাংশন শেষ ---
+// --- FIX: প্রোফাইল ইমেজ লোড করার ফাংশন শেষ ---
 
 
-// --- ডেটা রেন্ডারিং ফাংশন ---
-function renderProperties(propertiesToDisplay, category) {
-    propertyG.innerHTML = '';
+// --- ✅ নতুন: প্রপার্টি কার্ডের HTML তৈরি করার ফাংশন ---
+function createPropertyCardHTML(property) {
+    const propertyId = property.id;
+    const title = property.title || 'শিরোনামবিহীন প্রপার্টি';
+    const city = property.location?.city || 'অজানা শহর';
+    const area = property.location?.area || 'অজানা এলাকা';
+    // টাকার অঙ্কের জন্য বাংলা ফরম্যাট ব্যবহার করা হলো
+    const price = property.price ? new Intl.NumberFormat('bn-BD', { style: 'currency', currency: 'BDT', minimumFractionDigits: 0 }).format(property.price) : 'আলোচনা সাপেক্ষে';
+    const category = property.category || 'বিক্রয়';
+    const mainImageUrl = property.mainImageUrl || 'https://via.placeholder.com/300x200?text=No+Image';
+
+    // অন্যান্য তথ্য
+    const bedrooms = property.bedrooms || '-';
+    const bathrooms = property.bathrooms || '-';
+    const sizeSqft = property.sizeSqft ? `${property.sizeSqft} sqft` : '-';
     
-    if (propertiesToDisplay.length === 0) {
-        const message = (category === 'সকল' || category === 'বিক্রয়') ? 'এই ক্যাটাগরিতে কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।' : `"${category}" ক্যাটাগরিতে কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।`;
-        propertyG.innerHTML = `<p class="empty-message">${message}</p>`;
-        return;
-    }
+    // post.html এ রিডাইরেক্ট করা হলো, সাথে প্রপার্টির ID query parameter হিসেবে পাঠানো হলো।
+    const detailLink = `post.html?id=${propertyId}`; 
 
-    let htmlContent = ''; 
-    
-    propertiesToDisplay.forEach(doc => {
-        const data = doc.data();
-        
-        const imageUrl = (data.images && data.images.length > 0 && data.images[0].url) ? data.images[0].url : 'placeholder.jpg';
-        
-        let priceText = '';
-        if (data.price) {
-            priceText = `${data.price}`;
-        } else if (data.monthlyRent) {
-            priceText = `${data.monthlyRent}/মাস`;
-        } else {
-            priceText = 'দাম আলোচনা সাপেক্ষ';
-        }
-        
-        const finalPriceText = priceText.includes('আলোচনা সাপেক্ষ') ? priceText : `৳ ${priceText}`;
-        
-        const cardHtml = `
-            <div class="property-card" data-id="${doc.id}" onclick="window.location.href='details.html?id=${doc.id}'">
-                <img src="${imageUrl}" alt="${data.title}">
-                <div class="card-info">
-                    <h3>${data.title}</h3>
-                    <p class="location"><i class="material-icons">location_on</i> ${data.location && data.location.district ? data.location.district : 'অজানা জেলা'}</p>
-                    <p class="price">${finalPriceText}</p>
-                </div>
+    return `
+        <a href="${detailLink}" class="property-card" data-id="${propertyId}">
+            <div class="property-image-container">
+                <img src="${mainImageUrl}" alt="${title}" loading="lazy">
+                <span class="property-category">${category}</span>
             </div>
-        `;
-        htmlContent += cardHtml; 
-    });
-    
-    propertyG.innerHTML = htmlContent; 
+            <div class="property-details">
+                <h3 class="property-title">${title}</h3>
+                <p class="property-location">
+                    <i class="material-icons location-icon">location_on</i> ${area}, ${city}
+                </p>
+                <div class="property-specs">
+                    <span><i class="material-icons">king_bed</i> ${bedrooms}</span>
+                    <span><i class="material-icons">bathtub</i> ${bathrooms}</span>
+                    <span><i class="material-icons">square_foot</i> ${sizeSqft}</span>
+                </div>
+                <div class="property-price">${price}</div>
+            </div>
+        </a>
+    `;
 }
 
-
-// --- ক্যাটাগরি ফিল্টার এবং ডিসপ্লে ফাংশন (ক্লায়েন্ট-সাইড) ---
-function filterAndDisplayProperties(category, searchTerm = '') {
-    if (category === 'map') return;
+// --- ✅ আপডেট: প্রপার্টি লোড ও ডিসপ্লে করার ফাংশন ---
+async function fetchAndDisplayProperties(category, searchTerm = '') {
     
-    let filteredDocs = [];
-
-    if (category === 'সকল' || category === '') {
-        filteredDocs = allPropertyDocs;
+    propertyG.innerHTML = '<p class=\"loading-message\">প্রপার্টি লোড হচ্ছে...</p>';
+    
+    // 'map' ক্যাটাগরি হ্যান্ডেলিং
+    const isMapView = category === 'map';
+    const propertyGridContainer = document.getElementById('property-grid-container');
+    const mapSection = document.getElementById('map-section');
+    
+    if (isMapView) {
+        propertyGridContainer.style.display = 'none';
+        mapSection.style.display = 'block';
+        propertyG.innerHTML = ''; // গ্রিড পরিষ্কার
+        // ম্যাপ লজিক এখানে যাবে
+        return;
     } else {
-        // ক্লায়েন্ট-সাইডে ক্যাটাগরি দ্বারা ফিল্টার
-        filteredDocs = allPropertyDocs.filter(doc => doc.data().category === category);
+        propertyGridContainer.style.display = 'block';
+        mapSection.style.display = 'none';
     }
-    
-    // ক্লায়েন্ট-সাইডে সর্বশেষ তৈরি পোস্টগুলো আগে দেখানোর জন্য সাজানো
-    filteredDocs.sort((a, b) => {
-        // টাইমস্ট্যাম্প অবজেক্ট থেকে ডেটে রূপান্তর করে তুলনা
-        const dateA = a.data().createdAt ? a.data().createdAt.toDate() : new Date(0);
-        const dateB = b.data().createdAt ? b.data().createdAt.toDate() : new Date(0);
-        return dateB - dateA; // Descending Order (নতুন পোস্ট আগে)
-    });
 
-    renderProperties(filteredDocs, category);
-}
-
-
-// --- প্রধান ফাংশন: রিয়েল-টাইম ডেটা লোড করা (onSnapshot) ---
-function setupPropertyListener() {
+    // ফায়ারবেস কোয়েরি: ক্যাটাগরি অনুযায়ী ফিল্টার করে এবং তৈরির সময় (createdAt) অনুযায়ী সাজানো হয়েছে
+    let query = db.collection('properties').where('category', '==', category).orderBy('createdAt', 'desc');
     
-    propertyG.innerHTML = '<p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>';
-    
-    let query = db.collection('properties');
-    
-    // ⭐ শুধুমাত্র 'status' ফিল্টার ব্যবহার করা হচ্ছে। কোনো orderBy নেই।
-    // এই ক্ষেত্রে ফায়ারস্টোর একটি বিল্ট-ইন ইনডেক্স ব্যবহার করবে।
-    query = query.where('status', '==', 'published');
-    
-    // ⭐⭐ onSnapshot ব্যবহার করে লিসেনার সেট করা ⭐⭐
-    query.onSnapshot(snapshot => {
+    try {
+        const snapshot = await query.get();
         
-        // ⭐ গ্লোবাল ভ্যারিয়েবলে ডেটা সংরক্ষণ
-        allPropertyDocs = snapshot.docs;
-        
-        // ডিফল্ট ক্যাটাগরি 'বিক্রয়' ফিল্টার করে দেখানো
-        // প্রথম লোডের সময়, অথবা যদি ডেটাবেসে পরিবর্তন আসে, আমরা সক্রিয় বাটন অনুসারে ফিল্টার করব
-        const activeButton = document.querySelector('.nav-filters .nav-button.active');
-        const activeCategory = activeButton ? activeButton.dataset.category : 'বিক্রয়'; 
-        
-        filterAndDisplayProperties(activeCategory, globalSearchInput.value);
-
-        isInitialLoad = false; // প্রাথমিক লোডিং সম্পন্ন
-        
-    }, error => {
-        console.error("রিয়েল-টাইম ডেটা লোড করতে ব্যর্থ হয়েছে:", error);
-        if (isInitialLoad) {
-            propertyG.innerHTML = '<p class="error-message" style="color: red;">পোস্ট লোড করা যায়নি। ফায়ারবেস রুলস বা ডেটার "status" ভ্যালু পরীক্ষা করুন।</p>';
+        if (snapshot.empty) {
+            propertyG.innerHTML = `<p class="no-results-message">এই ক্যাটাগরিতে (<b>${category}</b>) কোনো প্রপার্টি খুঁজে পাওয়া যায়নি।</p>`;
+            return;
         }
-    });
+        
+        let propertiesHTML = '';
+        const sTerm = searchTerm.trim().toLowerCase();
+        let foundCount = 0;
+        
+        snapshot.forEach(doc => {
+            const propertyData = {
+                id: doc.id,
+                ...doc.data()
+            };
+            
+            // ✅ সাধারণ সার্চ ফিল্টার (JS-এ): সার্চ টার্ম থাকলে টাইটেল বা লোকেশন ফিল্ডে তা খুঁজুন
+            const titleMatch = propertyData.title && propertyData.title.toLowerCase().includes(sTerm);
+            const cityMatch = propertyData.location?.city && propertyData.location.city.toLowerCase().includes(sTerm);
+            const areaMatch = propertyData.location?.area && propertyData.location.area.toLowerCase().includes(sTerm);
+            
+            // যদি সার্চ টার্ম না থাকে অথবা কোনো ফিল্ডের সাথে মেলে
+            if (sTerm === '' || titleMatch || cityMatch || areaMatch) {
+                propertiesHTML += createPropertyCardHTML(propertyData);
+                foundCount++;
+            }
+        });
+        
+        propertyG.innerHTML = propertiesHTML;
+        
+        if (foundCount === 0) {
+             propertyG.innerHTML = `<p class="no-results-message">আপনার খোঁজা (<b>${searchTerm}</b>) সাথে মেলানো কোনো প্রপার্টি এই ক্যাটাগরিতে (<b>${category}</b>) খুঁজে পাওয়া যায়নি।</p>`;
+        }
+
+    } catch (error) {
+        console.error("প্রপার্টি লোড করতে ব্যর্থ:", error);
+        propertyG.innerHTML = `<p class="error-message">দুঃখিত! প্রপার্টি লোড করার সময় একটি সমস্যা হয়েছে। অনুগ্রহ করে পরে আবার চেষ্টা করুন।</p>`;
+    }
 }
-// --- প্রধান ফাংশন শেষ ---
 
 
-// লগআউট হ্যান্ডেলার (অপরিবর্তিত)
+// লগআউট হ্যান্ডেলার
 const handleLogout = async (e) => {
     e.preventDefault();
     try {
@@ -178,24 +174,24 @@ const handleLogout = async (e) => {
     }
 };
 
-// আইকন কাউন্টার আপডেট করার ডামি ফাংশন (অপরিবর্তিত)
+// আইকন কাউন্টার আপডেট করার ডামি ফাংশন (যদি ফায়ারবেস লজিক থাকে)
 function updateIconCounts() {
+    // এই ফাংশন ফায়ারবেস থেকে নোটিফিকেশন/মেসেজ কাউন্ট লোড করবে
+    // এখন এটি শুধু ডামি ডেটা দেখাচ্ছে
     if (notificationCount) {
-        notificationCount.textContent = 0;
-        notificationCount.style.display = 'none'; 
+        notificationCount.style.display = 'none';
     }
     if (messageCount) {
-        messageCount.textContent = 0;
-        messageCount.style.display = 'none'; 
+        messageCount.style.display = 'none';
     }
     if (postCount) {
-        postCount.textContent = 0;
-        postCount.style.display = 'none'; 
+        postCount.style.display = 'none';
     }
 }
 
-// ইভেন্ট লিসেনার সেটআপ (filterAndDisplayProperties-এ পরিবর্তন)
+// ইভেন্ট লিসেনার সেটআপ
 function setupUIEventListeners() {
+    // মেনু বাটন এবং সাইডবার টগল
     if (menuButton) {
         menuButton.addEventListener('click', () => {
             sidebar.classList.toggle('active');
@@ -209,8 +205,9 @@ function setupUIEventListeners() {
         });
     }
     
+    // নেভিগেশন আইকন রিডাইরেক্ট
     if (notificationButton) {
-         notificationButton.addEventListener('click', () => {
+        notificationButton.addEventListener('click', () => {
              window.location.href = 'notifications.html'; 
         });
     }
@@ -239,40 +236,33 @@ function setupUIEventListeners() {
             navButtons.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
             const category = button.dataset.category;
-            
-            // ম্যাপ বাটন ক্লিক করলে গ্রিড ও ম্যাপ টগল
-            if (category === 'map') {
-                document.getElementById('property-grid-container').style.display = 'none';
-                document.getElementById('map-section').style.display = 'block';
-            } else {
-                document.getElementById('property-grid-container').style.display = 'block';
-                document.getElementById('map-section').style.display = 'none';
-                // ✅ এখন এই ফাংশনটি লোড হওয়া ডেটা ফিল্টার করবে
-                filterAndDisplayProperties(category, globalSearchInput.value); 
-            }
+            fetchAndDisplayProperties(category, globalSearchInput.value);
         });
     });
 
     // গ্লোবাল সার্চ ইনপুট ইভেন্ট
-    globalSearchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            const activeCategory = document.querySelector('.nav-filters .nav-button.active').dataset.category;
-            filterAndDisplayProperties(activeCategory, globalSearchInput.value);
-            console.warn("সার্চ লজিক বর্তমানে নিষ্ক্রিয় রয়েছে।");
-        }
-    });
+    if (globalSearchInput) {
+        globalSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const activeCategory = document.querySelector('.nav-filters .nav-button.active').dataset.category;
+                fetchAndDisplayProperties(activeCategory, globalSearchInput.value);
+            }
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // সকল ইভেন্ট লিসেনার সেটআপ করা হলো
     setupUIEventListeners();
     
-    // ⭐ প্রাথমিক লোড: রিয়েল-টাইম লিসেনার সেট করা
-    setupPropertyListener();
+    // প্রাথমিক লোড: ডিফল্টভাবে 'বিক্রয়' ক্যাটাগরি দেখাবে
+    fetchAndDisplayProperties('বিক্রয়', ''); 
     
-    // Auth State Change Handler (অপরিবর্তিত)
+    // Auth State Change Handler 
     auth.onAuthStateChanged(user => {
         
         if (user) {
+            // লগইন থাকলে
             loadProfilePicture(user); 
             updateIconCounts(); 
             
@@ -286,6 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginLinkSidebar.addEventListener('click', handleLogout);
             }
         } else {
+            // লগইন না থাকলে
             profileImage.style.display = 'none';
             defaultProfileIcon.style.display = 'block';
             if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
