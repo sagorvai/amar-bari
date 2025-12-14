@@ -3,86 +3,298 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">প্রপার্টি বিস্তারিত - আমার বাড়ি.কম</title>
+    <title id="pageTitle">প্রপার্টির বিস্তারিত - আমার বাড়ি.কম</title>
     
     <link rel="stylesheet" href="style.css"> 
+    
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
     <script>
       // **আপনার বিদ্যমান Firebase কনফিগারেশন**
       const firebaseConfig = {
-        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn6-uE4zA",
         authDomain: "amar-bari-website.firebaseapp.com",
         projectId: "amar-bari-website",
         storageBucket: "amar-bari-website.firebasestorage.app",
         messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765290b351111111"
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
       };
       
       if (!firebase.apps.length) {
-          firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
       }
+      
+      // Global Firebase variables for details.js access
+      const db = firebase.firestore();
+      const auth = firebase.auth();
+      const storage = firebase.storage();
     </script>
+    
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --secondary-bg: #f8f9fa;
+        }
+
+        body {
+            margin: 0; 
+            padding-top: 50px;
+            font-family: Arial, sans-serif; 
+        }
+
+        /* --- হেডার ফিক্স --- */
+        .main-header {
+             position: fixed; 
+             top: 0;
+             left: 0;
+             right: 0;
+             background-color: white; 
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             z-index: 1000; 
+             padding-bottom: 0;
+        }
+        
+        /* --- ডিটেইলস পেজের জন্য নির্দিষ্ট স্টাইল --- */
+        .property-details-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        .loading-state, .error-state {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: var(--primary-color);
+        }
+        
+        .error-state {
+            color: var(--danger-color);
+        }
+
+        .details-header {
+            border-bottom: 2px solid var(--secondary-bg);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .details-header h1 {
+            color: var(--primary-color);
+            margin: 0 0 5px 0;
+            font-size: 2em;
+        }
+        
+        .details-header p.location {
+            color: #6c757d;
+            font-size: 1em;
+            margin: 0;
+        }
+        
+        .price-tag {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--success-color);
+            margin-top: 10px;
+        }
+
+        /* গ্যালারি স্টাইল */
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .image-gallery img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: zoom-in;
+        }
+
+        /* সেকশন স্টাইল */
+        .details-section {
+            background-color: var(--secondary-bg);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .details-section h3 {
+            color: var(--primary-color);
+            border-bottom: 1px dashed #ced4da;
+            padding-bottom: 5px;
+            margin-top: 0;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .details-section h3 .material-icons {
+            margin-right: 8px;
+            font-size: 1.2em;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            font-size: 1em;
+            color: #343a40;
+        }
+        
+        .info-item .material-icons {
+            color: var(--success-color);
+            margin-right: 5px;
+            font-size: 1.1em;
+        }
+        
+        .description-text {
+            line-height: 1.6;
+            white-space: pre-wrap; /* নতুন লাইন ঠিকভাবে দেখানোর জন্য */
+            color: #495057;
+        }
+        
+        .lister-contact-box {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .lister-contact-box h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        .contact-button {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        
+        .contact-button:hover {
+            background-color: #218838;
+        }
+
+        /* মোবাইলের জন্য ফিক্স */
+        @media (max-width: 600px) {
+            .property-details-container {
+                padding: 10px;
+            }
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
 
     <header class="main-header">
-        <div class="header-top container">
-            <i class="material-icons menu-icon" id="menuButton">menu</i>
-            <a href="index.html" class="logo-title">
-                <i class="material-icons logo-icon">apartment</i>
-                <span>আমার বাড়ি.কম</span>
-            </a>
+        <div class="header-top">
+            
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                
+                <a href="index.html" class="logo-title">
+                   <i class="material-icons logo-icon">home</i>  
+                    <span>আমার বাড়ি.কম</span>
+                </a>
+            </div>
+            
             <div class="header-actions">
-                <div class="notification-wrapper">
-                    <i class="material-icons profile-icon" id="notificationButton">notifications</i>
-                    <span class="count-badge" id="notification-count" style="display: none;">0</span>
+                
+                <div class="icon-wrapper" id="notificationButton"> 
+                    <i class="material-icons notification-icon">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
                 </div>
-                <div class="message-wrapper">
-                    <i class="material-icons profile-icon" id="messageButton">email</i>
-                    <span class="count-badge" id="message-count" style="display: none;">0</span>
+                
+                <div class="icon-wrapper" id="headerPostButton">
+                    <i class="material-icons post-icon-header">add_circle_outline</i>
+                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
                 </div>
-                <i class="material-icons profile-icon" id="headerPostButton">post_add</i>
+                
+                <div class="icon-wrapper" id="messageButton">
+                    <i class="material-icons message-icon">message</i>
+                    <span class="notification-count" id="message-count"></span>
+                </div>
                 
                 <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <i class="material-icons default-profile-icon" id="defaultProfileIcon">person</i>
-                    <img id="profileImage" src="" alt="Profile" style="display:none;">
-                </div>
+                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
+                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
+                
+                <div class="notification-dropdown" id="notification-dropdown">
+                    </div>
             </div>
         </div>
+        
     </header>
-
+    
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-logo">
-            <i class="material-icons logo-icon">apartment</i>
-            <span>আমার বাড়ি.কম</span>
-        </div>
         <nav>
-            <a href="index.html"><i class="material-icons">home</i> হোম</a>
-            <a href="profile.html"><i class="material-icons">account_circle</i> প্রোফাইল</a>
-            <a href="post.html"><i class="material-icons">add_box</i> নতুন পোস্ট</a>
-            <a href="tips.html"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
-            <a href="privacy.html"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
-            <a href="about.html"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html"><i class="material-icons">mail</i> যোগাযোগ</a>
+            <a href="index.html" class="sidebar-logo">
+                <i class="material-icons">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
+            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            
+            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
+            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            
             <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            
         </nav>
     </div>
+
     <div class="overlay" id="overlay"></div>
 
     <main class="main-content container">
-        <section id="property-details-container">
-            <div class="loading-message">প্রপার্টির তথ্য লোড হচ্ছে...</div>
-        </section>
-
-        <section id="error-message" style="display: none;">
-             <div class="error-box">দুঃখিত, এই প্রপার্টিটি খুঁজে পাওয়া যায়নি!</div>
-        </section>
-        
+        <div class="property-details-container" id="detailsContainer">
+            
+            <div class="loading-state" id="loadingState">
+                <i class="material-icons" style="font-size: 3em;">sync</i>
+                <p>প্রপার্টির ডেটা লোড হচ্ছে...</p>
+            </div>
+            
+            <div class="error-state" id="errorState" style="display: none;">
+                <i class="material-icons" style="font-size: 3em;">error_outline</i>
+                <p id="errorMessage"></p>
+            </div>
+            
+            <div id="propertyContent" style="display: none;">
+                
+                </div>
+            
+        </div>
     </main>
 
     <footer class="footer">
@@ -92,5 +304,30 @@
     </footer>
     
     <script src="details.js"></script> 
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            if (menuButton) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+        
+        // হেডার লজিকটি post.js ফাইল থেকে কপি করে এখানেও রাখা যেতে পারে যদি এটি একটি স্বতন্ত্র ফাইল না হয়। 
+        // এই ক্ষেত্রে, ধরে নিচ্ছি details.js ফাইলটি header/sidebar-এর UI লজিকও হ্যান্ডেল করছে, অথবা সেই লজিক সরাসরি এখানে আছে।
+    </script>
 </body>
-    </html>
+                       </html>
