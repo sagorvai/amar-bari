@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>প্রপার্টির বিস্তারিত - আমার বাড়ি.কম</title>
-    <link rel="stylesheet" href="style.css">
+    <title>প্রপার্টি বিস্তারিত - আমার বাড়ি.কম</title>
     
+    <link rel="stylesheet" href="style.css"> 
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-
+    
     <script>
       // **আপনার বিদ্যমান Firebase কনফিগারেশন**
       const firebaseConfig = {
@@ -21,40 +21,71 @@
         projectId: "amar-bari-website",
         storageBucket: "amar-bari-website.firebasestorage.app",
         messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765290b351..."
+        appId: "1:719084789035:web:f4da765290b351111111"
       };
-      firebase.initializeApp(firebaseConfig);
+      
+      // শুধুমাত্র অ্যাপ ইনিশিয়েলাইজ করুন
+      if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+      }
     </script>
 </head>
 <body>
+
     <header class="main-header">
-        <div class="header-top">
-            <div class="container header-container">
-                <div class="logo-area">
-                    <button class="menu-button" id="menuButton"><i class="material-icons">menu</i></button>
-                    <a href="index.html" class="logo">আমার বাড়ি.কম</a>
+        <div class="header-top container">
+            <i class="material-icons menu-icon" id="menuButton">menu</i>
+            <div class="logo-title">
+                <i class="material-icons logo-icon">apartment</i>
+                <span>আমার বাড়ি.কম</span>
+            </div>
+            <div class="header-actions">
+                <div class="notification-wrapper">
+                    <i class="material-icons profile-icon" id="notificationButton">notifications</i>
+                    <span class="count-badge" id="notification-count" style="display: none;">0</span>
+                </div>
+                <div class="message-wrapper">
+                    <i class="material-icons profile-icon" id="messageButton">email</i>
+                    <span class="count-badge" id="message-count" style="display: none;">0</span>
+                </div>
+                <i class="material-icons profile-icon" id="headerPostButton">post_add</i>
+                
+                <div class="profile-image-wrapper" id="profileImageWrapper">
+                    <i class="material-icons default-profile-icon" id="defaultProfileIcon">person</i>
+                    <img id="profileImage" src="" alt="Profile" style="display:none;">
                 </div>
             </div>
         </div>
-    </header>
+        
+        </header>
 
     <div class="sidebar" id="sidebar">
-        <a href="index.html" class="sidebar-link" id="home-link-sidebar"><i class="material-icons">home</i>হোম</a>
-        <a href="#" class="sidebar-link" id="post-link" style="display: none;"><i class="material-icons">add_box</i>প্রপার্টি পোস্ট করুন</a>
-        <a href="#" class="sidebar-link" id="login-link-sidebar"><i class="material-icons">account_circle</i>লগইন</a>
+        <div class="sidebar-logo">
+            <i class="material-icons logo-icon">apartment</i>
+            <span>আমার বাড়ি.কম</span>
+        </div>
+        <nav>
+            <a href="index.html"><i class="material-icons">home</i> হোম</a>
+            <a href="profile.html"><i class="material-icons">account_circle</i> প্রোফাইল</a>
+            <a href="post.html"><i class="material-icons">add_box</i> নতুন পোস্ট</a>
+            <a href="tips.html"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="privacy.html"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
+            <a href="about.html"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html"><i class="material-icons">mail</i> যোগাযোগ</a>
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+        </nav>
     </div>
     <div class="overlay" id="overlay"></div>
 
-    <main class="main-content">
-        <div class="container">
-            <h2 id="details-title" style="text-align: center; margin-bottom: 20px;">প্রপার্টির বিস্তারিত</h2>
-            
-            <div id="property-details-container" class="details-section">
-                <p id="loading-message" style="text-align: center; color: #3498db;">ডেটা লোড হচ্ছে...</p>
-                </div>
+    <main class="main-content container">
+        <section id="property-details-container">
+            <p class="loading-message">প্রপার্টির তথ্য লোড হচ্ছে...</p>
+        </section>
 
-            <p id="error-message" style="display: none; text-align: center; color: #e74c3c; font-size: 1.2em;">দুঃখিত, প্রপার্টিটি খুঁজে পাওয়া যায়নি।</p>
-        </div>
+        <section id="error-message" style="display: none;">
+             <h2 class="error-box">দুঃখিত, এই প্রপার্টিটি খুঁজে পাওয়া যায়নি!</h2>
+        </section>
+        
     </main>
 
     <footer class="footer">
@@ -65,4 +96,4 @@
     
     <script src="details.js"></script> 
 </body>
-  </html>
+                </html>
