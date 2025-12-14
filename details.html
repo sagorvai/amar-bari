@@ -15,9 +15,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <script>
-      // **আপনার বিদ্যমান Firebase কনফিগারেশন**
+      // **আপনার বিদ্যমান Firebase কনফিগারেশন (post.html থেকে নেওয়া)**
       const firebaseConfig = {
-        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn6-uE4zA",
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
         authDomain: "amar-bari-website.firebaseapp.com",
         projectId: "amar-bari-website",
         storageBucket: "amar-bari-website.firebasestorage.app",
@@ -36,6 +36,7 @@
     </script>
     
     <style>
+        /* CSS ভেরিয়েবল */
         :root {
             --primary-color: #007bff;
             --success-color: #28a745;
@@ -43,13 +44,15 @@
             --secondary-bg: #f8f9fa;
         }
 
+        /* গ্লোবাল ফিক্স */
         body {
             margin: 0; 
-            padding-top: 50px;
+            padding-top: 50px; 
             font-family: Arial, sans-serif; 
+            background-color: #eee;
         }
 
-        /* --- হেডার ফিক্স --- */
+        /* --- হেডার ফিক্স: post.html থেকে নেওয়া --- */
         .main-header {
              position: fixed; 
              top: 0;
@@ -61,130 +64,243 @@
              padding-bottom: 0;
         }
         
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; 
+            padding: 8px 15px; 
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0; 
+        }
+
+        .menu-icon {
+             margin-right: 0; 
+             cursor: pointer;
+        }
+        
+        .logo-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.8em; 
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 0px; 
+            text-decoration: none; 
+            white-space: nowrap; 
+        }
+        .logo-title:visited {
+             color: var(--primary-color);
+        }
+        .logo-icon {
+            margin-right: 5px;
+        }
+        .header-actions {
+             display: flex;
+             align-items: center;
+             gap: 12px; 
+             position: relative; 
+             flex-shrink: 0; 
+        }
+        .icon-wrapper {
+             position: relative;
+             display: inline-flex;
+             cursor: pointer;
+             align-items: center; 
+             justify-content: center;
+             height: 30px; 
+             width: 30px; 
+        }
+        .notification-count {
+            position: absolute;
+            top: -5px; 
+            right: -8px; 
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 5px; 
+            font-size: 0.7em;
+            font-weight: bold;
+            min-width: 10px;
+            text-align: center;
+            line-height: 1; 
+            display: none; 
+        }
+        .notification-icon { color: var(--primary-color); }
+        .message-icon { color: var(--primary-color); }
+        .post-icon-header { color: #28a745; }
+        .profile-image-wrapper {
+            cursor: pointer;
+            width: 35px; 
+            height: 35px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary-color); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #profileImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         /* --- ডিটেইলস পেজের জন্য নির্দিষ্ট স্টাইল --- */
+        .main-content {
+            padding: 10px;
+        }
+        
         .property-details-container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
             background-color: white;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
 
-        .loading-state, .error-state {
-            text-align: center;
-            padding: 50px;
-            font-size: 1.2em;
+        /* --- টপ অ্যাকশন বার (ব্যাক এবং শেয়ার) --- */
+        .top-action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .action-button {
+            background: none;
+            border: none;
             color: var(--primary-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 5px 10px;
+            font-size: 1em;
+            font-weight: bold;
+            transition: color 0.2s;
         }
-        
-        .error-state {
-            color: var(--danger-color);
+        .action-button:hover {
+            color: #0056b3;
+        }
+        .action-button .material-icons {
+            margin-right: 5px;
+            font-size: 1.2em;
         }
 
+        /* --- হেডার সেকশন --- */
         .details-header {
-            border-bottom: 2px solid var(--secondary-bg);
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
-
         .details-header h1 {
-            color: var(--primary-color);
+            color: #343a40;
             margin: 0 0 5px 0;
-            font-size: 2em;
+            font-size: 1.5em; /* স্ক্রিনশট অনুযায়ী ফন্ট ছোট করা হলো */
         }
-        
         .details-header p.location {
             color: #6c757d;
-            font-size: 1em;
+            font-size: 0.9em;
             margin: 0;
-        }
-        
-        .price-tag {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: var(--success-color);
-            margin-top: 10px;
-        }
-
-        /* গ্যালারি স্টাইল */
-        .image-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .image-gallery img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            cursor: zoom-in;
-        }
-
-        /* সেকশন স্টাইল */
-        .details-section {
-            background-color: var(--secondary-bg);
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
-
-        .details-section h3 {
-            color: var(--primary-color);
-            border-bottom: 1px dashed #ced4da;
-            padding-bottom: 5px;
-            margin-top: 0;
-            margin-bottom: 10px;
             display: flex;
             align-items: center;
         }
-        
-        .details-section h3 .material-icons {
-            margin-right: 8px;
-            font-size: 1.2em;
+        .price-tag {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--success-color);
+            margin-top: 5px;
         }
 
+        /* --- সেকশন স্টাইল (স্ক্রিনশট অনুযায়ী) --- */
+        .details-section {
+            padding: 15px 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .details-section h3 {
+            color: var(--primary-color);
+            padding-bottom: 5px;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+        }
+        .details-section h3 .material-icons {
+            margin-right: 8px;
+            font-size: 1.3em;
+        }
+
+        /* গ্যালারি */
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .image-gallery img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: zoom-in;
+        }
+        .no-image-found {
+            color: #999;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        /* তথ্য গ্রিড */
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
+            grid-template-columns: 1fr 1fr; /* স্ক্রিনশট অনুযায়ী দুটি কলাম */
+            gap: 10px 15px;
         }
-        
         .info-item {
             display: flex;
             align-items: center;
             font-size: 1em;
             color: #343a40;
         }
-        
+        .info-item b {
+            font-weight: normal;
+            margin-left: 5px;
+        }
         .info-item .material-icons {
-            color: var(--success-color);
+            color: #6c757d; /* আইকনের কালার হালকা করা হলো */
             margin-right: 5px;
             font-size: 1.1em;
         }
-        
-        .description-text {
-            line-height: 1.6;
-            white-space: pre-wrap; /* নতুন লাইন ঠিকভাবে দেখানোর জন্য */
-            color: #495057;
+        .info-item .label {
+             font-weight: bold;
+             margin-right: 5px;
         }
         
+        /* বিবরণ */
+        .description-text {
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: #495057;
+            padding-left: 5px;
+        }
+
+        /* যোগাযোগ বক্স */
         .lister-contact-box {
-            background-color: #e9ecef;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
             padding: 15px;
             border-radius: 6px;
             text-align: center;
             margin-top: 20px;
         }
-        
-        .lister-contact-box h4 {
-            margin-top: 0;
-            color: #495057;
-        }
-        
         .contact-button {
             background-color: var(--success-color);
             color: white;
@@ -194,12 +310,19 @@
             cursor: pointer;
             font-size: 1.1em;
             text-decoration: none;
-            display: inline-block;
+            display: block; /* স্ক্রিনশট অনুযায়ী ব্লক লেভেল করা হলো */
+            width: 80%;
+            margin: 10px auto 0 auto;
             transition: background-color 0.3s;
         }
         
-        .contact-button:hover {
-            background-color: #218838;
+        /* অবস্থান সেকশন */
+        .google-map-section p {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        .google-map-section a {
+            word-break: break-all;
         }
 
         /* মোবাইলের জন্য ফিক্স */
@@ -228,7 +351,6 @@
             </div>
             
             <div class="header-actions">
-                
                 <div class="icon-wrapper" id="notificationButton"> 
                     <i class="material-icons notification-icon">notifications</i>
                     <span class="notification-count" id="notification-count"></span>
@@ -252,7 +374,6 @@
                     </div>
             </div>
         </div>
-        
     </header>
     
     <div class="sidebar" id="sidebar">
@@ -278,19 +399,31 @@
     <div class="overlay" id="overlay"></div>
 
     <main class="main-content container">
-        <div class="property-details-container" id="detailsContainer">
+        <div class="property-details-container">
             
             <div class="loading-state" id="loadingState">
-                <i class="material-icons" style="font-size: 3em;">sync</i>
+                <i class="material-icons" style="font-size: 3em; color: var(--primary-color);">sync</i>
                 <p>প্রপার্টির ডেটা লোড হচ্ছে...</p>
             </div>
             
             <div class="error-state" id="errorState" style="display: none;">
-                <i class="material-icons" style="font-size: 3em;">error_outline</i>
+                <i class="material-icons" style="font-size: 3em; color: var(--danger-color);">error_outline</i>
                 <p id="errorMessage"></p>
+                <button class="action-button" onclick="window.history.back()">
+                    <i class="material-icons">arrow_back</i> ফিরে যান
+                </button>
             </div>
             
             <div id="propertyContent" style="display: none;">
+                
+                <div class="top-action-bar">
+                    <button class="action-button" id="backButton">
+                        <i class="material-icons">arrow_back</i> ফিরে যান
+                    </button>
+                    <button class="action-button" id="shareButton">
+                        <i class="material-icons">share</i> শেয়ার করুন
+                    </button>
+                </div>
                 
                 </div>
             
@@ -324,10 +457,19 @@
                     overlay.classList.remove('active');
                 });
             }
+            
+            // হেডার অ্যাকশনগুলির জন্য লজিক (post.js থেকে নেওয়া)
+            const notificationButton = document.getElementById('notificationButton');
+            const headerPostButton = document.getElementById('headerPostButton');
+            const messageButton = document.getElementById('messageButton');
+            const profileImageWrapper = document.getElementById('profileImageWrapper'); 
+            
+            if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
+            if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
+            if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
+            if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
         });
         
-        // হেডার লজিকটি post.js ফাইল থেকে কপি করে এখানেও রাখা যেতে পারে যদি এটি একটি স্বতন্ত্র ফাইল না হয়। 
-        // এই ক্ষেত্রে, ধরে নিচ্ছি details.js ফাইলটি header/sidebar-এর UI লজিকও হ্যান্ডেল করছে, অথবা সেই লজিক সরাসরি এখানে আছে।
     </script>
 </body>
-                       </html>
+    </html>
