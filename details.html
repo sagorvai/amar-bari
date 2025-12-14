@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>প্রপার্টি বিস্তারিত - আমার বাড়ি.কম</title>
+    <title id="pageTitle">প্রপার্টি বিস্তারিত - আমার বাড়ি.কম</title>
     
     <link rel="stylesheet" href="style.css"> 
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
@@ -24,7 +24,6 @@
         appId: "1:719084789035:web:f4da765290b351111111"
       };
       
-      // শুধুমাত্র অ্যাপ ইনিশিয়েলাইজ করুন
       if (!firebase.apps.length) {
           firebase.initializeApp(firebaseConfig);
       }
@@ -35,10 +34,10 @@
     <header class="main-header">
         <div class="header-top container">
             <i class="material-icons menu-icon" id="menuButton">menu</i>
-            <div class="logo-title">
+            <a href="index.html" class="logo-title">
                 <i class="material-icons logo-icon">apartment</i>
                 <span>আমার বাড়ি.কম</span>
-            </div>
+            </a>
             <div class="header-actions">
                 <div class="notification-wrapper">
                     <i class="material-icons profile-icon" id="notificationButton">notifications</i>
@@ -79,11 +78,11 @@
 
     <main class="main-content container">
         <section id="property-details-container">
-            <p class="loading-message">প্রপার্টির তথ্য লোড হচ্ছে...</p>
+            <div class="loading-message">প্রপার্টির তথ্য লোড হচ্ছে...</div>
         </section>
 
         <section id="error-message" style="display: none;">
-             <h2 class="error-box">দুঃখিত, এই প্রপার্টিটি খুঁজে পাওয়া যায়নি!</h2>
+             <div class="error-box">দুঃখিত, এই প্রপার্টিটি খুঁজে পাওয়া যায়নি!</div>
         </section>
         
     </main>
@@ -96,4 +95,4 @@
     
     <script src="details.js"></script> 
 </body>
-                </html>
+</html>
