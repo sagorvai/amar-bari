@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">প্রপার্টির বিবরণ - আমার বাড়ি.কম</title>
+    
+    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="details.css"> 
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <script>
+      // **আপনার বিদ্যমান Firebase কনফিগারেশন**
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+      };
+      
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
+    
+    <style>
+        :root {
+            --primary-color: #007bff;
+        }
+        body { margin: 0; padding-top: 50px; font-family: Arial, sans-serif; }
+        .main-header {
+             position: fixed; top: 0; left: 0; right: 0;
+             background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1000; 
+        }
+        .header-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; }
+        .logo-title {
+            display: flex; align-items: center; font-size: 1.8em; font-weight: bold;
+            color: var(--primary-color); margin-left: 0px; text-decoration: none;
+        }
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .icon-wrapper { position: relative; display: inline-flex; cursor: pointer; align-items: center; }
+        .profile-image-wrapper { 
+            width: 30px; height: 30px; border-radius: 50%; overflow: hidden; border: 1px solid #ccc;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #profileImage { width: 100%; height: 100%; object-fit: cover; }
+        #defaultProfileIcon { color: var(--primary-color); }
+        /* কন্টেইনার স্টাইল */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+    </style>
+
+</head>
+<body>
+    
+    <header class="main-header">
+        <div class="header-top container">
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="backButton" style="margin-right: 15px; cursor: pointer;">arrow_back</i>
+                
+                <a href="index.html" class="logo-title">
+                    <i class="material-icons logo-icon">home</i> 
+                    <span>আমার বাড়ি.কম</span>
+                </a>
+            </div>
+            <div class="header-actions">
+                <div class="icon-wrapper" id="notificationButton">
+                    <i class="material-icons notification-icon">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
+                </div>
+                <div class="icon-wrapper" id="headerPostButton">
+                    <i class="material-icons post-icon-header">add_circle_outline</i>
+                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
+                </div>
+                <div class="icon-wrapper" id="messageButton">
+                    <i class="material-icons message-icon">message</i>
+                    <span class="notification-count" id="message-count"></span>
+                </div>
+                <div class="profile-image-wrapper" id="profileImageWrapper">
+                     <i class="material-icons" id="defaultProfileIcon">person</i>
+                     <img id="profileImage" alt="Profile" style="display: none;">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content container">
+        
+        <div id="property-details-container">
+            <p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>
+        </div>
+
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
+    </footer>
+    
+    <script src="details.js"></script> 
+</body>
+  </html>
