@@ -6,8 +6,9 @@ const detailsContainer = document.getElementById('property-details-container');
 const errorMessageDiv = document.getElementById('error-message');
 const pageTitleElement = document.getElementById('pageTitle');
 
-// --- Helper Functions (Reused) ---
+// --- Helper Functions ---
 
+// URL থেকে প্রপার্টি আইডি বের করার ফাংশন
 function getPropertyIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
     return params.get('id');
@@ -78,10 +79,11 @@ function setupShareButton(title, text, url) {
                     console.log('Successfully shared');
                 } catch (error) {
                     console.error('Error sharing:', error);
-                    alert('শেয়ার করা ব্যর্থ হয়েছে বা বাতিল করা হয়েছে।');
+                    // Mobile: Error sharing, Desktop: Alert
+                    alert('শেয়ার করা ব্যর্থ হয়েছে বা বাতিল করা হয়েছে।'); 
                 }
             } else {
-                // Web Share API support না থাকলে URL কপি করার অপশন দেওয়া
+                // Fallback for browsers without Web Share API
                 navigator.clipboard.writeText(url || window.location.href);
                 alert('আপনার ব্রাউজার শেয়ার অপশন সাপোর্ট করে না। লিংকটি কপি করা হয়েছে।');
             }
@@ -146,32 +148,36 @@ function renderPropertyDetails(property, owner) {
         </div>
     `;
 
-    // --- ২. স্পেকস ও ডেটা গ্রিড তৈরি (সকল সম্ভাব্য ইনপুট) ---
+    // --- ২. স্পেকস ও ডেটা গ্রিড তৈরি (সকল ইনপুট) ---
     let specsGridHTML = '';
     
     if (isLandOrPlot) {
          // জমি/প্লটের জন্য
         specsGridHTML = `
-            <div class="info-item"><i class="material-icons">landscape</i> <strong>জমির ধরণ:</strong> <span class="info-value">${propertyType}</span></div>
+            <div class="info-item"><i class="material-icons">landscape</i> <strong>প্রপার্টির ধরণ:</strong> <span class="info-value">${propertyType}</span></div>
             <div class="info-item"><i class="material-icons">square_foot</i> <strong>জমির পরিমাপ:</strong> <span class="info-value">${property.landArea || '-'} ${property.sizeUnit || 'শতক'}</span></div>
-            <div class="info-item"><i class="material-icons">forest</i> <strong>জমির প্রকৃতি:</strong> <span class="info-value">${property.landType || 'অজানা'}</span></div>
+            <div class="info-item"><i class="material-icons">grass</i> <strong>জমির প্রকৃতি:</strong> <span class="info-value">${property.landType || 'অজানা'}</span></div>
             <div class="info-item"><i class="material-icons">map</i> <strong>মৌজা:</strong> <span class="info-value">${property.location?.mouza || '-'}</span></div>
-            <div class="info-item"><i class="material-icons">border_all</i> <strong>দাগ/খতিয়ান:</strong> <span class="info-value">${property.location?.dagNumber || '-'} / ${property.location?.khotiyanNumber || '-'}</span></div>
+            <div class="info-item"><i class="material-icons">pin</i> <strong>দাগ নম্বর:</strong> <span class="info-value">${property.location?.dagNumber || '-'}</span></div>
+            <div class="info-item"><i class="material-icons">description</i> <strong>খতিয়ান নম্বর:</strong> <span class="info-value">${property.location?.khotiyanNumber || '-'}</span></div>
+            <div class="info-item"><i class="material-icons">gavel</i> <strong>মালিকানা ধরণ:</strong> <span class="info-value">${property.ownershipType || 'সম্পূর্ণ'}</span></div>
         `;
     } else {
         // ফ্লাট/বাড়ি/কমার্শিয়াল-এর জন্য
         specsGridHTML = `
-            <div class="info-item"><i class="material-icons">home</i> <strong>প্রপার্টি ধরণ:</strong> <span class="info-value">${propertyType}</span></div>
+            <div class="info-item"><i class="material-icons">category</i> <strong>প্রপার্টির ধরণ:</strong> <span class="info-value">${propertyType}</span></div>
+            <div class="info-item"><i class="material-icons">square_foot</i> <strong>ফ্লোর এরিয়া:</strong> <span class="info-value">${property.sizeSqft || '-'} স্কয়ারফিট</span></div>
             <div class="info-item"><i class="material-icons">king_bed</i> <strong>বেডরুম:</strong> <span class="info-value">${property.bedrooms || '-'}</span></div>
             <div class="info-item"><i class="material-icons">bathtub</i> <strong>বাথরুম:</strong> <span class="info-value">${property.bathrooms || '-'}</span></div>
-            <div class="info-item"><i class="material-icons">square_foot</i> <strong>ফ্লোর এরিয়া:</strong> <span class="info-value">${property.sizeSqft || '-'} স্কয়ারফিট</span></div>
-            <div class="info-item"><i class="material-icons">apartment</i> <strong>ফ্লোর/তলা:</strong> <span class="info-value">${property.floorNumber || '-'} / ${property.floors || '-'}</span></div>
-            <div class="info-item"><i class="material-icons">wb_sunny</i> <strong>সম্মুখ ভাগ:</strong> <span class="info-value">${property.facing || 'অজানা'}</span></div>
+            <div class="info-item"><i class="material-icons">balcony</i> <strong>বারান্দা:</strong> <span class="info-value">${property.balconies || '-'}</span></div>
+            <div class="info-item"><i class="material-icons">stairs</i> <strong>ফ্লোর নম্বর:</strong> <span class="info-value">${property.floorNumber || '-'}</span></div>
+            <div class="info-item"><i class="material-icons">apartment</i> <strong>মোট তলা:</strong> <span class="info-value">${property.floors || '-'}</span></div>
+            <div class="info-item"><i class="material-icons">wb_sunny</i> <strong>সম্মুখ দিক:</strong> <span class="info-value">${property.facing || 'অজানা'}</span></div>
             <div class="info-item"><i class="material-icons">event</i> <strong>নির্মাণের বছর:</strong> <span class="info-value">${property.buildYear || '-'}</span></div>
+            <div class="info-item"><i class="material-icons">gavel</i> <strong>মালিকানা ধরণ:</strong> <span class="info-value">${property.ownershipType || 'সম্পূর্ণ'}</span></div>
             ${category === 'ভাড়া' ? 
                 `<div class="info-item"><i class="material-icons">date_range</i> <strong>খালি হবে:</strong> <span class="info-value">${property.availableFrom || 'এখনই'}</span></div>` 
-                : 
-                `<div class="info-item"><i class="material-icons">gavel</i> <strong>মালিকানা ধরণ:</strong> <span class="info-value">${property.ownershipType || 'সম্পূর্ণ'}</span></div>`
+                : ''
             }
         `;
     }
@@ -330,12 +336,11 @@ async function loadPropertyData() {
 
 // --- UI ইভেন্ট লিসেনার সেটআপ (header and sidebar) ---
 document.addEventListener('DOMContentLoaded', () => {
-    // হেডার এবং সাইডবার লজিক (index.js থেকে কপি)
+    // হেডার এবং সাইডবার লজিক (index.js ও post.js থেকে কপি)
     const menuButton = document.getElementById('menuButton');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
     
-    // DUMMY UI ACTIONS (For header navigation)
     const notificationButton = document.getElementById('notificationButton'); 
     const messageButton = document.getElementById('messageButton');
     const headerPostButton = document.getElementById('headerPostButton'); 
@@ -355,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // হেডার রিডাইরেক্টস (index.js থেকে)
+    // হেডার রিডাইরেক্টস
     if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
     if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
     if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
@@ -364,10 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Auth State Change Handler (for login/logout link and profile image)
     const loginLinkSidebar = document.getElementById('login-link-sidebar');
-    const profileImage = document.getElementById('profileImage'); 
-    const defaultProfileIcon = document.getElementById('defaultProfileIcon'); 
     
-    // DUMMY Logout Handler (same as index.js)
     const handleLogout = async (e) => {
         e.preventDefault();
         try {
@@ -381,22 +383,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     auth.onAuthStateChanged(user => {
         if (user) {
-            // User is signed in
-            // Profile Image/Link logic (You might want a full loadProfilePicture here)
-            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
-            
-            // Sidebar link update
+            // User is signed in (Profile image and logout link setup)
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
                 loginLinkSidebar.href = '#';
+                loginLinkSidebar.removeEventListener('click', handleLogout); // Ensure no duplicate listener
                 loginLinkSidebar.addEventListener('click', handleLogout);
             }
         } else {
-            // User is signed out
-            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
-            if (profileImage) profileImage.style.display = 'none';
-            if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
-
+            // User is signed out (Login link setup)
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগইন';
                 loginLinkSidebar.href = 'auth.html';
