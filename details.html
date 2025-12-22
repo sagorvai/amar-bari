@@ -3,111 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">প্রপার্টির বিবরণ - আমার বাড়ি.কম</title>
-    
-    <link rel="stylesheet" href="style.css"> 
-    <link rel="stylesheet" href="details.css"> 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-
-    <script>
-      // **আপনার বিদ্যমান Firebase কনফিগারেশন**
-      const firebaseConfig = {
-        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
-        authDomain: "amar-bari-website.firebaseapp.com",
-        projectId: "amar-bari-website",
-        storageBucket: "amar-bari-website.firebasestorage.app",
-        messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
-      };
-      
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-    </script>
-    
+    <title>বিজ্ঞাপনের বিস্তারিত - Bikroy</title>
     <style>
-        :root {
-            --primary-color: #007bff;
-        }
-        body { margin: 0; padding-top: 50px; font-family: Arial, sans-serif; }
-        .main-header {
-             position: fixed; top: 0; left: 0; right: 0;
-             background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1000; 
-        }
-        .header-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; }
-        .logo-title {
-            display: flex; align-items: center; font-size: 1.8em; font-weight: bold;
-            color: var(--primary-color); margin-left: 0px; text-decoration: none;
-        }
-        .header-actions { display: flex; align-items: center; gap: 12px; }
-        .icon-wrapper { position: relative; display: inline-flex; cursor: pointer; align-items: center; }
-        .profile-image-wrapper { 
-            width: 30px; height: 30px; border-radius: 50%; overflow: hidden; border: 1px solid #ccc;
-            display: flex; align-items: center; justify-content: center;
-        }
-        #profileImage { width: 100%; height: 100%; object-fit: cover; }
-        #defaultProfileIcon { color: var(--primary-color); }
-        /* কন্টেইনার স্টাইল */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 15px;
-        }
+        :root { --primary-color: #149777; --bg-color: #f4f4f4; }
+        body { font-family: Arial, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; }
+        .container { max-width: 800px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .image-section img { width: 100%; border-radius: 8px; max-height: 400px; object-fit: cover; }
+        .price { color: var(--primary-color); font-size: 24px; font-weight: bold; margin: 15px 0; }
+        .title { font-size: 22px; color: #333; margin-bottom: 10px; }
+        .meta-info { font-size: 14px; color: #666; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .details-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .details-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        .label { font-weight: bold; color: #555; width: 30%; }
+        .description { line-height: 1.6; color: #444; white-space: pre-line; }
+        .contact-box { background: #ffc800; padding: 15px; text-align: center; border-radius: 5px; font-weight: bold; margin-top: 30px; cursor: pointer; }
     </style>
-
 </head>
 <body>
-    
-    <header class="main-header">
-        <div class="header-top container">
-            <div class="header-left">
-                <i class="material-icons menu-icon" id="backButton" style="margin-right: 15px; cursor: pointer;">arrow_back</i>
-                
-                <a href="index.html" class="logo-title">
-                    <i class="material-icons logo-icon">home</i> 
-                    <span>আমার বাড়ি.কম</span>
-                </a>
-            </div>
-            <div class="header-actions">
-                <div class="icon-wrapper" id="notificationButton">
-                    <i class="material-icons notification-icon">notifications</i>
-                    <span class="notification-count" id="notification-count"></span>
-                </div>
-                <div class="icon-wrapper" id="headerPostButton">
-                    <i class="material-icons post-icon-header">add_circle_outline</i>
-                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
-                </div>
-                <div class="icon-wrapper" id="messageButton">
-                    <i class="material-icons message-icon">message</i>
-                    <span class="notification-count" id="message-count"></span>
-                </div>
-                <div class="profile-image-wrapper" id="profileImageWrapper">
-                     <i class="material-icons" id="defaultProfileIcon">person</i>
-                     <img id="profileImage" alt="Profile" style="display: none;">
-                </div>
-            </div>
-        </div>
-    </header>
 
-    <main class="main-content container">
-        
-        <div id="property-details-container">
-            <p class="loading-message">প্রপার্টি লোড হচ্ছে...</p>
-        </div>
+<div class="container" id="main-content" style="display: none;">
+    <div class="image-section">
+        <img id="ad-image" src="" alt="Ad Image">
+    </div>
+    
+    <h1 class="title" id="ad-title">লোড হচ্ছে...</h1>
+    <div class="meta-info">
+        পাবলিশ হয়েছে: <span id="ad-date">ডিসেম্বর ২২, ২০২৫</span> | অবস্থান: <span id="ad-location">বগুড়া</span>
+    </div>
+    
+    <div class="price">৳ <span id="ad-price">০</span></div>
 
-    </main>
-    
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
-        </div>
-    </footer>
-    
-    <script src="details.js"></script> 
+    <table class="details-table">
+        <tr><td class="label">ক্যাটাগরি</td><td id="ad-category">N/A</td></tr>
+        <tr><td class="label">যোগাযোগ</td><td id="ad-contact">N/A</td></tr>
+    </table>
+
+    <h3>বর্ণনা</h3>
+    <div class="description" id="ad-description">
+        এখানে বিস্তারিত বর্ণনা দেখা যাবে।
+    </div>
+
+    <div class="contact-box" onclick="alert('সেলার নম্বর: ' + document.getElementById('ad-contact').innerText)">
+        📞 সেলারকে কল করুন
+    </div>
+</div>
+
+<script src="details.js"></script>
 </body>
-  </html>
+</html>
