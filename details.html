@@ -22,23 +22,6 @@
       };
       firebase.initializeApp(firebaseConfig);
     </script>
-
-    <style>
-        /* ডিটেইলস পেজের বিশেষ স্টাইল */
-        .details-container { margin-top: 20px; padding: 15px; }
-        .main-image-view { width: 100%; height: 350px; border-radius: 12px; overflow: hidden; background: #eee; position: relative; }
-        .main-image-view img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
-        .thumb-gallery { display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 10px; }
-        .thumb-gallery img { width: 80px; height: 60px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
-        .thumb-gallery img.active { border-color: #007bff; }
-        .info-section { background: white; border-radius: 15px; padding: 20px; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .price-text { font-size: 28px; color: #27ae60; font-weight: bold; margin: 10px 0; }
-        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; border-top: 1px solid #eee; padding-top: 15px; }
-        .meta-item { display: flex; align-items: center; gap: 8px; color: #555; }
-        .meta-item i { color: #007bff; }
-        .contact-card { background: #f8f9fa; border-radius: 12px; padding: 15px; border-left: 5px solid #007bff; margin-top: 20px; }
-        .call-now-btn { display: flex; align-items: center; justify-content: center; background: #27ae60; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; }
-    </style>
 </head>
 <body>
     <header class="header">
@@ -46,42 +29,71 @@
             <div class="logo-area" onclick="window.location.href='index.html'" style="cursor:pointer;">
                 <h1>আমার বাড়ি<span>.কম</span></h1>
             </div>
-            <button class="menu-button" id="menuButton"><i class="material-icons">menu</i></button>
+            
+            <div class="header-icons">
+                <button class="icon-button" id="notificationButton">
+                    <i class="material-icons">notifications</i>
+                </button>
+                <button class="icon-button" id="headerPostButton">
+                    <i class="material-icons">add_circle_outline</i>
+                </button>
+                <button class="icon-button" id="messageButton">
+                    <i class="material-icons">chat_bubble_outline</i>
+                </button>
+                
+                <div class="profile-image-wrapper" id="profileImageWrapper">
+                    <img src="" alt="Profile" id="profileImage" style="display: none; width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">
+                    <i class="material-icons" id="defaultProfileIcon">account_circle</i>
+                </div>
+            </div>
+
+            <button class="menu-button" id="menuButton">
+                <i class="material-icons">menu</i>
+            </button>
         </div>
     </header>
 
-    <main class="container">
-        <div id="loader" style="text-align:center; padding: 50px;">লোড হচ্ছে...</div>
-        
-        <div id="property-details" class="details-container" style="display: none;">
-            <div class="main-image-view">
-                <img id="mainImage" src="" alt="Property Image">
-            </div>
-            <div id="thumbGallery" class="thumb-gallery"></div>
+    <div class="sidebar" id="sidebar">
+        <nav class="sidebar-nav">
+            <a href="index.html"><i class="material-icons">home</i> হোম</a>
+            <a href="profile.html"><i class="material-icons">person</i> প্রোফাইল</a>
+            <a href="post.html"><i class="material-icons">add_box</i> প্রপার্টি পোস্ট করুন</a>
+            <hr>
+            <a href="auth.html" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+        </nav>
+    </div>
+    <div class="overlay" id="overlay"></div>
 
-            <div class="info-section">
-                <h2 id="displayTitle">প্রপার্টি টাইটেল</h2>
-                <p class="price-text">৳ <span id="displayPrice">0</span></p>
-                <p style="display:flex; align-items:center; color:#666;">
-                    <i class="material-icons" style="font-size:18px; margin-right:5px;">location_on</i>
-                    <span id="displayLocation">ঠিকানা এখানে</span>
+    <main class="container main-content">
+        <div id="loading" style="text-align: center; padding: 50px;">লোড হচ্ছে...</div>
+
+        <div id="details-view" style="display: none;">
+            <div class="property-gallery" style="margin-bottom: 20px;">
+                <img id="main-display-img" src="" style="width:100%; height:300px; object-fit:cover; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                <div id="thumb-list" style="display:flex; gap:10px; margin-top:10px; overflow-x:auto; padding:5px;"></div>
+            </div>
+
+            <div class="property-info-card" style="background:white; padding:20px; border-radius:15px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                <h2 id="det-title" style="margin-bottom:10px; color:#2c3e50;"></h2>
+                <div style="font-size:24px; color:#27ae60; font-weight:bold; margin-bottom:15px;">৳ <span id="det-price"></span></div>
+                
+                <p style="display:flex; align-items:center; color:#7f8c8d; margin-bottom:20px;">
+                    <i class="material-icons" style="margin-right:5px; font-size:18px;">location_on</i> <span id="det-location"></span>
                 </p>
 
-                <div class="meta-grid">
-                    <div class="meta-item"><i class="material-icons">category</i> <span id="displayCategory">...</span></div>
-                    <div class="meta-item"><i class="material-icons">straighten</i> <span id="displaySize">...</span></div>
-                    <div class="meta-item"><i class="material-icons">home</i> <span id="displayType">...</span></div>
-                    <div class="meta-item"><i class="material-icons">calendar_today</i> <span id="displayDate">...</span></div>
+                <h3 style="border-bottom:2px solid #f1f1f1; padding-bottom:8px; margin-bottom:15px;">প্রপার্টি বিবরণ ও তথ্য</h3>
+                <div id="dynamic-data-container" class="data-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
+                    </div>
+
+                <div style="background:#f9f9f9; padding:15px; border-radius:10px; margin-bottom:20px;">
+                    <h4 style="margin-bottom:10px;">বর্ণনা:</h4>
+                    <p id="det-desc" style="white-space:pre-wrap; color:#444; line-height:1.6;"></p>
                 </div>
 
-                <h3>বিস্তারিত বিবরণ</h3>
-                <p id="displayDescription" style="line-height:1.6; color:#444; white-space: pre-wrap;"></p>
-
-                <div class="contact-card">
-                    <h4>মালিকের সাথে যোগাযোগ</h4>
-                    <p><strong>নাম:</strong> <span id="displayOwner">...</span></p>
-                    <a id="callBtn" href="" class="call-now-btn">
-                        <i class="material-icons">phone</i> &nbsp; কল করুন
+                <div style="text-align:center; padding:20px; border:2px dashed #3498db; border-radius:12px;">
+                    <p style="margin-bottom:10px; font-weight:bold;">মালিকের সাথে সরাসরি কথা বলুন</p>
+                    <a id="det-call" href="" class="submit-button" style="text-decoration:none; display:inline-block; padding:12px 30px;">
+                        <i class="material-icons" style="vertical-align:middle;">call</i> কল করুন
                     </a>
                 </div>
             </div>
@@ -90,4 +102,4 @@
 
     <script src="details.js"></script>
 </body>
-    </html>
+                                                            </html>
