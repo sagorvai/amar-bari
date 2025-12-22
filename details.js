@@ -1,292 +1,37 @@
-// ধরে নেওয়া হচ্ছে db, auth, storage ভ্যারিয়েবলগুলো details.html এ গ্লোবালি সংজ্ঞায়িত আছে।
+document.addEventListener("DOMContentLoaded", function () {
+    // ১. লগইন চেক (ধরে নিচ্ছি 'userLoggedIn' কি ব্যবহার করছেন)
+    const isLoggedIn = localStorage.getItem('isLoggedIn'); 
 
-document.addEventListener('DOMContentLoaded', function() {
-    const propertyContent = document.getElementById('propertyContent');
-    const loadingState = document.getElementById('loadingState');
-    const errorState = document.getElementById('errorState');
-    const errorMessageElement = document.getElementById('errorMessage');
-    const pageTitle = document.getElementById('pageTitle');
-    const backButton = document.getElementById('backButton');
-    const shareButton = document.getElementById('shareButton');
-    const profileImage = document.getElementById('profileImage');
-    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
-    
-    // URL থেকে প্রপার্টির ID বের করা
-    const urlParams = new URLSearchParams(window.location.search);
-    const propertyId = urlParams.get('id');
-
-    if (!propertyId) {
-        showError('প্রপার্টির আইডি পাওয়া যায়নি।');
+    if (isLoggedIn !== 'true') {
+        alert("এই পেইজটি দেখতে আপনাকে আগে লগইন করতে হবে।");
+        window.location.href = "login.html"; // আপনার লগইন পেইজের নাম
         return;
     }
+
+    // লগইন থাকলে কন্টেন্ট দেখাও
+    document.getElementById('main-content').style.display = 'block';
+
+    // ২. localStorage থেকে ডাটা নেওয়া (post.js এ সেভ করা key)
+    const rawData = localStorage.getItem('previewData');
     
-    // --- ব্যাক ও শেয়ার বাটন লজিক (আগের মতো) ---
-    if (backButton) {
-        backButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.history.back();
-        });
-    }
+    if (rawData) {
+        const adData = JSON.parse(rawData);
 
-    if (shareButton) {
-        shareButton.addEventListener('click', async () => {
-            const shareData = {
-                title: pageTitle.textContent,
-                text: 'আমার বাড়ি.কম-এ এই প্রপার্টিটি দেখুন!',
-                url: window.location.href,
-            };
+        // ৩. HTML এলিমেন্টে ডাটা বসানো
+        document.getElementById('ad-title').innerText = adData.title || "শিরোনাম নেই";
+        document.getElementById('ad-price').innerText = adData.price || "০";
+        document.getElementById('ad-category').innerText = adData.category || "N/A";
+        document.getElementById('ad-location').innerText = adData.location || "উল্লেখ নেই";
+        document.getElementById('ad-description').innerText = adData.description || "কোনো বর্ণনা নেই";
+        document.getElementById('ad-contact').innerText = adData.contact || "নম্বর পাওয়া যায়নি";
 
-            try {
-                if (navigator.share) {
-                    await navigator.share(shareData);
-                } else {
-                    navigator.clipboard.writeText(shareData.url);
-                    alert('লিঙ্ক কপি করা হয়েছে! আপনি এখন ম্যানুয়ালি শেয়ার করতে পারবেন।');
-                }
-            } catch (err) {
-                console.error('Share failed:', err);
-                alert('শেয়ার করা সম্ভব হয়নি।');
-            }
-        });
-    }
-    
-    // --- Utility: মানকে বাংলা সংখ্যায় রূপান্তর করা ---
-    function toBengaliNumber(number) {
-        if (number === null || number === undefined || number === '') return 'N/A';
-        if (typeof number === 'number') {
-            return number.toLocaleString('bn-BD');
+        // ৪. ছবি প্রদর্শন (একাধিক ছবি থাকলে প্রথমটি দেখাবে)
+        if (adData.images && adData.images.length > 0) {
+            document.getElementById('ad-image').src = adData.images[0];
+        } else if (adData.image) {
+            document.getElementById('ad-image').src = adData.image;
         }
-        return String(number);
+    } else {
+        document.getElementById('main-content').innerHTML = "<h2>কোনো বিজ্ঞাপনের তথ্য পাওয়া যায়নি!</h2>";
     }
-    
-    // --- Utility: কাস্টম আইটেম ডিসপ্লে রেন্ডারার (UPDATED for Card) ---
-    function renderInfoItem(icon, label, value) {
-        // যদি মান না থাকে, তাহলে এটি রেন্ডার করা হবে না
-        if (value === undefined || value === null || value === '' || value === 'N/A') return '';
-        
-        let displayValue = value;
-        if (typeof value === 'number' && !isNaN(value)) {
-             displayValue = toBengaliNumber(value);
-        } else if (typeof value === 'string' && /^\d+$/.test(value) && value.length < 15) {
-             displayValue = toBengaliNumber(parseInt(value));
-        }
-
-        // পুরো আইটেমটিকে একটি .info-card এ মোড়ানো হয়েছে
-        return `
-            <div class="info-card">
-                <div class="info-item">
-                    <i class="material-icons">${icon}</i>
-                    <span class="label">${label}:</span> <b>${displayValue}</b>
-                </div>
-            </div>
-        `;
-    }
-
-    // --- হেডার প্রোফাইল ইমেজ লোডিং লজিক (NEW) ---
-    function loadUserProfile() {
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                // ইউজার লগইন করা আছে
-                if (user.photoURL) {
-                    profileImage.src = user.photoURL;
-                    profileImage.style.display = 'block';
-                    defaultProfileIcon.style.display = 'none';
-                } else {
-                    // photoURL না থাকলে ডিফল্ট আইকন দেখান
-                    profileImage.style.display = 'none';
-                    defaultProfileIcon.style.display = 'block';
-                }
-            } else {
-                // ইউজার লগইন করা নেই, ডিফল্ট আইকন দেখান
-                profileImage.style.display = 'none';
-                defaultProfileIcon.style.display = 'block';
-            }
-        });
-    }
-
-    // --- ত্রুটি দেখানোর ফাংশন (আগের মতো) ---
-    function showError(message) {
-        loadingState.style.display = 'none';
-        propertyContent.style.display = 'none';
-        errorMessageElement.textContent = message;
-        errorState.style.display = 'block';
-        pageTitle.textContent = 'ত্রুটি - আমার বাড়ি.কম';
-    }
-
-    // --- ডেটা রেন্ডার করার ফাংশন ---
-    function renderPropertyDetails(data) {
-        // ... (Existing logic for setting title, location, price, etc.) ...
-        pageTitle.textContent = `${data.title} - আমার বাড়ি.কম`;
-
-        const locationParts = [];
-        if (data.location?.village) locationParts.push(data.location.village);
-        if (data.location?.thana) locationParts.push(data.location.thana);
-        if (data.location?.district) locationParts.push(data.location.district);
-        const locationString = locationParts.length > 0 ? locationParts.join(', ') : 'ঠিকানা পাওয়া যায়নি';
-        
-        const isSell = data.category === 'বিক্রয়';
-        let priceDisplay = '৳ N/A';
-        let priceValue = 0;
-        
-        if (isSell) {
-            priceValue = data.price;
-            let priceUnitDisplay = '';
-            if (data.priceUnit === 'মোট') priceUnitDisplay = 'মোট দাম';
-            else if (data.priceUnit === 'শতক') priceUnitDisplay = '/ শতক';
-            else if (data.priceUnit === 'স্কয়ার ফিট') priceUnitDisplay = '/ স্কয়ার ফিট';
-            
-            if (priceValue) priceDisplay = `৳ ${toBengaliNumber(priceValue)} ${priceUnitDisplay}`;
-            
-        } else { 
-            priceValue = data.monthlyRent;
-            if (priceValue) priceDisplay = `৳ ${toBengaliNumber(priceValue)} / মাস`;
-        }
-
-        // --- ছবি গ্যালারি তৈরি করা (UPDATED with error handling) ---
-        const imageUrls = data.imageUrls || [];
-        const imageGalleryHTML = imageUrls.length > 0
-            ? imageUrls.map(url => `<img src="${url}" alt="${data.title} ছবি" onerror="this.onerror=null;this.src='https://via.placeholder.com/120?text=Image+Load+Error'">`).join('')
-            : `<p class="no-image-found">কোনো ছবি পাওয়া যায়নি।</p>`;
-            
-        
-        // --- মূল তথ্য গ্রিড তৈরি (Using renderInfoItem for card view) ---
-        let infoGridHTML = '';
-        
-        // 1. ক্ষেত্রফল (ডাইনামিক)
-        if (data.areaSqft) {
-            infoGridHTML += renderInfoItem('square_foot', 'ক্ষেত্রফল', `${data.areaSqft} স্কয়ার ফিট`);
-        } else if (data.landArea && data.landAreaUnit) {
-            infoGridHTML += renderInfoItem('crop_landscape', 'জমির পরিমাণ', `${data.landArea} ${data.landAreaUnit}`);
-        } else if (data.commercialArea && data.commercialAreaUnit) {
-            infoGridHTML += renderInfoItem('store', 'ক্ষেত্রফল', `${data.commercialArea} ${data.commercialAreaUnit}`);
-        } else if (data.houseArea && data.houseAreaUnit) {
-            infoGridHTML += renderInfoItem('crop_landscape', 'জমির পরিমাণ', `${data.houseArea} ${data.houseAreaUnit}`);
-        }
-
-        // 2. পোস্টকারী
-        infoGridHTML += renderInfoItem('person', 'পোস্টকারী', data.listerType);
-
-        // 3. রুম/বাথরুম/কিচেন (যদি থাকে)
-        infoGridHTML += renderInfoItem('bed', 'রুম সংখ্যা', data.rooms);
-        infoGridHTML += renderInfoItem('bathtub', 'বাথরুম', data.bathrooms);
-        infoGridHTML += renderInfoItem('kitchen', 'কিচেন', data.kitchen);
-        infoGridHTML += renderInfoItem('store', 'দোকান সংখ্যা', data.shopCount);
-        
-        // 4. অন্যান্য তথ্য
-        infoGridHTML += renderInfoItem('layers', 'ফ্লোর নং', data.floorNo);
-        infoGridHTML += renderInfoItem('date_range', 'প্রপার্টির বয়স', data.propertyAge === '0' ? 'নতুন' : data.propertyAge ? `${data.propertyAge} বছর` : undefined);
-        infoGridHTML += renderInfoItem('explore', 'দিক', data.facing);
-        infoGridHTML += renderInfoItem('straighten', 'রাস্তার প্রস্থ', data.roadWidth ? `${data.roadWidth} ফিট` : undefined);
-        infoGridHTML += renderInfoItem('group', 'ভাড়ার ধরন', data.rentType);
-        infoGridHTML += renderInfoItem('event', 'ওঠার তারিখ', data.moveInDate);
-        infoGridHTML += renderInfoItem('business', 'জমির ধরন', data.landType);
-        
-        
-        // --- অন্যান্য সুবিধা (Utilities) ---
-        let utilitiesHTML = '';
-        if (data.utilities && data.utilities.length > 0) {
-            utilitiesHTML = `
-                <div class="details-section">
-                    <h3><i class="material-icons">stars</i> অন্যান্য সুবিধা</h3>
-                    <div class="info-grid">
-                        ${data.utilities.map(u => renderInfoItem('check_circle', u, 'আছে')).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        // --- সম্পূর্ণ HTML তৈরি করা ---
-        const fullHTML = `
-            <div class="details-header">
-                <p class="location" style="font-weight: bold;">${data.type} (${data.category})</p>
-                <h1>${data.title}</h1>
-                <p class="location"><i class="material-icons" style="font-size: 1em; margin-right: 3px;">location_on</i> ${locationString}</p>
-                <div class="price-tag">${priceDisplay}</div>
-            </div>
-
-            <div class="details-section image-gallery-section">
-                <h3><i class="material-icons">photo_library</i> ছবি গ্যালারি</h3>
-                <div class="image-gallery">
-                    ${imageGalleryHTML}
-                </div>
-            </div>
-
-            <div class="details-section main-info-section">
-                <h3><i class="material-icons">info</i> মূল তথ্য</h3>
-                <div class="info-grid">
-                    ${infoGridHTML || '<p class="info-card" style="grid-column: 1 / -1; text-align: center; color: #999;">কোনো অতিরিক্ত তথ্য পাওয়া যায়নি।</p>'}
-                </div>
-            </div>
-            
-            ${utilitiesHTML}
-
-            <div class="details-section description-section">
-                <h3><i class="material-icons">description</i> বিস্তারিত বিবরণ</h3>
-                <p class="description-text">${data.description || 'বিস্তারিত বিবরণ যোগ করা হয়নি।'}</p>
-            </div>
-            
-            ${isSell && data.owner ? `
-                <div class="details-section ownership-section">
-                    <h3><i class="material-icons">gavel</i> মালিকানা তথ্য (সারসংক্ষেপ)</h3>
-                    <div class="info-grid">
-                         ${renderInfoItem('bookmark', 'মৌজা', data.owner.mouja)}
-                         ${renderInfoItem('grading', 'দাগ নং (ধরন)', data.owner.dagNoType)}
-                         ${renderInfoItem('border_color', 'দাগ নং', data.owner.dagNo)}
-                         ${renderInfoItem('person_outline', 'দাতার নাম', data.owner.donorName)}
-                    </div>
-                </div>
-            ` : ''}
-
-            <div class="lister-contact-box">
-                <h4>যোগাযোগ করুন</h4>
-                <p>পোস্টকারী ধরন: <b>${data.listerType || 'N/A'}</b></p>
-                ${data.phoneNumber ? `
-                    <a href="tel:${data.phoneNumber}" class="contact-button">
-                        <i class="material-icons" style="font-size: 1.1em; vertical-align: middle; margin-right: 5px;">call</i>
-                        ফোন করুন
-                    </a>
-                    <p style="font-size: 0.9em; margin-top: 5px;">(মোবাইল নম্বর: ${data.phoneNumber}) ${data.secondaryPhone ? `(অতিরিক্ত: ${data.secondaryPhone})` : ''}</p>
-                ` : '<p style="color: red;">যোগাযোগের নম্বর দেওয়া হয়নি।</p>'}
-            </div>
-            
-            <div class="details-section google-map-section">
-                 <h3><i class="material-icons">map</i> অবস্থান</h3>
-                 ${data.googleMap ? `
-                    <p>Google Map লোকেশন: <a href="${data.googleMap}" target="_blank">${data.googleMap}</a></p>
-                 ` : '<p style="color: #999;">Google ম্যাপ লোকেশন পিন করা হয়নি।</p>'}
-            </div>
-        `;
-        
-        propertyContent.innerHTML = fullHTML;
-        propertyContent.style.display = 'block';
-    }
-    
-    // --- প্রপার্টি ডেটা ফেচ করার ফাংশন (আগের মতো) ---
-    async function fetchPropertyData(id) {
-        try {
-            loadingState.style.display = 'block';
-            propertyContent.style.display = 'none';
-            errorState.style.display = 'none';
-            
-            const doc = await db.collection('properties').doc(id).get();
-
-            if (!doc.exists) {
-                showError('দুঃখিত, এই প্রপার্টির কোনো তথ্য পাওয়া যায়নি।');
-                return;
-            }
-
-            const data = doc.data();
-            renderPropertyDetails(data);
-            
-        } catch (error) {
-            console.error("Error fetching property data: ", error);
-            showError(`ডেটা লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে আইডি সঠিক কিনা যাচাই করুন।`);
-        } finally {
-            loadingState.style.display = 'none';
-        }
-    }
-    
-    // পেজ লোড হওয়ার পরে ডেটা ফেচ এবং প্রোফাইল লোড শুরু করা
-    fetchPropertyData(propertyId);
-    loadUserProfile();
 });
