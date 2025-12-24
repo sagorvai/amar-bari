@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>প্রপার্টি ডিটেইলস - আমার বাড়ি.কম</title>
+    <title>প্রপার্টি বিস্তারিত - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
@@ -12,28 +12,30 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
-        /* ডিটেইলস পেজের বিশেষ স্টাইল */
-        .property-hero { background: #000; position: relative; height: 350px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 0 0 20px 20px; }
-        .property-hero img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        /* ডিটেইলস পেজের বিশেষ অ্যাডভান্সড ডিজাইন */
+        .details-page-content { padding-top: 20px; padding-bottom: 100px; }
+        .hero-gallery { background: #000; border-radius: 12px; overflow: hidden; position: relative; height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+        .hero-gallery img { max-width: 100%; max-height: 100%; object-fit: contain; }
         
-        .gallery-nav { display: flex; gap: 8px; overflow-x: auto; padding: 15px; background: #fff; border-bottom: 1px solid #eee; }
-        .gallery-nav img { width: 80px; height: 60px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; opacity: 0.6; transition: 0.3s; }
-        .gallery-nav img.active { border-color: #3498db; opacity: 1; transform: scale(1.05); }
+        .thumb-nav { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
+        .thumb-nav img { width: 80px; height: 60px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; opacity: 0.6; }
+        .thumb-nav img.active { border-color: #3498db; opacity: 1; transform: scale(1.05); }
 
-        .info-section { background: #fff; padding: 25px; margin: 20px 0; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .detail-title { font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; }
-        .detail-price { font-size: 28px; color: #27ae60; font-weight: 800; margin-bottom: 15px; display: block; }
-        
-        .specification-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
-        .spec-item { background: #f8f9fa; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px; border-left: 4px solid #3498db; }
-        .spec-item i { color: #3498db; font-size: 24px; }
-        .spec-label { font-size: 12px; color: #7f8c8d; display: block; }
-        .spec-value { font-size: 15px; font-weight: 600; color: #34495e; }
+        .price-section { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .price-val { font-size: 26px; color: #27ae60; font-weight: 800; display: block; }
+        .prop-title-large { font-size: 20px; font-weight: 700; margin: 10px 0; color: #2c3e50; }
 
-        .desc-text { line-height: 1.8; color: #555; font-size: 16px; white-space: pre-line; }
+        .specs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 20px 0; }
+        .spec-card { background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #eee; display: flex; align-items: center; gap: 12px; }
+        .spec-card i { color: #3498db; font-size: 22px; background: #ebf5fb; padding: 8px; border-radius: 50%; }
+        .spec-label { font-size: 11px; color: #7f8c8d; display: block; }
+        .spec-data { font-size: 14px; font-weight: 600; color: #333; }
+
+        .desc-section { background: #fff; padding: 20px; border-radius: 12px; line-height: 1.7; color: #444; }
         
-        .footer-action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; padding: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); display: flex; justify-content: center; z-index: 1000; }
-        .chat-btn-large { background: #3498db; color: white; border: none; padding: 15px 50px; border-radius: 35px; font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 10px; width: 90%; justify-content: center; cursor: pointer; }
+        .fixed-action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; padding: 15px; box-shadow: 0 -4px 12px rgba(0,0,0,0.1); display: flex; justify-content: center; z-index: 1000; }
+        .btn-call-action { background: #3498db; color: #fff; border: none; padding: 14px 0; border-radius: 30px; width: 90%; font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.3s; }
+        .btn-call-action:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -62,42 +64,43 @@
     </div>
     <div class="overlay" id="overlay"></div>
 
-    <main class="container" style="padding-top: 20px; padding-bottom: 100px;">
-        <div id="loading-spinner" style="text-align:center; padding: 50px;">লোড হচ্ছে...</div>
+    <main class="container details-page-content">
+        <div id="loading-state" style="text-align: center; padding: 100px;">
+            <p>প্রপার্টি লোড হচ্ছে...</p>
+        </div>
 
-        <div id="main-content-area" style="display:none;">
-            <div class="property-hero">
-                <img id="display-frame" src="" alt="প্রপার্টি">
+        <div id="details-view" style="display: none;">
+            <div class="hero-gallery">
+                <img id="main-img-display" src="" alt="প্রপার্টি">
             </div>
-            <div id="thumb-gallery" class="gallery-nav"></div>
+            <div id="thumbnail-list" class="thumb-nav"></div>
 
-            <div class="info-section">
-                <div id="view-price" class="detail-price"></div>
-                <h1 id="view-title" class="detail-title"></h1>
-                <p id="view-location" style="color: #7f8c8d; display:flex; align-items:center; gap:5px;">
-                    <i class="material-icons" style="font-size:18px;">place</i>
+            <div class="price-section">
+                <span id="p-price" class="price-val"></span>
+                <h1 id="p-title" class="prop-title-large"></h1>
+                <p id="p-location" style="color: #7f8c8d; display:flex; align-items:center; gap:6px;">
+                    <i class="material-icons" style="font-size:18px; color:#e74c3c;">place</i>
                 </p>
             </div>
 
-            <h3 style="padding-left:15px; border-left:4px solid #3498db; margin-bottom:15px;">প্রপার্টির বৈশিষ্ট্যসমূহ</h3>
-            <div id="spec-grid" class="specification-grid"></div>
+            <div id="specs-container" class="specs-grid"></div>
 
-            <div class="info-section">
-                <h3 style="margin-top:0;">বিস্তারিত বিবরণ</h3>
-                <p id="view-desc" class="desc-text"></p>
+            <div class="desc-section">
+                <h3 style="margin-top: 0; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">বিস্তারিত বিবরণ</h3>
+                <p id="p-description"></p>
             </div>
         </div>
     </main>
 
-    <div class="footer-action-bar">
-        <button id="btn-start-chat" class="chat-btn-large">
-            <i class="material-icons">chat</i> মেসেজ পাঠান
+    <div class="fixed-action-bar">
+        <button id="chatNowBtn" class="btn-call-action">
+            <i class="material-icons">forum</i> সরাসরি চ্যাট করুন
         </button>
     </div>
 
     <script src="details.js"></script>
     <script>
-        // সাইডবার লজিক (সব পেজের জন্য স্ট্যান্ডার্ড)
+        // আপনার সাইটের স্ট্যান্ডার্ড মেনু লজিক
         const menuBtn = document.getElementById('menuButton');
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
@@ -112,4 +115,4 @@
         });
     </script>
 </body>
-                </html>
+                                    </html>
