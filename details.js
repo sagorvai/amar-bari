@@ -1,74 +1,85 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const propertyData = JSON.parse(sessionStorage.getItem('stagedPropertyData'));
-    const imageMetadata = JSON.parse(sessionStorage.getItem('stagedImageMetadata'));
+// Firebase Initialize (আপনার কনফিগারেশন index.html থেকে নেবে)
+const db = firebase.firestore();
+const auth = firebase.auth();
 
-    if (!propertyData) {
-        alert("কোনো ডেটা পাওয়া যায়নি!");
-        window.location.href = 'post.html';
+document.addEventListener('DOMContentLoaded', () => {
+    // ১. সাইডবার ও ইউজার হ্যান্ডলিং (index.js থেকে অনুপ্রাণিত)
+    const menuButton = document.getElementById('menuButton');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+
+    menuButton.onclick = () => { sidebar.classList.add('active'); overlay.classList.add('active'); };
+    overlay.onclick = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
+
+    // ২. ডেটা রিড করা (SessionStorage থেকে)
+    const pData = JSON.parse(sessionStorage.getItem('stagedPropertyData'));
+    const iData = JSON.parse(sessionStorage.getItem('stagedImageMetadata'));
+
+    if (!pData) {
+        alert("কোনো তথ্য পাওয়া যায়নি!");
+        window.location.href = 'index.html';
         return;
     }
 
-    // ১. ইমেজ গ্যালারি রেন্ডার
-    const mainImg = document.getElementById('main-display-img');
-    const sideContainer = document.getElementById('side-images-container');
+    // ৩. কন্টেন্ট সেট করা
+    document.getElementById('det-title').textContent = pData.title;
+    document.getElementById('det-desc').textContent = pData.description || "কোনো বর্ণনা নেই।";
+    document.getElementById('det-price').textContent = `৳ ${pData.price || pData.monthlyRent} (${pData.priceUnit || 'ফিক্সড'})`;
     
-    if (imageMetadata && imageMetadata.images && imageMetadata.images.length > 0) {
-        mainImg.src = imageMetadata.images[0].url;
-        
-        imageMetadata.images.slice(1, 3).forEach(img => {
-            const imgTag = document.createElement('img');
-            imgTag.src = img.url;
-            sideContainer.appendChild(imgTag);
+    const loc = pData.location;
+    document.getElementById('det-location').innerHTML = `<i class="material-icons" style="font-size:18px;">place</i> ${loc.village}, ${loc.upazila}, ${loc.district}`;
+
+    // ৪. ইমেজ গ্যালারি লজিক
+    const mainImg = document.getElementById('mainViewImg');
+    const thumbRow = document.getElementById('thumbRow');
+
+    if (iData && iData.images && iData.images.length > 0) {
+        mainImg.src = iData.images[0].url;
+        iData.images.forEach((imgObj, idx) => {
+            const thumb = document.createElement('img');
+            thumb.src = imgObj.url;
+            thumb.className = `thumb-img ${idx === 0 ? 'active' : ''}`;
+            thumb.onclick = () => {
+                mainImg.src = imgObj.url;
+                document.querySelectorAll('.thumb-img').forEach(t => t.classList.remove('active'));
+                thumb.classList.add('active');
+            };
+            thumbRow.appendChild(thumb);
         });
     }
 
-    // ২. টাইটেল, প্রাইস এবং লোকেশন
-    document.getElementById('view-title').textContent = propertyData.title;
-    document.getElementById('view-description').textContent = propertyData.description || 'কোনো বর্ণনা দেওয়া হয়নি।';
-    
-    const location = propertyData.location;
-    const locationText = `${location.village || ''}, ${location.upazila || location.thana || ''}, ${location.district}, ${location.division}`;
-    document.getElementById('view-location').innerHTML = `<i class="material-icons" style="font-size:16px; vertical-align:middle;">place</i> ${locationText}`;
+    // ৫. ফিচার গ্রিড (Icons)
+    const grid = document.getElementById('featureGrid');
+    const features = [
+        { icon: 'square_foot', label: 'আয়তন', val: pData.landArea || pData.areaSqft },
+        { icon: 'king_bed', label: 'বেডরুম', val: pData.rooms },
+        { icon: 'bathtub', label: 'বাথরুম', val: pData.bathrooms },
+        { icon: 'layers', label: 'তলা', val: pData.floorNo },
+        { icon: 'explore', label: 'মুখ', val: pData.facing }
+    ];
 
-    const pricePrefix = propertyData.category === 'ভাড়া' ? 'মাসিক ভাড়া: ' : 'দাম: ';
-    const priceVal = propertyData.category === 'ভাড়া' ? propertyData.monthlyRent : propertyData.price;
-    document.getElementById('view-price').textContent = `৳ ${priceVal} (${propertyData.priceUnit || 'মোট'})`;
-
-    // ৩. ইনফরমেশন গ্রিড (Dynamic Icons)
-    const infoGrid = document.getElementById('info-grid');
-    const addInfo = (icon, label, value) => {
-        if (value) {
-            infoGrid.innerHTML += `
-                <div class="info-item">
-                    <i class="material-icons">${icon}</i>
-                    <span><strong>${label}:</strong> ${value}</span>
+    features.forEach(f => {
+        if (f.val) {
+            grid.innerHTML += `
+                <div class="feature-item">
+                    <i class="material-icons">${f.icon}</i>
+                    <div>
+                        <small style="display:block; color:#777;">${f.label}</small>
+                        <strong>${f.val}</strong>
+                    </div>
                 </div>`;
         }
-    };
+    });
 
-    addInfo('category', 'ক্যাটাগরি', propertyData.category);
-    addInfo('home', 'টাইপ', propertyData.type);
-    addInfo('square_foot', 'আয়তন', propertyData.landArea || propertyData.areaSqft || propertyData.houseArea);
-    addInfo('king_bed', 'রুম', propertyData.rooms);
-    addInfo('bathtub', 'বাথরুম', propertyData.bathrooms);
-    addInfo('layers', 'তলা', propertyData.floorNo || propertyData.floors);
-    addInfo('directions', 'দিক', propertyData.facing);
-    addInfo('event', 'নির্মাণ কাল', propertyData.propertyAge ? `${propertyData.propertyAge} বছর` : 'নতুন');
+    // ৬. কন্টাক্ট ইনফো
+    document.getElementById('det-phone').textContent = pData.phoneNumber;
+    document.getElementById('callBtn').href = `tel:${pData.phoneNumber}`;
 
-    // ৪. ইউটিলিটি/সুবিধাসমূহ
-    const utilityContainer = document.getElementById('utility-container');
-    if (propertyData.utilities && propertyData.utilities.length > 0) {
-        propertyData.utilities.forEach(u => {
-            utilityContainer.innerHTML += `<span class="utility-tag">✓ ${u}</span>`;
-        });
-    } else {
-        document.getElementById('utility-section').style.display = 'none';
-    }
-
-    // ৫. কন্টাক্ট ইনফো
-    document.getElementById('view-phone').textContent = propertyData.phoneNumber;
-    document.getElementById('call-link').href = `tel:${propertyData.phoneNumber}`;
-    if (propertyData.secondaryPhone) {
-        document.getElementById('view-secondary-phone').textContent = `বিকল্প নম্বর: ${propertyData.secondaryPhone}`;
-    }
+    // ৭. প্রোফাইল চেক (index.js লজিক)
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.getElementById('profileImageWrapper').style.display = 'flex';
+            // আপনি এখানে index.js এর loadProfilePicture ফাংশনটি কল করতে পারেন
+        }
+    });
 });
