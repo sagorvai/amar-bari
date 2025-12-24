@@ -3,63 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>প্রপার্টি বিস্তারিত - আমার বাড়ি.কম</title>
+    <title>প্রোফাইল ড্যাশবোর্ড - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
+    <script>
+      // **আপনার বিদ্যমান Firebase কনফিগারেশন**
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+      };
+      
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
+    
     <style>
-        /* ডিটেইলস পেজের বিশেষ অ্যাডভান্সড ডিজাইন */
-        .details-page-content { padding-top: 20px; padding-bottom: 100px; }
-        .hero-gallery { background: #000; border-radius: 12px; overflow: hidden; position: relative; height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
-        .hero-gallery img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        /* CSS ভেরিয়েবল */
+        :root {
+            --primary-color: #007bff;
+        }
+
+        /* গ্লোবাল ফিক্স */
+        body {
+            margin: 0; 
+            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
+            font-family: Arial, sans-serif; 
+        }
+
+        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
+        .main-header {
+             position: fixed; 
+             top: 0;
+             left: 0;
+             right: 0;
+             background-color: white; 
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             z-index: 1000; 
+             padding-bottom: 0;
+        }
         
-        .thumb-nav { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
-        .thumb-nav img { width: 80px; height: 60px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; opacity: 0.6; }
-        .thumb-nav img.active { border-color: #3498db; opacity: 1; transform: scale(1.05); }
-
-        .price-section { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .price-val { font-size: 26px; color: #27ae60; font-weight: 800; display: block; }
-        .prop-title-large { font-size: 20px; font-weight: 700; margin: 10px 0; color: #2c3e50; }
-
-        .specs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 20px 0; }
-        .spec-card { background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #eee; display: flex; align-items: center; gap: 12px; }
-        .spec-card i { color: #3498db; font-size: 22px; background: #ebf5fb; padding: 8px; border-radius: 50%; }
-        .spec-label { font-size: 11px; color: #7f8c8d; display: block; }
-        .spec-data { font-size: 14px; font-weight: 600; color: #333; }
-
-        .desc-section { background: #fff; padding: 20px; border-radius: 12px; line-height: 1.7; color: #444; }
+        /* --- [START] সাইডবার ফিক্স: সম্পূর্ণ কার্যকারিতা, নতুন রঙ সহ --- */
+        .sidebar {
+            position: fixed; /* ফিক্সড পজিশন সেট করা হলো */
+            top: 0;
+            left: -250px; /* ডিফল্টভাবে স্ক্রিনের বাইরে লুকিয়ে রাখা হলো */
+            width: 250px; /* সাইডবারের প্রস্থ */
+            height: 100%;
+            
+            /* ⭐ ব্যাকগ্রাউন্ড কালার ফিক্সড: গাঢ় নীল/ধূসর (#34495e) ⭐ */
+            background-color: #34495e; 
+            
+            transition: left 0.3s ease; /* মসৃণ স্লাইড ট্রানজিশন */
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
+            z-index: 1050; 
+            overflow-y: auto;
+            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
+        }
         
-        .fixed-action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; padding: 15px; box-shadow: 0 -4px 12px rgba(0,0,0,0.1); display: flex; justify-content: center; z-index: 1000; }
-        .btn-call-action { background: #3498db; color: #fff; border: none; padding: 14px 0; border-radius: 30px; width: 90%; font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.3s; }
-        .btn-call-action:active { transform: scale(0.95); }
+        .sidebar.active {
+            left: 0; 
+        }
+        
+        .overlay {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); 
+            z-index: 1040; 
+            display: none; 
+        }
+        
+        .overlay.active {
+            display: block; 
+        }
+        
+        /* ⭐ সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা (#ffffff) ⭐ */
+        .sidebar a {
+            color: #ffffff; 
+            padding: 12px 15px; /* লিঙ্কগুলোর padding */
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .sidebar a i.material-icons {
+            color: #ffffff; /* আইকনগুলোর রঙ সাদা */
+            margin-right: 10px;
+        }
+
+        .sidebar a:hover {
+            background-color: #3e5369; /* হোভার ইফেক্টের জন্য একটু হালকা রঙ */
+        }
+        
+        /* সাইডবারের লোগো লিঙ্ক (প্রথম লিঙ্ক) */
+        .sidebar-logo {
+            padding: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white !important; /* নিশ্চিত সাদা */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+        }
+        
+        /* --- [END] সাইডবার ফিক্স: সম্পূর্ণ কার্যকারিতা, নতুন রঙ সহ --- */
+
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; 
+            padding: 8px 15px; 
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0; 
+        }
+
+        .menu-icon {
+             margin-right: 0; 
+             cursor: pointer;
+        }
+        
+        .logo-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.8em; 
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 0px; 
+            text-decoration: none; 
+            white-space: nowrap; 
+        }
+        .logo-title:visited {
+             color: var(--primary-color);
+        }
+        .logo-icon {
+            margin-right: 5px;
+        }
+
+        /* ডানের ব্লক (আইকন) ফিক্স */
+        .header-actions {
+             display: flex;
+             align-items: center;
+             gap: 12px; 
+             position: relative; 
+             flex-shrink: 0; 
+        }
+        
+        /* কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
+        .icon-wrapper {
+             position: relative;
+             display: inline-flex;
+             cursor: pointer;
+             align-items: center; 
+             justify-content: center;
+             height: 30px; 
+             width: 30px; 
+        }
+        
+        /* কমন নোটিফিকেশন কাউন্ট স্টাইল */
+        .notification-count {
+            position: absolute;
+            top: -5px; 
+            right: -8px; 
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 5px; 
+            font-size: 0.7em;
+            font-weight: bold;
+            min-width: 10px;
+            text-align: center;
+            line-height: 1; 
+            display: none; 
+        }
+        
+        /* আইকন কালার */
+        .notification-icon { color: var(--primary-color); }
+        .message-icon { color: var(--primary-color); }
+        .post-icon-header { color: #28a745; }
+
+        /* প্রোফাইল ইমেজ স্টাইল */
+        .profile-image-wrapper {
+            cursor: pointer;
+            width: 35px; 
+            height: 35px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary-color); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #profileImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
+        @media (max-width: 600px) {
+            body {
+                padding-top: 46px; 
+            }
+            .logo-title {
+                 font-size: 1.5em; 
+                 margin-left: 0px;
+            }
+            .header-actions {
+                 gap: 8px; 
+            }
+            .profile-image-wrapper {
+                 width: 30px; 
+                 height: 30px;
+            }
+        }
+        
     </style>
 </head>
 <body>
+
     <header class="main-header">
-        <div class="container header-content">
-            <button id="menuButton" class="icon-button"><i class="material-icons">menu</i></button>
-            <div class="logo">আমার বাড়ি.কম</div>
-            <div class="header-icons">
-                <button id="notificationButton" class="icon-button"><i class="material-icons">notifications</i></button>
-                <button id="messageButton" class="icon-button"><i class="material-icons">chat_bubble</i></button>
-                <div id="profileImageWrapper" class="profile-circle">
-                    <img id="profileImage" src="" alt="P" style="display:none;">
-                    <i id="defaultProfileIcon" class="material-icons">account_circle</i>
+        <div class="header-top">
+            
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                
+                <a href="index.html" class="logo-title">
+                   <i class="material-icons logo-icon">home</i>  
+                    <span>আমার বাড়ি.কম</span>
+                </a>
+            </div>
+            
+            <div class="header-actions">
+                
+                <div class="icon-wrapper" id="notificationButton"> 
+                    <i class="material-icons notification-icon">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
                 </div>
+                
+                <div class="icon-wrapper" id="headerPostButton">
+                    <i class="material-icons post-icon-header">add_circle_outline</i>
+                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
+                </div>
+                
+                <div class="icon-wrapper" id="messageButton">
+                    <i class="material-icons message-icon">message</i>
+                    <span class="notification-count" id="message-count"></span>
+                </div>
+                
+                <div class="profile-image-wrapper" id="profileImageWrapper">
+                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
+                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
+                
+                <div class="notification-dropdown" id="notification-dropdown">
+                    </div>
             </div>
         </div>
+        
     </header>
-
+    
     <div class="sidebar" id="sidebar">
-        <nav class="sidebar-nav">
-            <a href="index.html"><i class="material-icons">home</i> হোম</a>
-            <a href="profile.html"><i class="material-icons">person</i> প্রোফাইল</a>
-            <a href="post.html"><i class="material-icons">add_circle</i> প্রপার্টি পোস্ট করুন</a>
-            <a href="messages.html"><i class="material-icons">chat</i> মেসেজ</a>
+        <nav>
+            <a href="index.html" class="sidebar-logo">
+                <i class="material-icons">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
+            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            
+            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
+            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            
         </nav>
     </div>
     <div class="overlay" id="overlay"></div>
