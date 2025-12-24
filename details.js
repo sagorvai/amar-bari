@@ -10,104 +10,109 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
 document.addEventListener('DOMContentLoaded', async () => {
+    setupUI(); // হেডার ও সাইডবার লজিক
+
     const urlParams = new URLSearchParams(window.location.search);
     const propId = urlParams.get('id');
 
-    if (!propId) {
-        window.location.href = 'index.html';
-        return;
-    }
+    if (!propId) { window.location.href = 'index.html'; return; }
 
     try {
         const doc = await db.collection('properties').doc(propId).get();
         if (doc.exists) {
-            renderPropertyData(doc.data(), propId);
+            displayProperty(doc.data(), propId);
         } else {
-            alert("দুঃখিত, এই পোস্টটি খুঁজে পাওয়া যায়নি।");
+            alert("পোস্টটি পাওয়া যায়নি!");
             window.location.href = 'index.html';
         }
-    } catch (error) {
-        console.error("Error fetching details:", error);
-    }
+    } catch (e) { console.error(e); }
 });
 
-function renderPropertyData(data, id) {
-    // লোডার লুকানো
-    document.getElementById('loading-state').style.display = 'none';
-    document.getElementById('details-content').style.display = 'block';
+function displayProperty(data, id) {
+    document.getElementById('loading-spinner').style.display = 'none';
+    document.getElementById('details-view').style.display = 'block';
 
-    // ১. বেসিক তথ্য সেট করা
-    document.getElementById('display-title').textContent = data.title;
-    document.getElementById('display-price').textContent = Number(data.price).toLocaleString('bn-BD');
-    document.getElementById('display-location').querySelector('span').textContent = `${data.area || ''}, ${data.city || ''}`;
-    document.getElementById('display-description').textContent = data.description;
-
-    // ২. ইমেজ সেট করা
-    const imgContainer = document.getElementById('main-image-view');
+    // ১. ইমেজ এবং বেসিক টেক্সট
+    const imgHolder = document.getElementById('image-holder');
     if (data.images && data.images.length > 0) {
-        imgContainer.innerHTML = `<img src="${data.images[0].url}" alt="Property Image">`;
+        imgHolder.innerHTML = `<img src="${data.images[0].url}" alt="Property">`;
     }
 
-    // ৩. ডাইনামিক স্পেকস গ্রিড তৈরি (পোস্ট পেইজের সকল ডেটা)
-    const specsContainer = document.getElementById('display-specs');
-    specsContainer.innerHTML = ''; // ক্লিয়ার করা
+    document.getElementById('p-title').textContent = data.title;
+    document.getElementById('p-price').textContent = Number(data.price).toLocaleString('bn-BD');
+    document.getElementById('p-loc').querySelector('span').textContent = `${data.area}, ${data.city}`;
+    document.getElementById('p-desc').textContent = data.description;
 
-    const fields = [
-        { label: 'ক্যাটাগরি', value: data.category, icon: 'category' },
-        { label: 'ধরণ', value: data.type, icon: 'apartment' },
-        { label: 'বেডরুম', value: data.bedrooms, icon: 'bed' },
-        { label: 'বাথরুম', value: data.bathrooms, icon: 'bathtub' },
-        { label: 'আয়তন', value: data.size ? data.size + ' স্কয়ার ফিট' : null, icon: 'square_foot' },
-        { label: 'ফ্লোর লেভেল', value: data.floorLevel, icon: 'layers' },
-        { label: 'লিফট', value: data.lift, icon: 'elevator' },
-        { label: 'জেনারেটর', value: data.generator, icon: 'bolt' }
+    // ২. ডাইনামিক ফিল্ড গ্রিড (post.js এর ডেটা অনুযায়ী)
+    const grid = document.getElementById('dynamic-info-grid');
+    grid.innerHTML = '';
+
+    const specs = [
+        { label: 'ক্যাটাগরি', val: data.category, icon: 'category' },
+        { label: 'ধরণ', val: data.type, icon: 'apartment' },
+        { label: 'বেডরুম', val: data.bedrooms, icon: 'bed' },
+        { label: 'বাথরুম', val: data.bathrooms, icon: 'bathtub' },
+        { label: 'আয়তন', val: data.size ? data.size + ' স্কয়ার ফিট' : null, icon: 'square_foot' },
+        { label: 'ফ্লোর নম্বর', val: data.floorLevel, icon: 'layers' },
+        { label: 'লিফট', val: data.lift, icon: 'elevator' },
+        { label: 'জেনারেটর', val: data.generator, icon: 'bolt' }
     ];
 
-    fields.forEach(field => {
-        if (field.value && field.value !== "চিহ্নিত নেই") {
-            specsContainer.innerHTML += `
-                <div class="spec-item">
-                    <i class="material-icons">${field.icon}</i>
-                    <span>${field.label}</span>
-                    <strong>${field.value}</strong>
+    specs.forEach(s => {
+        if (s.val && s.val !== "চিহ্নিত নেই") {
+            grid.innerHTML += `
+                <div class="info-item">
+                    <i class="material-icons">${s.icon}</i>
+                    <span>${s.label}</span>
+                    <strong>${s.val}</strong>
                 </div>`;
         }
     });
 
-    // ৪. মালিকের তথ্য ও চ্যাট লজিক
+    // ৩. মালিকের তথ্য ও চ্যাট
     loadOwner(data.userId, data.createdAt);
 
     document.getElementById('chatNowBtn').onclick = () => {
-        const currentUser = firebase.auth().currentUser;
-        if (!currentUser) {
-            alert("চ্যাট করতে অনুগ্রহ করে লগইন করুন।");
-            window.location.href = 'auth.html';
-            return;
-        }
-        if (currentUser.uid === data.userId) {
-            alert("এটি আপনার নিজের পোস্ট।");
-            return;
-        }
-        // messages.js এর startChat ফাংশন কল করা
-        window.location.href = `messages.html?chatId=${currentUser.uid}_${data.userId}_${id}`;
+        const user = auth.currentUser;
+        if (!user) { alert("চ্যাট করতে লগইন করুন"); window.location.href='auth.html'; return; }
+        if (user.uid === data.userId) { alert("এটি আপনার নিজের পোস্ট"); return; }
+        window.location.href = `messages.html?chatId=${user.uid}_${data.userId}_${id}`;
     };
 }
 
-async function loadOwner(uid, timestamp) {
-    try {
-        const userDoc = await db.collection('users').doc(uid).get();
-        if (userDoc.exists) {
-            const userData = userDoc.data();
-            document.getElementById('display-owner-name').textContent = userData.fullName || "ব্যবহারকারী";
-            if (userData.profilePic) {
-                document.getElementById('display-owner-img').src = userData.profilePic;
+// সাইটের সাধারণ UI লজিক (Header, Sidebar, Profile Pic)
+function setupUI() {
+    const menuBtn = document.getElementById('menuButton');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+
+    menuBtn.onclick = () => { sidebar.classList.toggle('active'); overlay.classList.toggle('active'); };
+    overlay.onclick = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
+
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            document.getElementById('profileImageWrapper').style.display = 'flex';
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists && userDoc.data().profilePic) {
+                const img = document.getElementById('profileImage');
+                img.src = userDoc.data().profilePic;
+                img.style.display = 'block';
+                document.getElementById('defaultProfileIcon').style.display = 'none';
             }
         }
-        if (timestamp) {
-            const date = timestamp.toDate().toLocaleDateString('bn-BD');
-            document.getElementById('display-post-date').textContent = `পোস্ট করা হয়েছে: ${date}`;
-        }
-    } catch (e) { console.log(e); }
+    });
+}
+
+async function loadOwner(uid, time) {
+    const snap = await db.collection('users').doc(uid).get();
+    if (snap.exists) {
+        document.getElementById('o-name').textContent = snap.data().fullName || "ব্যবহারকারী";
+        if (snap.data().profilePic) document.getElementById('o-img').src = snap.data().profilePic;
     }
+    if (time) {
+        document.getElementById('p-date').textContent = "পোস্ট তারিখ: " + time.toDate().toLocaleDateString('bn-BD');
+    }
+                }
