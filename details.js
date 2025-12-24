@@ -1,4 +1,7 @@
-// Firebase কনফিগারেশন (আপনার index.html থেকে কপি করুন)
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// আপনার Firebase Config (index.html থেকে কপি করা)
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -7,86 +10,83 @@ const firebaseConfig = {
     messagingSenderId: "719084789035",
     appId: "1:719084789035:web:f4da765290b351"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const propertyId = urlParams.get('id');
+    const params = new URLSearchParams(window.location.search);
+    const propId = params.get('id');
 
-    if (!propertyId) {
-        alert("প্রপার্টি আইডি পাওয়া যায়নি!");
-        window.location.href = 'index.html';
-        return;
-    }
+    if (!propId) { window.location.href = 'index.html'; return; }
 
     try {
-        const doc = await db.collection('properties').doc(propertyId).get();
-        if (!doc.exists) {
-            alert("প্রপার্টিটি খুঁজে পাওয়া যায়নি!");
-            return;
+        const doc = await db.collection('properties').doc(propId).get();
+        if (doc.exists) {
+            renderProperty(doc.data(), propId);
+        } else {
+            alert('পোস্টটি পাওয়া যায়নি');
         }
-
-        const data = doc.data();
-        renderDetails(data, propertyId);
-    } catch (error) {
-        console.error("ডেটা লোড করতে সমস্যা:", error);
-    }
+    } catch (e) { console.error(e); }
 });
 
-function renderDetails(data, id) {
-    document.getElementById('details-loader').style.display = 'none';
-    document.getElementById('property-details').style.display = 'block';
+function renderProperty(data, id) {
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('content-area').style.display = 'block';
 
-    // শিরোনাম সেট করা
-    document.getElementById('prop-title').textContent = data.title || "শিরোনামহীন প্রপার্টি";
+    // ১. টেক্সট ডেটা সেট
+    document.getElementById('view-title').textContent = data.title;
+    document.getElementById('view-location').innerHTML += data.location || data.district;
+    document.getElementById('view-price').textContent = `৳ ${data.price} ${data.category === 'ভাড়া' ? '/ মাস' : ''}`;
+    document.getElementById('view-description').textContent = data.description;
 
-    // ছবি প্রদর্শন (৫টি ছবি থাকলে সব দেখাবে)
-    const gallery = document.getElementById('image-gallery');
+    // ২. ইমেজ গ্যালারি লজিক
+    const mainImg = document.getElementById('main-view');
+    const thumbList = document.getElementById('thumb-list');
+    
     if (data.images && data.images.length > 0) {
-        data.images.forEach(imgObj => {
-            const img = document.createElement('img');
-            img.src = imgObj.url;
-            img.alt = "Property Image";
-            img.onclick = () => window.open(img.src, '_blank');
-            gallery.appendChild(img);
+        mainImg.src = data.images[0].url;
+        data.images.forEach((img, index) => {
+            const tImg = document.createElement('img');
+            tImg.src = img.url;
+            if(index === 0) tImg.className = 'active';
+            tImg.onclick = () => {
+                mainImg.src = img.url;
+                document.querySelectorAll('.thumb-scroll img').forEach(i => i.classList.remove('active'));
+                tImg.classList.add('active');
+            };
+            thumbList.appendChild(tImg);
         });
     }
 
-    // ডাইনামিক ফিল্ড প্রদর্শন
-    const infoGrid = document.getElementById('dynamic-info');
-    
-    // যে ফিল্ডগুলো আমরা দেখাতে চাই
-    const fieldsToShow = {
-        'category': 'ক্যাটাগরি',
-        'subCategory': 'ধরন',
-        'price': 'মূল্য',
-        'location': 'ঠিকানা',
-        'area': 'আয়তন',
-        'beds': 'বেডরুম',
-        'baths': 'বাথরুম',
-        'description': 'বিবরণ'
+    // ৩. ডাইনামিক ফিল্ড গ্রিড (Post.js এর ফিল্ড অনুযায়ী)
+    const grid = document.getElementById('info-grid');
+    const fieldConfig = {
+        'category': { label: 'ক্যাটাগরি', icon: 'category' },
+        'subCategory': { label: 'প্রপার্টি টাইপ', icon: 'home' },
+        'beds': { label: 'বেডরুম', icon: 'bed' },
+        'baths': { label: 'বাথরুম', icon: 'shower' },
+        'area': { label: 'আয়তন', icon: 'straighten' },
+        'floorLevel': { label: 'তলা', icon: 'layers' },
+        'facing': { label: 'দিক', icon: 'explore' },
+        'completionStatus': { label: 'অবস্থা', icon: 'check_circle' }
     };
 
-    for (const [key, label] of Object.entries(fieldsToShow)) {
+    Object.keys(fieldConfig).forEach(key => {
         if (data[key]) {
-            const item = document.createElement('div');
-            item.className = 'info-item';
-            item.innerHTML = `
-                <span class="info-label">${label}</span>
-                <span class="info-value">${data[key]}</span>
+            const box = document.createElement('div');
+            box.className = 'info-box';
+            box.innerHTML = `
+                <i class="material-icons">${fieldConfig[key].icon}</i>
+                <div>
+                    <span class="info-label">${fieldConfig[key].label}</span>
+                    <span class="info-value">${data[key]}</span>
+                </div>
             `;
-            infoGrid.appendChild(item);
+            grid.appendChild(box);
         }
-    }
+    });
 
-    // চ্যাট বাটন লজিক (আপনার messages.js এর সাথে সামঞ্জস্যপূর্ণ)
-    document.getElementById('chat-start-btn').onclick = () => {
-        if (typeof startChat === "function") {
-            startChat(id, data.userId, data.title);
-        } else {
-            // যদি messages.js এখানে লোড না থাকে
-            window.location.href = `messages.html?chatId=${id}`;
-        }
+    // ৪. চ্যাট বাটন লজিক
+    document.getElementById('contact-btn').onclick = () => {
+        window.location.href = `messages.html?chatId=${id}`;
     };
-        }
+    }
