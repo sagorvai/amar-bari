@@ -1,7 +1,4 @@
-const db = firebase.firestore();
-const auth = firebase.auth();
-
-// আপনার প্রোজেক্টের Firebase কনফিগারেশন
+// Firebase কনফিগারেশন
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -11,88 +8,84 @@ const firebaseConfig = {
     appId: "1:719084789035:web:f4da765290b351"
 };
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const params = new URLSearchParams(window.location.search);
-    const propertyId = params.get('id');
+    const urlParams = new URLSearchParams(window.location.search);
+    const propId = urlParams.get('id');
 
-    if (!propertyId) {
-        window.location.href = 'index.html';
-        return;
-    }
+    if (!propId) { window.location.href = 'index.html'; return; }
 
     try {
-        const doc = await db.collection('properties').doc(propertyId).get();
+        const doc = await db.collection('properties').doc(propId).get();
         if (doc.exists) {
-            renderDetails(doc.data(), propertyId);
+            renderView(doc.data(), propId);
         } else {
-            alert('প্রপার্টিটি পাওয়া যায়নি!');
+            alert("দুঃখিত, এই পোস্টটি আর নেই।");
         }
     } catch (err) {
-        console.error("ডেটা লোড এরর:", err);
+        console.error(err);
     }
 });
 
-function renderDetails(data, id) {
-    document.getElementById('loading-spinner').style.display = 'none';
-    document.getElementById('main-content-area').style.display = 'block';
+function renderView(data, id) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('details-view').style.display = 'block';
 
-    // ১. বেসিক তথ্য সেট করা
-    document.getElementById('view-title').textContent = data.title;
-    document.getElementById('view-price').textContent = `৳ ${Number(data.price).toLocaleString('bn-BD')} ${data.category === 'ভাড়া' ? '/ মাস' : ''}`;
-    document.getElementById('view-location').innerHTML += data.location || data.district;
-    document.getElementById('view-desc').textContent = data.description;
+    // ১. টেক্সট ডেটা ম্যাপিং
+    document.getElementById('p-title').innerText = data.title;
+    document.getElementById('p-price').innerText = `৳ ${Number(data.price).toLocaleString('bn-BD')} ${data.category === 'ভাড়া' ? '/ মাস' : ''}`;
+    document.getElementById('p-location').innerHTML += data.location || data.district;
+    document.getElementById('p-description').innerText = data.description;
 
-    // ২. স্মার্ট ইমেজ গ্যালারি (৫টি ছবি হ্যান্ডলিং)
-    const displayFrame = document.getElementById('display-frame');
-    const thumbGallery = document.getElementById('thumb-gallery');
+    // ২. অ্যাডভান্সড ইমেজ গ্যালারি
+    const mainImg = document.getElementById('main-img-display');
+    const thumbContainer = document.getElementById('thumbnail-list');
     
     if (data.images && data.images.length > 0) {
-        displayFrame.src = data.images[0].url;
-        data.images.forEach((img, index) => {
-            const thumb = document.createElement('img');
-            thumb.src = img.url;
-            if (index === 0) thumb.classList.add('active');
+        mainImg.src = data.images[0].url;
+        data.images.forEach((imgObj, idx) => {
+            const tImg = document.createElement('img');
+            tImg.src = imgObj.url;
+            if (idx === 0) tImg.classList.add('active');
             
-            thumb.onclick = () => {
-                displayFrame.src = img.url;
-                document.querySelectorAll('.gallery-nav img').forEach(i => i.classList.remove('active'));
-                thumb.classList.add('active');
+            tImg.onclick = () => {
+                mainImg.src = imgObj.url;
+                document.querySelectorAll('.thumb-nav img').forEach(i => i.classList.remove('active'));
+                tImg.classList.add('active');
             };
-            thumbGallery.appendChild(thumb);
+            thumbContainer.appendChild(tImg);
         });
     }
 
-    // ৩. ডাইনামিক স্পেসিফিকেশন (post.js এর ইনপুট ফিল্ড অনুযায়ী)
-    const specGrid = document.getElementById('spec-grid');
-    const config = {
-        category: { label: 'ধরণ', icon: 'category' },
-        subCategory: { label: 'টাইপ', icon: 'home' },
-        beds: { label: 'বেডরুম', icon: 'bed' },
-        baths: { label: 'বাথরুম', icon: 'shower' },
-        area: { label: 'আয়তন', icon: 'straighten' },
-        floorLevel: { label: 'তলা', icon: 'layers' },
-        facing: { label: 'দিক', icon: 'explore' },
-        completionStatus: { label: 'অবস্থা', icon: 'verified' }
+    // ৩. ডাইনামিক ফিচার গ্রিড (post.js এর ইনপুট ফিল্ডের ওপর ভিত্তি করে)
+    const specs = document.getElementById('specs-container');
+    const fieldMapping = {
+        category: { n: 'ক্যাটাগরি', i: 'sell' },
+        subCategory: { n: 'প্রপার্টি টাইপ', i: 'apartment' },
+        beds: { n: 'বেডরুম', i: 'bed' },
+        baths: { n: 'বাথরুম', i: 'bathtub' },
+        area: { n: 'আয়তন', i: 'square_foot' },
+        floorLevel: { n: 'তলা', i: 'stairs' },
+        facing: { n: 'দিক', i: 'explore' },
+        completionStatus: { n: 'অবস্থা', i: 'new_releases' }
     };
 
-    Object.keys(config).forEach(key => {
-        if (data[key]) {
-            const item = document.createElement('div');
-            item.className = 'spec-item';
-            item.innerHTML = `
-                <i class="material-icons">${config[key].icon}</i>
-                <div>
-                    <span class="spec-label">${config[key].label}</span>
-                    <span class="spec-value">${data[key]}</span>
-                </div>
-            `;
-            specGrid.appendChild(item);
+    Object.keys(fieldMapping).forEach(key => {
+        if (data[key] && data[key] !== "") {
+            specs.innerHTML += `
+                <div class="spec-card">
+                    <i class="material-icons">${fieldMapping[key].i}</i>
+                    <div>
+                        <span class="spec-label">${fieldMapping[key].n}</span>
+                        <span class="spec-data">${data[key]}</span>
+                    </div>
+                </div>`;
         }
     });
 
-    // ৪. চ্যাট বাটন লজিক (messages.js এর সাথে ইন্টিগ্রেশন)
-    document.getElementById('btn-start-chat').onclick = () => {
+    // ৪. সরাসরি চ্যাট ইন্টিগ্রেশন
+    document.getElementById('chatNowBtn').onclick = () => {
         window.location.href = `messages.html?chatId=${id}`;
     };
-}
+        }
