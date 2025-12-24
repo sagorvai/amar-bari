@@ -3,85 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>প্রপার্টি বিস্তারিত - আমার বাড়ি.কম</title>
+    <title>প্রপার্টি ডিটেইলস - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-
-    <style>
-        .details-wrapper { margin-top: 20px; padding-bottom: 50px; }
-        
-        /* ইমেজ সেকশন */
-        .main-img-container { position: relative; width: 100%; height: 400px; border-radius: 15px; overflow: hidden; background: #ddd; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .main-img-container img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .thumb-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
-        .thumb-scroll img { width: 100px; height: 70px; object-fit: cover; border-radius: 8px; cursor: pointer; opacity: 0.6; transition: 0.3s; border: 2px solid transparent; }
-        .thumb-scroll img.active { opacity: 1; border-color: #3498db; }
-
-        /* কন্টেন্ট সেকশন */
-        .prop-header { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .price-tag { font-size: 24px; color: #27ae60; font-weight: bold; display: block; margin-top: 10px; }
-        
-        .info-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 20px; }
-        .info-box { background: #fff; padding: 15px; border-radius: 10px; display: flex; align-items: center; gap: 12px; border: 1px solid #eee; }
-        .info-box i { color: #3498db; background: #ebf5fb; padding: 8px; border-radius: 50%; }
-        .info-label { font-size: 13px; color: #777; display: block; }
-        .info-value { font-size: 16px; font-weight: 600; color: #333; }
-
-        .desc-box { background: #fff; padding: 20px; border-radius: 12px; margin-top: 20px; line-height: 1.6; }
-        .action-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 15px; display: flex; justify-content: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100; }
-        .btn-call { background: #3498db; color: #fff; padding: 12px 30px; border-radius: 30px; border: none; font-size: 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
-    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
-<body>
+<body class="details-page">
     <header class="main-header">
         <div class="container header-content">
             <button id="menuButton" class="icon-button"><i class="material-icons">menu</i></button>
-            <div class="logo">আমাৰ বাড়ি.কম</div>
+            <div class="logo">আমার বাড়ি.কম</div>
             <div class="header-icons">
                 <button id="notificationButton" class="icon-button"><i class="material-icons">notifications</i></button>
                 <button id="messageButton" class="icon-button"><i class="material-icons">chat_bubble</i></button>
-                <div id="profileImageWrapper" class="profile-circle" style="display:none;">
-                    <img id="profileImage" src="" alt="Profile">
+                <div id="profileImageWrapper" class="profile-circle">
+                    <img id="profileImage" src="" alt="P" style="display:none;">
                     <i id="defaultProfileIcon" class="material-icons">account_circle</i>
                 </div>
             </div>
         </div>
     </header>
 
-    <main class="container details-wrapper">
-        <div id="loader" style="text-align: center; padding: 100px;">লোড হচ্ছে...</div>
-
-        <div id="content-area" style="display: none;">
-            <div class="main-img-container">
-                <img id="main-view" src="" alt="Property">
+    <main class="container main-content" style="padding-top: 20px;">
+        <div class="image-showcase">
+            <div class="main-img-box">
+                <img id="active-image" src="" alt="প্রপার্টি ইমেজ">
             </div>
-            <div id="thumb-list" class="thumb-scroll"></div>
-
-            <div class="prop-header">
-                <h1 id="view-title" style="margin:0; font-size: 22px;"></h1>
-                <span id="view-location" style="color: #666; display: flex; align-items: center; gap: 5px; margin-top: 5px;">
-                    <i class="material-icons" style="font-size: 18px;">place</i> 
-                </span>
-                <span id="view-price" class="price-tag"></span>
-            </div>
-
-            <div id="info-grid" class="info-card-grid"></div>
-
-            <div class="desc-box">
-                <h3 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">বিস্তারিত বিবরণ</h3>
-                <p id="view-description"></p>
-            </div>
+            <div id="image-thumbnails" class="thumb-row"></div>
         </div>
-    </main>
 
-    <div class="action-bar">
-        <button id="contact-btn" class="btn-call">
-            <i class="material-icons">message</i> চ্যাট শুরু করুন
+        <div class="header-card">
+            <h1 id="prop-title">লোড হচ্ছে...</h1>
+            <div class="price-tag">৳ <span id="prop-price">0</span></div>
+            <p id="prop-location"><i class="material-icons">place</i> </p>
+        </div>
+
+        <div class="section-title">বৈশিষ্ট্যসমূহ</div>
+        <div id="features-grid" class="features-grid"></div>
+
+        <div class="section-title">বিস্তারিত বিবরণ</div>
+        <div class="description-box">
+            <p id="prop-desc"></p>
+        </div>
+
+        <div style="height: 100px;"></div> </main>
+
+    <div class="bottom-action">
+        <button id="startChatBtn" class="primary-btn">
+            <i class="material-icons">chat</i> চ্যাট শুরু করুন
         </button>
     </div>
 
