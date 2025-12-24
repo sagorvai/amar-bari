@@ -12,74 +12,101 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
-        .details-main { background: #f9f9f9; padding-top: 20px; }
-        .image-gallery-container { position: relative; border-radius: 15px; overflow: hidden; background: #000; height: 350px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .image-gallery-container img { width: 100%; height: 100%; object-fit: contain; }
+        .details-hero { position: relative; background: #fff; border-radius: 12px; overflow: hidden; margin-top: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .main-img-container { width: 100%; height: 300px; background: #000; display: flex; align-items: center; justify-content: center; }
+        .main-img-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
         
-        .info-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .price-text { font-size: 28px; color: #27ae60; font-weight: bold; margin: 10px 0; }
-        .property-title { font-size: 24px; font-weight: 700; color: #333; }
+        .prop-info-card { background: #fff; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .price-large { font-size: 26px; color: #27ae60; font-weight: 800; margin: 10px 0; }
         
-        .specs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; }
-        .spec-item { display: flex; flex-direction: column; align-items: center; background: #f8fbf9; padding: 15px; border-radius: 10px; text-align: center; }
-        .spec-item i { color: #27ae60; margin-bottom: 5px; }
-        .spec-item span { font-size: 13px; color: #666; }
-        .spec-item strong { font-size: 15px; color: #333; }
+        /* ডাইনামিক গ্রিড স্টাইল */
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin: 20px 0; }
+        .info-item { background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #eee; text-align: center; }
+        .info-item i { display: block; color: #27ae60; margin-bottom: 5px; font-size: 20px; }
+        .info-item span { font-size: 12px; color: #777; display: block; }
+        .info-item strong { font-size: 14px; color: #333; }
 
-        .owner-section { display: flex; align-items: center; gap: 15px; margin-top: 15px; }
-        .owner-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #27ae60; }
-        
-        .description-text { line-height: 1.8; color: #444; white-space: pre-line; }
-        .fixed-bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: center; z-index: 1000; }
-        .chat-btn { width: 100%; max-width: 500px; background: #e74c3c; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
+        .owner-box { display: flex; align-items: center; gap: 12px; padding: 15px; background: #fff; border-radius: 12px; border: 1px solid #eee; margin-top: 15px; }
+        .owner-box img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
     </style>
 </head>
 <body>
-    <main class="main-content container details-main">
-        <div id="loading-state" style="text-align: center; padding: 100px 0;">
-            <div class="loader"></div>
-            <p>তথ্য লোড হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...</p>
-        </div>
-
-        <div id="details-content" style="display: none;">
-            <div class="image-gallery-container" id="main-image-view">
+    <header class="main-header">
+        <div class="container header-container">
+            <div class="header-left">
+                <button class="icon-button" id="menuButton"><i class="material-icons">menu</i></button>
+                <h1 class="logo" onclick="window.location.href='index.html'">আমার বাড়ি<span>.কম</span></h1>
+            </div>
+            <div class="header-right">
+                <button class="icon-button" id="notificationButton"><i class="material-icons">notifications</i></button>
+                <button class="icon-button" id="messageButton"><i class="material-icons">chat</i></button>
+                <div class="profile-image-wrapper" id="profileImageWrapper" style="display:none;">
+                    <img id="profileImage" src="" alt="Profile" style="display:none;">
+                    <i class="material-icons" id="defaultProfileIcon">account_circle</i>
                 </div>
+            </div>
+        </div>
+    </header>
 
-            <div class="info-card">
-                <h1 class="property-title" id="display-title"></h1>
-                <p id="display-location" style="display: flex; align-items: center; color: #777;">
-                    <i class="material-icons" style="font-size: 18px; margin-right: 5px;">place</i> <span></span>
+    <div class="sidebar" id="sidebar">
+        <nav class="sidebar-nav">
+            <a href="index.html"><i class="material-icons">home</i> হোম</a>
+            <a href="profile.html"><i class="material-icons">person</i> প্রোফাইল</a>
+            <a href="post.html"><i class="material-icons">add_box</i> প্রপার্টি পোস্ট করুন</a>
+            <a href="messages.html"><i class="material-icons">message</i> মেসেজ</a>
+            <hr>
+            <a href="about.html"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="#" id="login-link-sidebar" class="login-link"><i class="material-icons">lock_open</i> লগইন</a>
+        </nav>
+    </div>
+    <div class="overlay" id="overlay"></div>
+
+    <main class="main-content container">
+        <div id="loading-spinner" style="text-align: center; padding: 50px;">লোড হচ্ছে...</div>
+
+        <div id="details-view" style="display: none;">
+            <div class="details-hero">
+                <div class="main-img-container" id="image-holder"></div>
+            </div>
+
+            <div class="prop-info-card">
+                <h1 id="p-title" style="font-size: 22px; margin-bottom: 5px;"></h1>
+                <p id="p-loc" style="color: #666; font-size: 14px; display: flex; align-items: center;">
+                    <i class="material-icons" style="font-size: 16px;">place</i> <span></span>
                 </p>
-                <div class="price-text">৳ <span id="display-price"></span></div>
+                <div class="price-large">৳ <span id="p-price"></span></div>
                 
-                <div class="specs-grid" id="display-specs">
-                    </div>
+                <div class="info-grid" id="dynamic-info-grid"></div>
             </div>
 
-            <div class="info-card">
-                <h3 style="margin-top: 0; border-bottom: 2px solid #f4f4f4; padding-bottom: 10px;">বিস্তারিত বিবরণ</h3>
-                <p id="display-description" class="description-text"></p>
+            <div class="prop-info-card">
+                <h3 style="border-bottom: 1px solid #eee; padding-bottom: 10px;">বিস্তারিত বর্ণনা</h3>
+                <p id="p-desc" style="line-height: 1.6; color: #444; white-space: pre-wrap;"></p>
             </div>
 
-            <div class="info-card">
+            <div class="prop-info-card">
                 <h3>বিজ্ঞাপনদাতার তথ্য</h3>
-                <div class="owner-section">
-                    <img id="display-owner-img" src="default-avatar.png" class="owner-img">
+                <div class="owner-box">
+                    <img id="o-img" src="default-avatar.png">
                     <div>
-                        <h4 id="display-owner-name" style="margin: 0;">লোড হচ্ছে...</h4>
-                        <p id="display-post-date" style="margin: 5px 0 0; font-size: 12px; color: #888;"></p>
+                        <strong id="o-name">লোড হচ্ছে...</strong>
+                        <p id="p-date" style="font-size: 12px; color: #888; margin: 0;"></p>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <div class="fixed-bottom-bar">
-        <button id="chatNowBtn" class="chat-btn">
+    <div class="fixed-action-bar" style="position: fixed; bottom: 0; width: 100%; padding: 10px; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: center; z-index: 100;">
+        <button id="chatNowBtn" style="width: 90%; max-width: 400px; background: #e74c3c; color: #fff; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
             <i class="material-icons">forum</i> সরাসরি চ্যাট করুন
         </button>
     </div>
 
+    <footer class="footer" style="margin-top: 100px; padding: 20px; text-align: center; background: #fff;">
+        <p>&copy; 2025 আমার বাড়ি.কম</p>
+    </footer>
+
     <script src="details.js"></script>
 </body>
-                                                                              </html>
+        </html>
