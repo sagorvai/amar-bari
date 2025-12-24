@@ -1,91 +1,92 @@
+// Firebase কনফিগারেশন (আপনার index.html থেকে কপি করুন)
+const firebaseConfig = {
+    apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+    authDomain: "amar-bari-website.firebaseapp.com",
+    projectId: "amar-bari-website",
+    storageBucket: "amar-bari-website.firebasestorage.app",
+    messagingSenderId: "719084789035",
+    appId: "1:719084789035:web:f4da765290b351"
+};
+firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const auth = firebase.auth();
 
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const propId = urlParams.get('id');
+    const propertyId = urlParams.get('id');
 
-    // হেডার ও সাইডবার লজিক (অরিজিনাল)
-    const setupNav = () => {
-        const menuBtn = document.getElementById('menuButton');
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        menuBtn?.addEventListener('click', () => { sidebar.classList.toggle('active'); overlay.classList.toggle('active'); });
-        overlay?.addEventListener('click', () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); });
-    };
-    setupNav();
-
-    if (!propId) { window.location.href = 'index.html'; return; }
+    if (!propertyId) {
+        alert("প্রপার্টি আইডি পাওয়া যায়নি!");
+        window.location.href = 'index.html';
+        return;
+    }
 
     try {
-        const doc = await db.collection('properties').doc(propId).get();
-        if (!doc.exists) { alert("পোস্টটি খুঁজে পাওয়া যায়নি!"); return; }
-
-        const data = doc.data();
-
-        // ১. ছবি লোড করা (৫টি ছবিই আসবে)
-        const mainView = document.getElementById('main-view');
-        const thumbBox = document.getElementById('image-thumbnails');
-        
-        if (data.images && data.images.length > 0) {
-            mainView.src = data.images[0].url;
-            data.images.forEach((imgObj, index) => {
-                const img = document.createElement('img');
-                img.src = imgObj.url;
-                img.style = "width:65px; height:50px; object-fit:cover; border-radius:5px; cursor:pointer; border:1px solid #ddd;";
-                img.onclick = () => { mainView.src = imgObj.url; };
-                thumbBox.appendChild(img);
-            });
+        const doc = await db.collection('properties').doc(propertyId).get();
+        if (!doc.exists) {
+            alert("প্রপার্টিটি খুঁজে পাওয়া যায়নি!");
+            return;
         }
 
-        // ২. সাধারণ তথ্য
-        document.getElementById('d-title').innerText = data.title;
-        document.getElementById('d-price').innerText = "৳ " + data.price;
-        document.getElementById('d-location').innerText = data.location;
-        document.getElementById('d-desc').innerText = data.description;
-        document.getElementById('call-link').href = `tel:${data.ownerPhone}`;
-
-        // ৩. ডাইনামিক ফিল্ডস (যা যা গ্রাহক ইনপুট দিয়েছে)
-        const specsGrid = document.getElementById('specs-grid');
-        const labelMap = {
-            'category': 'ক্যাটাগরি',
-            'propertyType': 'ধরণ',
-            'size': 'আয়তন',
-            'sizeUnit': 'ইউনিট',
-            'bed': 'বেডরুম',
-            'bath': 'বাথরুম',
-            'floorLevel': 'তলার অবস্থান',
-            'roadSize': 'রাস্তার আকার',
-            'propertyFacing': 'প্রপার্টির দিক',
-            'completionStatus': 'বর্তমান অবস্থা',
-            'ownerName': 'বিজ্ঞাপনদাতা'
-        };
-
-        Object.keys(data).forEach(key => {
-            if (labelMap[key] && data[key]) {
-                const item = document.createElement('div');
-                item.innerHTML = `<span style="color:#7f8c8d; display:block; font-size:12px;">${labelMap[key]}</span>
-                                  <span style="font-weight:bold; color:#34495e;">${data[key]}</span>`;
-                specsGrid.appendChild(item);
-            }
-        });
-
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('details-view').style.display = 'block';
-
-        // প্রোফাইল ছবি লোড করা
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                db.collection('users').doc(user.uid).get().then(uDoc => {
-                    if (uDoc.exists && uDoc.data().profilePicture) {
-                        const pImg = document.getElementById('profileImage');
-                        pImg.src = uDoc.data().profilePicture;
-                        pImg.style.display = 'block';
-                        document.getElementById('defaultProfileIcon').style.display = 'none';
-                    }
-                });
-            }
-        });
-
-    } catch (e) { console.log(e); }
+        const data = doc.data();
+        renderDetails(data, propertyId);
+    } catch (error) {
+        console.error("ডেটা লোড করতে সমস্যা:", error);
+    }
 });
+
+function renderDetails(data, id) {
+    document.getElementById('details-loader').style.display = 'none';
+    document.getElementById('property-details').style.display = 'block';
+
+    // শিরোনাম সেট করা
+    document.getElementById('prop-title').textContent = data.title || "শিরোনামহীন প্রপার্টি";
+
+    // ছবি প্রদর্শন (৫টি ছবি থাকলে সব দেখাবে)
+    const gallery = document.getElementById('image-gallery');
+    if (data.images && data.images.length > 0) {
+        data.images.forEach(imgObj => {
+            const img = document.createElement('img');
+            img.src = imgObj.url;
+            img.alt = "Property Image";
+            img.onclick = () => window.open(img.src, '_blank');
+            gallery.appendChild(img);
+        });
+    }
+
+    // ডাইনামিক ফিল্ড প্রদর্শন
+    const infoGrid = document.getElementById('dynamic-info');
+    
+    // যে ফিল্ডগুলো আমরা দেখাতে চাই
+    const fieldsToShow = {
+        'category': 'ক্যাটাগরি',
+        'subCategory': 'ধরন',
+        'price': 'মূল্য',
+        'location': 'ঠিকানা',
+        'area': 'আয়তন',
+        'beds': 'বেডরুম',
+        'baths': 'বাথরুম',
+        'description': 'বিবরণ'
+    };
+
+    for (const [key, label] of Object.entries(fieldsToShow)) {
+        if (data[key]) {
+            const item = document.createElement('div');
+            item.className = 'info-item';
+            item.innerHTML = `
+                <span class="info-label">${label}</span>
+                <span class="info-value">${data[key]}</span>
+            `;
+            infoGrid.appendChild(item);
+        }
+    }
+
+    // চ্যাট বাটন লজিক (আপনার messages.js এর সাথে সামঞ্জস্যপূর্ণ)
+    document.getElementById('chat-start-btn').onclick = () => {
+        if (typeof startChat === "function") {
+            startChat(id, data.userId, data.title);
+        } else {
+            // যদি messages.js এখানে লোড না থাকে
+            window.location.href = `messages.html?chatId=${id}`;
+        }
+    };
+        }
