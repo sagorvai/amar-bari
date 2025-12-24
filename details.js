@@ -1,7 +1,7 @@
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// আপনার Firebase Config (index.html থেকে কপি করা)
+// Firebase Init (আপনার কনফিগারেশন)
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -13,80 +13,77 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const params = new URLSearchParams(window.location.search);
-    const propId = params.get('id');
+    const urlParams = new URLSearchParams(window.location.search);
+    const propertyId = urlParams.get('id');
 
-    if (!propId) { window.location.href = 'index.html'; return; }
+    if (!propertyId) {
+        window.location.href = 'index.html';
+        return;
+    }
 
     try {
-        const doc = await db.collection('properties').doc(propId).get();
+        const doc = await db.collection('properties').doc(propertyId).get();
         if (doc.exists) {
-            renderProperty(doc.data(), propId);
-        } else {
-            alert('পোস্টটি পাওয়া যায়নি');
+            const data = doc.data();
+            displayDetails(data, propertyId);
         }
-    } catch (e) { console.error(e); }
+    } catch (error) {
+        console.error("Error:", error);
+    }
 });
 
-function renderProperty(data, id) {
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('content-area').style.display = 'block';
+function displayDetails(data, id) {
+    // ১. টেক্সট ডেটা
+    document.getElementById('prop-title').innerText = data.title;
+    document.getElementById('prop-price').innerText = Number(data.price).toLocaleString('bn-BD');
+    document.getElementById('prop-location').innerHTML += data.location || data.district;
+    document.getElementById('prop-desc').innerText = data.description;
 
-    // ১. টেক্সট ডেটা সেট
-    document.getElementById('view-title').textContent = data.title;
-    document.getElementById('view-location').innerHTML += data.location || data.district;
-    document.getElementById('view-price').textContent = `৳ ${data.price} ${data.category === 'ভাড়া' ? '/ মাস' : ''}`;
-    document.getElementById('view-description').textContent = data.description;
-
-    // ২. ইমেজ গ্যালারি লজিক
-    const mainImg = document.getElementById('main-view');
-    const thumbList = document.getElementById('thumb-list');
+    // ২. ইমেজ গ্যালারি (৫টি ছবি হ্যান্ডলিং)
+    const activeImg = document.getElementById('active-image');
+    const thumbRow = document.getElementById('image-thumbnails');
     
     if (data.images && data.images.length > 0) {
-        mainImg.src = data.images[0].url;
-        data.images.forEach((img, index) => {
-            const tImg = document.createElement('img');
-            tImg.src = img.url;
-            if(index === 0) tImg.className = 'active';
-            tImg.onclick = () => {
-                mainImg.src = img.url;
-                document.querySelectorAll('.thumb-scroll img').forEach(i => i.classList.remove('active'));
-                tImg.classList.add('active');
+        activeImg.src = data.images[0].url;
+        data.images.forEach((img, i) => {
+            const thumb = document.createElement('img');
+            thumb.src = img.url;
+            thumb.className = i === 0 ? 'thumb active' : 'thumb';
+            thumb.onclick = () => {
+                activeImg.src = img.url;
+                document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+                thumb.classList.add('active');
             };
-            thumbList.appendChild(tImg);
+            thumbRow.appendChild(thumb);
         });
     }
 
-    // ৩. ডাইনামিক ফিল্ড গ্রিড (Post.js এর ফিল্ড অনুযায়ী)
-    const grid = document.getElementById('info-grid');
-    const fieldConfig = {
-        'category': { label: 'ক্যাটাগরি', icon: 'category' },
-        'subCategory': { label: 'প্রপার্টি টাইপ', icon: 'home' },
-        'beds': { label: 'বেডরুম', icon: 'bed' },
-        'baths': { label: 'বাথরুম', icon: 'shower' },
-        'area': { label: 'আয়তন', icon: 'straighten' },
-        'floorLevel': { label: 'তলা', icon: 'layers' },
-        'facing': { label: 'দিক', icon: 'explore' },
-        'completionStatus': { label: 'অবস্থা', icon: 'check_circle' }
+    // ৩. ডাইনামিক ফিচার গ্রিড (Post.js লজিক অনুসরণ করে)
+    const grid = document.getElementById('features-grid');
+    const config = {
+        category: { n: 'ধরণ', i: 'category' },
+        beds: { n: 'বেডরুম', i: 'bed' },
+        baths: { n: 'বাথরুম', i: 'shower' },
+        area: { n: 'আয়তন', i: 'square_foot' },
+        floorLevel: { n: 'তলা', i: 'layers' },
+        facing: { n: 'দিক', i: 'explore' }
     };
 
-    Object.keys(fieldConfig).forEach(key => {
+    Object.keys(config).forEach(key => {
         if (data[key]) {
-            const box = document.createElement('div');
-            box.className = 'info-box';
-            box.innerHTML = `
-                <i class="material-icons">${fieldConfig[key].icon}</i>
-                <div>
-                    <span class="info-label">${fieldConfig[key].label}</span>
-                    <span class="info-value">${data[key]}</span>
-                </div>
-            `;
-            grid.appendChild(box);
+            grid.innerHTML += `
+                <div class="f-item">
+                    <i class="material-icons">${config[key].i}</i>
+                    <div>
+                        <small>${config[key].n}</small>
+                        <p>${data[key]}</p>
+                    </div>
+                </div>`;
         }
     });
 
-    // ৪. চ্যাট বাটন লজিক
-    document.getElementById('contact-btn').onclick = () => {
+    // ৪. চ্যাট বাটন
+    document.getElementById('startChatBtn').onclick = () => {
         window.location.href = `messages.html?chatId=${id}`;
     };
-    }
+            }
