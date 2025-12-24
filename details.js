@@ -1,85 +1,88 @@
-// Firebase Initialize (আপনার কনফিগারেশন index.html থেকে নেবে)
 const db = firebase.firestore();
 const auth = firebase.auth();
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ১. সাইডবার ও ইউজার হ্যান্ডলিং (index.js থেকে অনুপ্রাণিত)
-    const menuButton = document.getElementById('menuButton');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
+    // ১. ডেটা রিট্রাইভ করা (sessionStorage থেকে, যা post.js এ সেট করা হয়েছিল)
+    const propertyData = JSON.parse(sessionStorage.getItem('stagedPropertyData'));
+    const imageData = JSON.parse(sessionStorage.getItem('stagedImageMetadata'));
 
-    menuButton.onclick = () => { sidebar.classList.add('active'); overlay.classList.add('active'); };
-    overlay.onclick = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
-
-    // ২. ডেটা রিড করা (SessionStorage থেকে)
-    const pData = JSON.parse(sessionStorage.getItem('stagedPropertyData'));
-    const iData = JSON.parse(sessionStorage.getItem('stagedImageMetadata'));
-
-    if (!pData) {
-        alert("কোনো তথ্য পাওয়া যায়নি!");
-        window.location.href = 'index.html';
+    if (!propertyData) {
+        console.error("No property data found!");
         return;
     }
 
-    // ৩. কন্টেন্ট সেট করা
-    document.getElementById('det-title').textContent = pData.title;
-    document.getElementById('det-desc').textContent = pData.description || "কোনো বর্ণনা নেই।";
-    document.getElementById('det-price').textContent = `৳ ${pData.price || pData.monthlyRent} (${pData.priceUnit || 'ফিক্সড'})`;
-    
-    const loc = pData.location;
-    document.getElementById('det-location').innerHTML = `<i class="material-icons" style="font-size:18px;">place</i> ${loc.village}, ${loc.upazila}, ${loc.district}`;
+    // ২. ইমেজ গ্যালারি রেন্ডারিং
+    const mainDisplay = document.getElementById('mainDisplay');
+    const thumbStrip = document.getElementById('thumbStrip');
 
-    // ৪. ইমেজ গ্যালারি লজিক
-    const mainImg = document.getElementById('mainViewImg');
-    const thumbRow = document.getElementById('thumbRow');
-
-    if (iData && iData.images && iData.images.length > 0) {
-        mainImg.src = iData.images[0].url;
-        iData.images.forEach((imgObj, idx) => {
+    if (imageData && imageData.images.length > 0) {
+        mainDisplay.src = imageData.images[0].url;
+        
+        imageData.images.forEach((img, index) => {
             const thumb = document.createElement('img');
-            thumb.src = imgObj.url;
-            thumb.className = `thumb-img ${idx === 0 ? 'active' : ''}`;
+            thumb.src = img.url;
+            thumb.className = `thumb ${index === 0 ? 'active' : ''}`;
             thumb.onclick = () => {
-                mainImg.src = imgObj.url;
-                document.querySelectorAll('.thumb-img').forEach(t => t.classList.remove('active'));
+                mainDisplay.src = img.url;
+                document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
                 thumb.classList.add('active');
             };
-            thumbRow.appendChild(thumb);
+            thumbStrip.appendChild(thumb);
         });
     }
 
-    // ৫. ফিচার গ্রিড (Icons)
-    const grid = document.getElementById('featureGrid');
-    const features = [
-        { icon: 'square_foot', label: 'আয়তন', val: pData.landArea || pData.areaSqft },
-        { icon: 'king_bed', label: 'বেডরুম', val: pData.rooms },
-        { icon: 'bathtub', label: 'বাথরুম', val: pData.bathrooms },
-        { icon: 'layers', label: 'তলা', val: pData.floorNo },
-        { icon: 'explore', label: 'মুখ', val: pData.facing }
+    // ৩. টেক্সট ডেটা সেট করা
+    document.getElementById('p-title').textContent = propertyData.title;
+    document.getElementById('p-desc').textContent = propertyData.description || "বর্ণনা নেই।";
+    
+    // লোকেশন ফরম্যাট করা
+    const loc = propertyData.location;
+    document.getElementById('p-location').textContent = `${loc.village}, ${loc.upazila}, ${loc.district}`;
+
+    // দাম ফরম্যাট করা
+    const price = propertyData.category === 'ভাড়া' ? propertyData.monthlyRent : propertyData.price;
+    document.getElementById('p-price').textContent = `৳ ${price} (${propertyData.priceUnit || 'ফিক্সড'})`;
+
+    // ৪. ফিচার গ্রিড (Icons সহ)
+    const specGrid = document.getElementById('p-specs');
+    const specs = [
+        { icon: 'square_foot', label: 'আয়তন', value: propertyData.landArea || propertyData.areaSqft },
+        { icon: 'king_bed', label: 'বেডরুম', value: propertyData.rooms },
+        { icon: 'bathtub', label: 'বাথরুম', value: propertyData.bathrooms },
+        { icon: 'layers', label: 'তলা', value: propertyData.floorNo },
+        { icon: 'explore', label: 'facing', value: propertyData.facing }
     ];
 
-    features.forEach(f => {
-        if (f.val) {
-            grid.innerHTML += `
-                <div class="feature-item">
-                    <i class="material-icons">${f.icon}</i>
-                    <div>
-                        <small style="display:block; color:#777;">${f.label}</small>
-                        <strong>${f.val}</strong>
+    specs.forEach(spec => {
+        if (spec.value) {
+            specGrid.innerHTML += `
+                <div class="spec-item">
+                    <i class="material-icons">${spec.icon}</i>
+                    <div class="spec-info">
+                        <span>${spec.label}</span>
+                        <strong>${spec.value}</strong>
                     </div>
                 </div>`;
         }
     });
 
-    // ৬. কন্টাক্ট ইনফো
-    document.getElementById('det-phone').textContent = pData.phoneNumber;
-    document.getElementById('callBtn').href = `tel:${pData.phoneNumber}`;
-
-    // ৭. প্রোফাইল চেক (index.js লজিক)
+    // ৫. কন্টাক্ট লজিক
+    document.getElementById('callBtn').href = `tel:${propertyData.phoneNumber}`;
+    
+    // ৬. প্রোফাইল লোড লজিক (index.js থেকে কপি করা)
     auth.onAuthStateChanged(user => {
         if (user) {
-            document.getElementById('profileImageWrapper').style.display = 'flex';
-            // আপনি এখানে index.js এর loadProfilePicture ফাংশনটি কল করতে পারেন
+            const profileImageWrapper = document.getElementById('profileImageWrapper');
+            const profileImage = document.getElementById('profileImage');
+            const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+
+            db.collection('users').doc(user.uid).get().then(doc => {
+                if (doc.exists && doc.data().profilePicture) {
+                    profileImage.src = doc.data().profilePicture;
+                    profileImage.style.display = 'block';
+                    defaultProfileIcon.style.display = 'none';
+                }
+            });
         }
     });
 });
