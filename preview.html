@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>পোস্ট প্রিভিউ - আমার বাড়ি.কম</title>
+  <title>পোস্ট প্রিভিউ | আমার বাড়ি.কম</title>
 
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -24,40 +23,41 @@
     };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   </script>
+
+  <style>
+    .preview-wrapper { max-width: 900px; margin: auto; padding: 16px; }
+    .preview-section { border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-bottom: 16px; }
+    .preview-section h3 { margin-top: 0; }
+    .preview-row { margin-bottom: 6px; }
+    .preview-row strong { display: inline-block; min-width: 140px; }
+    .preview-images img { width: 100%; max-width: 220px; margin: 6px; border-radius: 4px; }
+    .preview-actions { display: flex; gap: 10px; }
+  </style>
 </head>
 
 <body>
 
-<!-- 🔁 হেডার (post.html থেকে কপি) -->
-<header class="main-header">
-  <!-- আপনার post.html এর header অপরিবর্তিত -->
+<header>
+  <!-- post.html এর হেডার 그대로 -->
 </header>
 
-<div class="sidebar" id="sidebar"></div>
-<div class="overlay" id="overlay"></div>
+<main class="preview-wrapper">
 
-<main class="main-content container">
-  <div class="preview-container">
+  <h2>📋 পোস্ট প্রিভিউ</h2>
+  <p>চূড়ান্ত করার আগে নিচের সব তথ্য ভালোভাবে যাচাই করুন</p>
 
-    <h2>📋 প্রপার্টি প্রিভিউ</h2>
-    <p>অনুগ্রহ করে নিচের তথ্যগুলো ভালোভাবে যাচাই করুন</p>
+  <div id="previewImages" class="preview-images"></div>
+  <div id="previewContent"></div>
 
-    <div id="preview-images" class="preview-images"></div>
-
-    <div id="preview-details" class="preview-details"></div>
-
-    <div class="preview-actions">
-      <button id="editPostBtn" class="btn-secondary">✏️ এডিট করুন</button>
-      <button id="confirmPostBtn" class="btn-primary">✅ চূড়ান্ত পোস্ট করুন</button>
-    </div>
-
+  <div class="preview-actions">
+    <button onclick="goBack()">✏️ এডিট করুন</button>
+    <button onclick="publishPost()">✅ চূড়ান্ত পোস্ট করুন</button>
   </div>
+
 </main>
 
-<footer class="footer">
-  <div class="container">
-    <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
-  </div>
+<footer>
+  <!-- post.html এর ফুটার 그대로 -->
 </footer>
 
 <script src="preview.js"></script>
