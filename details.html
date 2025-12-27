@@ -24,73 +24,70 @@
   </script>
 
   <style>
-    .details-wrap { max-width: 1000px; margin: auto; padding: 16px; }
-    .gallery { display: flex; gap: 10px; flex-wrap: wrap; }
-    .gallery img { width: 100%; max-width: 260px; border-radius: 6px; }
-    .badge { background: #eef; padding: 4px 10px; border-radius: 20px; font-size: 14px; }
-    .details-section { border-bottom: 1px solid #ddd; padding: 14px 0; }
-    .details-row { margin: 6px 0; }
-    .details-row strong { display: inline-block; min-width: 150px; }
+    .container { max-width: 1100px; margin: auto; padding: 16px; }
+    .slider { position: relative; overflow: hidden; border-radius: 10px; }
+    .slides { display: flex; transition: 0.4s ease; }
+    .slides img { width: 100%; max-height: 420px; object-fit: cover; }
+    .slider-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color:#fff; border:none; padding:10px; cursor:pointer; }
+    .prev { left: 10px; } .next { right: 10px; }
+
+    .badge { background:#eef; padding:6px 12px; border-radius:20px; display:inline-block; }
+    .section { margin-top: 24px; }
+    .row { margin: 6px 0; }
+    .row strong { width: 160px; display:inline-block; }
+
+    .contact-bar {
+      position: sticky; bottom: 0;
+      display: flex; gap: 10px;
+      background: #fff; padding: 10px;
+      border-top: 1px solid #ddd;
+    }
+    .contact-bar a {
+      flex: 1; text-align: center;
+      padding: 12px; border-radius: 6px;
+      color: #fff; text-decoration: none;
+    }
+    .call { background: #28a745; }
+    .chat { background: #007bff; }
+
+    .related { display:grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+    .card { border:1px solid #ddd; border-radius:6px; overflow:hidden; }
+    .card img { width:100%; height:140px; object-fit:cover; }
+    .card-body { padding:8px; }
   </style>
 </head>
 
 <body>
 
-<header class="main-header">
-        <div class="header-top">
-            
-            <div class="header-left">
-                <i class="material-icons menu-icon" id="menuButton">menu</i>
-                
-                <a href="index.html" class="logo-title">
-                   <i class="material-icons logo-icon">home</i>  
-                    <span>আমার বাড়ি.কম</span>
-                </a>
-            </div>
-            
-            <div class="header-actions">
-                
-                <div class="icon-wrapper" id="notificationButton"> 
-                    <i class="material-icons notification-icon">notifications</i>
-                    <span class="notification-count" id="notification-count"></span>
-                </div>
-                
-                <div class="icon-wrapper" id="headerPostButton">
-                    <i class="material-icons post-icon-header">add_circle_outline</i>
-                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
-                </div>
-                
-                <div class="icon-wrapper" id="messageButton">
-                    <i class="material-icons message-icon">message</i>
-                    <span class="notification-count" id="message-count"></span>
-                </div>
-                
-                <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile">
-                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> 
-                </div>
-                
-                <div class="notification-dropdown" id="notification-dropdown">
-                    </div>
-            </div>
-        </div>
-        
-    </header>
+<header><!-- same header --></header>
 
-<main class="details-wrap">
+<main class="container">
 
-  <h2 id="postTitle"></h2>
-  <span id="postBadge" class="badge"></span>
+  <h2 id="title"></h2>
+  <span id="badge" class="badge"></span>
 
-  <div id="imageGallery" class="gallery"></div>
+  <!-- Image Slider -->
+  <div class="slider">
+    <div id="slides" class="slides"></div>
+    <button class="slider-btn prev" onclick="slide(-1)">❮</button>
+    <button class="slider-btn next" onclick="slide(1)">❯</button>
+  </div>
 
-  <div id="detailsContent"></div>
+  <div id="details"></div>
+
+  <!-- Related -->
+  <div class="section">
+    <h3>🔁 সম্পর্কিত পোস্ট</h3>
+    <div id="relatedPosts" class="related"></div>
+  </div>
 
 </main>
 
-<footer>
-  <!-- same footer -->
-</footer>
+<!-- Contact Bar -->
+<div class="contact-bar">
+  <a id="callBtn" class="call">📞 কল করুন</a>
+  <a id="chatBtn" class="chat">💬 চ্যাট করুন</a>
+</div>
 
 <script src="details.js"></script>
 </body>
