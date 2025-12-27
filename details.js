@@ -1,117 +1,84 @@
 const db = firebase.firestore();
+const id = new URLSearchParams(location.search).get('id');
 
-/* ---------------- Utils ---------------- */
-const qs = new URLSearchParams(window.location.search);
-const postId = qs.get('id');
+let index = 0;
 
-if (!postId) {
-  alert('পোস্ট খুঁজে পাওয়া যায়নি');
-  location.href = 'index.html';
+function slide(dir) {
+  const slides = document.getElementById('slides');
+  index += dir;
+  if (index < 0) index = slides.children.length - 1;
+  if (index >= slides.children.length) index = 0;
+  slides.style.transform = `translateX(-${index * 100}%)`;
 }
 
-const content = document.getElementById('detailsContent');
+db.collection('properties').doc(id).get().then(doc => {
+  if (!doc.exists) return;
 
-function section(title) {
-  const s = document.createElement('div');
-  s.className = 'details-section';
-  s.innerHTML = `<h3>${title}</h3>`;
-  content.appendChild(s);
-  return s;
-}
+  const d = doc.data();
 
-function row(parent, label, value) {
-  if (!value) return;
-  const r = document.createElement('div');
-  r.className = 'details-row';
-  r.innerHTML = `<strong>${label}:</strong> ${value}`;
-  parent.appendChild(r);
-}
+  document.getElementById('title').innerText = d.title;
+  document.getElementById('badge').innerText = `${d.type} | ${d.category}`;
 
-/* ---------------- Load Post ---------------- */
-db.collection('properties').doc(postId).get()
-  .then(doc => {
-    if (!doc.exists) {
-      alert('পোস্ট পাওয়া যায়নি');
-      location.href = 'index.html';
-      return;
-    }
+  /* Images (ALL) */
+  const slides = document.getElementById('slides');
+  (d.images || []).forEach(img => {
+    const i = document.createElement('img');
+    i.src = img.url;
+    slides.appendChild(i);
+  });
 
-    const data = doc.data();
+  /* Details */
+  const box = document.getElementById('details');
+  box.innerHTML = `
+    <div class="section">
+      <h3>🏠 প্রপার্টি তথ্য</h3>
+      <div class="row"><strong>বর্ণনা:</strong> ${d.description || ''}</div>
+      <div class="row"><strong>রুম:</strong> ${d.rooms || '-'}</div>
+      <div class="row"><strong>বাথরুম:</strong> ${d.bathrooms || '-'}</div>
+      <div class="row"><strong>ফেসিং:</strong> ${d.facing || '-'}</div>
+      <div class="row"><strong>সুবিধা:</strong> ${(d.utilities||[]).join(', ')}</div>
+    </div>
 
-    /* ---------- Header ---------- */
-    document.getElementById('postTitle').innerText = data.title || 'প্রপার্টি';
-    document.getElementById('postBadge').innerText =
-      `${data.type || ''} | ${data.category || ''}`;
+    <div class="section">
+      <h3>💰 মূল্য</h3>
+      ${d.category === 'বিক্রয়'
+        ? `<div class="row"><strong>দাম:</strong> ${d.price} টাকা</div>`
+        : `<div class="row"><strong>ভাড়া:</strong> ${d.monthlyRent} টাকা</div>`
+      }
+    </div>
 
-    /* ---------- Images ---------- */
-    const gallery = document.getElementById('imageGallery');
-    (data.images || []).forEach(img => {
-      const i = document.createElement('img');
-      i.src = img.url;
-      gallery.appendChild(i);
+    <div class="section">
+      <h3>📍 অবস্থান</h3>
+      <div class="row"><strong>জেলা:</strong> ${d.location?.district}</div>
+      <div class="row"><strong>এলাকা:</strong> ${d.location?.village || d.location?.wardNo}</div>
+      <div class="row"><strong>রাস্তা:</strong> ${d.location?.road}</div>
+    </div>
+  `;
+
+  /* Contact */
+  document.getElementById('callBtn').href = `tel:${d.phoneNumber}`;
+  document.getElementById('chatBtn').href = `https://wa.me/88${d.phoneNumber}`;
+
+  /* Related Posts */
+  db.collection('properties')
+    .where('location.district', '==', d.location?.district)
+    .limit(6)
+    .get()
+    .then(snap => {
+      const rel = document.getElementById('relatedPosts');
+      snap.forEach(p => {
+        if (p.id === id) return;
+        const x = p.data();
+        rel.innerHTML += `
+          <a href="details.html?id=${p.id}" class="card">
+            <img src="${x.images?.[0]?.url || ''}">
+            <div class="card-body">
+              <strong>${x.title}</strong><br>
+              ${x.price || x.monthlyRent} টাকা
+            </div>
+          </a>
+        `;
+      });
     });
 
-    /* ---------- Basic Info ---------- */
-    const basic = section('🏠 প্রপার্টি তথ্য');
-    row(basic, 'ক্যাটাগরি', data.category);
-    row(basic, 'টাইপ', data.type);
-    row(basic, 'বর্ণনা', data.description);
-    row(basic, 'ফেসিং', data.facing);
-    row(basic, 'রাস্তার প্রস্থ', data.roadWidth);
-
-    if (Array.isArray(data.utilities)) {
-      row(basic, 'সুবিধা', data.utilities.join(', '));
-    }
-
-    /* ---------- Structure ---------- */
-    row(basic, 'রুম', data.rooms);
-    row(basic, 'বাথরুম', data.bathrooms);
-    row(basic, 'কিচেন', data.kitchen);
-    row(basic, 'ফ্লোর নং', data.floorNo);
-
-    /* ---------- Land / Plot ---------- */
-    row(basic, 'জমির ধরন', data.landType);
-    row(basic, 'প্লট নং', data.plotNo);
-
-    /* ---------- Price ---------- */
-    const price = section('💰 মূল্য');
-
-    if (data.category === 'বিক্রয়') {
-      row(price, 'দাম', data.price + ' টাকা');
-      row(price, 'জমির পরিমাণ', data.landArea);
-    } else {
-      row(price, 'মাসিক ভাড়া', data.monthlyRent + ' টাকা');
-      row(price, 'এডভান্স', data.advance + ' টাকা');
-    }
-
-    /* ---------- Location ---------- */
-    const loc = section('📍 ঠিকানা');
-    if (data.location) {
-      row(loc, 'বিভাগ', data.location.division);
-      row(loc, 'জেলা', data.location.district);
-      row(loc, 'উপজেলা/থানা', data.location.upazila);
-      row(loc, 'ইউনিয়ন', data.location.union);
-      row(loc, 'ওয়ার্ড', data.location.wardNo);
-      row(loc, 'গ্রাম/এলাকা', data.location.village);
-      row(loc, 'রাস্তা', data.location.road);
-    }
-
-    /* ---------- Ownership ---------- */
-    if (data.category === 'বিক্রয়' && data.owner) {
-      const own = section('📑 মালিকানা');
-      row(own, 'দাতার নাম', data.owner.donorName);
-      row(own, 'দাগ নং', data.owner.dagNo);
-      row(own, 'দাগ ধরন', data.owner.dagNoType);
-      row(own, 'মৌজা', data.owner.mouja);
-    }
-
-    /* ---------- Contact ---------- */
-    const contact = section('📞 যোগাযোগ');
-    row(contact, 'ফোন', data.phoneNumber);
-    row(contact, 'অতিরিক্ত ফোন', data.secondaryPhone);
-
-  })
-  .catch(err => {
-    console.error(err);
-    alert('ডেটা লোড করতে সমস্যা হয়েছে');
-  });
+});
