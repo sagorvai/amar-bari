@@ -59,7 +59,65 @@
 
 <body>
 
-<header><!-- same header --></header>
+    <header class="main-header">
+        <div class="header-top">
+            
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                
+                <a href="index.html" class="logo-title">
+                   <i class="material-icons logo-icon">home</i>  
+                    <span>আমার বাড়ি.কম</span>
+                </a>
+            </div>
+            
+            <div class="header-actions">
+                
+                <div class="icon-wrapper" id="notificationButton"> 
+                    <i class="material-icons notification-icon">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
+                </div>
+                
+                <div class="icon-wrapper" id="headerPostButton">
+                    <i class="material-icons post-icon-header">add_circle_outline</i>
+                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
+                </div>
+                
+                <div class="icon-wrapper" id="messageButton">
+                    <i class="material-icons message-icon">message</i>
+                    <span class="notification-count" id="message-count"></span>
+                </div>
+                
+                <div class="profile-image-wrapper" id="profileImageWrapper">
+                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
+                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
+                
+                <div class="notification-dropdown" id="notification-dropdown">
+                    </div>
+            </div>
+        </div>
+        
+    </header>
+    
+    <div class="sidebar" id="sidebar">
+        <nav>
+            <a href="index.html" class="sidebar-logo">
+                <i class="material-icons">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
+            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            
+            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
+            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            
+        </nav>
+    </div>
 
 <main class="container">
 
