@@ -1,88 +1,117 @@
 const db = firebase.firestore();
-const auth = firebase.auth();
 
-document.addEventListener('DOMContentLoaded', () => {
-    // ১. ডেটা রিট্রাইভ করা (sessionStorage থেকে, যা post.js এ সেট করা হয়েছিল)
-    const propertyData = JSON.parse(sessionStorage.getItem('stagedPropertyData'));
-    const imageData = JSON.parse(sessionStorage.getItem('stagedImageMetadata'));
+/* ---------------- Utils ---------------- */
+const qs = new URLSearchParams(window.location.search);
+const postId = qs.get('id');
 
-    if (!propertyData) {
-        console.error("No property data found!");
-        return;
+if (!postId) {
+  alert('পোস্ট খুঁজে পাওয়া যায়নি');
+  location.href = 'index.html';
+}
+
+const content = document.getElementById('detailsContent');
+
+function section(title) {
+  const s = document.createElement('div');
+  s.className = 'details-section';
+  s.innerHTML = `<h3>${title}</h3>`;
+  content.appendChild(s);
+  return s;
+}
+
+function row(parent, label, value) {
+  if (!value) return;
+  const r = document.createElement('div');
+  r.className = 'details-row';
+  r.innerHTML = `<strong>${label}:</strong> ${value}`;
+  parent.appendChild(r);
+}
+
+/* ---------------- Load Post ---------------- */
+db.collection('properties').doc(postId).get()
+  .then(doc => {
+    if (!doc.exists) {
+      alert('পোস্ট পাওয়া যায়নি');
+      location.href = 'index.html';
+      return;
     }
 
-    // ২. ইমেজ গ্যালারি রেন্ডারিং
-    const mainDisplay = document.getElementById('mainDisplay');
-    const thumbStrip = document.getElementById('thumbStrip');
+    const data = doc.data();
 
-    if (imageData && imageData.images.length > 0) {
-        mainDisplay.src = imageData.images[0].url;
-        
-        imageData.images.forEach((img, index) => {
-            const thumb = document.createElement('img');
-            thumb.src = img.url;
-            thumb.className = `thumb ${index === 0 ? 'active' : ''}`;
-            thumb.onclick = () => {
-                mainDisplay.src = img.url;
-                document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
-                thumb.classList.add('active');
-            };
-            thumbStrip.appendChild(thumb);
-        });
+    /* ---------- Header ---------- */
+    document.getElementById('postTitle').innerText = data.title || 'প্রপার্টি';
+    document.getElementById('postBadge').innerText =
+      `${data.type || ''} | ${data.category || ''}`;
+
+    /* ---------- Images ---------- */
+    const gallery = document.getElementById('imageGallery');
+    (data.images || []).forEach(img => {
+      const i = document.createElement('img');
+      i.src = img.url;
+      gallery.appendChild(i);
+    });
+
+    /* ---------- Basic Info ---------- */
+    const basic = section('🏠 প্রপার্টি তথ্য');
+    row(basic, 'ক্যাটাগরি', data.category);
+    row(basic, 'টাইপ', data.type);
+    row(basic, 'বর্ণনা', data.description);
+    row(basic, 'ফেসিং', data.facing);
+    row(basic, 'রাস্তার প্রস্থ', data.roadWidth);
+
+    if (Array.isArray(data.utilities)) {
+      row(basic, 'সুবিধা', data.utilities.join(', '));
     }
 
-    // ৩. টেক্সট ডেটা সেট করা
-    document.getElementById('p-title').textContent = propertyData.title;
-    document.getElementById('p-desc').textContent = propertyData.description || "বর্ণনা নেই।";
-    
-    // লোকেশন ফরম্যাট করা
-    const loc = propertyData.location;
-    document.getElementById('p-location').textContent = `${loc.village}, ${loc.upazila}, ${loc.district}`;
+    /* ---------- Structure ---------- */
+    row(basic, 'রুম', data.rooms);
+    row(basic, 'বাথরুম', data.bathrooms);
+    row(basic, 'কিচেন', data.kitchen);
+    row(basic, 'ফ্লোর নং', data.floorNo);
 
-    // দাম ফরম্যাট করা
-    const price = propertyData.category === 'ভাড়া' ? propertyData.monthlyRent : propertyData.price;
-    document.getElementById('p-price').textContent = `৳ ${price} (${propertyData.priceUnit || 'ফিক্সড'})`;
+    /* ---------- Land / Plot ---------- */
+    row(basic, 'জমির ধরন', data.landType);
+    row(basic, 'প্লট নং', data.plotNo);
 
-    // ৪. ফিচার গ্রিড (Icons সহ)
-    const specGrid = document.getElementById('p-specs');
-    const specs = [
-        { icon: 'square_foot', label: 'আয়তন', value: propertyData.landArea || propertyData.areaSqft },
-        { icon: 'king_bed', label: 'বেডরুম', value: propertyData.rooms },
-        { icon: 'bathtub', label: 'বাথরুম', value: propertyData.bathrooms },
-        { icon: 'layers', label: 'তলা', value: propertyData.floorNo },
-        { icon: 'explore', label: 'facing', value: propertyData.facing }
-    ];
+    /* ---------- Price ---------- */
+    const price = section('💰 মূল্য');
 
-    specs.forEach(spec => {
-        if (spec.value) {
-            specGrid.innerHTML += `
-                <div class="spec-item">
-                    <i class="material-icons">${spec.icon}</i>
-                    <div class="spec-info">
-                        <span>${spec.label}</span>
-                        <strong>${spec.value}</strong>
-                    </div>
-                </div>`;
-        }
-    });
+    if (data.category === 'বিক্রয়') {
+      row(price, 'দাম', data.price + ' টাকা');
+      row(price, 'জমির পরিমাণ', data.landArea);
+    } else {
+      row(price, 'মাসিক ভাড়া', data.monthlyRent + ' টাকা');
+      row(price, 'এডভান্স', data.advance + ' টাকা');
+    }
 
-    // ৫. কন্টাক্ট লজিক
-    document.getElementById('callBtn').href = `tel:${propertyData.phoneNumber}`;
-    
-    // ৬. প্রোফাইল লোড লজিক (index.js থেকে কপি করা)
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            const profileImageWrapper = document.getElementById('profileImageWrapper');
-            const profileImage = document.getElementById('profileImage');
-            const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+    /* ---------- Location ---------- */
+    const loc = section('📍 ঠিকানা');
+    if (data.location) {
+      row(loc, 'বিভাগ', data.location.division);
+      row(loc, 'জেলা', data.location.district);
+      row(loc, 'উপজেলা/থানা', data.location.upazila);
+      row(loc, 'ইউনিয়ন', data.location.union);
+      row(loc, 'ওয়ার্ড', data.location.wardNo);
+      row(loc, 'গ্রাম/এলাকা', data.location.village);
+      row(loc, 'রাস্তা', data.location.road);
+    }
 
-            db.collection('users').doc(user.uid).get().then(doc => {
-                if (doc.exists && doc.data().profilePicture) {
-                    profileImage.src = doc.data().profilePicture;
-                    profileImage.style.display = 'block';
-                    defaultProfileIcon.style.display = 'none';
-                }
-            });
-        }
-    });
-});
+    /* ---------- Ownership ---------- */
+    if (data.category === 'বিক্রয়' && data.owner) {
+      const own = section('📑 মালিকানা');
+      row(own, 'দাতার নাম', data.owner.donorName);
+      row(own, 'দাগ নং', data.owner.dagNo);
+      row(own, 'দাগ ধরন', data.owner.dagNoType);
+      row(own, 'মৌজা', data.owner.mouja);
+    }
+
+    /* ---------- Contact ---------- */
+    const contact = section('📞 যোগাযোগ');
+    row(contact, 'ফোন', data.phoneNumber);
+    row(contact, 'অতিরিক্ত ফোন', data.secondaryPhone);
+
+  })
+  .catch(err => {
+    console.error(err);
+    alert('ডেটা লোড করতে সমস্যা হয়েছে');
+  });
