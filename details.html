@@ -1,65 +1,348 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>প্রপার্টি বিস্তারিত | আমার বাড়ি.কম</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>মেসেজ - আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-  <link rel="stylesheet" href="style.css">
+    <script>
+      // **আপনার বিদ্যমান Firebase কনফিগারেশন**
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+      };
+      
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      
+      // এই স্ক্রিপ্ট ব্লকটি কেবল Firebase ইনিশিয়ালাইজেশনের জন্য রাখা হলো।
+      // সকল Header/Sidebar/Auth লজিক নিচের প্রধান লজিক ব্লকে স্থানান্তরিত করা হয়েছে।
+    </script>
+    
+    <style>
+        /* CSS ভেরিয়েবল */
+        :root {
+            --primary-color: #007bff;
+        }
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+        /* গ্লোবাল ফিক্স */
+        body {
+            margin: 0; 
+            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
+            font-family: Arial, sans-serif; 
+        }
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
-      authDomain: "amar-bari-website.firebaseapp.com",
-      projectId: "amar-bari-website",
-      storageBucket: "amar-bari-website.firebasestorage.app",
-      messagingSenderId: "719084789035",
-      appId: "1:719084789035:web:f4da765290b3519d0e82fe"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-  </script>
+        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
+        .main-header {
+             position: fixed; 
+             top: 0;
+             left: 0;
+             right: 0;
+             background-color: white; 
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             z-index: 1000; 
+             padding-bottom: 0;
+        }
+        
+        /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
+        .sidebar {
+            z-index: 1050; 
+        }
+        .overlay {
+            z-index: 1040; 
+        }
+        
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; 
+            padding: 8px 15px; 
+        }
 
-  <style>
-    .container { max-width: 1100px; margin: auto; padding: 16px; }
-    .slider { position: relative; overflow: hidden; border-radius: 10px; }
-    .slides { display: flex; transition: 0.4s ease; }
-    .slides img { width: 100%; max-height: 420px; object-fit: cover; }
-    .slider-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color:#fff; border:none; padding:10px; cursor:pointer; }
-    .prev { left: 10px; } .next { right: 10px; }
+        .header-left {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0; 
+        }
 
-    .badge { background:#eef; padding:6px 12px; border-radius:20px; display:inline-block; }
-    .section { margin-top: 24px; }
-    .row { margin: 6px 0; }
-    .row strong { width: 160px; display:inline-block; }
+        .menu-icon {
+             margin-right: 0; 
+             cursor: pointer;
+        }
+        
+        .logo-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.8em; 
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 0px; 
+            text-decoration: none; 
+            white-space: nowrap; 
+        }
+        .logo-title:visited {
+             color: var(--primary-color);
+        }
+        .logo-icon {
+            margin-right: 5px;
+        }
 
-    .contact-bar {
-      position: sticky; bottom: 0;
-      display: flex; gap: 10px;
-      background: #fff; padding: 10px;
-      border-top: 1px solid #ddd;
-    }
-    .contact-bar a {
-      flex: 1; text-align: center;
-      padding: 12px; border-radius: 6px;
-      color: #fff; text-decoration: none;
-    }
-    .call { background: #28a745; }
-    .chat { background: #007bff; }
+        /* ডানের ব্লক (আইকন) ফিক্স */
+        .header-actions {
+             display: flex;
+             align-items: center;
+             gap: 12px; 
+             position: relative; 
+             flex-shrink: 0; 
+        }
+        
+        /* কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
+        .icon-wrapper {
+             position: relative;
+             display: inline-flex;
+             cursor: pointer;
+             align-items: center; 
+             justify-content: center;
+             height: 30px; 
+             width: 30px; 
+        }
+        
+        /* কমন নোটিফিকেশন কাউন্ট স্টাইল */
+        .notification-count {
+            position: absolute;
+            top: -5px; 
+            right: -8px; 
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 5px; 
+            font-size: 0.7em;
+            font-weight: bold;
+            min-width: 10px;
+            text-align: center;
+            line-height: 1; 
+            display: none; 
+        }
+        
+        /* আইকন কালার */
+        .notification-icon { color: var(--primary-color); }
+        .message-icon { color: var(--primary-color); }
+        .post-icon-header { color: #28a745; }
 
-    .related { display:grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
-    .card { border:1px solid #ddd; border-radius:6px; overflow:hidden; }
-    .card img { width:100%; height:140px; object-fit:cover; }
-    .card-body { padding:8px; }
-  </style>
+        /* প্রোফাইল ইমেজ স্টাইল */
+        .profile-image-wrapper {
+            cursor: pointer;
+            width: 35px; 
+            height: 35px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary-color); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #profileImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
+        @media (max-width: 600px) {
+            body {
+                padding-top: 46px; 
+            }
+            .logo-title {
+                 font-size: 1.5em; 
+                 margin-left: 0px;
+            }
+            .header-actions {
+                 gap: 8px; 
+            }
+            .profile-image-wrapper {
+                 width: 30px; 
+                 height: 30px;
+            }
+        
+        /* ❌ এখানে অতিরিক্ত বন্ধনী ছিল, যা সরানো হয়েছে */
+        
+        /* মেসেজিং পেজের জন্য নির্দিষ্ট স্টাইল */
+        .message-container {
+            display: flex;
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            min-height: 70vh;
+        }
+        .chat-list-panel {
+            width: 30%;
+            border-right: 1px solid #eee;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        .chat-area-panel {
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        #chat-messages {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message-input-area {
+            padding: 10px;
+            border-top: 1px solid #eee;
+            display: flex;
+        }
+        .message-input-area input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+        .message-input-area button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        
+        .chat-item {
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .chat-item:hover, .chat-item.active {
+            background-color: #e9ecef;
+        }
+        .chat-info {
+            margin-left: 10px;
+        }
+        .chat-info h4 {
+            margin: 0;
+            font-size: 1em;
+        }
+        .chat-info p {
+            margin: 0;
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+        
+        /* Individual Message Bubbles */
+        .message-bubble {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            word-wrap: break-word; /* লম্বা টেক্সট ভাঙার জন্য */
+        }
+        .message-bubble.sent {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+        .message-bubble.received {
+            background-color: #e9ecef;
+            color: #343a40;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+        .message-time {
+            font-size: 0.7em;
+            color: #ccc;
+            margin-top: 3px;
+            text-align: right;
+            display: block;
+        }
+        .message-bubble.received .message-time {
+             color: #6c757d;
+             text-align: left;
+        }
+        .no-chat-selected {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+            font-size: 1.2em;
+        }
+        }
+        
+    </style>
 </head>
-
 <body>
 
-<header><!-- same header --></header>
+    <header class="main-header">
+        <div class="header-top">
+            
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                
+                <a href="index.html" class="logo-title">
+                   <i class="material-icons logo-icon">home</i>  
+                    <span>আমার বাড়ি.কম</span>
+                </a>
+            </div>
+            
+            <div class="header-actions">
+                
+                <div class="icon-wrapper" id="notificationButton"> 
+                    <i class="material-icons notification-icon">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
+                </div>
+                
+                <div class="icon-wrapper" id="headerPostButton">
+                    <i class="material-icons post-icon-header">add_circle_outline</i>
+                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
+                </div>
+                
+                <div class="icon-wrapper" id="messageButton">
+                    <i class="material-icons message-icon">message</i>
+                    <span class="notification-count" id="message-count"></span>
+                </div>
+                
+                <div class="profile-image-wrapper" id="profileImageWrapper">
+                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
+                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
+                
+                <div class="notification-dropdown" id="notification-dropdown">
+                    </div>
+            </div>
+        </div>
+        
+    </header>
 
 <main class="container">
 
