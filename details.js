@@ -1,124 +1,211 @@
+// details.js
+// Initialize Firestore
 const db = firebase.firestore();
-const auth = firebase.auth();
-const postId = new URLSearchParams(location.search).get('id');
 
-let postData = null;
+// Slider functions (adapted from W3Schools slideshow example):contentReference[oaicite:9]{index=9}.
+let slideIndex = 1;
+function showSlides(n) {
+  const slides = document.getElementsByClassName("mySlides");
+  if (slides.length === 0) return;
+  if (n > slides.length) { slideIndex = 1; }
+  if (n < 1) { slideIndex = slides.length; }
+  for (let slide of slides) {
+    slide.style.display = "none";
+  }
+  slides[slideIndex - 1].style.display = "block";
+}
+function plusSlides(n) { showSlides(slideIndex += n); }
 
-/* ---------- Load Post ---------- */
-db.collection('properties').doc(postId).get().then(doc => {
-  if (!doc.exists) return;
+// On DOM ready, fetch listing data
+document.addEventListener('DOMContentLoaded', async () => {
+  // Get listing ID from URL (e.g. details.html?id=DOCID)
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if (!id) return;
 
-  postData = doc.data();
+  // Fetch document from Firestore
+  const docRef = db.collection('properties').doc(id);
+  const docSnap = await docRef.get();
+  if (!docSnap.exists) {
+    console.error("Listing not found");
+    return;
+  }
+  const data = docSnap.data();
 
-  /* View Count */
-  db.collection('properties').doc(postId)
-    .update({ views: firebase.firestore.FieldValue.increment(1) });
+  // Title and Description
+  document.getElementById('propertyTitle').textContent = data.title || '';
+  document.getElementById('description').textContent = data.description || '';
 
-  document.getElementById('title').innerText = postData.title;
-  document.getElementById('badge').innerText =
-    `${postData.type} | ${postData.category}`;
+  // Update and display view count (Firestore increment):contentReference[oaicite:10]{index=10}
+  const viewEl = document.getElementById('viewCount');
+  const currentCount = data.viewCount || 0;
+  docRef.update({ viewCount: firebase.firestore.FieldValue.increment(1) });
+  viewEl.textContent = `👁️ দেখা হয়েছে: ${currentCount + 1} জন`;
 
-  /* Images (3 property + khotian + sketch) */
-  const slides = document.getElementById('slides');
-  const allImages = [
-    ...(postData.images || []).map(i => i.url),
-    postData.documents?.khotian?.url,
-    postData.documents?.sketch?.url
-  ].filter(Boolean);
+  // Call button
+  if (data.phoneNumber) {
+    const callBtn = document.getElementById('callBtn');
+    callBtn.href = `tel:${data.phoneNumber}`;
+    callBtn.innerHTML = '📞 কল করুন';
+  }
 
-  allImages.forEach(url => {
-    const img = document.createElement('img');
-    img.src = url;
-    slides.appendChild(img);
+  // Chat button (pass owner/user ID to chat page)
+  const chatBtn = document.getElementById('chatBtn');
+  chatBtn.href = `chat.html?user=${data.userId || ''}`;
+  chatBtn.textContent = '💬 চ্যাট করুন';
+
+  // Populate dynamic details
+  const dl = document.getElementById('detailsList');
+  function addDetail(label, value) {
+    if (!value) return;
+    const dt = document.createElement('dt');
+    const dd = document.createElement('dd');
+    dt.textContent = label;
+    dd.textContent = value;
+    dl.appendChild(dt);
+    dl.appendChild(dd);
+  }
+
+  // Category and Type
+  addDetail('বিজ্ঞাপনের ধরণ:', data.category);
+  addDetail('প্রকার:', data.type);
+
+  // Price or Rent
+  if (data.category === 'বিক্রয়') {
+    let priceStr = data.price ? `${data.price} টাকা` : '';
+    if (data.priceUnit) priceStr += ` (${data.priceUnit})`;
+    addDetail('দাম:', priceStr);
+  }
+  if (data.category === 'ভাড়া') {
+    addDetail('মাসিক ভাড়া:', data.monthlyRent ? `${data.monthlyRent} টাকা` : '');
+    addDetail('জামানত / এডভান্স:', data.advance ? `${data.advance} টাকা` : '');
+    if (data.moveInDate) addDetail('পরিচলন তারিখ:', data.moveInDate);
+  }
+
+  // Owner details (for sale)
+  if (data.category === 'বিক্রয়' && data.owner) {
+    addDetail('মালিকের নাম:', data.owner.donorName);
+    addDetail('দাগ নম্বর:', `${data.owner.dagNoType || ''} ${data.owner.dagNo || ''}`);
+    addDetail('মৌজা:', data.owner.mouja);
+  }
+
+  // Location fields
+  if (data.location) {
+    let addressParts = [
+      data.location.upazila, data.location.union, data.location.thana,
+      data.location.wardNo, data.location.village, data.location.road
+    ].filter(Boolean);
+    let addrText = addressParts.join(', ');
+    if (data.location.areaType) addrText = `${data.location.areaType}: ` + addrText;
+    addrText += ` (${data.location.district || ''}, ${data.location.division || ''})`;
+
+    // Google Maps link (if coordinates available in data.googleMap)
+    if (data.googleMap) {
+      const [lat, lng] = data.googleMap.split(',').map(coord => coord.trim());
+      if (lat && lng) {
+        const mapLink = document.createElement('a');
+        mapLink.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        mapLink.target = '_blank';
+        mapLink.textContent = ' মানচিত্রে দেখুন';
+        addrText += mapLink.outerHTML;
+      }
+    }
+    addDetail('ঠিকানা:', addrText);
+  }
+
+  // Property-specific details
+  if (['জমি','প্লট'].includes(data.type)) {
+    addDetail('জমির পরিমাণ:', data.landArea ? `${data.landArea} ${data.landAreaUnit||''}` : '');
+    addDetail('রোডের প্রস্থ:', data.roadWidth ? `${data.roadWidth} ফুট` : '');
+    addDetail('জমির ধরন:', data.landType);
+    if (data.type === 'প্লট') {
+      addDetail('প্লট নং:', data.plotNo);
+    }
+  } else {
+    // Built properties
+    if (data.floors) addDetail('মালিকানার তলা:', data.floors);
+    if (data.houseArea) addDetail('পরিমাণ (বাসা):', `${data.houseArea} ${data.houseAreaUnit||''}`);
+    if (data.rooms) addDetail('রুম সংখ্যা:', data.rooms);
+    if (data.bathrooms) addDetail('বাথরুম:', data.bathrooms);
+    if (data.kitchen) addDetail('রান্নাঘর:', data.kitchen);
+    if (data.areaSqft) addDetail('পরিমাণ (ফ্ল্যাট):', `${data.areaSqft} বর্গফুট`);
+    if (data.floorNo) addDetail('মেঝে নম্বর:', data.floorNo);
+    if (data.commercialArea) addDetail('ব্যবসায়িক পরিমাণ:', `${data.commercialArea} ${data.commercialAreaUnit||''}`);
+    if (data.shopCount) addDetail('দোকানের সংখ্যা:', data.shopCount);
+    // Property age and facing
+    if (data.propertyAge) addDetail('প্রপার্টির বয়স:', `${data.propertyAge} বছর`);
+    if (data.facing) addDetail('ফেসিং:', data.facing);
+  }
+
+  // Utilities (যদি থাকে)
+  if (data.utilities) {
+    const utils = [];
+    for (let key in data.utilities) {
+      if (data.utilities[key]) {
+        // Convert utility key to Bengali label (e.g. "electricity":"বিদ্যুৎ")
+        let label = key;
+        if (key === 'electricity') label = 'বিদ্যুৎ'; 
+        else if (key === 'gas') label = 'গ্যাস';
+        else if (key === 'water') label = 'পানি';
+        else if (key === 'sewage') label = 'পয়ঃনিষ্কাশন';
+        utils.push(label);
+      }
+    }
+    if (utils.length) addDetail('সুবিধাসমূহ:', utils.join(', '));
+  }
+
+  // Build Image Slider (3 main + khotian + sketch):contentReference[oaicite:11]{index=11}
+  const slider = document.getElementById('slider');
+  const imgUrls = [];
+  if (Array.isArray(data.images)) imgUrls.push(...data.images);
+  if (data.khotian) imgUrls.push(data.khotian);
+  if (data.sketch) imgUrls.push(data.sketch);
+  const totalSlides = imgUrls.length;
+  imgUrls.forEach((url, i) => {
+    const slideDiv = document.createElement('div');
+    slideDiv.className = 'mySlides fade';
+    slideDiv.innerHTML = `
+      <div class="numbertext">${i+1} / ${totalSlides}</div>
+      <img src="${url}" style="width:100%">
+    `;
+    slider.appendChild(slideDiv);
+  });
+  showSlides(slideIndex);  // display the first slide
+
+  // Share button handler
+  document.getElementById('shareBtn').addEventListener('click', () => {
+    const shareData = {
+      title: data.title || 'বিজ্ঞাপন',
+      text: data.description || '',
+      url: window.location.href
+    };
+    if (navigator.share) {
+      navigator.share(shareData).catch(err => console.error(err));
+    } else {
+      // Fallback: copy URL
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => alert('URL কপি হয়েছে'))
+        .catch(err => console.error(err));
+    }
   });
 
-  /* Contact */
-  document.getElementById('callBtn').href = `tel:${postData.phoneNumber}`;
-  document.getElementById('chatBtn').href = `chat.html?postId=${postId}`;
-
-  /* Dynamic Details */
-  const d = document.getElementById('details');
-
-  function row(label, value){
-    if(!value) return '';
-    return `<div class="row"><strong>${label}:</strong> ${value}</div>`;
-  }
-
-  d.innerHTML = `
-    <div class="section">
-      <h3>🏠 প্রপার্টি তথ্য</h3>
-      ${row('বর্ণনা', postData.description)}
-      ${row('রুম', postData.rooms)}
-      ${row('বাথরুম', postData.bathrooms)}
-      ${row('কিচেন', postData.kitchen)}
-      ${row('ফ্লোর', postData.floorNo)}
-      ${row('ফেসিং', postData.facing)}
-      ${row('সুবিধা', (postData.utilities||[]).join(', '))}
-    </div>
-
-    <div class="section">
-      <h3>💰 মূল্য</h3>
-      ${
-        postData.category === 'বিক্রয়'
-          ? row('দাম', postData.price + ' টাকা')
-          : row('ভাড়া', postData.monthlyRent + ' টাকা') +
-            row('এডভান্স', postData.advance + ' টাকা')
-      }
-    </div>
-
-    <div class="section">
-      <h3>📍 অবস্থান</h3>
-      ${row('জেলা', postData.location?.district)}
-      ${row('এলাকা', postData.location?.village || postData.location?.wardNo)}
-      ${row('রাস্তা', postData.location?.road)}
-    </div>
-  `;
-
-  /* Related */
+  // Related listings query:contentReference[oaicite:12]{index=12}
   db.collection('properties')
-    .where('location.district', '==', postData.location?.district)
-    .limit(6)
-    .get()
-    .then(snap => {
-      const r = document.getElementById('related');
-      snap.forEach(p => {
-        if (p.id === postId) return;
-        const x = p.data();
-        r.innerHTML += `
-          <a href="details.html?id=${p.id}" class="card">
-            <img src="${x.images?.[0]?.url || ''}">
-            <div class="card-body">
-              <strong>${x.title}</strong><br>
-              ${(x.price||x.monthlyRent)||''} টাকা
-            </div>
-          </a>
-        `;
+    .where('location.district', '==', data.location.district)
+    .where('type', '==', data.type)
+    .limit(5)
+    .get().then(snap => {
+      const ul = document.getElementById('relatedList');
+      snap.forEach(doc => {
+        if (doc.id === id) return;
+        const item = doc.data();
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `details.html?id=${doc.id}`;
+        a.textContent = item.title || `${item.type} - ${item.location.district}`;
+        li.appendChild(a);
+        ul.appendChild(li);
       });
-    });
-});
+    }).catch(err => console.error(err));
 
-/* ---------- Save ---------- */
-function savePost(){
-  const user = auth.currentUser;
-  if(!user){ alert('লগইন প্রয়োজন'); return; }
-
-  db.collection('savedPosts')
-    .doc(user.uid)
-    .collection('items')
-    .doc(postId)
-    .set({ createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-
-  alert('❤️ সেভ করা হয়েছে');
-}
-
-/* ---------- Share ---------- */
-function sharePost(){
-  if(navigator.share){
-    navigator.share({
-      title: postData.title,
-      url: location.href
-    });
-  } else {
-    alert('লিংক কপি করে শেয়ার করুন');
-  }
-}
+}).catch(err => console.error(err));
