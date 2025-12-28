@@ -1,71 +1,68 @@
+<!-- details.html -->
 <!DOCTYPE html>
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <title>প্রপার্টি বিস্তারিত | আমার বাড়ি.কম</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- মোবাইল-প্রথম লেআউট:contentReference[oaicite:8]{index=8} -->
+  <title>বিস্তারিত বিজ্ঞাপন</title>
   <link rel="stylesheet" href="style.css">
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-  <style>
-    .container{max-width:1100px;margin:auto;padding:14px}
-    .slider{position:relative;overflow:hidden;border-radius:10px}
-    .slides{display:flex;transition:.4s}
-    .slides img{width:100%;max-height:420px;object-fit:cover}
-    .btn{padding:10px;border-radius:6px;border:none;cursor:pointer}
-    .actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
-    .section{margin-top:24px}
-    .row{margin:6px 0}
-    .row strong{min-width:150px;display:inline-block}
-    .fixed-bar{position:sticky;bottom:0;background:#fff;border-top:1px solid #ddd;display:flex;gap:8px;padding:10px}
-    .fixed-bar a,.fixed-bar button{flex:1;text-align:center}
-    .related{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-    .card{border:1px solid #ddd;border-radius:6px;overflow:hidden}
-    .card img{width:100%;height:120px;object-fit:cover}
-    .card-body{padding:6px}
-  </style>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+  <script>
+    // আপনার Firebase কনফিগারেশন
+    const firebaseConfig = {
+      apiKey: "...",
+      authDomain: "...",
+      projectId: "...",
+      storageBucket: "...",
+      messagingSenderId: "...",
+      appId: "..."
+    };
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+  </script>
 </head>
-
 <body>
-
-<header><!-- same header --></header>
-
-<main class="container">
-
-  <button onclick="history.back()" class="btn">⬅️ ফিরে যান</button>
-
-  <h2 id="title"></h2>
-  <div id="badge"></div>
-
-  <!-- Slider -->
-  <div class="slider">
-    <div id="slides" class="slides"></div>
+  <!-- Back Button -->
+  <button onclick="window.history.back();">⬅️ পেছনে যান</button>
+  
+  <!-- Title -->
+  <h1 id="propertyTitle"></h1>
+  
+  <!-- Image Slider -->
+  <div id="slider" class="slideshow-container">
+    <!-- Slides will be injected here by details.js -->
+    <a class="prev" onclick="plusSlides(-1)">❮</a>
+    <a class="next" onclick="plusSlides(1)">❯</a>
   </div>
-
-  <div class="actions">
-    <button onclick="savePost()">❤️ Save</button>
-    <button onclick="sharePost()">🔗 Share</button>
+  
+  <!-- Description -->
+  <p id="description"></p>
+  
+  <!-- Details List -->
+  <dl id="detailsList"></dl>
+  
+  <!-- View Count, Save, Share -->
+  <div>
+    <span id="viewCount">👁️ দেখা হয়েছে: 0 জন</span>
+    <button id="saveBtn">❤️ সংরক্ষণ</button>
+    <button id="shareBtn">🔗 শেয়ার</button>
   </div>
-
-  <div id="details"></div>
-
-  <div class="section">
-    <h3>🔁 সম্পর্কিত পোস্ট</h3>
-    <div id="related" class="related"></div>
+  
+  <!-- Call and Chat -->
+  <div>
+    <a id="callBtn" href="#"><span>📞 কল করুন</span></a>
+    <a id="chatBtn" href="#"><span>💬 চ্যাট করুন</span></a>
   </div>
-
-</main>
-
-<div class="fixed-bar">
-  <a id="callBtn" class="btn">📞 কল করুন</a>
-  <a id="chatBtn" class="btn">💬 চ্যাট</a>
-</div>
-
-<script src="details.js"></script>
+  
+  <!-- Related Listings -->
+  <div id="relatedListings">
+    <h3>সম্পর্কিত বিজ্ঞাপন</h3>
+    <ul id="relatedList"></ul>
+  </div>
+  
+  <script src="details.js"></script>
 </body>
 </html>
