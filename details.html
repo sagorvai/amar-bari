@@ -4,10 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>প্রপার্টি বিস্তারিত | আমার বাড়ি.কম</title>
-
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
@@ -24,69 +23,63 @@
   </script>
 
   <style>
-    .container { max-width: 1100px; margin: auto; padding: 16px; }
-    .slider { position: relative; overflow: hidden; border-radius: 10px; }
-    .slides { display: flex; transition: 0.4s ease; }
-    .slides img { width: 100%; max-height: 420px; object-fit: cover; }
-    .slider-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color:#fff; border:none; padding:10px; cursor:pointer; }
-    .prev { left: 10px; } .next { right: 10px; }
+    .container { max-width: 800px; margin: auto; padding: 15px; padding-bottom: 80px; }
+    .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .action-btn { background: #f0f0f0; border: none; padding: 10px; border-radius: 50%; cursor: pointer; font-size: 18px; }
+    
+    .slider { position: relative; overflow: hidden; border-radius: 12px; background: #000; height: 300px; }
+    .slides { display: flex; transition: 0.5s; height: 100%; }
+    .slides img { width: 100%; flex-shrink: 0; object-fit: contain; }
+    .slider-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 10px; cursor: pointer; }
+    .next { right: 0; }
+    .img-label { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); color: #fff; padding: 2px 10px; border-radius: 4px; font-size: 12px; }
 
-    .badge { background:#eef; padding:6px 12px; border-radius:20px; display:inline-block; }
-    .section { margin-top: 24px; }
-    .row { margin: 6px 0; }
-    .row strong { width: 160px; display:inline-block; }
+    .price-tag { font-size: 24px; color: #28a745; font-weight: bold; margin: 15px 0; }
+    .section { background: #fff; padding: 15px; border-radius: 8px; margin-top: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+    .row:last-child { border: none; }
+    
+    .map-container { width: 100%; height: 200px; border-radius: 8px; margin-top: 10px; overflow: hidden; border: 1px solid #ddd; }
+    .map-container iframe { width: 100%; height: 100%; border: none; }
 
-    .contact-bar {
-      position: sticky; bottom: 0;
-      display: flex; gap: 10px;
-      background: #fff; padding: 10px;
-      border-top: 1px solid #ddd;
-    }
-    .contact-bar a {
-      flex: 1; text-align: center;
-      padding: 12px; border-radius: 6px;
-      color: #fff; text-decoration: none;
-    }
-    .call { background: #28a745; }
-    .chat { background: #007bff; }
-
-    .related { display:grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
-    .card { border:1px solid #ddd; border-radius:6px; overflow:hidden; }
-    .card img { width:100%; height:140px; object-fit:cover; }
-    .card-body { padding:8px; }
+    .contact-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; padding: 10px; gap: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+    .contact-bar a, .contact-bar button { flex: 1; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; border: none; cursor: pointer; }
+    .btn-call { background: #28a745; color: white; }
+    .btn-chat { background: #007bff; color: white; }
   </style>
 </head>
-
 <body>
 
-<header><!-- same header --></header>
-
 <main class="container">
+  <div class="top-nav">
+    <button class="action-btn" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
+    <div>
+      <button class="action-btn" onclick="saveProperty()"><i class="far fa-bookmark" id="saveIcon"></i></button>
+      <button class="action-btn" onclick="shareProperty()"><i class="fas fa-share-alt"></i></button>
+    </div>
+  </div>
 
-  <h2 id="title"></h2>
-  <span id="badge" class="badge"></span>
-
-  <!-- Image Slider -->
   <div class="slider">
     <div id="slides" class="slides"></div>
     <button class="slider-btn prev" onclick="slide(-1)">❮</button>
     <button class="slider-btn next" onclick="slide(1)">❯</button>
   </div>
 
-  <div id="details"></div>
+  <h2 id="title" style="margin-top:15px;"></h2>
+  <div id="price" class="price-tag"></div>
 
-  <!-- Related -->
+  <div id="dynamicDetails"></div>
+
   <div class="section">
-    <h3>🔁 সম্পর্কিত পোস্ট</h3>
-    <div id="relatedPosts" class="related"></div>
+    <h3>📍 অবস্থান ও ম্যাপ</h3>
+    <div id="locationText"></div>
+    <div id="mapView" class="map-container"></div>
   </div>
-
 </main>
 
-<!-- Contact Bar -->
 <div class="contact-bar">
-  <a id="callBtn" class="call">📞 কল করুন</a>
-  <a id="chatBtn" class="chat">💬 চ্যাট করুন</a>
+  <a id="callBtn" class="btn-call"><i class="fas fa-phone"></i> কল করুন</a>
+  <a id="chatBtn" class="btn-chat"><i class="fas fa-comment-dots"></i> মেসেজ</a>
 </div>
 
 <script src="details.js"></script>
