@@ -1,10 +1,18 @@
+// 🔥 Firebase config (তোমার config এখানে বসাবে)
+firebase.initializeApp({
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_PROJECT_ID"
+});
+
 const db = firebase.firestore();
+
 const params = new URLSearchParams(window.location.search);
-const id = params.get('id');
+const id = params.get("id");
 
 let currentIndex = 0;
 
-/* ---------------- SLIDER ---------------- */
+/* ---------- Slider ---------- */
 function slide(dir) {
   const slides = document.getElementById("slides");
   const total = slides.children.length;
@@ -13,12 +21,18 @@ function slide(dir) {
   slides.style.transform = `translateX(-${currentIndex * 100}%)`;
 }
 
-/* ---------------- LOAD DETAILS ---------------- */
-if (!id) {
-  alert("Invalid post");
-  location.href = "index.html";
+/* ---------- Helper ---------- */
+function row(label, value) {
+  if (!value) return "";
+  return `<div class="row"><strong>${label}</strong><span>${value}</span></div>`;
 }
 
+if (!id) {
+  alert("Invalid post");
+  location.href = "/";
+}
+
+/* ---------- Load Data ---------- */
 db.collection("properties").doc(id).get().then(doc => {
   if (!doc.exists) {
     alert("পোস্ট পাওয়া যায়নি");
@@ -27,122 +41,89 @@ db.collection("properties").doc(id).get().then(doc => {
 
   const d = doc.data();
 
-  /* -------- TITLE & PRICE -------- */
-  document.getElementById("title").innerText = d.title;
-
+  /* ---------- Title & Price ---------- */
+  document.getElementById("title").innerText = d.title || "";
   document.getElementById("price").innerText =
     d.category === "বিক্রয়"
-      ? `${d.price} টাকা (${d.priceUnit})`
+      ? `${d.price} টাকা`
       : `${d.monthlyRent} টাকা / মাস`;
 
-  /* -------- IMAGES (5 TOTAL) -------- */
+  /* ---------- Images (5) ---------- */
   const slides = document.getElementById("slides");
   slides.innerHTML = "";
 
   const images = [
-    ...(d.imageUrls || []),
-    d.owner?.khotianUrl,
-    d.owner?.sketchUrl
+    ...(d.images || []),            // property images
+    d.khotianImage,
+    d.sketchImage
   ].filter(Boolean);
 
-  images.forEach((url, i) => {
+  images.forEach((src, i) => {
     slides.innerHTML += `
       <div style="min-width:100%;position:relative">
-        <img src="${url}">
+        <img src="${src}">
         <span class="img-label">ছবি ${i + 1}</span>
       </div>`;
   });
 
-  /* -------- DETAILS (POST PAGE ORDER) -------- */
-  let html = `<div class="section"><h3>🏠 প্রপার্টি বিবরণ</h3>`;
+  /* ---------- Details Sections ---------- */
+  let html = "";
 
-  const add = (label, val) => {
-    if (val) html += `<div class="row"><strong>${label}</strong><span>${val}</span></div>`;
-  };
+  /* 1️⃣ পোস্টকারী ধরন */
+  html += `<div class="section"><h3>📌 পোস্টকারী ধরন</h3>`;
+  html += row("পোস্টকারী", d.listerType);
+  html += `</div>`;
 
-  add("পোস্টের ধরন", d.category);
-  add("প্রপার্টির টাইপ", d.type);
-  add("লিস্টার টাইপ", d.listerType);
+  /* 2️⃣ পোস্ট ক্যাটাগরি */
+  html += `<div class="section"><h3>🏷️ পোস্টের ক্যাটাগরি</h3>`;
+  html += row("ক্যাটাগরি", d.category);
+  html += row("টাইপ", d.type);
+  html += `</div>`;
 
-  add("প্রপার্টির বয়স", d.propertyAge ? `${d.propertyAge} বছর` : null);
-  add("ফেসিং", d.facing);
-  add("সুবিধা", d.utilities?.join(", "));
+  /* 3️⃣ বিক্রয় / ভাড়া বিবরণ */
+  html += `<div class="section"><h3>🏠 ${d.category} বিবরণ</h3>`;
+  html += row("মূল্য", d.price);
+  html += row("মাসিক ভাড়া", d.monthlyRent);
+  html += row("ভাড়ার ধরন", d.rentType);
+  html += `</div>`;
 
-  /* ---- TYPE BASED ---- */
-  if (d.type === "জমি" || d.type === "প্লট") {
-    add("পরিমাণ", `${d.landArea} ${d.landAreaUnit}`);
-    add("জমির ধরন", d.landType);
-    add("রাস্তা (ফিট)", d.roadWidth);
-    add("প্লট নং", d.plotNo);
+  /* 4️⃣ মালিকানা (শুধু বিক্রয়) */
+  if (d.category === "বিক্রয়") {
+    html += `<div class="section"><h3>📄 মালিকানা বিবরণ</h3>`;
+    html += row("মালিকের নাম", d.ownerName);
+    html += row("দাগ নম্বর", d.dagNo);
+    html += row("মৌজা", d.mouja);
+    html += `</div>`;
   }
 
-  if (["বাড়ি", "ফ্লাট"].includes(d.type)) {
-    add("রুম", d.rooms);
-    add("বাথরুম", d.bathrooms);
-    add("কিচেন", d.kitchen);
-    add("ফ্লোর", d.floorNo);
-    add("তলা সংখ্যা", d.floors);
-  }
+  /* 5️⃣ ঠিকানা */
+  html += `<div class="section"><h3>📍 ঠিকানা ও অবস্থান</h3>`;
+  html += row("বিভাগ", d.location?.division);
+  html += row("জেলা", d.location?.district);
+  html += row("থানা", d.location?.thana);
+  html += row("রোড", d.location?.road);
+  html += `</div>`;
 
-  if (["অফিস", "দোকান"].includes(d.type)) {
-    add("পরিমাণ", `${d.commercialArea} ${d.commercialAreaUnit}`);
-    add("দোকান সংখ্যা", d.shopCount);
-  }
-
-  /* ---- RENT ---- */
-  if (d.category === "ভাড়া") {
-    add("ভাড়ার ধরন", d.rentType);
-    add("ওঠার তারিখ", d.moveInDate);
-    add("এডভান্স", d.advance);
-  }
-
-  /* ---- DESCRIPTION ---- */
+  /* 6️⃣ যোগাযোগ */
+  html += `<div class="section contact"><h3>☎️ যোগাযোগ</h3>`;
+  html += row("ফোন", d.phoneNumber);
+  html += row("অতিরিক্ত ফোন", d.secondaryPhone);
   html += `
-    <div class="row" style="flex-direction:column">
-      <strong>বিস্তারিত</strong>
-      <p>${d.description}</p>
-    </div></div>`;
+    <a href="tel:${d.phoneNumber}">কল করুন</a>
+    <a href="https://wa.me/88${d.phoneNumber}">WhatsApp</a>
+  </div>`;
 
-  document.getElementById("dynamicDetails").innerHTML = html;
+  /* 7️⃣ বিস্তারিত বর্ণনা */
+  html += `<div class="section"><h3>📝 বিস্তারিত বর্ণনা</h3>
+            <p>${d.description || "উল্লেখ নেই"}</p>
+          </div>`;
 
-  /* -------- LOCATION -------- */
-  document.getElementById("locationText").innerText =
-    `${d.location.district}, ${d.location.thana}, ${d.location.road}`;
-
+  /* Map */
   if (d.googleMap) {
-    document.getElementById("mapView").innerHTML =
-      `<iframe src="${d.googleMap}"></iframe>`;
-  } else {
-    document.getElementById("mapView").style.display = "none";
+    html += `<div class="section"><h3>🗺️ ম্যাপ</h3>
+              <iframe src="${d.googleMap}"></iframe>
+            </div>`;
   }
 
-  /* -------- CONTACT -------- */
-  document.getElementById("callBtn").href = `tel:${d.phoneNumber}`;
-  document.getElementById("chatBtn").href =
-    `https://wa.me/88${d.phoneNumber}?text=${encodeURIComponent(d.title)}`;
-
-  loadRelatedPosts(d.category, d.location.district);
+  document.getElementById("detailsContainer").innerHTML = html;
 });
-
-/* ---------------- RELATED POSTS ---------------- */
-function loadRelatedPosts(category, district) {
-  db.collection("properties")
-    .where("category", "==", category)
-    .where("location.district", "==", district)
-    .limit(4)
-    .get()
-    .then(snap => {
-      let html = `<div class="section"><h3>🔗 সম্পর্কিত পোস্ট</h3><div class="grid">`;
-      snap.forEach(doc => {
-        const p = doc.data();
-        html += `
-          <a href="details.html?id=${doc.id}" class="card">
-            <img src="${p.imageUrls?.[0]}">
-            <h4>${p.title}</h4>
-            <p>${p.price || p.monthlyRent} টাকা</p>
-          </a>`;
-      });
-      html += `</div></div>`;
-      document.querySelector("main").insertAdjacentHTML("beforeend", html);
-    });
-}
