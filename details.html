@@ -1,10 +1,79 @@
 <!DOCTYPE html>
-<html>
-<body>
-  <h1 id="test">HTML Loaded</h1>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<title>পোস্ট ডিটেইলস</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <script>
-    document.getElementById("test").innerText = "JS Loaded OK";
-  </script>
+<!-- Firebase SDK v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script>
+  // 🔴 অবশ্যই তোমার আসল Firebase config বসাবে
+  firebase.initializeApp({
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID"
+  });
+</script>
+
+<style>
+  body { margin:0; font-family:Arial; background:#f4f4f4; }
+  main { max-width:900px; margin:auto; padding:12px; }
+  h1 { font-size:22px; margin:10px 0; }
+  h3 { margin:8px 0; }
+  .price { color:#c62828; font-weight:bold; }
+
+  .section {
+    background:#fff;
+    padding:12px;
+    margin-top:12px;
+    border-radius:6px;
+  }
+  .row {
+    display:flex;
+    justify-content:space-between;
+    padding:6px 0;
+    border-bottom:1px solid #eee;
+    font-size:14px;
+  }
+  .row:last-child { border:none; }
+
+  .slider {
+    background:#000;
+    overflow:hidden;
+    border-radius:6px;
+    height:280px;
+  }
+  .slides {
+    display:flex;
+    transition:0.4s ease;
+    height:100%;
+  }
+  .slides img {
+    width:100%;
+    object-fit:contain;
+  }
+</style>
+</head>
+
+<body>
+<main>
+
+  <h1 id="status">Loading…</h1>
+
+  <div class="slider">
+    <div class="slides" id="slides"></div>
+  </div>
+
+  <h1 id="title"></h1>
+  <div class="price" id="price"></div>
+
+  <div id="details"></div>
+
+</main>
+
+<script src="details.js"></script>
 </body>
-  </html>
+</html>
