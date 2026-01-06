@@ -1,41 +1,10 @@
 <!DOCTYPE html>
-<html lang="bn">
-<head>
-<meta charset="UTF-8">
-<title>প্রপার্টি বিস্তারিত</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
-<style>
-  body { font-family: Arial, sans-serif; margin:0; background:#f8f8f8; }
-  main { max-width:900px; margin:auto; padding:10px; }
-  h1 { font-size:22px; margin:8px 0; }
-  .price { font-size:18px; color:#c62828; margin-bottom:10px; }
-  .slider { position:relative; overflow:hidden; height:300px; background:#000; border-radius:6px; margin-bottom:10px; }
-  .slides { display:flex; transition:0.4s ease; height:100%; }
-  .slides img { width:100%; object-fit:contain; }
-  .section { background:#fff; padding:10px 12px; margin-top:12px; border-radius:6px; }
-  .row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee; }
-  .row:last-child { border:none; }
-  iframe { width:100%; height:250px; border:0; margin-top:10px; }
-</style>
-</head>
+<html>
 <body>
+  <h1 id="test">HTML Loaded</h1>
 
-<main>
-  <div class="slider">
-    <div class="slides" id="slides"></div>
-  </div>
-
-  <h1 id="title">Loading...</h1>
-  <div class="price" id="price"></div>
-
-  <div id="details"></div>
-</main>
-
-<script src="details.js"></script>
+  <script>
+    document.getElementById("test").innerText = "JS Loaded OK";
+  </script>
 </body>
-</html>
+  </html>
