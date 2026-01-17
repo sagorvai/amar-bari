@@ -1,72 +1,109 @@
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-  <meta charset="UTF-8" />
-  <title>প্রপার্টি বিস্তারিত</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  <style>
-    body {font-family: sans-serif; margin:0; background:#f7f7f7;}
-    .container{max-width:1100px;margin:auto;padding:10px;}
-    .card{background:#fff;border-radius:8px;padding:15px;margin-bottom:15px;}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-    .title{font-size:22px;font-weight:bold}
-    .price{font-size:20px;color:#e91e63}
-    .slider img{width:100%;border-radius:8px}
-    .contact{background:#0d6efd;color:#fff;text-align:center}
-    .contact a{color:#fff;text-decoration:none;font-weight:bold}
-  </style>
-</head>
+const firebaseConfig = {
+  // তোমার config বসাবে
+};
 
-<body>
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-<div class="container">
+const params = new URLSearchParams(window.location.search);
+const propertyId = params.get("id");
 
-  <!-- Image slider -->
-  <div class="card slider" id="imageSlider"></div>
+if (!propertyId) {
+  alert("Property ID missing");
+}
 
-  <!-- Title + price -->
-  <div class="card">
-    <div class="title" id="title"></div>
-    <div class="price" id="price"></div>
-    <div id="category"></div>
-  </div>
+function safeAdd(container, label, value) {
+  if (!value) return;
+  const div = document.createElement("div");
+  div.innerHTML = `<strong>${label}:</strong> ${value}`;
+  container.appendChild(div);
+}
 
-  <!-- Location -->
-  <div class="card" id="location"></div>
+async function loadDetails() {
+  const ref = doc(db, "properties", propertyId);
+  const snap = await getDoc(ref);
 
-  <!-- Quick info -->
-  <div class="card grid" id="quickInfo"></div>
+  if (!snap.exists()) {
+    alert("ডেটা পাওয়া যায়নি");
+    return;
+  }
 
-  <!-- Utilities -->
-  <div class="card" id="utilities" style="display:none">
-    <h3>সুবিধাসমূহ</h3>
-    <ul id="utilitiesList"></ul>
-  </div>
+  const p = snap.data();
 
-  <!-- Description -->
-  <div class="card">
-    <h3>বর্ণনা</h3>
-    <p id="description"></p>
-  </div>
+  // title & price
+  document.getElementById("title").innerText = p.title || "";
+  document.getElementById("category").innerText = p.category || "";
 
-  <!-- Ownership -->
-  <div class="card" id="ownership" style="display:none">
-    <h3>মালিকানা তথ্য</h3>
-    <div id="ownershipData"></div>
-  </div>
+  let priceText = "";
+  if (p.category === "ভাড়া") {
+    priceText = p.monthlyRent + " টাকা / মাস";
+  } else {
+    priceText = p.price + " টাকা";
+  }
+  document.getElementById("price").innerText = priceText;
 
-  <!-- Map -->
-  <div class="card" id="map" style="display:none"></div>
+  // images
+  const slider = document.getElementById("imageSlider");
+  if (p.images && p.images.length) {
+    p.images.forEach(img => {
+      const i = document.createElement("img");
+      i.src = img.url;
+      slider.appendChild(i);
+    });
+  }
 
-  <!-- Contact -->
-  <div class="card contact">
-    <div id="phone"></div>
-    <a id="callBtn" href="#">📞 কল করুন</a>
-  </div>
+  // location
+  const loc = p.location || {};
+  document.getElementById("location").innerText =
+    `${loc.village || ""}, ${loc.thana || ""}, ${loc.district || ""}`;
 
-</div>
+  // quick info
+  const qi = document.getElementById("quickInfo");
+  safeAdd(qi, "টাইপ", p.type);
+  safeAdd(qi, "রুম", p.rooms);
+  safeAdd(qi, "বাথরুম", p.bathrooms);
+  safeAdd(qi, "ফ্লোর", p.floorNo);
+  safeAdd(qi, "ফেসিং", p.facing);
+  safeAdd(qi, "রোড", p.roadWidth);
+  safeAdd(qi, "জমির পরিমাণ", p.landArea ? p.landArea + " " + p.landAreaUnit : "");
 
-<script src="details.js"></script>
-</body>
-</html>
+  // utilities
+  if (p.utilities && p.utilities.length) {
+    document.getElementById("utilities").style.display = "block";
+    p.utilities.forEach(u => {
+      const li = document.createElement("li");
+      li.innerText = u;
+      document.getElementById("utilitiesList").appendChild(li);
+    });
+  }
+
+  // description
+  document.getElementById("description").innerText = p.description || "";
+
+  // ownership
+  if (p.owner) {
+    document.getElementById("ownership").style.display = "block";
+    const o = p.owner;
+    document.getElementById("ownershipData").innerHTML = `
+      দাতা: ${o.donorName || ""}<br>
+      দাগ: ${o.dagNo || ""}<br>
+      মৌজা: ${o.mouja || ""}
+    `;
+  }
+
+  // map
+  if (p.googleMap) {
+    document.getElementById("map").style.display = "block";
+    document.getElementById("map").innerHTML =
+      `<iframe src="${p.googleMap}" width="100%" height="250" style="border:0"></iframe>`;
+  }
+
+  // contact
+  document.getElementById("phone").innerText = p.phoneNumber || "";
+  document.getElementById("callBtn").href = `tel:${p.phoneNumber}`;
+}
+
+loadDetails();
