@@ -1,96 +1,72 @@
-// Firebase Initialization Check
-const statusEl = document.getElementById("status");
-const contentArea = document.getElementById("content-area");
-const titleEl = document.getElementById("title");
-const priceEl = document.getElementById("price");
-const detailsEl = document.getElementById("details");
-const slidesEl = document.getElementById("slides");
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <title>প্রপার্টি বিস্তারিত</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-const db = firebase.firestore();
+  <style>
+    body {font-family: sans-serif; margin:0; background:#f7f7f7;}
+    .container{max-width:1100px;margin:auto;padding:10px;}
+    .card{background:#fff;border-radius:8px;padding:15px;margin-bottom:15px;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+    .title{font-size:22px;font-weight:bold}
+    .price{font-size:20px;color:#e91e63}
+    .slider img{width:100%;border-radius:8px}
+    .contact{background:#0d6efd;color:#fff;text-align:center}
+    .contact a{color:#fff;text-decoration:none;font-weight:bold}
+  </style>
+</head>
 
-// URL থেকে ID সংগ্রহ করা
-const urlParams = new URLSearchParams(window.location.search);
-const id = urlParams.get("id");
+<body>
 
-if (!id) {
-    statusEl.innerText = "❌ URL-এ কোনো পোস্ট আইডি (ID) পাওয়া যায়নি।";
-} else {
-    // Firestore থেকে ডাটা ফেচ করা
-    db.collection("properties").doc(id).get()
-    .then(doc => {
-        if (!doc.exists) {
-            statusEl.innerText = "❌ এই পোস্টটি খুঁজে পাওয়া যায়নি। আইডিটি সঠিক কিনা যাচাই করুন।";
-            return;
-        }
+<div class="container">
 
-        const d = doc.data();
-        console.log("Fetched Data:", d); // ব্রাউজার কনসোলে ডাটা চেক করার জন্য
+  <!-- Image slider -->
+  <div class="card slider" id="imageSlider"></div>
 
-        // লোডিং স্ট্যাটাস সরিয়ে কন্টেন্ট দেখানো
-        statusEl.style.display = "none";
-        if(contentArea) contentArea.style.display = "block";
+  <!-- Title + price -->
+  <div class="card">
+    <div class="title" id="title"></div>
+    <div class="price" id="price"></div>
+    <div id="category"></div>
+  </div>
 
-        // ১. শিরোনাম ও মূল্য সেট করা
-        titleEl.innerText = d.title || "শিরোনাম নেই";
-        
-        if (d.category === "ভাড়া") {
-            priceEl.innerText = d.monthlyRent ? `৳ ${d.monthlyRent} / মাস` : "ভাড়া উল্লেখ নেই";
-        } else {
-            priceEl.innerText = d.price ? `৳ ${d.price}` : "মূল্য উল্লেখ নেই";
-        }
+  <!-- Location -->
+  <div class="card" id="location"></div>
 
-        // ২. ইমেজ স্লাইডার হ্যান্ডেলিং
-        if (d.images && Array.isArray(d.images) && d.images.length > 0) {
-            slidesEl.innerHTML = d.images.map(img => {
-                const src = (typeof img === 'object') ? img.url : img;
-                return `<div style="min-width:100%"><img src="${src}" style="width:100%; height:300px; object-fit:contain; background:#000;"></div>`;
-            }).join('');
-        } else {
-            slidesEl.innerHTML = `<div style="width:100%; height:200px; display:flex; align-items:center; justify-content:center; color:#ccc;">ছবি নেই</div>`;
-        }
+  <!-- Quick info -->
+  <div class="card grid" id="quickInfo"></div>
 
-        // ৩. তথ্য প্রদর্শনের জন্য রো তৈরি (Helper Function)
-        const row = (label, value) => {
-            if (!value) return "";
-            return `<div class="row"><strong>${label}</strong><span>${value}</span></div>`;
-        };
+  <!-- Utilities -->
+  <div class="card" id="utilities" style="display:none">
+    <h3>সুবিধাসমূহ</h3>
+    <ul id="utilitiesList"></ul>
+  </div>
 
-        // ৪. সেকশন ভিত্তিক ডিটেইলস তৈরি
-        let html = "";
+  <!-- Description -->
+  <div class="card">
+    <h3>বর্ণনা</h3>
+    <p id="description"></p>
+  </div>
 
-        // প্রপার্টি বিবরণ
-        html += `<div class="section"><h3>🏠 প্রপার্টি বিবরণ</h3>`;
-        html += row("ক্যাটাগরি", d.category);
-        html += row("টাইপ", d.type);
-        html += row("লিস্টার", d.listerType);
-        html += `</div>`;
+  <!-- Ownership -->
+  <div class="card" id="ownership" style="display:none">
+    <h3>মালিকানা তথ্য</h3>
+    <div id="ownershipData"></div>
+  </div>
 
-        // ঠিকানা
-        if (d.location) {
-            html += `<div class="section"><h3>📍 ঠিকানা ও অবস্থান</h3>`;
-            html += row("বিভাগ", d.location.division);
-            html += row("জেলা", d.location.district);
-            html += row("থানা", d.location.thana);
-            html += row("গ্রাম/ওয়ার্ড", d.location.village || d.location.wardNo);
-            html += `</div>`;
-        }
+  <!-- Map -->
+  <div class="card" id="map" style="display:none"></div>
 
-        // যোগাযোগ
-        html += `<div class="section"><h3>☎️ যোগাযোগ</h3>`;
-        html += row("ফোন", d.phoneNumber);
-        html += row("অন্যান্য", d.secondaryPhone);
-        html += `</div>`;
+  <!-- Contact -->
+  <div class="card contact">
+    <div id="phone"></div>
+    <a id="callBtn" href="#">📞 কল করুন</a>
+  </div>
 
-        // বর্ণনা
-        html += `<div class="section"><h3>📝 বিস্তারিত বর্ণনা</h3>
-                  <p style="white-space: pre-line; color:#555;">${d.description || "কোনো বর্ণনা দেওয়া হয়নি।"}</p>
-                </div>`;
+</div>
 
-        detailsEl.innerHTML = html;
-
-    })
-    .catch(error => {
-        console.error("Firestore Error:", error);
-        statusEl.innerText = "❌ ডেটা লোড করতে সমস্যা হয়েছে: " + error.message;
-    });
-}
+<script src="details.js"></script>
+</body>
+</html>
