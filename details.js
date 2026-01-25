@@ -1,109 +1,86 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// Firebase কনফিগারেশন (আপনার আগের ফাইলের মতো)
+const db = firebase.firestore();
 
-const firebaseConfig = {
-  // তোমার config বসাবে
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const params = new URLSearchParams(window.location.search);
-const propertyId = params.get("id");
+// URL থেকে প্রপার্টি ID নেওয়া (যেমন: details.html?id=12345)
+const urlParams = new URLSearchParams(window.location.search);
+const propertyId = urlParams.get('id');
 
 if (!propertyId) {
-  alert("Property ID missing");
+    alert("প্রপার্টি খুঁজে পাওয়া যায়নি!");
+    window.location.href = 'index.html';
 }
 
-function safeAdd(container, label, value) {
-  if (!value) return;
-  const div = document.createElement("div");
-  div.innerHTML = `<strong>${label}:</strong> ${value}`;
-  container.appendChild(div);
+async function fetchPropertyDetails() {
+    try {
+        const doc = await db.collection('properties').doc(propertyId).get();
+        if (doc.exists) {
+            const data = doc.data();
+            renderDetails(data);
+        } else {
+            console.log("No such document!");
+        }
+    } catch (error) {
+        console.error("Error getting document:", error);
+    }
 }
 
-async function loadDetails() {
-  const ref = doc(db, "properties", propertyId);
-  const snap = await getDoc(ref);
+function renderDetails(data) {
+    // বেসিক তথ্য সেট করা
+    document.getElementById('propertyTitle').innerText = data.title;
+    document.getElementById('propertyPrice').innerText = data.price || data.monthlyRent || 'আলোচনা সাপেক্ষ';
+    document.getElementById('propertyLocation').innerText = `${data.location.district}, ${data.location.upazila}`;
+    document.getElementById('categoryBadge').innerText = data.category;
+    document.getElementById('propertyDescription').innerText = data.description || 'কোনো বর্ণনা দেওয়া হয়নি।';
 
-  if (!snap.exists()) {
-    alert("ডেটা পাওয়া যায়নি");
-    return;
-  }
+    // ইমেজ গ্যালারি সেটআপ
+    const images = data.images || [];
+    const mainImg = document.getElementById('mainImage');
+    const thumbRow = document.getElementById('thumbnailRow');
+    
+    if (images.length > 0) {
+        mainImg.src = images[0].url;
+        images.forEach((img, index) => {
+            const thumb = document.createElement('img');
+            thumb.src = img.url;
+            thumb.onclick = () => mainImg.src = img.url;
+            thumbRow.appendChild(thumb);
+        });
+    }
 
-  const p = snap.data();
+    // ডাইনামিক ফিল্ড রেন্ডারিং (সবচেয়ে গুরুত্বপূর্ণ অংশ)
+    const specsContainer = document.getElementById('dynamicSpecs');
+    const excludeFields = ['title', 'description', 'images', 'location', 'category', 'phoneNumber', 'secondaryPhone'];
 
-  // title & price
-  document.getElementById("title").innerText = p.title || "";
-  document.getElementById("category").innerText = p.category || "";
+    for (const [key, value] of Object.entries(data)) {
+        if (!excludeFields.includes(key) && value) {
+            const specItem = document.createElement('div');
+            specItem.className = 'spec-item';
+            specItem.innerHTML = `
+                <span class="label">${formatKey(key)}:</span>
+                <span class="value">${value}</span>
+            `;
+            specsContainer.appendChild(specItem);
+        }
+    }
 
-  let priceText = "";
-  if (p.category === "ভাড়া") {
-    priceText = p.monthlyRent + " টাকা / মাস";
-  } else {
-    priceText = p.price + " টাকা";
-  }
-  document.getElementById("price").innerText = priceText;
-
-  // images
-  const slider = document.getElementById("imageSlider");
-  if (p.images && p.images.length) {
-    p.images.forEach(img => {
-      const i = document.createElement("img");
-      i.src = img.url;
-      slider.appendChild(i);
-    });
-  }
-
-  // location
-  const loc = p.location || {};
-  document.getElementById("location").innerText =
-    `${loc.village || ""}, ${loc.thana || ""}, ${loc.district || ""}`;
-
-  // quick info
-  const qi = document.getElementById("quickInfo");
-  safeAdd(qi, "টাইপ", p.type);
-  safeAdd(qi, "রুম", p.rooms);
-  safeAdd(qi, "বাথরুম", p.bathrooms);
-  safeAdd(qi, "ফ্লোর", p.floorNo);
-  safeAdd(qi, "ফেসিং", p.facing);
-  safeAdd(qi, "রোড", p.roadWidth);
-  safeAdd(qi, "জমির পরিমাণ", p.landArea ? p.landArea + " " + p.landAreaUnit : "");
-
-  // utilities
-  if (p.utilities && p.utilities.length) {
-    document.getElementById("utilities").style.display = "block";
-    p.utilities.forEach(u => {
-      const li = document.createElement("li");
-      li.innerText = u;
-      document.getElementById("utilitiesList").appendChild(li);
-    });
-  }
-
-  // description
-  document.getElementById("description").innerText = p.description || "";
-
-  // ownership
-  if (p.owner) {
-    document.getElementById("ownership").style.display = "block";
-    const o = p.owner;
-    document.getElementById("ownershipData").innerHTML = `
-      দাতা: ${o.donorName || ""}<br>
-      দাগ: ${o.dagNo || ""}<br>
-      মৌজা: ${o.mouja || ""}
-    `;
-  }
-
-  // map
-  if (p.googleMap) {
-    document.getElementById("map").style.display = "block";
-    document.getElementById("map").innerHTML =
-      `<iframe src="${p.googleMap}" width="100%" height="250" style="border:0"></iframe>`;
-  }
-
-  // contact
-  document.getElementById("phone").innerText = p.phoneNumber || "";
-  document.getElementById("callBtn").href = `tel:${p.phoneNumber}`;
+    // কন্টাক্ট বাটন সেটআপ
+    document.getElementById('callBtn').href = `tel:${data.phoneNumber}`;
+    document.getElementById('whatsappBtn').href = `https://wa.me/88${data.phoneNumber}`;
 }
 
-loadDetails();
+// কী-এর নামগুলো সুন্দর করার জন্য ফাংশন (যেমন: areaSize -> এরিয়া সাইজ)
+function formatKey(key) {
+    const translations = {
+        type: 'ধরন',
+        areaSize: 'আয়তন',
+        landType: 'জমির ধরন',
+        bedRooms: 'বেডরুম',
+        bathRooms: 'বাথরুম',
+        floorLevel: 'তলা',
+        facing: 'মুখ',
+        mouja: 'মৌজা'
+    };
+    return translations[key] || key;
+}
+
+fetchPropertyDetails();
