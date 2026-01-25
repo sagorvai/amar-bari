@@ -1,86 +1,85 @@
-// Firebase কনফিগারেশন (আপনার আগের ফাইলের মতো)
-const db = firebase.firestore();
-
-// URL থেকে প্রপার্টি ID নেওয়া (যেমন: details.html?id=12345)
+// ১. URL থেকে ID সংগ্রহ করা
 const urlParams = new URLSearchParams(window.location.search);
 const propertyId = urlParams.get('id');
 
 if (!propertyId) {
-    alert("প্রপার্টি খুঁজে পাওয়া যায়নি!");
+    alert("ভুল লিঙ্ক! হোম পেজে ফিরে যান।");
     window.location.href = 'index.html';
 }
 
-async function fetchPropertyDetails() {
+// ২. ডেটাবেজ থেকে তথ্য আনা
+async function loadPropertyDetails() {
     try {
         const doc = await db.collection('properties').doc(propertyId).get();
-        if (doc.exists) {
-            const data = doc.data();
-            renderDetails(data);
-        } else {
-            console.log("No such document!");
+        if (!doc.exists) {
+            document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>দুঃখিত! এই বিজ্ঞাপনটি খুঁজে পাওয়া যায়নি।</h2>";
+            return;
         }
+
+        const data = doc.data();
+        displayUI(data);
     } catch (error) {
-        console.error("Error getting document:", error);
+        console.error("Error:", error);
     }
 }
 
-function renderDetails(data) {
-    // বেসিক তথ্য সেট করা
-    document.getElementById('propertyTitle').innerText = data.title;
-    document.getElementById('propertyPrice').innerText = data.price || data.monthlyRent || 'আলোচনা সাপেক্ষ';
-    document.getElementById('propertyLocation').innerText = `${data.location.district}, ${data.location.upazila}`;
-    document.getElementById('categoryBadge').innerText = data.category;
-    document.getElementById('propertyDescription').innerText = data.description || 'কোনো বর্ণনা দেওয়া হয়নি।';
-
-    // ইমেজ গ্যালারি সেটআপ
-    const images = data.images || [];
-    const mainImg = document.getElementById('mainImage');
-    const thumbRow = document.getElementById('thumbnailRow');
+// ৩. UI-তে ডেটা প্রদর্শন করা
+function displayUI(data) {
+    // বেসিক টেক্সট
+    document.getElementById('title').innerText = data.title;
+    document.getElementById('catTag').innerText = data.category;
+    document.getElementById('descText').innerText = data.description || "কোনো বিবরণ নেই।";
+    document.getElementById('price').innerText = `৳ ${data.price || data.monthlyRent || 'আলোচনা সাপেক্ষ'}`;
     
-    if (images.length > 0) {
-        mainImg.src = images[0].url;
-        images.forEach((img, index) => {
-            const thumb = document.createElement('img');
-            thumb.src = img.url;
-            thumb.onclick = () => mainImg.src = img.url;
-            thumbRow.appendChild(thumb);
+    // লোকেশন ফরম্যাট
+    const loc = data.location;
+    document.getElementById('location').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${loc.village}, ${loc.upazila}, ${loc.district}`;
+
+    // ছবি সেটআপ
+    const displayImg = document.getElementById('displayImg');
+    const thumbList = document.getElementById('thumbList');
+    if (data.images && data.images.length > 0) {
+        displayImg.src = data.images[0].url;
+        data.images.forEach((img, idx) => {
+            const t = document.createElement('img');
+            t.src = img.url;
+            t.onclick = () => {
+                displayImg.src = img.url;
+                document.querySelectorAll('.thumb-container img').forEach(i => i.classList.remove('active'));
+                t.classList.add('active');
+            };
+            if(idx === 0) t.classList.add('active');
+            thumbList.appendChild(t);
         });
     }
 
-    // ডাইনামিক ফিল্ড রেন্ডারিং (সবচেয়ে গুরুত্বপূর্ণ অংশ)
-    const specsContainer = document.getElementById('dynamicSpecs');
-    const excludeFields = ['title', 'description', 'images', 'location', 'category', 'phoneNumber', 'secondaryPhone'];
+    // ৪. ডাইনামিক ফিল্ড জেনারেটর (অত্যাধুনিক পদ্ধতি)
+    const specGrid = document.getElementById('specGrid');
+    const fieldsToDisplay = {
+        'type': 'প্রপার্টির ধরন',
+        'areaSize': 'আয়তন',
+        'bedRooms': 'বেডরুম',
+        'bathRooms': 'বাথরুম',
+        'floorLevel': 'তলা',
+        'landType': 'জমির ধরন',
+        'facing': 'মুখ',
+        'bookingMoney': 'বুকিং মানি',
+        'mouja': 'মৌজা'
+    };
 
-    for (const [key, value] of Object.entries(data)) {
-        if (!excludeFields.includes(key) && value) {
-            const specItem = document.createElement('div');
-            specItem.className = 'spec-item';
-            specItem.innerHTML = `
-                <span class="label">${formatKey(key)}:</span>
-                <span class="value">${value}</span>
-            `;
-            specsContainer.appendChild(specItem);
+    for (const [key, label] of Object.entries(fieldsToDisplay)) {
+        if (data[key]) {
+            const box = document.createElement('div');
+            box.className = 'spec-box';
+            box.innerHTML = `<small>${label}</small><b>${data[key]}</b>`;
+            specGrid.appendChild(box);
         }
     }
 
-    // কন্টাক্ট বাটন সেটআপ
-    document.getElementById('callBtn').href = `tel:${data.phoneNumber}`;
-    document.getElementById('whatsappBtn').href = `https://wa.me/88${data.phoneNumber}`;
+    // ৫. কন্টাক্ট বাটন
+    document.getElementById('callLink').href = `tel:${data.phoneNumber}`;
+    document.getElementById('waLink').href = `https://wa.me/88${data.phoneNumber}`;
 }
 
-// কী-এর নামগুলো সুন্দর করার জন্য ফাংশন (যেমন: areaSize -> এরিয়া সাইজ)
-function formatKey(key) {
-    const translations = {
-        type: 'ধরন',
-        areaSize: 'আয়তন',
-        landType: 'জমির ধরন',
-        bedRooms: 'বেডরুম',
-        bathRooms: 'বাথরুম',
-        floorLevel: 'তলা',
-        facing: 'মুখ',
-        mouja: 'মৌজা'
-    };
-    return translations[key] || key;
-}
-
-fetchPropertyDetails();
+// লোড শুরু
+loadPropertyDetails();
