@@ -4,57 +4,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>প্রপার্টি ডিটেইলস | আমার বাড়ি.কম</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <link rel="stylesheet" href="style.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root { --primary: #2563eb; --glass: rgba(255, 255, 255, 0.9); }
+        body { background: #f3f4f6; font-family: 'Hind Siliguri', sans-serif; }
+        .details-wrapper { max-width: 1100px; margin: 20px auto; padding: 15px; display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        
+        /* স্লাইডার */
+        .image-section { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .main-img { width: 100%; height: 450px; object-fit: cover; }
+        .thumb-container { display: flex; gap: 10px; padding: 10px; overflow-x: auto; background: #eee; }
+        .thumb-container img { width: 80px; height: 60px; border-radius: 5px; cursor: pointer; object-fit: cover; opacity: 0.6; }
+        .thumb-container img.active { opacity: 1; border: 2px solid var(--primary); }
+
+        /* ইনফো কার্ড */
+        .info-card { background: white; padding: 25px; border-radius: 15px; margin-top: 20px; }
+        .price { font-size: 28px; color: #16a34a; font-weight: bold; margin: 10px 0; }
+        .dynamic-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+        .spec-box { background: #f8fafc; padding: 12px; border-radius: 10px; border-left: 4px solid var(--primary); }
+        .spec-box small { color: #64748b; display: block; font-size: 12px; }
+        .spec-box b { color: #1e293b; font-size: 16px; }
+
+        /* সাইডবার */
+        .sidebar { position: sticky; top: 20px; }
+        .contact-card { background: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .btn-action { display: block; width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; text-decoration: none; font-weight: bold; transition: 0.3s; }
+        .btn-call { background: #2563eb; color: white; }
+        .btn-wa { background: #22c55e; color: white; }
+
+        @media (max-width: 768px) { .details-wrapper { grid-template-columns: 1fr; } .main-img { height: 250px; } }
+    </style>
 </head>
 <body>
 
-    <div class="details-container">
-        <div class="image-gallery" id="imageGallery">
-            <div class="main-image-container">
-                <img id="mainImage" src="placeholder.jpg" alt="Property Image">
-                <div class="gallery-nav">
-                    <button id="prevBtn"><i class="fas fa-chevron-left"></i></button>
-                    <button id="nextBtn"><i class="fas fa-chevron-right"></i></button>
-                </div>
-            </div>
-            <div class="thumbnail-row" id="thumbnailRow"></div>
-        </div>
+    <div class="details-wrapper">
+        <main>
+            <section class="image-section">
+                <img id="displayImg" src="https://via.placeholder.com/800x450?text=Loading..." class="main-img">
+                <div class="thumb-container" id="thumbList"></div>
+            </section>
 
-        <div class="content-wrapper">
-            <div class="main-info">
-                <div class="badge" id="categoryBadge">বিক্রয়</div>
-                <h1 id="propertyTitle">লোডিং...</h1>
-                <p class="location"><i class="fas fa-map-marker-alt"></i> <span id="propertyLocation">ঠিকানা</span></p>
-                <div class="price-tag">৳ <span id="propertyPrice">00</span></div>
+            <section class="info-card">
+                <span id="catTag" style="background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-size: 14px;">ক্যাটাগরি</span>
+                <h1 id="title" style="margin-top: 15px;">লোডিং হচ্ছে...</h1>
+                <p id="location" style="color: #64748b;"><i class="fas fa-map-marker-alt"></i> ঠিকানা</p>
+                <div class="price" id="price">৳ ০.০০</div>
                 
-                <hr>
-                
-                <h3>বিস্তারিত বিবরণ</h3>
-                <div class="dynamic-specs" id="dynamicSpecs">
+                <div class="dynamic-grid" id="specGrid">
                     </div>
 
-                <h3>বিবরণ</h3>
-                <p id="propertyDescription">এখানে বিস্তারিত বর্ণনা থাকবে...</p>
-            </div>
-
-            <div class="contact-sidebar">
-                <div class="contact-card">
-                    <h3>যোগাযোগ করুন</h3>
-                    <div class="seller-info">
-                        <i class="fas fa-user-circle"></i>
-                        <span id="sellerName">বিজ্ঞাপনদাতা</span>
-                    </div>
-                    <a id="callBtn" href="#" class="btn-call"><i class="fas fa-phone-alt"></i> কল করুন</a>
-                    <a id="whatsappBtn" href="#" class="btn-whatsapp"><i class="fab fa-whatsapp"></i> হোয়াটসঅ্যাপ</a>
+                <div class="description">
+                    <h3>বিবরণ</h3>
+                    <p id="descText" style="line-height: 1.6; color: #334155; white-space: pre-line;"></p>
                 </div>
+            </section>
+        </main>
+
+        <aside class="sidebar">
+            <div class="contact-card">
+                <img id="userIcon" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width: 60px; border-radius: 50%;">
+                <h3 id="sellerName">বিজ্ঞাপনদাতা</h3>
+                <p style="font-size: 14px; color: #64748b;">সরাসরি যোগাযোগ করুন</p>
+                <a id="callLink" href="#" class="btn-action btn-call"><i class="fas fa-phone-alt"></i> কল করুন</a>
+                <a id="waLink" href="#" class="btn-action btn-wa"><i class="fab fa-whatsapp"></i> হোয়াটসঅ্যাপ</a>
             </div>
-        </div>
+        </aside>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script>
+        // আপনার Firebase Config এখানে দিন (আগের ফাইল থেকে)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+            authDomain: "amar-bari-website.firebaseapp.com",
+            projectId: "amar-bari-website",
+            storageBucket: "amar-bari-website.firebasestorage.app",
+            messagingSenderId: "719084789035",
+            appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
     <script src="details.js"></script>
 </body>
 </html>
