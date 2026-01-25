@@ -1,72 +1,60 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8" />
-  <title>প্রপার্টি বিস্তারিত</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <style>
-    body {font-family: sans-serif; margin:0; background:#f7f7f7;}
-    .container{max-width:1100px;margin:auto;padding:10px;}
-    .card{background:#fff;border-radius:8px;padding:15px;margin-bottom:15px;}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-    .title{font-size:22px;font-weight:bold}
-    .price{font-size:20px;color:#e91e63}
-    .slider img{width:100%;border-radius:8px}
-    .contact{background:#0d6efd;color:#fff;text-align:center}
-    .contact a{color:#fff;text-decoration:none;font-weight:bold}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>প্রপার্টি ডিটেইলস | আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 </head>
-
 <body>
 
-<div class="container">
+    <div class="details-container">
+        <div class="image-gallery" id="imageGallery">
+            <div class="main-image-container">
+                <img id="mainImage" src="placeholder.jpg" alt="Property Image">
+                <div class="gallery-nav">
+                    <button id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+                    <button id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="thumbnail-row" id="thumbnailRow"></div>
+        </div>
 
-  <!-- Image slider -->
-  <div class="card slider" id="imageSlider"></div>
+        <div class="content-wrapper">
+            <div class="main-info">
+                <div class="badge" id="categoryBadge">বিক্রয়</div>
+                <h1 id="propertyTitle">লোডিং...</h1>
+                <p class="location"><i class="fas fa-map-marker-alt"></i> <span id="propertyLocation">ঠিকানা</span></p>
+                <div class="price-tag">৳ <span id="propertyPrice">00</span></div>
+                
+                <hr>
+                
+                <h3>বিস্তারিত বিবরণ</h3>
+                <div class="dynamic-specs" id="dynamicSpecs">
+                    </div>
 
-  <!-- Title + price -->
-  <div class="card">
-    <div class="title" id="title"></div>
-    <div class="price" id="price"></div>
-    <div id="category"></div>
-  </div>
+                <h3>বিবরণ</h3>
+                <p id="propertyDescription">এখানে বিস্তারিত বর্ণনা থাকবে...</p>
+            </div>
 
-  <!-- Location -->
-  <div class="card" id="location"></div>
+            <div class="contact-sidebar">
+                <div class="contact-card">
+                    <h3>যোগাযোগ করুন</h3>
+                    <div class="seller-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="sellerName">বিজ্ঞাপনদাতা</span>
+                    </div>
+                    <a id="callBtn" href="#" class="btn-call"><i class="fas fa-phone-alt"></i> কল করুন</a>
+                    <a id="whatsappBtn" href="#" class="btn-whatsapp"><i class="fab fa-whatsapp"></i> হোয়াটসঅ্যাপ</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <!-- Quick info -->
-  <div class="card grid" id="quickInfo"></div>
-
-  <!-- Utilities -->
-  <div class="card" id="utilities" style="display:none">
-    <h3>সুবিধাসমূহ</h3>
-    <ul id="utilitiesList"></ul>
-  </div>
-
-  <!-- Description -->
-  <div class="card">
-    <h3>বর্ণনা</h3>
-    <p id="description"></p>
-  </div>
-
-  <!-- Ownership -->
-  <div class="card" id="ownership" style="display:none">
-    <h3>মালিকানা তথ্য</h3>
-    <div id="ownershipData"></div>
-  </div>
-
-  <!-- Map -->
-  <div class="card" id="map" style="display:none"></div>
-
-  <!-- Contact -->
-  <div class="card contact">
-    <div id="phone"></div>
-    <a id="callBtn" href="#">📞 কল করুন</a>
-  </div>
-
-</div>
-
-<script src="details.js"></script>
+    <script src="details.js"></script>
 </body>
 </html>
