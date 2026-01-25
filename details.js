@@ -1,85 +1,96 @@
-// ১. URL থেকে ID সংগ্রহ করা
 const urlParams = new URLSearchParams(window.location.search);
 const propertyId = urlParams.get('id');
 
 if (!propertyId) {
-    alert("ভুল লিঙ্ক! হোম পেজে ফিরে যান।");
+    alert("প্রপার্টি আইডি পাওয়া যায়নি!");
     window.location.href = 'index.html';
 }
 
-// ২. ডেটাবেজ থেকে তথ্য আনা
-async function loadPropertyDetails() {
+async function loadFullDetails() {
     try {
         const doc = await db.collection('properties').doc(propertyId).get();
         if (!doc.exists) {
-            document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>দুঃখিত! এই বিজ্ঞাপনটি খুঁজে পাওয়া যায়নি।</h2>";
+            document.body.innerHTML = "<h2>বিজ্ঞাপনটি খুঁজে পাওয়া যায়নি।</h2>";
             return;
         }
 
         const data = doc.data();
-        displayUI(data);
+        renderCompleteUI(data);
     } catch (error) {
         console.error("Error:", error);
     }
 }
 
-// ৩. UI-তে ডেটা প্রদর্শন করা
-function displayUI(data) {
-    // বেসিক টেক্সট
+function renderCompleteUI(data) {
+    // ১. বেসিক তথ্য
     document.getElementById('title').innerText = data.title;
-    document.getElementById('catTag').innerText = data.category;
-    document.getElementById('descText').innerText = data.description || "কোনো বিবরণ নেই।";
     document.getElementById('price').innerText = `৳ ${data.price || data.monthlyRent || 'আলোচনা সাপেক্ষ'}`;
-    
-    // লোকেশন ফরম্যাট
-    const loc = data.location;
-    document.getElementById('location').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${loc.village}, ${loc.upazila}, ${loc.district}`;
+    document.getElementById('descText').innerText = data.description || "কোনো বিবরণ নেই।";
+    document.getElementById('catTag').innerText = data.category;
 
-    // ছবি সেটআপ
+    // ২. ইমেজ গ্যালারি (আগের মতোই)
     const displayImg = document.getElementById('displayImg');
     const thumbList = document.getElementById('thumbList');
     if (data.images && data.images.length > 0) {
         displayImg.src = data.images[0].url;
-        data.images.forEach((img, idx) => {
+        data.images.forEach(img => {
             const t = document.createElement('img');
             t.src = img.url;
-            t.onclick = () => {
-                displayImg.src = img.url;
-                document.querySelectorAll('.thumb-container img').forEach(i => i.classList.remove('active'));
-                t.classList.add('active');
-            };
-            if(idx === 0) t.classList.add('active');
+            t.onclick = () => displayImg.src = img.url;
             thumbList.appendChild(t);
         });
     }
 
-    // ৪. ডাইনামিক ফিল্ড জেনারেটর (অত্যাধুনিক পদ্ধতি)
+    // ৩. ডাইনামিক ফিল্ডস (সব তথ্য দেখানোর ম্যাজিক)
     const specGrid = document.getElementById('specGrid');
-    const fieldsToDisplay = {
-        'type': 'প্রপার্টির ধরন',
-        'areaSize': 'আয়তন',
-        'bedRooms': 'বেডরুম',
-        'bathRooms': 'বাথরুম',
-        'floorLevel': 'তলা',
-        'landType': 'জমির ধরন',
-        'facing': 'মুখ',
-        'bookingMoney': 'বুকিং মানি',
-        'mouja': 'মৌজা'
+    specGrid.innerHTML = ''; // ক্লিয়ার করা
+
+    // সকল সম্ভাব্য ফিল্ডের বাংলা নাম (ম্যাপিং)
+    const fieldLabels = {
+        // সাধারণ
+        type: 'প্রপার্টির ধরন',
+        areaSize: 'আয়তন/সাইজ',
+        bedRooms: 'বেডরুম',
+        bathRooms: 'বাথরুম',
+        floorLevel: 'তলা',
+        facing: 'মুখ (Facing)',
+        completionStatus: 'অবস্থা',
+        
+        // জমি সংক্রান্ত (Sale)
+        landType: 'জমির ধরন',
+        mouja: 'মৌজা',
+        dagNo: 'দাগ নম্বর',
+        khotianNo: 'খতিয়ান নম্বর',
+        bookingMoney: 'বুকিং মানি',
+        
+        // লোকেশন বিস্তারিত
+        district: 'জেলা',
+        upazila: 'উপজেলা',
+        union: 'ইউনিয়ন',
+        village: 'গ্রাম/এলাকা',
+        road: 'রাস্তা/ব্লক'
     };
 
-    for (const [key, label] of Object.entries(fieldsToDisplay)) {
-        if (data[key]) {
+    // ডেটা অবজেক্ট লুপ করে সব তথ্য বের করা
+    // এখানে আমরা 'location' এবং 'owner' অবজেক্টের ভেতরেও খুঁজবো
+    const allInfo = { ...data, ...data.location, ...data.owner };
+
+    Object.keys(fieldLabels).forEach(key => {
+        if (allInfo[key] && allInfo[key] !== "") {
             const box = document.createElement('div');
             box.className = 'spec-box';
-            box.innerHTML = `<small>${label}</small><b>${data[key]}</b>`;
+            box.innerHTML = `
+                <small style="color: #64748b; font-size: 13px;">${fieldLabels[key]}</small>
+                <b style="display: block; font-size: 16px; color: #1e293b;">${allInfo[key]}</b>
+            `;
             specGrid.appendChild(box);
         }
-    }
+    });
 
-    // ৫. কন্টাক্ট বাটন
+    // ৪. কন্টাক্ট ইনফো
+    document.getElementById('sellerName').innerText = data.ownerName || "বিজ্ঞাপনদাতা";
     document.getElementById('callLink').href = `tel:${data.phoneNumber}`;
     document.getElementById('waLink').href = `https://wa.me/88${data.phoneNumber}`;
 }
 
-// লোড শুরু
-loadPropertyDetails();
+loadFullDetails();
