@@ -1,4 +1,4 @@
-// ১. URL থেকে প্রপার্টি ID সংগ্রহ করা
+// ১. URL থেকে আইডি সংগ্রহ
 const urlParams = new URLSearchParams(window.location.search);
 const propertyId = urlParams.get('id');
 
@@ -7,7 +7,7 @@ if (!propertyId) {
     window.location.href = 'index.html';
 }
 
-// ২. ডেটাবেজ থেকে তথ্য লোড করা
+// ২. ডাটাবেজ থেকে তথ্য আনা
 async function loadFullDetails() {
     try {
         const doc = await db.collection('properties').doc(propertyId).get();
@@ -25,12 +25,12 @@ async function loadFullDetails() {
 
 // ৩. UI রেন্ডারিং ফাংশন
 function renderCompleteUI(data) {
-    // --- বেসিক হেডার তথ্য ---
-    document.getElementById('title').innerText = data.title;
+    // হেডার ও প্রাইস সেটআপ
+    document.getElementById('title').innerText = data.title || "শিরোনাম নেই";
     document.getElementById('price').innerText = `৳ ${data.price || data.monthlyRent || 'আলোচনা সাপেক্ষ'}`;
-    document.getElementById('catTag').innerText = data.category;
+    document.getElementById('catTag').innerText = data.category || "General";
 
-    // --- ইমেজ গ্যালারি সেটআপ ---
+    // ইমেজ গ্যালারি
     const displayImg = document.getElementById('displayImg');
     const thumbList = document.getElementById('thumbList');
     if (data.images && data.images.length > 0) {
@@ -50,102 +50,80 @@ function renderCompleteUI(data) {
     }
 
     const specGrid = document.getElementById('specGrid');
-    specGrid.innerHTML = ''; // ক্লিয়ার করা
+    specGrid.innerHTML = ''; 
 
-    // --- ১. পোস্টকারী ও ক্যাটাগরি তথ্য ---
-    addSectionHeader(specGrid, '👤 পোস্টের সাধারণ তথ্য');
-    addSpecItem(specGrid, 'পোস্টকারীর ধরন', data.posterType || 'ব্যক্তিগত');
-    addSpecItem(specGrid, 'পোস্টের ক্যাটাগরি', data.category);
-    addSpecItem(specGrid, 'প্রপার্টির ধরন', data.type);
+    // ফিল্ডের নামগুলো বাংলায় রূপান্তরের ম্যাপ
+    const labelMap = {
+        posterType: 'পোস্টকারীর ধরন', category: 'ক্যাটাগরি', type: 'প্রপার্টির ধরন',
+        areaSize: 'আয়তন/সাইজ', bedRooms: 'বেডরুম', bathRooms: 'বাথরুম',
+        floorLevel: 'তলা/লেভেল', facing: 'মুখ (Facing)', completionStatus: 'অবস্থা',
+        monthlyRent: 'মাসিক ভাড়া', price: 'মোট মূল্য', bookingMoney: 'বুকিং মানি',
+        donorName: 'দাতার নাম', mouja: 'মৌজা', dagNo: 'দাগ নম্বর',
+        dagNoType: 'দাগের ধরন', khotianNo: 'খতিয়ান নম্বর',
+        district: 'জেলা', upazila: 'উপজেলা', union: 'ইউনিয়ন/ওয়ার্ড',
+        village: 'গ্রাম/এলাকা', road: 'রাস্তা/ব্লক',
+        phoneNumber: 'প্রাথমিক ফোন', secondaryPhone: 'অতিরিক্ত ফোন', ownerName: 'মালিকের নাম'
+    };
 
-    // --- ২. বিক্রয়/ভাড়া বিবরণ ---
-    addSectionHeader(specGrid, '🏠 প্রপার্টি বিবরণ');
-    if (data.category === 'ভাড়া') {
-        addSpecItem(specGrid, 'মাসিক ভাড়া', data.monthlyRent ? `৳ ${data.monthlyRent}` : null);
-        addSpecItem(specGrid, 'বেডরুম', data.bedRooms);
-        addSpecItem(specGrid, 'বাথরুম', data.bathRooms);
-        addSpecItem(specGrid, 'ফ্লোর লেভেল', data.floorLevel);
-        addSpecItem(specGrid, 'মুখ (Facing)', data.facing);
-    } else {
-        addSpecItem(specGrid, 'মোট মূল্য', data.price ? `৳ ${data.price}` : null);
-        addSpecItem(specGrid, 'জমির আয়তন', data.areaSize);
-        addSpecItem(specGrid, 'জমির ধরন', data.landType);
-        addSpecItem(specGrid, 'অবস্থা (Status)', data.completionStatus);
-        addSpecItem(specGrid, 'বুকিং মানি', data.bookingMoney);
-    }
+    // যে ফিল্ডগুলো আমরা বক্সে দেখাব না (কারণ এগুলো আলাদাভাবে টাইটেল বা ডেসক্রিপশনে আছে)
+    const skipFields = ['title', 'description', 'images', 'status', 'location', 'owner', 'timestamp'];
 
-    // --- ৩. মালিকানা বিবরণ (শুধুমাত্র বিক্রয়ের জন্য) ---
-    if (data.category === 'বিক্রয়' && data.owner) {
-        addSectionHeader(specGrid, '📑 মালিকানা তথ্য');
-        addSpecItem(specGrid, 'দাতার নাম', data.owner.donorName);
-        addSpecItem(specGrid, 'মৌজা', data.owner.mouja);
-        addSpecItem(specGrid, 'দাগ নম্বর', data.owner.dagNo);
-        addSpecItem(specGrid, 'দাগের ধরন', data.owner.dagNoType);
-        addSpecItem(specGrid, 'খতিয়ান নম্বর', data.owner.khotianNo);
-    }
+    // --- ১. সকল সাধারণ ও ডাইনামিক ফিল্ড অটো-লুপ ---
+    addSectionHeader(specGrid, '📊 প্রপার্টির সকল তথ্য');
+    
+    // মূল অবজেক্টের ভেতর থেকে সব ডেটা বের করা
+    Object.keys(data).forEach(key => {
+        if (!skipFields.includes(key) && data[key]) {
+            addSpecItem(specGrid, labelMap[key] || key, data[key]);
+        }
+    });
 
-    // --- ৪. ঠিকানা ও অবস্থান ---
+    // --- ২. লোকেশন অবজেক্টের ভেতর থেকে সব তথ্য ---
     if (data.location) {
         addSectionHeader(specGrid, '📍 ঠিকানা ও অবস্থান');
-        addSpecItem(specGrid, 'জেলা', data.location.district);
-        addSpecItem(specGrid, 'উপজেলা', data.location.upazila);
-        addSpecItem(specGrid, 'ইউনিয়ন/ওয়ার্ড', data.location.union || data.location.wardNo);
-        addSpecItem(specGrid, 'গ্রাম/এলাকা', data.location.village);
-        addSpecItem(specGrid, 'রাস্তা/ব্লক', data.location.road);
+        Object.keys(data.location).forEach(key => {
+            if (data.location[key]) {
+                addSpecItem(specGrid, labelMap[key] || key, data.location[key]);
+            }
+        });
     }
 
-    // --- ৫. যোগাযোগের তথ্য ---
-    addSectionHeader(specGrid, '📞 যোগাযোগ');
-    addSpecItem(specGrid, 'নাম', data.ownerName || 'বিজ্ঞাপনদাতা');
-    addSpecItem(specGrid, 'প্রাথমিক ফোন', data.phoneNumber);
-    addSpecItem(specGrid, 'অতিরিক্ত ফোন', data.secondaryPhone);
+    // --- ৩. মালিকানা অবজেক্টের ভেতর থেকে সব তথ্য (বিক্রয় হলে) ---
+    if (data.owner) {
+        addSectionHeader(specGrid, '📑 মালিকানা ও দলিলাদি');
+        Object.keys(data.owner).forEach(key => {
+            if (data.owner[key]) {
+                addSpecItem(specGrid, labelMap[key] || key, data.owner[key]);
+            }
+        });
+    }
 
-    // --- ৬. প্রপার্টির বিস্তারিত বর্ণনা ---
+    // ডেসক্রিপশন
     document.getElementById('descText').innerText = data.description || "কোনো বিস্তারিত বর্ণনা দেওয়া হয়নি।";
 
-    // কন্টাক্ট অ্যাকশন বাটন
+    // বাটন অ্যাকশন
     document.getElementById('callLink').href = `tel:${data.phoneNumber}`;
     document.getElementById('waLink').href = `https://wa.me/88${data.phoneNumber}`;
 }
 
-// সাহায্যকারী ফাংশন: সেকশন টাইটেল তৈরি
+// সাহায্যকারী ফাংশন: সেকশন টাইটেল
 function addSectionHeader(container, title) {
     const header = document.createElement('div');
-    header.style = `
-        grid-column: 1 / -1; 
-        margin-top: 25px; 
-        padding: 8px 15px; 
-        background: #f1f5f9; 
-        color: #334155; 
-        font-weight: 700; 
-        border-radius: 8px; 
-        border-left: 5px solid #2563eb;
-        font-size: 16px;
-    `;
+    header.style = `grid-column: 1 / -1; margin-top: 25px; padding: 10px 15px; background: #eef2f6; color: #1e293b; font-weight: 700; border-radius: 8px; border-left: 5px solid #2563eb; font-size: 16px;`;
     header.innerText = title;
     container.appendChild(header);
 }
 
-// সাহায্যকারী ফাংশন: প্রতিটি তথ্যের বক্স তৈরি
+// সাহায্যকারী ফাংশন: প্রতিটি তথ্যের বক্স
 function addSpecItem(container, label, value) {
-    if (!value || value === "" || value === undefined) return;
+    if (typeof value === 'object') return; // ছবি বা অন্য অবজেক্ট বাদ দিতে
     const box = document.createElement('div');
-    box.className = 'spec-box';
-    box.style = `
-        padding: 12px;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    `;
+    box.style = `padding: 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);`;
     box.innerHTML = `
-        <small style="color: #64748b; font-size: 12px; font-weight: 500;">${label}</small>
+        <small style="color: #64748b; font-size: 12px; font-weight: 500; text-transform: capitalize;">${label}</small>
         <span style="color: #1e293b; font-size: 15px; font-weight: 600;">${value}</span>
     `;
     container.appendChild(box);
 }
 
-// ডাটা লোড শুরু করা
 loadFullDetails();
