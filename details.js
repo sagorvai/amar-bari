@@ -1,132 +1,93 @@
-// 1️⃣ URL থেকে ID
-const urlParams = new URLSearchParams(window.location.search);
-const propertyId = urlParams.get("id");
+const params = new URLSearchParams(location.search);
+const id = params.get('id');
+if (!id) location.href = 'index.html';
 
-if (!propertyId) {
-    alert("প্রপার্টি আইডি পাওয়া যায়নি!");
-    location.href = "index.html";
+db.collection('properties').doc(id).get().then(doc => {
+  if (!doc.exists) return alert('ডেটা পাওয়া যায়নি');
+  const data = doc.data();
+  renderAll(data);
+});
+
+function renderAll(data) {
+  renderHeader(data);
+  renderGallery(data.images || []);
+  renderOverview(data);
+  renderPriceTerms(data);
+  renderLocation(data.location || {});
+  renderPhysical(data);
+  renderOwnership(data.owner || {});
+  renderContact(data);
+  document.getElementById('description').innerText = data.description || '';
 }
 
-// 2️⃣ Firestore থেকে ডেটা
-async function loadFullDetails() {
-    try {
-        const snap = await db.collection("properties").doc(propertyId).get();
+/* ---------- HELPERS ---------- */
 
-        if (!snap.exists) {
-            document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px'>বিজ্ঞাপন পাওয়া যায়নি</h2>";
-            return;
-        }
+function addBox(parent, label, value) {
+  if (!value) return;
+  parent.innerHTML += `
+    <div class="box">
+      <div class="label">${label}</div>
+      <div class="value">${value}</div>
+    </div>`;
+}
 
-        renderCompleteUI(snap.data());
-    } catch (err) {
-        console.error(err);
-        alert("ডেটা লোড করতে সমস্যা হয়েছে");
+/* ---------- SECTIONS ---------- */
+
+function renderHeader(d) {
+  title.innerText = d.title || '';
+  shortLocation.innerText = `${d.location?.district || ''}, ${d.location?.upazila || ''}`;
+  price.innerText = d.price ? `৳ ${d.price}` : d.monthlyRent ? `৳ ${d.monthlyRent} / মাস` : '';
+}
+
+function renderGallery(images) {
+  if (!images.length) return;
+  displayImg.src = images[0].url;
+  images.forEach(img => {
+    thumbList.innerHTML += `<img src="${img.url}" onclick="displayImg.src='${img.url}'">`;
+  });
+}
+
+function renderOverview(d) {
+  const o = overview;
+  addBox(o, 'প্রপার্টির ধরন', d.type);
+  addBox(o, 'ক্যাটাগরি', d.category);
+  addBox(o, 'বিজ্ঞাপনদাতা', d.listerType);
+  addBox(o, 'ফেসিং', d.facing);
+  addBox(o, 'প্রপার্টির বয়স', d.propertyAge);
+  if (Array.isArray(d.utilities)) addBox(o, 'সুবিধাসমূহ', d.utilities.join(', '));
+}
+
+function renderPriceTerms(d) {
+  const p = priceTerms;
+  addBox(p, 'মূল্য', d.price);
+  addBox(p, 'মাসিক ভাড়া', d.monthlyRent);
+  addBox(p, 'অ্যাডভান্স', d.advance);
+  addBox(p, 'বাসা ছাড়ার তারিখ', d.moveInDate);
+}
+
+function renderLocation(loc) {
+  const l = locationInfo;
+  Object.entries(loc).forEach(([k,v]) => addBox(l, k, v));
+}
+
+function renderPhysical(d) {
+  const p = physicalDetails;
+  ['rooms','bathrooms','kitchen','areaSqft','landArea','floors','commercialArea','roadWidth']
+    .forEach(k => addBox(p, k, d[k]));
+}
+
+function renderOwnership(owner) {
+  const o = ownership;
+  if (!Object.keys(owner).length) {
+    document.getElementById('legalSection').style.display='none';
+    return;
+  }
+  Object.entries(owner).forEach(([k,v]) => addBox(o, k, v));
+}
+
+function renderContact(d) {
+  posterType.innerText = d.listerType || '';
+  sellerName.innerText = d.owner?.donorName || '';
+  callBtn.href = `tel:${d.phoneNumber}`;
+  waBtn.href = `https://wa.me/88${d.phoneNumber}`;
     }
-}
-
-// 3️⃣ UI Render
-function renderCompleteUI(data) {
-
-    // ===== BASIC INFO =====
-    document.getElementById("title").innerText = data.title || "শিরোনাম নেই";
-    document.getElementById("catTag").innerText = data.category || "General";
-
-    // ===== PRICE =====
-    let priceText = "আলোচনা সাপেক্ষ";
-    if (data.price) priceText = `৳ ${data.price}`;
-    if (data.monthlyRent) priceText = `৳ ${data.monthlyRent} / মাস`;
-    document.getElementById("price").innerText = priceText;
-
-    // ===== LOCATION LINE =====
-    if (data.location) {
-        const loc = [
-            data.location.village,
-            data.location.union,
-            data.location.upazila,
-            data.location.district
-        ].filter(Boolean).join(", ");
-
-        document.getElementById("location").innerHTML =
-            `<i class="fas fa-map-marker-alt"></i> ${loc}`;
-    }
-
-    // ===== IMAGES =====
-    const displayImg = document.getElementById("displayImg");
-    const thumbList = document.getElementById("thumbList");
-
-    if (Array.isArray(data.images) && data.images.length) {
-        displayImg.src = data.images[0].url;
-        thumbList.innerHTML = "";
-
-        data.images.forEach((img, i) => {
-            const t = document.createElement("img");
-            t.src = img.url;
-            if (i === 0) t.classList.add("active");
-            t.onclick = () => {
-                displayImg.src = img.url;
-                document.querySelectorAll(".thumb-container img")
-                    .forEach(x => x.classList.remove("active"));
-                t.classList.add("active");
-            };
-            thumbList.appendChild(t);
-        });
-    }
-
-    // ===== SPEC GRID =====
-    const specGrid = document.getElementById("specGrid");
-    specGrid.innerHTML = "";
-
-    const labelMap = {
-        posterType: "পোস্টকারীর ধরন",
-        type: "প্রপার্টির ধরন",
-        areaSize: "আয়তন",
-        bedRooms: "বেডরুম",
-        bathRooms: "বাথরুম",
-        floorLevel: "তলা",
-        facing: "ফেসিং",
-        completionStatus: "অবস্থা"
-    };
-
-    addSectionHeader(specGrid, "📊 প্রপার্টি তথ্য");
-
-    Object.keys(labelMap).forEach(key => {
-        if (data[key]) {
-            addSpecItem(specGrid, labelMap[key], data[key]);
-        }
-    });
-
-    // ===== DESCRIPTION =====
-    document.getElementById("descText").innerText =
-        data.description || "কোনো বর্ণনা দেওয়া হয়নি";
-
-    // ===== SELLER INFO =====
-    document.getElementById("sellerName").innerText =
-        data.ownerName || data.donorName || "বিজ্ঞাপনদাতা";
-
-    const phone =
-        data.phoneNumber ||
-        data.owner?.phoneNumber ||
-        data.contact?.phone;
-
-    if (phone) {
-        document.getElementById("callLink").href = `tel:${phone}`;
-        document.getElementById("waLink").href = `https://wa.me/88${phone}`;
-    }
-}
-
-// ===== HELPERS =====
-function addSectionHeader(container, title) {
-    const d = document.createElement("div");
-    d.style = "grid-column:1/-1;font-weight:700;margin-top:20px";
-    d.innerText = title;
-    container.appendChild(d);
-}
-
-function addSpecItem(container, label, value) {
-    const box = document.createElement("div");
-    box.className = "spec-box";
-    box.innerHTML = `<small>${label}</small><b>${value}</b>`;
-    container.appendChild(box);
-}
-
-loadFullDetails();
