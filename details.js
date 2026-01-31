@@ -7,7 +7,7 @@ if (!propertyId) {
     window.location.href = 'index.html';
 }
 
-// ২. ডাটাবেজ থেকে তথ্য আনা
+// ২. ডাটাবেজ থেকে তথ্য লোড করা
 async function loadPropertyDetails() {
     try {
         const doc = await db.collection('properties').doc(propertyId).get();
@@ -22,11 +22,17 @@ async function loadPropertyDetails() {
     }
 }
 
-// ৩. সিরিয়াল অনুযায়ী ডাটা রেন্ডারিং
+// ৩. UI রেন্ডারিং ফাংশন
 function renderStructuredUI(data) {
-    // --- ক. হেডার ও ছবি (First Impression) ---
-    document.getElementById('title').innerText = data.title;
-    document.getElementById('price').innerText = `৳ ${data.price || data.monthlyRent || 'আলোচনা সাপেক্ষ'}`;
+    // --- ক. হেডার ও ছবি ---
+    document.getElementById('title').innerText = data.title || "শিরোনাম নেই";
+    
+    // দাম ও ইউনিট সেটআপ
+    let priceDisplay = "আলোচনা সাপেক্ষ";
+    if (data.price) priceDisplay = `৳ ${data.price}`;
+    else if (data.monthlyRent) priceDisplay = `৳ ${data.monthlyRent} / মাস`;
+    document.getElementById('price').innerText = priceDisplay;
+    
     document.getElementById('catTag').innerText = data.category;
 
     const displayImg = document.getElementById('displayImg');
@@ -50,27 +56,32 @@ function renderStructuredUI(data) {
     const specGrid = document.getElementById('specGrid');
     specGrid.innerHTML = ''; 
 
-    // --- ১. পোস্টের ধরণ (Basic Info) ---
+    // --- ১. সাধারণ তথ্য ---
     addSectionHeader(specGrid, '📋 সাধারণ তথ্য');
     addSpecItem(specGrid, 'বিজ্ঞাপন দাতা', data.posterType);
     addSpecItem(specGrid, 'ক্যাটাগরি', data.category);
     addSpecItem(specGrid, 'প্রপার্টির ধরণ', data.type);
 
-    // --- ২. প্রপার্টি বিবরণ (Property Features) ---
+    // --- ২. প্রপার্টি বিবরণ (ইন্টারনাল ডিটেইলস) ---
+    // এখানে আপনার ডাটাবেজের সঠিক ফিল্ড নামগুলো ব্যবহার করা হয়েছে
     addSectionHeader(specGrid, '🏠 প্রপার্টির অভ্যন্তরীণ বিবরণ');
-    if (data.category === 'ভাড়া') {
-        addSpecItem(specGrid, 'বেডরুম', data.bedRooms);
-        addSpecItem(specGrid, 'বাথরুম', data.bathRooms);
-        addSpecItem(specGrid, 'তলা/ফ্লোর', data.floorLevel);
+    
+    if (data.category === 'ভাড়া' || data.type === 'ফ্ল্যাট' || data.type === 'বাড়ি') {
+        addSpecItem(specGrid, 'বেডরুম', data.bedRooms ? `${data.bedRooms} টি` : null);
+        addSpecItem(specGrid, 'বাথরুম', data.bathRooms ? `${data.bathRooms} টি` : null);
+        addSpecItem(specGrid, 'তলা/ফ্লোর', data.floorLevel ? `${data.floorLevel} তলা` : null);
+        addSpecItem(specGrid, 'আয়তন', data.areaSize ? `${data.areaSize} স্কয়ার ফিট` : null);
         addSpecItem(specGrid, 'Facing (মুখ)', data.facing);
-    } else {
-        addSpecItem(specGrid, 'জমির আয়তন', data.areaSize);
+    } 
+    
+    if (data.category === 'বিক্রয়') {
+        addSpecItem(specGrid, 'জমির আয়তন', data.areaSize ? `${data.areaSize} শতাংশ/কাঠা` : null);
         addSpecItem(specGrid, 'জমির ধরণ', data.landType);
         addSpecItem(specGrid, 'বর্তমান অবস্থা', data.completionStatus);
-        addSpecItem(specGrid, 'বুকিং মানি', data.bookingMoney);
+        addSpecItem(specGrid, 'বুকিং মানি', data.bookingMoney ? `৳ ${data.bookingMoney}` : null);
     }
 
-    // --- ৩. ঠিকানা ও অবস্থান (Location) ---
+    // --- ৩. ঠিকানা ও অবস্থান ---
     if (data.location) {
         addSectionHeader(specGrid, '📍 ঠিকানা ও অবস্থান');
         addSpecItem(specGrid, 'জেলা', data.location.district);
@@ -80,23 +91,22 @@ function renderStructuredUI(data) {
         addSpecItem(specGrid, 'রাস্তা/ব্লক', data.location.road);
     }
 
-    // --- ৪. মালিকানা বিবরণ (Ownership - Only for Sale) ---
+    // --- ৪. মালিকানা বিবরণ (Only for Sale) ---
     if (data.category === 'বিক্রয়' && data.owner) {
         addSectionHeader(specGrid, '📑 মালিকানা ও দলিলাদি');
         addSpecItem(specGrid, 'দাতার নাম', data.owner.donorName);
         addSpecItem(specGrid, 'মৌজা', data.owner.mouja);
         addSpecItem(specGrid, 'দাগ নম্বর', data.owner.dagNo);
         addSpecItem(specGrid, 'খতিয়ান নম্বর', data.owner.khotianNo);
-        addSpecItem(specGrid, 'দাগের ধরণ', data.owner.dagNoType);
     }
 
-    // --- ৫. যোগাযোগ (Contact) ---
+    // --- ৫. যোগাযোগ ---
     addSectionHeader(specGrid, '📞 যোগাযোগের মাধ্যম');
-    addSpecItem(specGrid, 'যোগাযোগের নাম', data.ownerName);
-    addSpecItem(specGrid, 'প্রাথমিক মোবাইল', data.phoneNumber);
-    addSpecItem(specGrid, 'অন্যান্য মোবাইল', data.secondaryPhone);
+    addSpecItem(specGrid, 'নাম', data.ownerName);
+    addSpecItem(specGrid, 'মোবাইল', data.phoneNumber);
+    addSpecItem(specGrid, 'অন্যান্য ফোন', data.secondaryPhone);
 
-    // --- ৬. বিস্তারিত বর্ণনা (Long Description) ---
+    // --- ৬. বিস্তারিত বর্ণনা ---
     document.getElementById('descText').innerText = data.description || "কোনো বর্ণনা নেই।";
 
     // বাটন লিঙ্ক
@@ -104,40 +114,22 @@ function renderStructuredUI(data) {
     document.getElementById('waLink').href = `https://wa.me/88${data.phoneNumber}`;
 }
 
-// স্টাইলিশ সেকশন হেডার
+// সেকশন হেডার স্টাইল
 function addSectionHeader(container, title) {
     const header = document.createElement('div');
-    header.style = `
-        grid-column: 1 / -1; 
-        margin-top: 30px; 
-        padding: 12px; 
-        background: linear-gradient(90deg, #f8fafc 0%, #ffffff 100%);
-        color: #334155; 
-        font-weight: bold; 
-        border-bottom: 2px solid #e2e8f0;
-        display: flex;
-        align-items: center;
-        font-size: 18px;
-    `;
+    header.style = "grid-column: 1 / -1; margin-top: 25px; padding: 10px; background: #f8fafc; border-left: 5px solid #2563eb; font-weight: bold; font-size: 16px; color: #334155;";
     header.innerText = title;
     container.appendChild(header);
 }
 
-// ডাটা বক্স
+// ডাটা বক্স স্টাইল (লেবেল ও ভ্যালু ইউনিটসহ)
 function addSpecItem(container, label, value) {
-    if (!value || value === "" || value === undefined) return;
+    if (!value || value === "" || value === "undefined" || value === null) return;
     const box = document.createElement('div');
-    box.className = 'info-box';
-    box.style = `
-        padding: 15px;
-        border-bottom: 1px solid #f1f5f9;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    `;
+    box.style = "padding: 12px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #fff;";
     box.innerHTML = `
         <span style="color: #64748b; font-size: 14px;">${label}</span>
-        <span style="color: #1e293b; font-weight: 600;">${value}</span>
+        <span style="color: #1e293b; font-weight: 600; font-size: 15px;">${value}</span>
     `;
     container.appendChild(box);
 }
