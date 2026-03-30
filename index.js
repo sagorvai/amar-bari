@@ -25,26 +25,31 @@ const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
 const globalSearchInput = document.getElementById('globalSearchInput');
 
-// --- প্রোফাইল ইমেজ লোড করার ফাংশন ---
+// --- সব পেজের হেডারে প্রোফাইল ইমেজ লোড করার সঠিক ফাংশন ---
 async function loadProfilePicture(user) {
-    if (profileImage && defaultProfileIcon) {
+    // তোমার হেডারের ইমেজ এবং আইকন আইডি অনুযায়ী এগুলো নিশ্চিত করো
+    const headerProfileImage = document.getElementById('profileImage'); 
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+    const profileImageWrapper = document.getElementById('profileImageWrapper');
+
+    if (headerProfileImage && defaultProfileIcon) {
         try {
+            // Firestore-এর 'users' কালেকশন থেকে ডাটা নেওয়া
             const doc = await db.collection('users').doc(user.uid).get();
-            if (doc.exists) {
-                const data = doc.data();
-                if (data.profilePictureUrl) {
-                    profileImage.src = data.profilePictureUrl;
-                    profileImage.style.display = 'block';
-                    defaultProfileIcon.style.display = 'none';
-                } else {
-                    profileImage.style.display = 'none';
-                    defaultProfileIcon.style.display = 'block';
-                }
+            
+            if (doc.exists && doc.data().profilePic) {
+                const userData = doc.data();
+                // Firestore থেকে পাওয়া ছবির URL সেট করা
+                headerProfileImage.src = userData.profilePic;
+                headerProfileImage.style.display = 'block';
+                defaultProfileIcon.style.display = 'none';
+            } else {
+                // যদি Firestore-এ ছবি না থাকে, তবে Firebase Auth-এর ডিফল্ট ছবি দেখা বা আইকন রাখা
+                headerProfileImage.style.display = 'none';
+                defaultProfileIcon.style.display = 'block';
             }
         } catch (error) {
-            console.error("Profile picture load failed:", error);
-            profileImage.style.display = 'none';
-            defaultProfileIcon.style.display = 'block';
+            console.error("Header Profile Load Error:", error);
         }
     }
 }
