@@ -57,6 +57,14 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) { console.error("Error loading profile:", e); }
     }
 
+    // নতুন পোস্ট বাটনে ক্লিক করলে post.html এ যাবে
+const floatingPostBtn = document.getElementById('floating-post-btn');
+if (floatingPostBtn) {
+    floatingPostBtn.onclick = () => {
+        window.location.href = 'post.html';
+    };
+}
+    
     // ৩. প্রপার্টি লিস্ট লোড করা
     async function loadUserProperties(userId) {
         propertiesList.innerHTML = '<p>লোড হচ্ছে...</p>';
