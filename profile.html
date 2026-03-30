@@ -5,297 +5,111 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>প্রোফাইল ড্যাশবোর্ড - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
-    
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-    <script>
-      // **আপনার বিদ্যমান Firebase কনফিগারেশন**
-      const firebaseConfig = {
-        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
-        authDomain: "amar-bari-website.firebaseapp.com",
-        projectId: "amar-bari-website",
-        storageBucket: "amar-bari-website.firebasestorage.app",
-        messagingSenderId: "719084789035",
-        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
-      };
-      
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-    </script>
-    
     <style>
-        /* CSS ভেরিয়েবল */
-        :root {
-            --primary-color: #007bff;
-        }
+        /* প্রোফাইল স্পেসিফিক আধুনিক স্টাইল */
+        .profile-header-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 20px; margin-bottom: 25px; }
+        .profile-avatar-big { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #2ecc71; }
+        
+        .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 15px; border-radius: 10px; text-align: center; border-bottom: 4px solid #2ecc71; }
+        .stat-card h4 { margin: 5px 0; color: #7f8c8d; font-size: 14px; }
+        .stat-card p { font-size: 22px; font-weight: bold; margin: 0; color: #2c3e50; }
 
-        /* গ্লোবাল ফিক্স */
-        body {
-            margin: 0; 
-            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
-            font-family: Arial, sans-serif; 
-        }
-
-        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
-        .main-header {
-             position: fixed; 
-             top: 0;
-             left: 0;
-             right: 0;
-             background-color: white; 
-             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-             z-index: 1000; 
-             padding-bottom: 0;
-        }
+        .profile-tabs { display: flex; gap: 10px; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; border: none; background: none; cursor: pointer; font-size: 16px; font-weight: 600; color: #7f8c8d; transition: 0.3s; }
+        .tab-btn.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; }
         
-        /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
-        .sidebar {
-            z-index: 1050; 
-        }
-        .overlay {
-            z-index: 1040; 
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         
-        .header-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between; 
-            padding: 8px 15px; 
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            flex-shrink: 0; 
-        }
-
-        .menu-icon {
-             margin-right: 0; 
-             cursor: pointer;
-        }
-        
-        .logo-title {
-            display: flex;
-            align-items: center;
-            font-size: 1.8em; 
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-left: 0px; 
-            text-decoration: none; 
-            white-space: nowrap; 
-        }
-        .logo-title:visited {
-             color: var(--primary-color);
-        }
-        .logo-icon {
-            margin-right: 5px;
-        }
-
-        /* ডানের ব্লক (আইকন) ফিক্স */
-        .header-actions {
-             display: flex;
-             align-items: center;
-             gap: 12px; 
-             position: relative; 
-             flex-shrink: 0; 
-        }
-        
-        /* কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
-        .icon-wrapper {
-             position: relative;
-             display: inline-flex;
-             cursor: pointer;
-             align-items: center; 
-             justify-content: center;
-             height: 30px; 
-             width: 30px; 
-        }
-        
-        /* কমন নোটিফিকেশন কাউন্ট স্টাইল */
-        .notification-count {
-            position: absolute;
-            top: -5px; 
-            right: -8px; 
-            background-color: red;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 5px; 
-            font-size: 0.7em;
-            font-weight: bold;
-            min-width: 10px;
-            text-align: center;
-            line-height: 1; 
-            display: none; 
-        }
-        
-        /* আইকন কালার */
-        .notification-icon { color: var(--primary-color); }
-        .message-icon { color: var(--primary-color); }
-        .post-icon-header { color: #28a745; }
-
-        /* প্রোফাইল ইমেজ স্টাইল */
-        .profile-image-wrapper {
-            cursor: pointer;
-            width: 35px; 
-            height: 35px;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 2px solid var(--primary-color); 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #profileImage {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
-        @media (max-width: 600px) {
-            body {
-                padding-top: 46px; 
-            }
-            .logo-title {
-                 font-size: 1.5em; 
-                 margin-left: 0px;
-            }
-            .header-actions {
-                 gap: 8px; 
-            }
-            .profile-image-wrapper {
-                 width: 30px; 
-                 height: 30px;
-            }
-        }
-        
+        .edit-badge { background: #f1f2f6; padding: 4px 10px; border-radius: 20px; font-size: 12px; cursor: pointer; color: #2ecc71; display: inline-flex; align-items: center; gap: 5px; }
     </style>
 </head>
 <body>
-
-    <header class="main-header">
-        <div class="header-top">
-            
-            <div class="header-left">
-                <i class="material-icons menu-icon" id="menuButton">menu</i>
-                
-                <a href="index.html" class="logo-title">
-                   <i class="material-icons logo-icon">home</i>  
-                    <span>আমার বাড়ি.কম</span>
-                </a>
-            </div>
-            
-            <div class="header-actions">
-                
-                <div class="icon-wrapper" id="notificationButton"> 
-                    <i class="material-icons notification-icon">notifications</i>
-                    <span class="notification-count" id="notification-count"></span>
+    <main class="main-content container">
+        <div class="profile-header-card">
+            <img src="default-avatar.png" id="user-avatar" class="profile-avatar-big" alt="User">
+            <div class="user-info">
+                <h2 id="display-name" style="margin:0;">লোড হচ্ছে...</h2>
+                <p id="user-email" style="color: #7f8c8d; margin: 5px 0;"></p>
+                <div class="edit-badge" id="edit-profile-show-btn">
+                    <i class="material-icons" style="font-size: 16px;">edit</i> প্রোফাইল এডিট করুন
                 </div>
-                
-                <div class="icon-wrapper" id="headerPostButton">
-                    <i class="material-icons post-icon-header">add_circle_outline</i>
-                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
-                </div>
-                
-                <div class="icon-wrapper" id="messageButton">
-                    <i class="material-icons message-icon">message</i>
-                    <span class="notification-count" id="message-count"></span>
-                </div>
-                
-                <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
-                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
-                
-                <div class="notification-dropdown" id="notification-dropdown">
-                    </div>
             </div>
         </div>
-        
-    </header>
-    
-    <div class="sidebar" id="sidebar">
-        <nav>
-            <a href="index.html" class="sidebar-logo">
-                <i class="material-icons">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
-            
-            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
-            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            
-            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
-            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
-            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            
-            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
-        </nav>
-    </div>
 
-    <div class="overlay" id="overlay"></div>
-
-    <main class="main-content container">
-        <div id="profile-dashboard">
-            <div class="profile-header">
-                <img id="user-avatar" src="https://via.placeholder.com/150x150?text=User" alt="User Avatar" class="avatar">
-                <div>
-                    <h2 id="display-name">ব্যবহারকারীর নাম</h2>
-                    <p id="user-email">email@example.com</p>
-                    <p id="user-phone">ফোন নম্বর: <span class="data-placeholder">যোগ করা হয়নি</span></p>
-                    <button id="edit-profile-show-btn" class="primary-button" style="margin-top: 10px;">প্রোফাইল সম্পাদনা করুন</button>
-                </div>
+        <div class="stats-container">
+            <div class="stat-card">
+                <h4>আমার পোস্ট</h4>
+                <p id="total-posts-count">০</p>
             </div>
-
-            <div id="edit-profile-section" class="edit-section" style="display: none;">
-                <h3>প্রোফাইল তথ্য আপডেট</h3>
-                <form id="edit-profile-form">
-                    <div class="input-group">
-                        <label for="edit-full-name">সম্পূর্ণ নাম:</label>
-                        <input type="text" id="edit-full-name">
-                    </div>
-                    <div class="input-group">
-                        <label for="edit-phone-number">ফোন নম্বর:</label>
-                        <input type="tel" id="edit-phone-number">
-                    </div>
-                    <div class="input-group">
-                        <label for="edit-address">ঠিকানা:</label>
-                        <textarea id="edit-address" rows="3"></textarea>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="edit-profile-picture">প্রোফাইল ছবি আপলোড:</label>
-                        <input type="file" id="edit-profile-picture" accept="image/*">
-                    </div>
-                    
-                    <button type="submit" id="update-profile-btn">আপডেট সংরক্ষণ করুন</button>
-                    <button type="button" id="edit-profile-hide-btn" style="background-color: #95a5a6; margin-top: 10px;">বাতিল করুন</button>
-                </form>
+            <div class="stat-card">
+                <h4>সেভ করা</h4>
+                <p id="saved-posts-count">০</p>
             </div>
+            <div class="stat-card">
+                <h4>ভেরিফিকেশন</h4>
+                <p id="verification-status" style="font-size: 14px; color: #e67e22;">Pending</p>
+            </div>
+        </div>
 
+        <div class="profile-tabs">
+            <button class="tab-btn active" onclick="openTab(event, 'my-posts')">আমার লিস্টিং</button>
+            <button class="tab-btn" onclick="openTab(event, 'saved-posts')">পছন্দের তালিকা</button>
+        </div>
 
-            <h3>আমার আপলোড করা প্রপার্টিগুলো</h3>
-            
-            <div id="my-properties-list" class="property-grid" style="margin-top: 20px;">
+        <div id="my-posts" class="tab-content active">
+            <div id="my-properties-list" class="property-grid"></div>
+            <p id="empty-posts-message" style="display:none; text-align:center; padding: 40px; color: #95a5a6;">আপনি এখনও কোনো পোস্ট করেননি।</p>
+        </div>
+
+        <div id="saved-posts" class="tab-content">
+            <div id="saved-properties-list" class="property-grid"></div>
+            <p style="text-align:center; padding: 40px; color: #95a5a6;">আপনার পছন্দের কোনো প্রপার্টি সেভ করা নেই।</p>
+        </div>
+
+        <div id="edit-profile-section" style="display: none; background: white; padding: 20px; border-radius: 12px; margin-top: 20px;">
+            <h3>প্রোফাইল আপডেট করুন</h3>
+            <form id="edit-profile-form">
+                <div class="input-group">
+                    <label>পুরো নাম:</label>
+                    <input type="text" id="edit-full-name" required>
                 </div>
-
-            <p id="empty-properties-message" class="no-results-message" style="display: none; grid-column: 1 / -1;">আপনি এখনও কোনো প্রপার্টি আপলোড করেননি।</p>
-
+                <div class="input-group">
+                    <label>ফোন নম্বর:</label>
+                    <input type="tel" id="edit-phone-number">
+                </div>
+                <div class="input-group">
+                    <label>ছবি পরিবর্তন:</label>
+                    <input type="file" id="edit-profile-picture" accept="image/*">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="submit" class="submit-button" id="update-profile-btn">সংরক্ষণ করুন</button>
+                    <button type="button" id="edit-profile-hide-btn" style="background:#bdc3c7;" class="submit-button">বাতিল</button>
+                </div>
+            </form>
         </div>
     </main>
 
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
-        </div>
-    </footer>
-    
-    <script src="profile.js"></script> 
+    <script src="profile.js"></script>
+    <script>
+        // ট্যাব পরিবর্তনের সহজ ফাংশন
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) { tabcontent[i].classList.remove("active"); }
+            tablinks = document.getElementsByClassName("tab-btn");
+            for (i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+    </script>
 </body>
-    </html>
+</html>
