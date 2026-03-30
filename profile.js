@@ -47,16 +47,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const doc = await db.collection('users').doc(user.uid).get();
             if (doc.exists) {
                 const data = doc.data();
-                const fullName = data.fullName || "ইউজার নাম নেই";
-                const photoUrl = data.profilePic || 'default-avatar.png';
+                displayNameEl.textContent = data.fullName || "ইউজার নাম নেই";
+                userAvatar.src = data.profilePic || 'default-avatar.png';
                 
-                displayNameEl.textContent = fullName;
-                userAvatar.src = photoUrl;
-                
-                // পপ-আপ ফর্মে আগের তথ্য সেট করা
+                // পপ-আপ ফর্মে ডিফল্ট ভ্যালু সেট করা
                 document.getElementById('edit-full-name').value = data.fullName || "";
-                document.getElementById('edit-phone-number').value = data.phone || "";
-                avatarPreview.src = photoUrl; // পপ-আপের ভেতরে প্রিভিউ
+                avatarPreview.src = data.profilePic || 'default-avatar.png';
             }
         } catch (e) { console.error("Error loading profile:", e); }
     }
@@ -76,95 +72,79 @@ document.addEventListener('DOMContentLoaded', function() {
 
             snapshot.forEach(doc => {
                 const p = doc.data();
-                const firstImg = (p.images && p.images.length > 0) ? p.images[0].url : 'placeholder.jpg';
-                
                 const card = document.createElement('div');
                 card.className = 'property-card';
                 card.style.cursor = "pointer";
                 card.onclick = () => showPropertyDetails(doc.id, p);
                 
                 card.innerHTML = `
-                    <img src="${firstImg}" style="width:100%; height:150px; object-fit:cover; border-radius:8px;">
+                    <img src="${(p.images && p.images[0]) ? p.images[0].url : 'placeholder.jpg'}" style="width:100%; height:150px; object-fit:cover; border-radius:8px;">
                     <h4 style="margin:10px 0 5px 0;">${p.title || 'শিরোনামহীন'}</h4>
-                    <p style="color:#2ecc71; font-weight:bold;">৳ ${p.price || p.rent || 'আলোচনা সাপেক্ষ'}</p>
+                    <p style="color:#2ecc71; font-weight:bold;">৳ ${p.price || p.rent || '০'}</p>
                 `;
                 propertiesList.appendChild(card);
             });
         } catch (e) { console.error(e); }
     }
 
-    // ৪. প্রোফাইল এডিট পপ-আপ কন্ট্রোল (FIXED)
+    // ৪. প্রোফাইল এডিট পপ-আপ কন্ট্রোল
     if (showEditBtn) showEditBtn.onclick = () => editModal.style.display = 'block';
     if (closeEditBtn) closeEditBtn.onclick = () => editModal.style.display = 'none';
     
-    // পপ-আপের বাইরে ক্লিক করলে বন্ধ হবে
-    window.onclick = (event) => {
-        if (event.target == editModal) {
-            editModal.style.display = 'none';
-        }
+    // ৫. প্রিভিউ ইমেজ লোড
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => avatarPreview.src = e.target.result;
+                reader.readAsDataURL(file);
+            }
+        });
     }
 
-    // ৫. ছবি নির্বাচনের সাথে সাথে প্রিভিউ দেখানো
-    fileInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            // ফাইলের সাইজ চেক (Max 2MB)
-            if (file.size > 2 * 1024 * 1024) {
-                alert("ছবি ২ এমবি-র কম হতে হবে।");
-                this.value = ""; return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                avatarPreview.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // ৬. প্রোফাইল আপডেট লজিক
-editForm.onsubmit = async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('update-profile-btn');
-    const user = auth.currentUser;
-    const newName = document.getElementById('edit-full-name').value;
-    const file = fileInput.files[0];
-    
-    btn.disabled = true;
-    btn.textContent = "আপডেট হচ্ছে...";
-    
-    try {
-        let updateData = { 
-            fullName: newName, 
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
-        };
-
-        if (file) {
-            // ফাইলের নাম ইউনিক করা
-            const fileName = `avatar_${Date.now()}_${file.name}`;
-            const storageRef = storage.ref(`profile_pics/${user.uid}/${fileName}`);
+    // ৬. প্রোফাইল আপডেট লজিক (একদম সঠিক ফর্ম সাবমিট)
+    if (editForm) {
+        editForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('update-profile-btn');
+            const user = auth.currentUser;
+            const newName = document.getElementById('edit-full-name').value;
+            const file = fileInput.files[0];
             
-            // আপলোড শুরু
-            const snapshot = await storageRef.put(file);
-            const downloadURL = await snapshot.ref.getDownloadURL();
-            updateData.profilePic = downloadURL;
-        }
+            btn.disabled = true;
+            btn.textContent = "আপডেট হচ্ছে...";
+            
+            try {
+                let updateData = { 
+                    fullName: newName, 
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
+                };
 
-        // Firestore আপডেট
-        await db.collection('users').doc(user.uid).set(updateData, { merge: true });
-        
-        alert('প্রোফাইল সফলভাবে আপডেট হয়েছে!');
-        editModal.style.display = 'none';
-        location.reload(); 
-        
-    } catch (error) {
-        console.error("Error details:", error);
-        alert('সমস্যা হয়েছে: ' + error.message);
-        btn.disabled = false;
-        btn.textContent = "আবার চেষ্টা করুন";
+                if (file) {
+                    const fileName = `avatar_${user.uid}_${Date.now()}`;
+                    const storageRef = storage.ref(`profile_pics/${user.uid}/${fileName}`);
+                    const snapshot = await storageRef.put(file);
+                    const downloadURL = await snapshot.ref.getDownloadURL();
+                    updateData.profilePic = downloadURL;
+                }
+
+                await db.collection('users').doc(user.uid).set(updateData, { merge: true });
+                alert('প্রোফাইল সফলভাবে আপডেট হয়েছে!');
+                editModal.style.display = 'none';
+                location.reload(); 
+                
+            } catch (error) {
+                console.error("Error:", error);
+                alert('সমস্যা হয়েছে: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = "আবার চেষ্টা করুন";
+            }
+        };
     }
-};
+});
 
-// প্রপার্টি পপ-আপ ফাংশনসমূহ (অপরিবর্তিত)
+// পপ-আপে প্রপার্টি ডিটেইলস ফাংশন (গ্লোবাল)
 function showPropertyDetails(id, data) {
     const modal = document.getElementById('propertyModal');
     const contentInner = document.getElementById('modal-content-inner');
@@ -181,7 +161,6 @@ function showPropertyDetails(id, data) {
         e.stopPropagation();
         deletePost(id);
     };
-    document.getElementById('modal-upgrade-btn').onclick = () => alert('আপগ্রেড ফিচারটি শীঘ্রই আসছে!');
     
     modal.style.display = 'block';
 }
@@ -192,9 +171,7 @@ function closePropertyModal() {
 
 async function deletePost(id) {
     if(confirm('পোস্টটি মুছে ফেলতে চান?')) {
-        try {
-            await db.collection('properties').doc(id).delete();
-            location.reload();
-        } catch(e) { alert('ডিলিট সম্ভব হয়নি।'); }
+        await db.collection('properties').doc(id).delete();
+        location.reload();
     }
-                          }
+                        }
