@@ -121,55 +121,48 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ৬. প্রোফাইল আপডেট লজিক (IMAGE FIX WITH PATH)
-    editForm.onsubmit = async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('update-profile-btn');
-        const user = auth.currentUser;
-        const newName = document.getElementById('edit-full-name').value;
-        const phone = document.getElementById('edit-phone-number').value;
-        const file = fileInput.files[0];
-        
-        btn.disabled = true;
-        btn.textContent = "আপডেট হচ্ছে...";
-        
-        try {
-            let updateData = { 
-                fullName: newName, 
-                phone: phone,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
-            };
+    // ৬. প্রোফাইল আপডেট লজিক
+editForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('update-profile-btn');
+    const user = auth.currentUser;
+    const newName = document.getElementById('edit-full-name').value;
+    const file = fileInput.files[0];
+    
+    btn.disabled = true;
+    btn.textContent = "আপডেট হচ্ছে...";
+    
+    try {
+        let updateData = { 
+            fullName: newName, 
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
+        };
 
-            // যদি নতুন ছবি নির্বাচন করা হয়
-            if (file) {
-                // ফাইলের নাম ইউনিক করার জন্য টাইমস্ট্যাম্প যোগ করা
-                const fileExt = file.name.split('.').pop();
-                const fileName = `profile_${user.uid}_${Date.now()}.${fileExt}`;
-                const storageRef = storage.ref().child(`profile_pics/${user.uid}/${fileName}`);
-                
-                // ১. স্টোরেজে ছবি আপলোড (path সহ)
-                const task = await storageRef.put(file);
-                // ২. ছবির ডাউনলোড ইউআরএল নেওয়া
-                const downloadURL = await task.ref.getDownloadURL();
-                // ৩. ডাটাবেসে ইউআরএল সেভ করা
-                updateData.profilePic = downloadURL;
-            }
-
-            // ৪. Firestore-এ ডেটা সেভ করা
-            await db.collection('users').doc(user.uid).set(updateData, { merge: true });
+        if (file) {
+            // ফাইলের নাম ইউনিক করা
+            const fileName = `avatar_${Date.now()}_${file.name}`;
+            const storageRef = storage.ref(`profile_pics/${user.uid}/${fileName}`);
             
-            alert('প্রোফাইল সফলভাবে আপডেট হয়েছে!');
-            editModal.style.display = 'none'; // পপ-আপ বন্ধ করা
-            location.reload(); // পেজ রিলোড করে নতুন তথ্য দেখানো
-            
-        } catch (error) {
-            console.error("Update error:", error);
-            alert('আপডেট করা সম্ভব হয়নি। এরর: ' + error.message);
-            btn.disabled = false;
-            btn.textContent = "আপডেট সংরক্ষণ করুন";
+            // আপলোড শুরু
+            const snapshot = await storageRef.put(file);
+            const downloadURL = await snapshot.ref.getDownloadURL();
+            updateData.profilePic = downloadURL;
         }
-    };
-});
+
+        // Firestore আপডেট
+        await db.collection('users').doc(user.uid).set(updateData, { merge: true });
+        
+        alert('প্রোফাইল সফলভাবে আপডেট হয়েছে!');
+        editModal.style.display = 'none';
+        location.reload(); 
+        
+    } catch (error) {
+        console.error("Error details:", error);
+        alert('সমস্যা হয়েছে: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = "আবার চেষ্টা করুন";
+    }
+};
 
 // প্রপার্টি পপ-আপ ফাংশনসমূহ (অপরিবর্তিত)
 function showPropertyDetails(id, data) {
