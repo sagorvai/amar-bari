@@ -89,13 +89,26 @@
                 <div class="input-group">
                     <label>ছবি পরিবর্তন:</label>
                     <input type="file" id="edit-profile-picture" accept="image/*">
-                </div>
+                </div> 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
                     <button type="submit" class="submit-button" id="update-profile-btn">সংরক্ষণ করুন</button>
                     <button type="button" id="edit-profile-hide-btn" style="background:#bdc3c7;" class="submit-button">বাতিল</button>
                 </div>
             </form>
         </div>
+
+<div id="propertyModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); overflow-y:auto;">
+    <div style="background:white; margin:5% auto; padding:20px; width:90%; max-width:600px; border-radius:12px; position:relative;">
+        <span onclick="closeModal()" style="position:absolute; right:20px; top:10px; font-size:30px; cursor:pointer;">&times;</span>
+        <div id="modal-content">
+            </div>
+        <div style="display:flex; gap:10px; margin-top:20px; border-top:1px solid #ddd; padding-top:15px;">
+            <button id="modal-delete-btn" style="background:#e74c3c; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; flex:1;">ডিলিট করুন</button>
+            <button id="modal-upgrade-btn" style="background:#3498db; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; flex:1;">আপগ্রেড / এডিট</button>
+        </div>
+    </div>
+</div>
+        
     </main>
 
     <script src="profile.js"></script>
