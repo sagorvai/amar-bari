@@ -1,99 +1,90 @@
-const firebaseConfig = {
-    apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
-    authDomain: "amar-bari-website.firebaseapp.com",
-    projectId: "amar-bari-website",
-    storageBucket: "amar-bari-website.firebasestorage.app",
-    messagingSenderId: "719084789035",
-    appId: "1:719084789035:web:f4da765290b3519d0e82fe"
-};
-
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+// Firebase Config আগের মতই...
 const db = firebase.firestore();
-const auth = firebase.auth();
-
-// URL থেকে Post ID নেওয়া (যেমন: details.html?id=ABC123)
 const urlParams = new URLSearchParams(window.location.search);
 const postId = urlParams.get('id');
 
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!postId) {
-        alert("পোস্ট আইডি পাওয়া যায়নি!");
-        window.location.href = 'index.html';
-        return;
-    }
+    if (!postId) return;
 
     try {
         const doc = await db.collection('properties').doc(postId).get();
         if (doc.exists) {
             const data = doc.data();
-            renderDetails(data);
-            loadRelatedPosts(data.category, data.type);
-        } else {
-            alert("পোস্টটি খুঁজে পাওয়া যায়নি!");
+            renderPropertyDetails(data);
         }
     } catch (e) { console.error(e); }
 });
 
-function renderDetails(data) {
+function renderPropertyDetails(data) {
+    // শিরোনাম ও ডেসক্রিপশন
     document.getElementById('det-title').textContent = data.title;
     document.getElementById('det-desc').textContent = data.description;
+    document.getElementById('det-price').textContent = `৳ ${data.price || data.rent || 'আলোচনা সাপেক্ষ'}`;
 
-    // গ্যালারি রেন্ডারিং (৫টি ছবি)
-    const gallery = document.getElementById('det-gallery');
-    const allImages = [...(data.images || []), ...(data.documents ? [data.documents.khotian, data.documents.sketch].filter(Boolean) : [])];
-    
-    gallery.innerHTML = '';
-    allImages.slice(0, 5).forEach((img, index) => {
-        const imgTag = document.createElement('img');
-        imgTag.src = img.url || img;
-        imgTag.className = index === 0 ? 'main-img' : 'sub-img';
-        imgTag.onclick = () => window.open(imgTag.src, '_blank');
-        gallery.appendChild(imgTag);
+    // ১. গ্যালারি ও লাইটবক্স সেটআপ
+    const imageGrid = document.getElementById('image-grid');
+    const allImages = [...(data.images || [])];
+    if(data.documents?.khotian) allImages.push(data.documents.khotian);
+    if(data.documents?.sketch) allImages.push(data.documents.sketch);
+
+    imageGrid.innerHTML = '';
+    allImages.forEach((img, index) => {
+        const div = document.createElement('div');
+        div.className = index === 0 ? 'main-img-box' : 'thumb-img-box';
+        const url = img.url || img;
+        div.innerHTML = `<img src="${url}" class="img-fit" onclick="openLightbox('${url}')">`;
+        imageGrid.appendChild(div);
     });
 
-    // প্রিভিউ স্টাইলে তথ্য প্রদর্শন
-    const infoGrid = document.getElementById('det-info');
-    infoGrid.innerHTML = `
-        <div class="info-section">
-            <h3>🏠 মূল তথ্য</h3>
-            <p><strong>ক্যাটাগরি:</strong> ${data.category}</p>
-            <p><strong>টাইপ:</strong> ${data.type}</p>
-            <p><strong>দাম:</strong> ৳ ${data.price || data.rent || 'আলোচনা সাপেক্ষ'}</p>
-        </div>
-        <div class="info-section">
-            <h3>📍 অবস্থান</h3>
-            <p><strong>জেলা:</strong> ${data.location?.district}</p>
-            <p><strong>উপজেলা:</strong> ${data.location?.upazila}</p>
-            <p><strong>এলাকা:</strong> ${data.location?.village || 'প্রযোজ্য নয়'}</p>
-        </div>
-    `;
+    // ২. গুরুত্বপূর্ণ তথ্য টেবিল (Dynamic Fields পর্যবেক্ষণ করে)
+    const table = document.getElementById('details-table');
+    const fields = [
+        ['ক্যাটাগরি', data.category],
+        ['ধরণ', data.type],
+        ['বেডরুম', data.bedrooms],
+        ['বাথরুম', data.bathrooms],
+        ['ফ্লোর নম্বর', data.floorLevel],
+        ['জমির পরিমাণ', data.landArea ? `${data.landArea} ${data.landUnit}` : ''],
+        ['জেলা', data.location?.district],
+        ['উপজেলা', data.location?.upazila],
+        ['ইউনিয়ন/ওয়ার্ড', data.location?.union || data.location?.wardNo],
+        ['গ্রাম/রাস্তা', `${data.location?.village || ''} ${data.location?.road || ''}`]
+    ];
 
-    // যোগাযোগ লজিক
-    document.getElementById('call-link').href = `tel:${data.phoneNumber}`;
-    document.getElementById('msg-link').onclick = () => {
-        // মেসেজ সিস্টেমে নিয়ে যাবে (senderId ও receiverId সহ)
-        window.location.href = `messages.html?to=${data.userId}&ref=${postId}`;
+    table.innerHTML = fields.map(([label, value]) => 
+        value ? `<tr><td>${label}</td><td>${value}</td></tr>` : ''
+    ).join('');
+
+    // ৩. কল ও ম্যাপ লিঙ্ক
+    document.getElementById('call-btn').href = `tel:${data.phoneNumber}`;
+    
+    const mapBtn = document.getElementById('google-map-link');
+    if (data.googleMapLink) {
+        mapBtn.href = data.googleMapLink;
+        mapBtn.style.display = 'flex';
+    } else {
+        mapBtn.style.display = 'none';
+    }
+
+    // ৪. শেয়ার বাটন লজিক
+    document.getElementById('share-btn').onclick = () => {
+        if (navigator.share) {
+            navigator.share({
+                title: data.title,
+                url: window.location.href
+            });
+        } else {
+            alert("লিঙ্কটি কপি করুন: " + window.location.href);
+        }
     };
 }
 
-// রিলেটিভ পোস্ট লোড (একই ক্যাটাগরির ৩টি পোস্ট)
-async function loadRelatedPosts(category, type) {
-    const grid = document.getElementById('related-grid');
-    const snapshot = await db.collection('properties')
-        .where('category', '==', category)
-        .limit(4)
-        .get();
+// লাইটবক্স ফাংশন
+function openLightbox(url) {
+    document.getElementById('lb-img').src = url;
+    document.getElementById('lightbox').style.display = 'flex';
+}
 
-    grid.innerHTML = '';
-    snapshot.forEach(doc => {
-        if (doc.id === postId) return; // বর্তমান পোস্ট বাদ দিয়ে
-        const p = doc.data();
-        grid.innerHTML += `
-            <div class="property-card" onclick="location.href='details.html?id=${doc.id}'">
-                <img src="${p.images?.[0]?.url || 'placeholder.jpg'}" style="width:100%; height:150px; object-fit:cover; border-radius:8px;">
-                <h4>${p.title}</h4>
-                <p>৳ ${p.price || p.rent}</p>
-            </div>
-        `;
-    });
-                }
+function closeLightbox() {
+    document.getElementById('lightbox').style.display = 'none';
+}
