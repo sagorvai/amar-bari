@@ -7,75 +7,101 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
-        .details-wrapper { max-width: 1000px; margin: 20px auto; padding: 15px; }
-        .post-header { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        .post-title { font-size: 24px; color: #2c3e50; margin: 0 0 10px 0; }
-        .price-tag { font-size: 22px; color: #2ecc71; font-weight: bold; }
+        :root { --primary: #2ecc71; --dark: #2c3e50; --gray: #7f8c8d; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .container { max-width: 800px; margin: auto; padding: 15px; }
         
-        /* ইমেজ গ্যালারি গ্রিড */
-        .image-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-        .main-img-box { grid-column: span 4; height: 350px; cursor: pointer; }
-        .thumb-img-box { height: 100px; cursor: pointer; }
-        .img-fit { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; transition: 0.3s; }
-        .img-fit:hover { opacity: 0.8; }
+        /* Header Section */
+        .content-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .post-title { font-size: 26px; color: var(--dark); margin-bottom: 10px; line-height: 1.4; }
+        .post-desc { color: #555; line-height: 1.6; border-top: 1px solid #eee; padding-top: 15px; white-space: pre-line; }
 
-        /* ইনফো টেবিল */
-        .info-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
-        .info-table td { padding: 12px 15px; border-bottom: 1px solid #eee; }
-        .info-table td:first-child { font-weight: bold; color: #7f8c8d; width: 40%; }
+        /* Gallery Grid */
+        .gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+        .gal-item { border-radius: 10px; overflow: hidden; cursor: pointer; position: relative; }
+        .gal-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
+        .gal-item:first-child { grid-column: span 4; height: 300px; }
+        .gal-item:not(:first-child) { height: 100px; }
+        .gal-item:hover img { transform: scale(1.05); }
 
-        /* অ্যাকশন বাটন */
-        .action-bar { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-action { flex: 1; padding: 12px; border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-weight: bold; }
+        /* Info Table */
+        .info-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .info-table tr { border-bottom: 1px solid #f0f0f0; }
+        .info-table td { padding: 12px 5px; font-size: 15px; }
+        .info-table td:first-child { color: var(--gray); font-weight: 600; width: 45%; }
+        .info-table td:last-child { color: var(--dark); text-align: right; }
+
+        /* Action Buttons */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .act-btn { padding: 12px; border: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 5px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 14px; }
+        .btn-call { background: var(--primary); color: white; }
         .btn-save { background: #f1c40f; color: #333; }
         .btn-share { background: #34495e; color: white; }
-        .btn-call { background: #2ecc71; color: white; text-decoration: none; }
-        .btn-map { background: #e74c3c; color: white; text-decoration: none; }
+        .btn-map { background: #e74c3c; color: white; width: 100%; margin-top: 10px; }
 
-        /* Lightbox Modal */
-        .lightbox { display: none; position: fixed; z-index: 2000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
-        .lightbox-img { max-width: 90%; max-height: 80%; border-radius: 5px; }
-        .close-lb { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; }
+        /* Lightbox */
+        #lightbox { display: none; position: fixed; z-index: 9999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); justify-content: center; align-items: center; }
+        #lb-img { max-width: 95%; max-height: 85%; border-radius: 8px; }
+        .lb-close { position: absolute; top: 20px; right: 25px; color: white; font-size: 40px; cursor: pointer; }
+
+        /* Related Posts */
+        .related-section { margin-top: 30px; }
+        .related-card { background: white; padding: 10px; border-radius: 10px; display: flex; gap: 10px; margin-bottom: 10px; cursor: pointer; }
+        .related-card img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
     </style>
 </head>
 <body>
-    <div class="details-wrapper">
-        <div class="post-header">
-            <h1 id="det-title" class="post-title">লোড হচ্ছে...</h1>
-            <p class="price-tag" id="det-price"></p>
-            <p id="det-desc" style="white-space: pre-line; color: #555;"></p>
+
+    <div class="container">
+        <!-- Title & Description -->
+        <div class="content-card">
+            <h1 id="p-title" class="post-title">লোড হচ্ছে...</h1>
+            <div id="p-desc" class="post-desc">অনুগ্রহ করে অপেক্ষা করুন...</div>
         </div>
 
-        <div class="image-container" id="image-grid">
-            </div>
-
-        <div class="action-bar">
-            <a href="#" id="call-btn" class="btn-action btn-call"><i class="material-icons">call</i> কল করুন</a>
-            <button class="btn-action btn-save" id="save-btn"><i class="material-icons">bookmark_border</i> সেভ</button>
-            <button class="btn-action btn-share" id="share-btn"><i class="material-icons">share</i> শেয়ার</button>
+        <!-- Image Gallery -->
+        <div class="gallery-grid" id="p-gallery">
+            <!-- Images will load here -->
         </div>
 
-        <h3>প্রপার্টি ইনফরমেশন</h3>
-        <table class="info-table" id="details-table">
+        <!-- Call, Save, Share -->
+        <div class="action-grid">
+            <a href="#" id="p-call" class="act-btn btn-call"><i class="material-icons">call</i> কল করুন</a>
+            <button class="act-btn btn-save" onclick="alert('ফিচারটি শীঘ্রই আসছে!')"><i class="material-icons">bookmark_border</i> সেভ</button>
+            <button class="act-btn btn-share" id="p-share"><i class="material-icons">share</i> শেয়ার</button>
+        </div>
+
+        <!-- Full Info Table -->
+        <div class="content-card">
+            <h3 style="margin-top:0"><i class="material-icons" style="vertical-align: middle;">list</i> প্রপার্টি ইনফরমেশন</h3>
+            <table class="info-table" id="p-info-table">
+                <!-- Data will load here -->
             </table>
-
-        <div id="map-area" style="margin-top: 20px;">
-            <a href="#" id="google-map-link" target="_blank" class="btn-action btn-map">
+            
+            <a href="#" id="p-map" target="_blank" class="act-btn btn-map" style="display: none;">
                 <i class="material-icons">location_on</i> গুগোল ম্যাপে লোকেশন দেখুন
             </a>
         </div>
+
+        <!-- Related Posts -->
+        <div class="related-section">
+            <h3>সম্পর্কিত পোস্ট</h3>
+            <div id="related-list"></div>
+        </div>
     </div>
 
-    <div id="lightbox" class="lightbox">
-        <span class="close-lb" onclick="closeLightbox()">&times;</span>
-        <img class="lightbox-img" id="lb-img">
+    <!-- Lightbox Modal -->
+    <div id="lightbox" onclick="this.style.display='none'">
+        <span class="lb-close">&times;</span>
+        <img id="lb-img" src="">
     </div>
 
     <script src="details.js"></script>
 </body>
-</html>
+            </html>
