@@ -7,101 +7,100 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
         :root { --primary: #2ecc71; --dark: #2c3e50; --gray: #7f8c8d; }
-        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-bottom: 50px; }
         .container { max-width: 800px; margin: auto; padding: 15px; }
         
-        /* Header Section */
+        /* Header Card */
         .content-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .post-title { font-size: 26px; color: var(--dark); margin-bottom: 10px; line-height: 1.4; }
-        .post-desc { color: #555; line-height: 1.6; border-top: 1px solid #eee; padding-top: 15px; white-space: pre-line; }
+        .post-title { font-size: 26px; color: var(--dark); margin: 0 0 10px 0; line-height: 1.4; }
+        .post-price { font-size: 22px; color: var(--primary); font-weight: bold; margin-bottom: 15px; }
+        .post-desc { color: #555; line-height: 1.7; border-top: 1px solid #eee; padding-top: 15px; white-space: pre-line; }
 
-        /* Gallery Grid */
+        /* Gallery Grid (5 Photos) */
         .gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
-        .gal-item { border-radius: 10px; overflow: hidden; cursor: pointer; position: relative; }
-        .gal-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
-        .gal-item:first-child { grid-column: span 4; height: 300px; }
-        .gal-item:not(:first-child) { height: 100px; }
-        .gal-item:hover img { transform: scale(1.05); }
+        .gal-item { border-radius: 10px; overflow: hidden; cursor: pointer; position: relative; background: #ddd; }
+        .gal-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; display: block; }
+        .gal-item:first-child { grid-column: span 4; height: 350px; }
+        .gal-item:not(:first-child) { height: 110px; }
+        .gal-item:hover img { transform: scale(1.05); opacity: 0.9; }
 
-        /* Info Table */
+        /* Specs Table */
         .info-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         .info-table tr { border-bottom: 1px solid #f0f0f0; }
-        .info-table td { padding: 12px 5px; font-size: 15px; }
+        .info-table td { padding: 12px 8px; font-size: 15px; }
         .info-table td:first-child { color: var(--gray); font-weight: 600; width: 45%; }
         .info-table td:last-child { color: var(--dark); text-align: right; }
 
-        /* Action Buttons */
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 20px 0; }
-        .act-btn { padding: 12px; border: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 5px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 14px; }
+        /* Buttons */
+        .action-bar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .btn { padding: 12px; border: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 14px; transition: 0.2s; }
         .btn-call { background: var(--primary); color: white; }
         .btn-save { background: #f1c40f; color: #333; }
         .btn-share { background: #34495e; color: white; }
-        .btn-map { background: #e74c3c; color: white; width: 100%; margin-top: 10px; }
+        .btn-map { background: #e74c3c; color: white; width: 100%; margin-top: 15px; }
+        .btn:active { transform: scale(0.95); }
 
-        /* Lightbox */
-        #lightbox { display: none; position: fixed; z-index: 9999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); justify-content: center; align-items: center; }
-        #lb-img { max-width: 95%; max-height: 85%; border-radius: 8px; }
-        .lb-close { position: absolute; top: 20px; right: 25px; color: white; font-size: 40px; cursor: pointer; }
+        /* Lightbox Slider */
+        #lightbox { display: none; position: fixed; z-index: 9999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        #lb-img { max-width: 95%; max-height: 80%; border-radius: 5px; border: 2px solid white; }
+        .lb-close { position: absolute; top: 20px; right: 25px; color: white; font-size: 45px; cursor: pointer; }
+        .lb-nav { position: absolute; color: white; font-size: 50px; cursor: pointer; top: 50%; transform: translateY(-50%); padding: 20px; user-select: none; }
+        .lb-prev { left: 10px; }
+        .lb-next { right: 10px; }
 
-        /* Related Posts */
-        .related-section { margin-top: 30px; }
-        .related-card { background: white; padding: 10px; border-radius: 10px; display: flex; gap: 10px; margin-bottom: 10px; cursor: pointer; }
-        .related-card img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
+        /* Related Section */
+        .related-title { font-size: 18px; margin: 30px 0 15px 0; color: var(--dark); }
+        .related-list { display: flex; flex-direction: column; gap: 12px; }
+        .rel-card { background: white; padding: 10px; border-radius: 12px; display: flex; gap: 12px; align-items: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .rel-card img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Title & Description -->
         <div class="content-card">
             <h1 id="p-title" class="post-title">লোড হচ্ছে...</h1>
-            <div id="p-desc" class="post-desc">অনুগ্রহ করে অপেক্ষা করুন...</div>
+            <div id="p-price" class="post-price"></div>
+            <div id="p-desc" class="post-desc">তথ্য খোঁজা হচ্ছে, দয়া করে অপেক্ষা করুন...</div>
         </div>
 
-        <!-- Image Gallery -->
         <div class="gallery-grid" id="p-gallery">
-            <!-- Images will load here -->
+            </div>
+
+        <div class="action-bar">
+            <a href="#" id="p-call" class="btn btn-call"><i class="material-icons">call</i> কল করুন</a>
+            <button class="btn btn-save" onclick="savePost()"><i class="material-icons">bookmark_border</i> সেভ</button>
+            <button class="btn btn-share" id="p-share"><i class="material-icons">share</i> শেয়ার</button>
         </div>
 
-        <!-- Call, Save, Share -->
-        <div class="action-grid">
-            <a href="#" id="p-call" class="act-btn btn-call"><i class="material-icons">call</i> কল করুন</a>
-            <button class="act-btn btn-save" onclick="alert('ফিচারটি শীঘ্রই আসছে!')"><i class="material-icons">bookmark_border</i> সেভ</button>
-            <button class="act-btn btn-share" id="p-share"><i class="material-icons">share</i> শেয়ার</button>
-        </div>
-
-        <!-- Full Info Table -->
         <div class="content-card">
-            <h3 style="margin-top:0"><i class="material-icons" style="vertical-align: middle;">list</i> প্রপার্টি ইনফরমেশন</h3>
-            <table class="info-table" id="p-info-table">
-                <!-- Data will load here -->
-            </table>
+            <h3 style="margin-top:0; border-bottom: 2px solid #eee; padding-bottom: 10px;">প্রপার্টি তথ্য</h3>
+            <table class="info-table" id="p-info-table"></table>
             
-            <a href="#" id="p-map" target="_blank" class="act-btn btn-map" style="display: none;">
+            <a href="#" id="p-map" target="_blank" class="btn btn-map" style="display: none;">
                 <i class="material-icons">location_on</i> গুগোল ম্যাপে লোকেশন দেখুন
             </a>
         </div>
 
-        <!-- Related Posts -->
         <div class="related-section">
-            <h3>সম্পর্কিত পোস্ট</h3>
-            <div id="related-list"></div>
+            <h3 class="related-title">সম্পর্কিত আরও কিছু পোস্ট</h3>
+            <div id="related-list" class="related-list"></div>
         </div>
     </div>
 
-    <!-- Lightbox Modal -->
-    <div id="lightbox" onclick="this.style.display='none'">
-        <span class="lb-close">&times;</span>
+    <div id="lightbox">
+        <span class="lb-close" onclick="closeLightbox()">&times;</span>
+        <span class="lb-nav lb-prev" onclick="changeImg(-1, event)">&#10094;</span>
         <img id="lb-img" src="">
+        <span class="lb-nav lb-next" onclick="changeImg(1, event)">&#10095;</span>
     </div>
 
     <script src="details.js"></script>
 </body>
-            </html>
+    </html>
