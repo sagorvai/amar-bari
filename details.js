@@ -1,3 +1,4 @@
+// Firebase Config (As per your project)
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -17,29 +18,31 @@ let allImages = [];
 let currentIndex = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!postId) {
-        document.body.innerHTML = "<h3 style='text-align:center; margin-top:50px;'>পোস্ট খুঁজে পাওয়া যায়নি!</h3>";
-        return;
-    }
+    if (!postId) return;
 
     try {
         const doc = await db.collection('properties').doc(postId).get();
         if (doc.exists) {
-            const data = doc.data();
-            renderDetails(data);
-            loadRelatedPosts(data.category);
+            renderDetails(doc.data());
         } else {
-            alert("এই পোস্টটি এখন আর উপলব্ধ নেই।");
+            alert("পোস্টটি পাওয়া যায়নি!");
         }
-    } catch (e) { console.error("Error:", e); }
+    } catch (e) { console.error(e); }
 });
 
 function renderDetails(data) {
-    document.getElementById('p-title').textContent = data.title || "শিরোনামহীন";
-    document.getElementById('p-price').textContent = data.price || data.rent ? `৳ ${data.price || data.rent}` : "আলোচনা সাপেক্ষ";
-    document.getElementById('p-desc').textContent = data.description || "";
+    // ১. বেসিক তথ্য (শিরোনাম ও ডেসক্রিপশন)
+    document.getElementById('p-title').textContent = data.title || "";
+    document.getElementById('p-desc').textContent = data.description || "কোন বর্ণনা দেওয়া হয়নি।";
+    
+    // দাম নির্ধারণ (বিক্রয় বনাম ভাড়া)
+    if (data.category === 'বিক্রয়') {
+        document.getElementById('p-price').textContent = data.price ? `৳ ${data.price} (মোট দাম)` : "আলোচনা সাপেক্ষ";
+    } else {
+        document.getElementById('p-price').textContent = data.monthlyRent ? `৳ ${data.monthlyRent} (মাসিক ভাড়া)` : "ভাড়া আলোচনা সাপেক্ষ";
+    }
 
-    // গ্যালারি ইমেজ প্রসেসিং
+    // ২. ইমেজ গ্যালারি প্রোসেসিং (Main + Documents)
     allImages = [];
     if (data.images) data.images.forEach(img => allImages.push(img.url || img));
     if (data.documents?.khotian) allImages.push(data.documents.khotian.url || data.documents.khotian);
@@ -50,35 +53,71 @@ function renderDetails(data) {
     allImages.slice(0, 5).forEach((url, idx) => {
         const div = document.createElement('div');
         div.className = 'gal-item';
-        div.innerHTML = `<img src="${url}" onclick="openLightbox(${idx})">`;
+        div.innerHTML = `<img src="${url}" onclick="openLightbox(${idx}, event)">`;
         gallery.appendChild(div);
     });
 
-    // তথ্য টেবিল (post.js এর ভেরিয়েবল অনুযায়ী)
+    // ৩. প্রপার্টি তথ্য টেবিল (সিরিয়াল অনুযায়ী)
     const infoTable = document.getElementById('p-info-table');
-    const specs = [
-        ["ক্যাটাগরি", data.category],
-        ["ধরণ", data.type],
-        ["বেডরুম", data.bedrooms],
-        ["বাথরুম", data.bathrooms],
-        ["ফ্লোর", data.floorLevel],
-        ["জমির পরিমাণ", data.landArea ? `${data.landArea} ${data.landUnit || ''}` : null],
-        ["জেলা", data.location?.district],
-        ["উপজেলা", data.location?.upazila],
-        ["ইউনিয়ন/ওয়ার্ড", data.location?.union || data.location?.wardNo],
-        ["গ্রাম/রাস্তা", data.location?.village || data.location?.road]
-    ];
+    let specs = [];
 
+    // --- গ্রুপ ১: প্রপার্টির মূল তথ্য ---
+    specs.push(["ক্যাটাগরি", data.category]);
+    specs.push(["টাইপ", data.type]);
+    specs.push(["রুম সংখ্যা", data.rooms]);
+    specs.push(["বাথরুম সংখ্যা", data.bathrooms]);
+    specs.push(["কিচেন সংখ্যা", data.kitchen]);
+    specs.push(["ফ্লোর নং", data.floorNo || data.floorLevel]);
+    specs.push(["প্রপার্টির বয়স", data.propertyAge ? `${data.propertyAge} বছর` : null]);
+    specs.push(["ফেসিং", data.facing]);
+    specs.push(["রাস্তা (ফিট)", data.roadWidth ? `${data.roadWidth} ফিট` : null]);
+    
+    if (data.utilities && Array.isArray(data.utilities)) {
+        specs.push(["সুবিধাসমূহ", data.utilities.join(', ')]);
+    }
+
+    // জমি সংক্রান্ত
+    specs.push(["জমির ধরন", data.landType]);
+    specs.push(["প্লট নং", data.plotNo]);
+    
+    // পরিমাপ (বিভিন্ন ইউনিটের জন্য)
+    let area = data.landArea || data.houseArea || data.areaSqft || data.commercialArea;
+    let unit = data.landAreaUnit || data.houseAreaUnit || data.commercialAreaUnit || "স্কয়ার ফিট";
+    if (area) specs.push(["পরিমাণ", `${area} ${unit}`]);
+
+    // --- গ্রুপ ২: অবস্থান (📍 ঠিকানা) ---
+    if (data.location) {
+        specs.push(["বিভাগ", data.location.division]);
+        specs.push(["জেলা", data.location.district]);
+        specs.push(["উপজেলা/থানা", data.location.upazila || data.location.thana]);
+        specs.push(["ইউনিয়ন/ওয়ার্ড", data.location.union || data.location.wardNo]);
+        specs.push(["গ্রাম/এলাকা", data.location.village]);
+        specs.push(["রাস্তা", data.location.road]);
+    }
+
+    // --- গ্রুপ ৩: মালিকানা তথ্য (📑 বিক্রয় হলে) ---
+    if (data.category === 'বিক্রয়' && data.owner) {
+        specs.push(["দাতার নাম", data.owner.donorName]);
+        specs.push(["দাগ নং", data.owner.dagNo]);
+        specs.push(["দাগ ধরন", data.owner.dagNoType]);
+        specs.push(["মৌজা", data.owner.mouja]);
+    }
+
+    // --- গ্রুপ ৪: যোগাযোগ ---
+    specs.push(["ফোন নম্বর", data.phoneNumber]);
+    if (data.secondaryPhone) specs.push(["অতিরিক্ত ফোন", data.secondaryPhone]);
+
+    // টেবিল রেন্ডার (শুধু যেগুলোতে ডাটা আছে)
     infoTable.innerHTML = specs
-        .filter(s => s[1]) // শুধু ডাটা থাকলে দেখাবে
+        .filter(s => s[1] && s[1] !== "" && s[1] !== "undefined")
         .map(s => `<tr><td>${s[0]}</td><td>${s[1]}</td></tr>`)
         .join('');
 
-    // কন্টাক্ট ও ম্যাপ লিঙ্ক
+    // কল ও ম্যাপ বাটন
     document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
-    if (data.googleMapLink) {
+    if (data.googleMap) {
         const mapBtn = document.getElementById('p-map');
-        mapBtn.href = data.googleMapLink;
+        mapBtn.href = data.googleMap;
         mapBtn.style.display = 'flex';
     }
 
@@ -87,52 +126,24 @@ function renderDetails(data) {
         if (navigator.share) {
             navigator.share({ title: data.title, url: window.location.href });
         } else {
-            alert("লিঙ্কটি কপি করুন: " + window.location.href);
+            alert("লিঙ্ক কপি করুন: " + window.location.href);
         }
     };
 }
 
-// লাইটবক্স স্লাইডার লজিক
-function openLightbox(index) {
-    currentIndex = index;
-    document.getElementById('lb-img').src = allImages[currentIndex];
+// লাইটবক্স ফাংশন
+function openLightbox(idx, e) {
+    e.stopPropagation();
+    currentIndex = idx;
+    const lbImg = document.getElementById('lb-img');
+    lbImg.src = allImages[currentIndex];
     document.getElementById('lightbox').style.display = 'flex';
 }
 
-function closeLightbox() {
-    document.getElementById('lightbox').style.display = 'none';
-}
-
-function changeImg(step, event) {
-    event.stopPropagation();
+function changeImg(step, e) {
+    e.stopPropagation();
     currentIndex += step;
     if (currentIndex >= allImages.length) currentIndex = 0;
     if (currentIndex < 0) currentIndex = allImages.length - 1;
     document.getElementById('lb-img').src = allImages[currentIndex];
 }
-
-// সম্পর্কিত পোস্ট লোড
-async function loadRelatedPosts(cat) {
-    const list = document.getElementById('related-list');
-    try {
-        const snap = await db.collection('properties').where('category', '==', cat).limit(4).get();
-        list.innerHTML = '';
-        snap.forEach(doc => {
-            if (doc.id === postId) return;
-            const d = doc.data();
-            list.innerHTML += `
-                <div class="rel-card" onclick="location.href='details.html?id=${doc.id}'">
-                    <img src="${d.images?.[0]?.url || d.images?.[0] || 'placeholder.jpg'}">
-                    <div>
-                        <h4 style="margin:0">${d.title}</h4>
-                        <p style="color:var(--primary); margin:4px 0;">৳ ${d.price || d.rent || '---'}</p>
-                    </div>
-                </div>
-            `;
-        });
-    } catch (e) { console.log(e); }
-}
-
-function savePost() {
-    alert("সেভ ফিচারটি প্রক্রিয়াধীন। লগইন করে চেষ্টা করুন।");
-                                           }
