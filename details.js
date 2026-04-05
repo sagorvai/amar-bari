@@ -24,17 +24,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function renderDetails(data) {
-    // শিরোনাম ও ডেসক্রিপশন
     document.getElementById('p-title').textContent = data.title || "";
     document.getElementById('p-desc').textContent = data.description || "";
 
-    // ১. দাম ও ইউনিটের সঠিক লজিক
+    // ১. দাম ও ইউনিট (ভাড়া ও বিক্রয় উভয় ঠিক করা হলো)
     let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
-    // post.js অনুযায়ী priceUnit অথবা rentUnit চেক করবে
     let unit = data.priceUnit || data.rentUnit || ""; 
     document.getElementById('p-price').textContent = amount ? `৳ ${amount} (${unit})` : "আলোচনা সাপেক্ষ";
 
-    // ইমেজ গ্যালারি (৫টি ছবি)
+    // ইমেজ গ্যালারি
     let images = [];
     if (data.images) data.images.forEach(img => images.push(img.url || img));
     if (data.documents?.khotian) images.push(data.documents.khotian.url || data.documents.khotian);
@@ -49,18 +47,26 @@ function renderDetails(data) {
         gallery.appendChild(div);
     });
 
-    // সাহায্যকারী ফাংশন: টেবিল রো তৈরি
     const addRow = (tableId, label, value) => {
         if (!value || value === "" || value === "undefined") return;
         const table = document.getElementById(tableId);
         table.innerHTML += `<tr><td>${label}</td><td>${value}</td></tr>`;
     };
 
-    // ২. 🏠 প্রপার্টির তথ্য (post.js এর সাথে সিঙ্ক করা)
+    // ২. 🏠 প্রপার্টির তথ্য
     const basicT = 'table-basic';
-    document.getElementById(basicT).innerHTML = ""; // আগের ডেটা ক্লিয়ার
+    document.getElementById(basicT).innerHTML = ""; 
+
     addRow(basicT, "ক্যাটাগরি", data.category);
     addRow(basicT, "টাইপ", data.type);
+    
+    // ভাড়ার জন্য বিশেষ তথ্য (উঠার তারিখ, ধরন, এডভ্যান্স)
+    if (data.category === 'ভাড়া') {
+        addRow(basicT, "ভাড়ার ধরন", data.rentType); // ফ্যামিলি/ব্যাচেলর
+        addRow(basicT, "ওঠার তারিখ", data.availableDate);
+        addRow(basicT, "অগ্রিম (এডভ্যান্স)", data.advanceAmount ? `৳ ${data.advanceAmount}` : "");
+    }
+
     addRow(basicT, "বেডরুম", data.bedrooms || data.rooms);
     addRow(basicT, "বাথরুম", data.bathrooms);
     addRow(basicT, "কিচেন", data.kitchen);
@@ -68,25 +74,29 @@ function renderDetails(data) {
     addRow(basicT, "রাস্তা", data.roadWidth ? `${data.roadWidth} ফিট` : "");
     addRow(basicT, "ফেসিং", data.facing);
     
-    // পরিমাণের পাসে ব্র্যাকেটে সঠিক ইউনিট (landAreaUnit / houseAreaUnit / commercialAreaUnit)
+    // সুবিধা সমূহ (Utilities - কমা দিয়ে সুন্দর করে দেখানো)
+    if (data.utilities && data.utilities.length > 0) {
+        addRow(basicT, "সুবিধা সমূহ", Array.isArray(data.utilities) ? data.utilities.join(', ') : data.utilities);
+    }
+
+    // পরিমাণের পাসে ব্র্যাকেটে ইউনিট
     let area = data.landArea || data.houseArea || data.areaSqft || data.commercialArea;
     let areaUnit = data.landAreaUnit || data.houseAreaUnit || data.commercialAreaUnit || "";
     addRow(basicT, "পরিমাণ", area ? `${area} (${areaUnit})` : "");
 
-    // ৩. 📑 মালিকানা তথ্য (দাগ নং ও ধরন)
+    // ৩. 📑 মালিকানা তথ্য
     if (data.category === 'বিক্রয়' && data.owner) {
         document.getElementById('section-owner').style.display = 'block';
         const ownT = 'table-owner';
         document.getElementById(ownT).innerHTML = "";
         addRow(ownT, "দাতার নাম", data.owner.donorName);
-        // দাগ নং ও ধরন (এসএ/আরএস/বিএস)
         let dag = data.owner.dagNo;
         let dagType = data.owner.dagNoType || "";
         addRow(ownT, "দাগ নং", dag ? `${dag} (${dagType})` : "");
         addRow(ownT, "মৌজা", data.owner.mouja);
     }
 
-    // ৪. 📍 অবস্থান (থানা সহ সব তথ্য)
+    // ৪. 📍 অবস্থান
     const locT = 'table-location';
     document.getElementById(locT).innerHTML = "";
     addRow(locT, "জেলা", data.location?.district);
@@ -111,13 +121,11 @@ function renderDetails(data) {
     document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
 }
 
-// সম্পর্কিত পোস্ট লজিক: গ্রাম > থানা > জেলা ফিল্টারিং
+// সম্পর্কিত পোস্ট লজিক (আগের মতোই সঠিক আছে)
 async function loadRelatedPosts(currentData) {
     const list = document.getElementById('related-list');
     const seeMoreBox = document.getElementById('see-more-box');
-    
     try {
-        // একই ক্যাটাগরির পোস্টগুলো নেওয়া হচ্ছে
         const snapshot = await db.collection('properties')
             .where('category', '==', currentData.category)
             .limit(50) 
@@ -128,20 +136,15 @@ async function loadRelatedPosts(currentData) {
             if (doc.id !== postId) allPosts.push({ id: doc.id, ...doc.data() });
         });
 
-        // গ্রাম > থানা > জেলা অনুসারে সর্টিং
         allPosts.sort((a, b) => {
             const aVillage = (a.location?.village === currentData.location?.village) ? 1 : 0;
             const bVillage = (b.location?.village === currentData.location?.village) ? 1 : 0;
             if (aVillage !== bVillage) return bVillage - aVillage;
-
             const aThana = (a.location?.thana === currentData.location?.thana) ? 1 : 0;
             const bThana = (b.location?.thana === currentData.location?.thana) ? 1 : 0;
-            if (aThana !== bThana) return bThana - aThana;
-
-            return 0;
+            return bThana - aThana;
         });
 
-        // প্রথম ১০টি দেখানো হবে
         const displayPosts = allPosts.slice(0, 10);
         list.innerHTML = "";
         displayPosts.forEach(post => {
@@ -157,7 +160,6 @@ async function loadRelatedPosts(currentData) {
                     </div>
                 </div>`;
         });
-
         if (allPosts.length > 10) seeMoreBox.style.display = 'block';
     } catch (e) { console.error(e); }
 }
@@ -165,4 +167,4 @@ async function loadRelatedPosts(currentData) {
 function openLightbox(url) {
     document.getElementById('lb-img').src = url;
     document.getElementById('lightbox').style.display = 'flex';
-            }
+}
