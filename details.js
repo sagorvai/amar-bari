@@ -1,4 +1,3 @@
-// Firebase Config (আগের মতোই ঠিক আছে)
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -7,44 +6,32 @@ const firebaseConfig = {
     messagingSenderId: "719084789035",
     appId: "1:719084789035:web:f4da765290b3519d0e82fe"
 };
-
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const auth = firebase.auth();
 
 const urlParams = new URLSearchParams(window.location.search);
 const postId = urlParams.get('id');
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!postId) return;
-
-    try {
-        const doc = await db.collection('properties').doc(postId).get();
-        if (doc.exists) {
-            const data = doc.data();
-            renderDetails(data);
-            // সম্পর্কিত পোস্ট লোড করা (একই টাইপ ও ক্যাটাগরির)
-            loadRelatedPosts(data.category, data.type);
-        }
-    } catch (e) { console.error(e); }
+    const doc = await db.collection('properties').doc(postId).get();
+    if (doc.exists) {
+        const data = doc.data();
+        renderDetails(data);
+        loadRelatedPosts(data);
+    }
 });
 
 function renderDetails(data) {
-    // শিরোনাম ও বর্ণনা
     document.getElementById('p-title').textContent = data.title || "";
     document.getElementById('p-desc').textContent = data.description || "";
-    
-    // ১. দামের সাথে ইউনিট ম্যাপিং (২,৫০,০০০ (মোট), ২,৫০,০০০ (শতক) ইত্যাদি)
-    let priceText = "আলোচনা সাপেক্ষ";
-    let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
-    let unit = data.priceType || ""; // post.js এ এটি 'priceType' নামে সেভ হচ্ছে
-    
-    if (amount) {
-        priceText = `৳ ${amount} (${unit})`;
-    }
-    document.getElementById('p-price').textContent = priceText;
 
-    // ২. গ্যালারি ইমেজ (৫টি ছবি)
+    // ১. দামের সাথে ইউনিট ব্র্যাকেটে (যেমন: ২,৫০,০০০ (শতক))
+    let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
+    let unit = data.priceUnit || ""; // post.js থেকে সংগৃহীত ইউনিট
+    document.getElementById('p-price').textContent = amount ? `৳ ${amount} (${unit})` : "আলোচনা সাপেক্ষ";
+
+    // ইমেজ গ্যালারি
     let images = [];
     if (data.images) data.images.forEach(img => images.push(img.url || img));
     if (data.documents?.khotian) images.push(data.documents.khotian.url || data.documents.khotian);
@@ -52,152 +39,111 @@ function renderDetails(data) {
 
     const gallery = document.getElementById('p-gallery');
     gallery.innerHTML = '';
-    images.slice(0, 5).forEach((url) => {
+    images.slice(0, 5).forEach(url => {
         const div = document.createElement('div');
         div.className = 'gal-item';
         div.innerHTML = `<img src="${url}" onclick="openLightbox('${url}')">`;
         gallery.appendChild(div);
     });
 
-    // ৩. অ্যাকশন বাটন লজিক (কল, মেসেজ, সেভ, শেয়ার)
-    document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
-    
-    // মেসেজ বাটন (ইউজার লগইন থাকলে মেসেজে যাবে, না থাকলে এলার্ট)
-    document.getElementById('p-message').onclick = (e) => {
-        e.preventDefault();
-        const user = auth.currentUser;
-        if(user){
-            if(user.uid === data.userId){
-                alert("এটি আপনার নিজের পোস্ট!");
-                return;
-            }
-            // মেসেজিং পেজে নিয়ে যাবে (receiverId ও ref postId সহ)
-            window.location.href = `messages.html?to=${data.userId}&ref=${postId}`;
-        } else {
-            alert("মেসেজ করতে অনুগ্রহ করে লগইন করুন।");
-            window.location.href = 'auth.html'; // বা লগইন পেজে
-        }
+    const addRow = (tableId, label, value) => {
+        if (!value || value === "") return;
+        const table = document.getElementById(tableId);
+        table.innerHTML += `<tr><td>${label}</td><td>${value}</td></tr>`;
     };
 
-    // সেভ বাটন
-    document.getElementById('p-save').onclick = () => {
-        alert("ফিচারটি প্রক্রীয়াধীন। শীঘ্রই আপনার সেভ করা পোস্টে এটি যুক্ত হবে।");
-        // ভবিষ্যতের জন্য: db.collection('saved_posts').doc(user.uid).collection('posts').doc(postId).set({...})
-    };
+    // প্রপার্টি তথ্য
+    addRow('table-basic', "ক্যাটাগরি", data.category);
+    addRow('table-basic', "টাইপ", data.type);
+    addRow('table-basic', "বেডরুম", data.bedrooms || data.rooms);
+    addRow('table-basic', "বাথরুম", data.bathrooms);
+    addRow('table-basic', "ফ্লোর নম্বর", data.floorNo);
+    addRow('table-basic', "জমির পরিমাণ", data.landArea);
 
-    // শেয়ার বাটন
-    document.getElementById('p-share').onclick = () => {
-        if (navigator.share) {
-            navigator.share({ title: data.title, url: window.location.href });
-        } else {
-            alert("লিঙ্কটি কপি করুন: " + window.location.href);
-        }
-    };
-
-    // ৪. সেকশন ভিত্তিক ডাটা টেবিল (আগের মতই ঠিক আছে)
-    const addRow = (label, value) => {
-        if (!value || value === "undefined" || value === "") return "";
-        return `<tr><td>${label}</td><td>${value}</td></tr>`;
-    };
-
-    // --- 🏠 প্রপার্টির তথ্য ---
-    const basicTable = document.getElementById('table-basic');
-    basicTable.innerHTML = 
-        addRow("ক্যাটাগরি", data.category) +
-        addRow("টাইপ", data.type) +
-        addRow("বেডরুম", data.bedrooms || data.rooms) +
-        addRow("বাথরুম", data.bathrooms) +
-        addRow("কিচেন", data.kitchen) +
-        addRow("ফ্লোর নম্বর", data.floorNo || data.floorLevel) +
-        addRow("রাস্তা (ফিট)", data.roadWidth ? `${data.roadWidth} ফিট` : "") +
-        addRow("ফেসিং", data.facing) +
-        addRow("সুবিধাসমূহ", Array.isArray(data.utilities) ? data.utilities.join(', ') : data.utilities) +
-        addRow("জমির পরিমাণ", data.landArea ? `${data.landArea} ${data.landUnit || data.landAreaUnit || ''}` : "");
-
-    // --- 📑 মালিকানা তথ্য ---
+    // মালিকানা (বিক্রয় হলে)
     if (data.category === 'বিক্রয়' && data.owner) {
-        document.getElementById('section-ownership').style.display = 'block';
-        const ownTable = document.getElementById('table-ownership');
-        ownTable.innerHTML = 
-            addRow("দাতার নাম", data.owner.donorName) +
-            addRow("দাগ নং", data.owner.dagNo) +
-            addRow("দাগ ধরন", data.owner.dagNoType) +
-            addRow("মৌজা", data.owner.mouja);
+        document.getElementById('section-owner').style.display = 'block';
+        addRow('table-owner', "দাতার নাম", data.owner.donorName);
+        addRow('table-owner', "দাগ ও ধরন", `${data.owner.dagNo} (${data.owner.dagNoType})`);
+        addRow('table-owner', "মৌজা", data.owner.mouja);
     }
 
-    // --- 📍 অবস্থান ---
-    const locTable = document.getElementById('table-location');
-    locTable.innerHTML = 
-        addRow("বিভাগ", data.location?.division) +
-        addRow("জেলা", data.location?.district) +
-        addRow("উপজেলা", data.location?.upazila) +
-        addRow("থানা", data.location?.thana) +
-        addRow("ইউনিয়ন", data.location?.union) +
-        addRow("ওয়ার্ড নম্বর", data.location?.wardNo) +
-        addRow("গ্রাম/এলাকা", data.location?.village) +
-        addRow("রাস্তা", data.location?.road);
+    // অবস্থান (থানা সহ)
+    addRow('table-location', "জেলা", data.location?.district);
+    addRow('table-location', "উপজেলা", data.location?.upazila);
+    addRow('table-location', "থানা", data.location?.thana); // থানা যুক্ত করা হলো
+    addRow('table-location', "ইউনিয়ন", data.location?.union);
+    addRow('table-location', "গ্রাম/এলাকা", data.location?.village);
+    addRow('table-location', "রাস্তা", data.location?.road);
 
-    // ম্যাপ
     if (data.googleMap) {
-        const mapBtn = document.getElementById('p-map');
-        mapBtn.href = data.googleMap;
-        mapBtn.style.display = 'flex';
+        const m = document.getElementById('p-map');
+        m.href = data.googleMap;
+        m.style.display = 'flex';
     }
 
-    // --- 📞 যোগাযোগ ---
-    const contactTable = document.getElementById('table-contact');
-    contactTable.innerHTML = 
-        addRow("প্রাথমিক ফোন", data.phoneNumber) +
-        addRow("অতিরিক্ত ফোন", data.secondaryPhone);
+    addRow('table-contact', "প্রাথমিক ফোন", data.phoneNumber);
+    document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
 }
 
-// সম্পর্কিত পোস্ট লোড ফাংশন (ছবি, শিরোনাম, দাম, অবস্থান সহ)
-async function loadRelatedPosts(category, type) {
+// সম্পর্কিত পোস্ট লজিক: গ্রাম > থানা > জেলা
+async function loadRelatedPosts(currentData) {
     const list = document.getElementById('related-list');
+    const seeMoreBox = document.getElementById('see-more-box');
+    const btnSeeMore = document.getElementById('btn-see-more');
+
     try {
-        // একই ক্যাটাগরি ও টাইপের ৪টি পোস্ট খোঁজা
+        // ১. প্রথমে একই ক্যাটাগরির সব পোস্ট নিব (ফিল্টার করার জন্য)
         const snapshot = await db.collection('properties')
-            .where('category', '==', category)
-            .where('type', '==', type)
-            .limit(5) // বর্তমান পোস্ট সহ
+            .where('category', '==', currentData.category)
+            .limit(50) 
             .get();
-        
-        list.innerHTML = '';
-        let count = 0;
 
+        let allPosts = [];
         snapshot.forEach(doc => {
-            if (doc.id === postId || count >= 4) return; // বর্তমান পোস্ট এবং লিমিট বাদ দেওয়া
-            const d = doc.data();
-            
-            // সম্পর্কিত পোস্টের দামের ইউনিট ম্যাপিং
-            let relPrice = "আলোচনা সাপেক্ষ";
-            let relAmount = d.category === 'বিক্রয়' ? d.price : d.monthlyRent;
-            if(relAmount) relPrice = `৳ ${relAmount} (${d.priceType || ''})`;
-
-            // কার্ড তৈরির HTML
-            list.innerHTML += `
-                <div class="rel-card" onclick="location.href='details.html?id=${doc.id}'">
-                    <img src="${d.images?.[0]?.url || d.images?.[0] || 'placeholder.jpg'}">
-                    <div class="rel-info">
-                        <h4 class="rel-title">${d.title || 'শিরোনামহীন'}</h4>
-                        <p class="rel-price">${relPrice}</p>
-                        <p class="rel-loc">
-                            <i class="material-icons" style="font-size:14px;">place</i>
-                            ${d.location?.village || ''}, ${d.location?.thana || ''}, ${d.location?.district || ''}
-                        </td>
-                    </div>
-                </div>
-            `;
-            count++;
+            if (doc.id !== postId) allPosts.push({ id: doc.id, ...doc.data() });
         });
 
-        if (list.innerHTML === '') {
-            list.innerHTML = '<p style="color:var(--gray); font-size:14px;">কোনো সম্পর্কিত পোস্ট পাওয়া যায়নি।</p>';
+        // ২. অগ্রাধিকার অনুযায়ী সাজানো (গ্রাম > থানা > জেলা)
+        allPosts.sort((a, b) => {
+            const aVillage = a.location?.village === currentData.location?.village ? 1 : 0;
+            const bVillage = b.location?.village === currentData.location?.village ? 1 : 0;
+            if (aVillage !== bVillage) return bVillage - aVillage;
+
+            const aThana = a.location?.thana === currentData.location?.thana ? 1 : 0;
+            const bThana = b.location?.thana === currentData.location?.thana ? 1 : 0;
+            if (aThana !== bThana) return bThana - aThana;
+
+            const aDist = a.location?.district === currentData.location?.district ? 1 : 0;
+            const bDist = b.location?.district === currentData.location?.district ? 1 : 0;
+            return bDist - aDist;
+        });
+
+        // ৩. প্রথম ১০টি দেখানো
+        const displayPosts = allPosts.slice(0, 10);
+        displayPosts.forEach(post => {
+            const price = post.category === 'বিক্রয়' ? post.price : post.monthlyRent;
+            list.innerHTML += `
+                <div class="rel-card" onclick="location.href='details.html?id=${post.id}'">
+                    <img src="${post.images?.[0]?.url || post.images?.[0] || 'placeholder.jpg'}">
+                    <div class="rel-info">
+                        <h4 class="rel-title">${post.title}</h4>
+                        <p class="rel-price">৳ ${price} (${post.priceUnit || ''})</p>
+                        <p class="rel-loc">${post.location?.village}, ${post.location?.thana}, ${post.location?.district}</p>
+                    </div>
+                </div>`;
+        });
+
+        if (allPosts.length > 10) {
+            seeMoreBox.style.display = 'block';
+            btnSeeMore.onclick = () => {
+                location.href = `all-posts.html?category=${currentData.category}`;
+            };
         }
-    } catch (e) { console.log("Error loading related posts:", e); }
+    } catch (e) { console.error(e); }
 }
 
 function openLightbox(url) {
     document.getElementById('lb-img').src = url;
     document.getElementById('lightbox').style.display = 'flex';
-                            }
+        }
