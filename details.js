@@ -198,3 +198,40 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('messageButton')?.addEventListener('click', () => location.href = 'messages.html');
     document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
+
+// Auth State Change Handler 
+    auth.onAuthStateChanged(user => {
+        
+        if (user) {
+            // লগইন থাকলে
+            loadProfilePicture(user); 
+            updateIconCounts(); 
+            
+            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+            
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগআউট';
+                loginLinkSidebar.href = '#';
+                
+                loginLinkSidebar.removeEventListener('click', handleLogout);
+                loginLinkSidebar.addEventListener('click', handleLogout);
+            }
+        } else {
+            // লগইন না থাকলে
+            profileImage.style.display = 'none';
+            defaultProfileIcon.style.display = 'block';
+            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+
+            notificationCount.style.display = 'none';
+            messageCount.style.display = 'none';
+            postCount.style.display = 'none';
+            
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগইন';
+                loginLinkSidebar.href = 'auth.html';
+                loginLinkSidebar.removeEventListener('click', handleLogout); 
+            }
+        }
+    });
+
+});
