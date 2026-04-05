@@ -54,8 +54,20 @@
 
         #lightbox { display: none; position: fixed; z-index: 999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
         #lb-img { max-width: 90%; max-height: 80%; }
-  
-    /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
+
+        /* CSS ভেরিয়েবল */
+        :root {
+            --primary-color: #007bff;
+        }
+
+        /* গ্লোবাল ফিক্স */
+        body {
+            margin: 0; 
+            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
+            font-family: Arial, sans-serif; 
+        }
+ 
+        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
         .main-header {
              position: fixed; 
              top: 0;
