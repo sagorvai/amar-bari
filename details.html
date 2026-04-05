@@ -7,90 +7,81 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
-        :root { --primary: #007bff; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f8f9fa; }
-        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-bottom: 40px; }
+        :root { --primary: #007bff; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f4f7f6; }
+        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-bottom: 50px; }
         .container { max-width: 800px; margin: auto; padding: 15px; }
         
-        /* Header Card */
+        /* কার্ড ডিজাইন */
         .content-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .post-title { font-size: 24px; color: var(--dark); margin: 0 0 10px 0; line-height: 1.4; }
-        .post-price { font-size: 20px; color: #28a745; font-weight: bold; margin-bottom: 15px; display: block; }
-        .post-desc { color: #444; line-height: 1.7; border-top: 1px solid #eee; padding-top: 15px; white-space: pre-line; font-size: 15px; }
+        .post-title { font-size: 24px; color: var(--dark); margin: 0 0 10px 0; }
+        .post-price { font-size: 22px; color: #28a745; font-weight: bold; margin-bottom: 15px; display: block; }
+        .post-desc { color: #444; line-height: 1.7; border-top: 1px solid #eee; padding-top: 15px; white-space: pre-line; }
 
-        /* Gallery Grid (5 Photos Layout) */
+        /* গ্যালারি */
         .gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 20px 0; }
-        .gal-item { border-radius: 8px; overflow: hidden; cursor: pointer; background: #eee; position: relative; }
-        .gal-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: 0.3s; }
-        .gal-item:first-child { grid-column: span 4; height: 320px; } /* Main Image */
-        .gal-item:not(:first-child) { height: 100px; }
-        .gal-item:hover img { opacity: 0.8; }
+        .gal-item { border-radius: 8px; overflow: hidden; cursor: pointer; background: #eee; height: 100px; }
+        .gal-item:first-child { grid-column: span 4; height: 320px; }
+        .gal-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        /* Specs Table */
-        .info-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        /* সেকশন হেডিং ও টেবিল */
+        .section-title { font-size: 18px; color: var(--dark); margin: 25px 0 10px 0; display: flex; align-items: center; gap: 8px; font-weight: bold; }
+        .info-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
         .info-table tr { border-bottom: 1px solid #f1f1f1; }
-        .info-table td { padding: 12px 5px; font-size: 14px; color: #333; }
-        .info-table td:first-child { color: var(--gray); font-weight: 600; width: 40%; }
-        .info-table td:last-child { text-align: right; font-weight: 500; }
+        .info-table td { padding: 12px 10px; font-size: 15px; }
+        .info-table td:first-child { color: var(--gray); font-weight: 600; width: 45%; }
+        .info-table td:last-child { text-align: right; color: #333; }
 
-        /* Buttons */
-        .action-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        /* বাটন */
+        .action-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
         .btn { padding: 12px; border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 15px; }
         .btn-call { background: #28a745; color: white; }
         .btn-share { background: var(--primary); color: white; }
-        .btn-map { background: #e74c3c; color: white; width: 100%; margin-top: 15px; }
+        .btn-map { background: #e74c3c; color: white; width: 100%; margin-top: 10px; }
 
-        /* Lightbox */
+        /* লাইটবক্স */
         #lightbox { display: none; position: fixed; z-index: 10000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
         #lb-img { max-width: 90%; max-height: 80%; border: 2px solid #fff; }
-        .lb-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; }
-        .lb-nav { position: absolute; color: white; font-size: 40px; cursor: pointer; top: 50%; transform: translateY(-50%); padding: 20px; }
-        .lb-prev { left: 10px; } .lb-next { right: 10px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Title & Price Section -->
         <div class="content-card">
             <h1 id="p-title" class="post-title">লোড হচ্ছে...</h1>
             <span id="p-price" class="post-price"></span>
-            <div id="p-desc" class="post-desc">তথ্য খোঁজা হচ্ছে...</div>
+            <div id="p-desc" class="post-desc"></div>
         </div>
 
-        <!-- Image Gallery -->
         <div class="gallery-grid" id="p-gallery"></div>
 
-        <!-- Quick Actions -->
         <div class="action-bar">
             <a href="#" id="p-call" class="btn btn-call"><i class="material-icons">call</i> কল করুন</a>
             <button class="btn btn-share" id="p-share"><i class="material-icons">share</i> শেয়ার</button>
         </div>
 
-        <!-- Detailed Info Table (Sequential as Preview) -->
-        <div class="content-card">
-            <h3 style="margin:0 0 15px 0; display:flex; align-items:center; gap:8px;">
-                <i class="material-icons" style="color:var(--primary)">info</i> প্রপার্টি তথ্য
-            </h3>
-            <table class="info-table" id="p-info-table"></table>
-            
-            <a href="#" id="p-map" target="_blank" class="btn btn-map" style="display: none;">
-                <i class="material-icons">location_on</i> গুগোল ম্যাপে লোকেশন দেখুন
-            </a>
+        <div class="section-title">🏠 প্রপার্টির তথ্য</div>
+        <table class="info-table" id="table-basic"></table>
+
+        <div id="section-owner" style="display: none;">
+            <div class="section-title">📑 মালিকানা তথ্য</div>
+            <table class="info-table" id="table-owner"></table>
         </div>
+
+        <div class="section-title">📍 অবস্থান</div>
+        <table class="info-table" id="table-location"></table>
+        
+        <a href="#" id="p-map" target="_blank" class="btn btn-map" style="display: none;">
+            <i class="material-icons">location_on</i> গুগোল ম্যাপে সঠিক লোকেশন দেখুন
+        </a>
     </div>
 
-    <!-- Lightbox Structure -->
     <div id="lightbox" onclick="this.style.display='none'">
-        <span class="lb-close">&times;</span>
-        <span class="lb-nav lb-prev" onclick="changeImg(-1, event)">&#10094;</span>
         <img id="lb-img" src="">
-        <span class="lb-nav lb-next" onclick="changeImg(1, event)">&#10095;</span>
     </div>
 
     <script src="details.js"></script>
