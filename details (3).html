@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>প্রপার্টি ডিটেইলস - আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        :root { --primary: #007bff; --success: #28a745; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f4f7f6; }
+        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-bottom: 50px; }
+        .container { max-width: 800px; margin: auto; padding: 15px; }
+        
+        .top-bar { display: flex; align-items: center; gap: 10px; padding: 10px 0; margin-bottom: 15px; }
+        .btn-back { background: none; border: none; color: var(--dark); cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 16px; }
+
+        .content-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .post-title { font-size: 22px; color: var(--dark); margin: 0 0 8px 0; }
+        .post-price { font-size: 20px; color: var(--success); font-weight: bold; margin-bottom: 12px; display: block; }
+        .post-desc { color: #444; line-height: 1.7; border-top: 1px solid #eee; padding-top: 15px; white-space: pre-line; }
+
+        .gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 20px 0; }
+        .gal-item { border-radius: 8px; overflow: hidden; cursor: pointer; background: #eee; height: 100px; }
+        .gal-item:first-child { grid-column: span 4; height: 350px; }
+        .gal-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .action-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+        .btn-act { padding: 10px; border: 1px solid #ddd; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; text-decoration: none; font-size: 12px; font-weight: bold; background: white; color: var(--dark); }
+        .btn-call { color: var(--success); border-color: var(--success); }
+
+        .section-header { background: #fff; padding: 12px 15px; border-radius: 8px 8px 0 0; margin-top: 25px; border-bottom: 2px solid var(--primary); font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .info-table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 10px; }
+        .info-table td { padding: 12px 15px; border-bottom: 1px solid #f8f9fa; font-size: 14px; }
+        .info-table td:last-child { text-align: right; font-weight: 600; }
+
+        .btn-map { background: #e74c3c; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; }
+
+        /* Related Posts */
+        .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 15px; }
+        .rel-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; }
+        .rel-card img { width: 100%; height: 110px; object-fit: cover; }
+        .rel-info { padding: 8px; }
+        .rel-title { font-size: 13px; font-weight: bold; margin: 0; height: 36px; overflow: hidden; }
+        .rel-price { color: var(--success); font-size: 12px; font-weight: bold; margin: 4px 0; }
+        .rel-loc { font-size: 11px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .see-more-container { text-align: center; margin-top: 20px; }
+        .btn-see-more { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
+
+        #lightbox { display: none; position: fixed; z-index: 999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
+        #lb-img { max-width: 90%; max-height: 80%; }
+    </style>
+</head>
+<body>
+   <div class="overlay" id="overlay"></div>
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <img src="logo.png" alt="আমার বাড়ি.কম লোগো" class="sidebar-logo">
+        <button class="close-btn" id="closeMenu">×</button>
+    </div>
+    <ul class="sidebar-links">
+        <li><a href="index.html"><i class="material-icons">home</i> হোম</a></li>
+        <li><a href="post.html"><i class="material-icons">add_box</i> পোস্ট করুন</a></li>
+        <li><a href="messages.html"><i class="material-icons">chat</i> মেসেজ</a></li>
+        <li><a href="profile.html"><i class="material-icons">person</i> প্রোফাইল</a></li>
+        <li><a href="#" id="logoutLinkSidebar"><i class="material-icons">logout</i> লগআউট</a></li>
+    </ul>
+</nav>
+
+<header class="header">
+    <div class="container header-content">
+        <div class="header-left">
+            <button class="menu-button" id="menuButton">
+                <i class="material-icons">menu</i>
+            </button>
+            <div class="logo">
+                <a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+                    <img src="logo.png" alt="লোগো" style="height: 32px; margin-right: 8px;">
+                    <span style="font-weight: bold; font-size: 1.2rem;">আমার বাড়ি.কম</span>
+                </a>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="icon-button" id="notificationButton"><i class="material-icons">notifications</i></button>
+            <button class="icon-button" id="headerPostButton"><i class="material-icons">add_circle_outline</i></button>
+            <button class="icon-button" id="messageButton"><i class="material-icons">chat_bubble_outline</i></button>
+            <div class="profile-image-wrapper" id="profileImageWrapper" style="cursor: pointer;">
+                <i class="material-icons" id="defaultProfileIcon">account_circle</i>
+                <img src="" alt="Profile" id="headerProfileImage" style="display: none; width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+            </div>
+        </div>
+    </div>
+</header> 
+   
+    
+    <div class="container">
+        <div class="top-bar">
+            <button class="btn-back" onclick="window.history.back()"><i class="material-icons">arrow_back</i> ফিরে যান</button>
+        </div>
+
+        <div class="content-card">
+            <h1 id="p-title" class="post-title">লোড হচ্ছে...</h1>
+            <span id="p-price" class="post-price"></span>
+            <div id="p-desc" class="post-desc"></div>
+        </div>
+
+        <div class="gallery-grid" id="p-gallery"></div>
+
+        <div class="action-bar">
+            <a href="#" id="p-call" class="btn-act btn-call"><i class="material-icons">call</i> কল</a>
+            <button class="btn-act" id="p-message"><i class="material-icons">chat</i> মেসেজ</button>
+            <button class="btn-act" id="p-save"><i class="material-icons">bookmark_border</i> সেভ</button>
+            <button class="btn-act" id="p-share"><i class="material-icons">share</i> শেয়ার</button>
+        </div>
+
+        <div class="section-header">🏠 প্রপার্টির তথ্য</div>
+        <table class="info-table" id="table-basic"></table>
+
+        <div id="section-owner" style="display:none;">
+            <div class="section-header">📑 মালিকানা তথ্য</div>
+            <table class="info-table" id="table-owner"></table>
+        </div>
+
+        <div class="section-header">📍 অবস্থান</div>
+        <table class="info-table" id="table-location"></table>
+        <a href="#" id="p-map" target="_blank" class="btn-map" style="display:none;"><i class="material-icons">map</i> ম্যাপে দেখুন</a>
+
+        <div class="section-header">📞 যোগাযোগ</div>
+        <table class="info-table" id="table-contact"></table>
+
+        <div class="related-section">
+            <h3 style="margin-top:30px;">সম্পর্কিত পোস্ট</h3>
+            <div class="related-grid" id="related-list"></div>
+            <div class="see-more-container" id="see-more-box" style="display:none;">
+                <button class="btn-see-more" id="btn-see-more">See More...</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lightbox" onclick="this.style.display='none'"><img id="lb-img"></div>
+
+    <script src="details.js"></script> 
+
+    <footer class="footer">
+    <div class="container">
+        <p>&copy; 2026 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+    </div>
+    </footer>
+</body>
+    </html>
