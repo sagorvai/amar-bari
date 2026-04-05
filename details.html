@@ -12,117 +12,97 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
-        :root { --primary: #007bff; --success: #28a745; --warning: #f1c40f; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f4f7f6; }
-        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-bottom: 30px; }
+        :root { --primary: #007bff; --success: #28a745; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f4f7f6; }
+        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-bottom: 50px; }
         .container { max-width: 800px; margin: auto; padding: 15px; }
         
-        /* সবার উপরের ব্যাক বার */
-        .top-bar { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #ddd; margin-bottom: 15px; }
-        .btn-back { background: none; border: none; color: var(--dark); cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 16px; padding: 5px 10px; border-radius: 5px; }
-        .btn-back:hover { background-color: #eee; }
+        .top-bar { display: flex; align-items: center; gap: 10px; padding: 10px 0; margin-bottom: 15px; }
+        .btn-back { background: none; border: none; color: var(--dark); cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 16px; }
 
-        /* কার্ড ও হেডার */
-        .content-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; position: relative; }
-        .post-title { font-size: 22px; color: var(--dark); margin: 0 0 8px 0; line-height: 1.4; }
+        .content-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .post-title { font-size: 22px; color: var(--dark); margin: 0 0 8px 0; }
         .post-price { font-size: 20px; color: var(--success); font-weight: bold; margin-bottom: 12px; display: block; }
-        .post-desc { color: #444; line-height: 1.7; border-top: 1px solid #eee; padding-top: 15px; white-space: pre-line; font-size: 15px; }
+        .post-desc { color: #444; line-height: 1.7; border-top: 1px solid #eee; padding-top: 15px; white-space: pre-line; }
 
-        /* গ্যালারি গ্রিড */
         .gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 20px 0; }
         .gal-item { border-radius: 8px; overflow: hidden; cursor: pointer; background: #eee; height: 100px; }
         .gal-item:first-child { grid-column: span 4; height: 350px; }
         .gal-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        /* ৪টি অ্যাকশন বাটন */
         .action-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
-        .btn-act { padding: 10px; border: none; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; text-decoration: none; font-size: 12px; font-weight: bold; transition: 0.2s; text-align: center; }
-        .btn-act i { font-size: 22px; }
-        .btn-call { background: #e8fcf1; color: var(--success); border: 1px solid var(--success); }
-        .btn-message { background: #e3f2fd; color: var(--primary); border: 1px solid var(--primary); }
-        .btn-save { background: #fffdf0; color: #d6a100; border: 1px solid var(--warning); }
-        .btn-share { background: #f8f9fa; color: var(--dark); border: 1px solid #ddd; }
-        .btn-act:active { transform: scale(0.95); }
+        .btn-act { padding: 10px; border: 1px solid #ddd; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; text-decoration: none; font-size: 12px; font-weight: bold; background: white; color: var(--dark); }
+        .btn-call { color: var(--success); border-color: var(--success); }
 
-        /* সেকশন হেডিং ও টেবিল */
-        .section-header { background: #fff; padding: 12px 15px; border-radius: 8px 8px 0 0; margin-top: 25px; border-bottom: 2px solid var(--primary); display: flex; align-items: center; gap: 10px; font-weight: bold; color: var(--dark); }
-        .info-table { width: 100%; border-collapse: collapse; background: white; border-radius: 0 0 8px 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
-        .info-table tr { border-bottom: 1px solid #f8f9fa; }
-        .info-table td { padding: 12px 15px; font-size: 14px; }
-        .info-table td:first-child { color: var(--gray); width: 40%; font-weight: 500; }
-        .info-table td:last-child { text-align: right; color: #222; font-weight: 600; }
+        .section-header { background: #fff; padding: 12px 15px; border-radius: 8px 8px 0 0; margin-top: 25px; border-bottom: 2px solid var(--primary); font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .info-table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 10px; }
+        .info-table td { padding: 12px 15px; border-bottom: 1px solid #f8f9fa; font-size: 14px; }
+        .info-table td:last-child { text-align: right; font-weight: 600; }
 
-        /* ম্যাপ বাটন */
-        .btn-map { background: #e74c3c; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 15px; font-size: 15px; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
+        .btn-map { background: #e74c3c; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; }
 
-        /* লাইটবক্স */
-        #lightbox { display: none; position: fixed; z-index: 10000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); justify-content: center; align-items: center; }
-        #lb-img { max-width: 95%; max-height: 85%; border: 2px solid #fff; border-radius: 4px; }
+        /* Related Posts */
+        .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 15px; }
+        .rel-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; }
+        .rel-card img { width: 100%; height: 110px; object-fit: cover; }
+        .rel-info { padding: 8px; }
+        .rel-title { font-size: 13px; font-weight: bold; margin: 0; height: 36px; overflow: hidden; }
+        .rel-price { color: var(--success); font-size: 12px; font-weight: bold; margin: 4px 0; }
+        .rel-loc { font-size: 11px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .see-more-container { text-align: center; margin-top: 20px; }
+        .btn-see-more { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
 
-        /* সম্পর্কিত পোস্ট সেকশন */
-        .related-section { margin-top: 40px; }
-        .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 15px; }
-        .rel-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: 0.3s; }
-        .rel-card:hover { transform: translateY(-3px); }
-        .rel-card img { width: 100%; height: 160px; object-fit: cover; }
-        .rel-info { padding: 12px; }
-        .rel-title { font-size: 15px; color: var(--dark); margin: 0 0 6px 0; font-weight: bold; height: 42px; overflow: hidden; line-height: 1.4; }
-        .rel-price { color: var(--success); font-weight: bold; font-size: 14px; margin-bottom: 6px; }
-        .rel-loc { color: var(--gray); font-size: 12px; display: flex; align-items: center; gap: 4px; }
+        #lightbox { display: none; position: fixed; z-index: 999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
+        #lb-img { max-width: 90%; max-height: 80%; }
     </style>
 </head>
 <body>
-
     <div class="container">
         <div class="top-bar">
-            <button class="btn-back" onclick="window.history.back()">
-                <i class="material-icons">arrow_back</i> ফিরে যান
-            </button>
+            <button class="btn-back" onclick="window.history.back()"><i class="material-icons">arrow_back</i> ফিরে যান</button>
         </div>
 
         <div class="content-card">
             <h1 id="p-title" class="post-title">লোড হচ্ছে...</h1>
-            <span id="p-price" class="post-price"></span> <div id="p-desc" class="post-desc"></div>
+            <span id="p-price" class="post-price"></span>
+            <div id="p-desc" class="post-desc"></div>
         </div>
 
         <div class="gallery-grid" id="p-gallery"></div>
 
         <div class="action-bar">
-            <a href="#" id="p-call" class="btn-act btn-call"><i class="material-icons">call</i> কল করুন</a>
-            <a href="#" id="p-message" class="btn-act btn-message"><i class="material-icons">chat</i> মেসেজ</a>
-            <button class="btn-act btn-save" id="p-save"><i class="material-icons">bookmark_border</i> সেভ করুন</button>
-            <button class="btn-act btn-share" id="p-share"><i class="material-icons">share</i> শেয়ার</button>
+            <a href="#" id="p-call" class="btn-act btn-call"><i class="material-icons">call</i> কল</a>
+            <button class="btn-act" id="p-message"><i class="material-icons">chat</i> মেসেজ</button>
+            <button class="btn-act" id="p-save"><i class="material-icons">bookmark_border</i> সেভ</button>
+            <button class="btn-act" id="p-share"><i class="material-icons">share</i> শেয়ার</button>
         </div>
 
-        <div class="section-header"><i class="material-icons">home</i> 🏠 প্রপার্টির তথ্য</div>
+        <div class="section-header">🏠 প্রপার্টির তথ্য</div>
         <table class="info-table" id="table-basic"></table>
 
-        <div id="section-ownership" style="display: none;">
-            <div class="section-header"><i class="material-icons">assignment</i> 📑 মালিকানা তথ্য</div>
-            <table class="info-table" id="table-ownership"></table>
+        <div id="section-owner" style="display:none;">
+            <div class="section-header">📑 মালিকানা তথ্য</div>
+            <table class="info-table" id="table-owner"></table>
         </div>
 
-        <div class="section-header"><i class="material-icons">place</i> 📍 অবস্থান</div>
+        <div class="section-header">📍 অবস্থান</div>
         <table class="info-table" id="table-location"></table>
-        
-        <a href="#" id="p-map" target="_blank" class="btn-map" style="display: none;">
-            <i class="material-icons">map</i> গুগোল ম্যাপে লোকেশন দেখুন
-        </a>
+        <a href="#" id="p-map" target="_blank" class="btn-map" style="display:none;"><i class="material-icons">map</i> ম্যাপে দেখুন</a>
 
-        <div class="section-header"><i class="material-icons">contact_phone</i> 📞 যোগাযোগ</div>
+        <div class="section-header">📞 যোগাযোগ</div>
         <table class="info-table" id="table-contact"></table>
 
         <div class="related-section">
-            <h3 style="margin:0; color:var(--dark);">সম্পর্কিত আরও কিছু পোস্ট</h3>
-            <div class="related-grid" id="related-list">
-                </div>
+            <h3 style="margin-top:30px;">সম্পর্কিত পোস্ট</h3>
+            <div class="related-grid" id="related-list"></div>
+            <div class="see-more-container" id="see-more-box" style="display:none;">
+                <button class="btn-see-more" id="btn-see-more">See More...</button>
+            </div>
         </div>
-
     </div>
 
-    <div id="lightbox" onclick="this.style.display='none'">
-        <img id="lb-img" src="">
-    </div>
+    <div id="lightbox" onclick="this.style.display='none'"><img id="lb-img"></div>
 
     <script src="details.js"></script>
 </body>
-                                                                 </html>
+    </html>
