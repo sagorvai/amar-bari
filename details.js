@@ -1,5 +1,15 @@
-// Firebase Config আগের মতোই থাকবে...
+const firebaseConfig = {
+    apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+    authDomain: "amar-bari-website.firebaseapp.com",
+    projectId: "amar-bari-website",
+    storageBucket: "amar-bari-website.firebasestorage.app",
+    messagingSenderId: "719084789035",
+    appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
 const urlParams = new URLSearchParams(window.location.search);
 const postId = urlParams.get('id');
 
@@ -14,16 +24,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function renderDetails(data) {
+    // শিরোনাম ও ডেসক্রিপশন
     document.getElementById('p-title').textContent = data.title || "";
     document.getElementById('p-desc').textContent = data.description || "";
 
-    // ১. দামের সাথে ইউনিট (বিক্রয় ও ভাড়া উভয় ক্ষেত্রেই সমাধান)
+    // ১. দাম ও ইউনিটের সঠিক লজিক
     let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
-    // এখানে priceUnit বা rentUnit যেটা পাওয়া যাবে সেটাই নিবে
+    // post.js অনুযায়ী priceUnit অথবা rentUnit চেক করবে
     let unit = data.priceUnit || data.rentUnit || ""; 
     document.getElementById('p-price').textContent = amount ? `৳ ${amount} (${unit})` : "আলোচনা সাপেক্ষ";
 
-    // ইমেজ গ্যালারি
+    // ইমেজ গ্যালারি (৫টি ছবি)
     let images = [];
     if (data.images) data.images.forEach(img => images.push(img.url || img));
     if (data.documents?.khotian) images.push(data.documents.khotian.url || data.documents.khotian);
@@ -38,16 +49,16 @@ function renderDetails(data) {
         gallery.appendChild(div);
     });
 
-    // সাহায্যকারী ফাংশন
+    // সাহায্যকারী ফাংশন: টেবিল রো তৈরি
     const addRow = (tableId, label, value) => {
         if (!value || value === "" || value === "undefined") return;
         const table = document.getElementById(tableId);
         table.innerHTML += `<tr><td>${label}</td><td>${value}</td></tr>`;
     };
 
-    // ২. 🏠 প্রপার্টির তথ্য (সব ডেটা পয়েন্ট সহ)
+    // ২. 🏠 প্রপার্টির তথ্য (post.js এর সাথে সিঙ্ক করা)
     const basicT = 'table-basic';
-    document.getElementById(basicT).innerHTML = ""; // রিসেট
+    document.getElementById(basicT).innerHTML = ""; // আগের ডেটা ক্লিয়ার
     addRow(basicT, "ক্যাটাগরি", data.category);
     addRow(basicT, "টাইপ", data.type);
     addRow(basicT, "বেডরুম", data.bedrooms || data.rooms);
@@ -57,25 +68,25 @@ function renderDetails(data) {
     addRow(basicT, "রাস্তা", data.roadWidth ? `${data.roadWidth} ফিট` : "");
     addRow(basicT, "ফেসিং", data.facing);
     
-    // পরিমাণের পাসে ব্র্যাকেটে ইউনিট (landAreaUnit/houseAreaUnit/commercialAreaUnit)
+    // পরিমাণের পাসে ব্র্যাকেটে সঠিক ইউনিট (landAreaUnit / houseAreaUnit / commercialAreaUnit)
     let area = data.landArea || data.houseArea || data.areaSqft || data.commercialArea;
     let areaUnit = data.landAreaUnit || data.houseAreaUnit || data.commercialAreaUnit || "";
     addRow(basicT, "পরিমাণ", area ? `${area} (${areaUnit})` : "");
 
-    // ৩. 📑 মালিকানা তথ্য (দাগ নং এর সাথে ইউনিট/টাইপ)
+    // ৩. 📑 মালিকানা তথ্য (দাগ নং ও ধরন)
     if (data.category === 'বিক্রয়' && data.owner) {
         document.getElementById('section-owner').style.display = 'block';
         const ownT = 'table-owner';
         document.getElementById(ownT).innerHTML = "";
         addRow(ownT, "দাতার নাম", data.owner.donorName);
-        // দাগ নং (এসএ/আরএস/বিএস ইত্যাদি ব্র্যাকেটে)
+        // দাগ নং ও ধরন (এসএ/আরএস/বিএস)
         let dag = data.owner.dagNo;
         let dagType = data.owner.dagNoType || "";
         addRow(ownT, "দাগ নং", dag ? `${dag} (${dagType})` : "");
         addRow(ownT, "মৌজা", data.owner.mouja);
     }
 
-    // ৪. 📍 অবস্থান (থানা সহ)
+    // ৪. 📍 অবস্থান (থানা সহ সব তথ্য)
     const locT = 'table-location';
     document.getElementById(locT).innerHTML = "";
     addRow(locT, "জেলা", data.location?.district);
@@ -100,12 +111,13 @@ function renderDetails(data) {
     document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
 }
 
-// সম্পর্কিত পোস্ট লজিক (আগের মতোই থাকবে)
+// সম্পর্কিত পোস্ট লজিক: গ্রাম > থানা > জেলা ফিল্টারিং
 async function loadRelatedPosts(currentData) {
     const list = document.getElementById('related-list');
     const seeMoreBox = document.getElementById('see-more-box');
     
     try {
+        // একই ক্যাটাগরির পোস্টগুলো নেওয়া হচ্ছে
         const snapshot = await db.collection('properties')
             .where('category', '==', currentData.category)
             .limit(50) 
@@ -116,18 +128,20 @@ async function loadRelatedPosts(currentData) {
             if (doc.id !== postId) allPosts.push({ id: doc.id, ...doc.data() });
         });
 
+        // গ্রাম > থানা > জেলা অনুসারে সর্টিং
         allPosts.sort((a, b) => {
-            const aVillage = a.location?.village === currentData.location?.village ? 1 : 0;
-            const bVillage = b.location?.village === currentData.location?.village ? 1 : 0;
+            const aVillage = (a.location?.village === currentData.location?.village) ? 1 : 0;
+            const bVillage = (b.location?.village === currentData.location?.village) ? 1 : 0;
             if (aVillage !== bVillage) return bVillage - aVillage;
 
-            const aThana = a.location?.thana === currentData.location?.thana ? 1 : 0;
-            const bThana = b.location?.thana === currentData.location?.thana ? 1 : 0;
+            const aThana = (a.location?.thana === currentData.location?.thana) ? 1 : 0;
+            const bThana = (b.location?.thana === currentData.location?.thana) ? 1 : 0;
             if (aThana !== bThana) return bThana - aThana;
 
             return 0;
         });
 
+        // প্রথম ১০টি দেখানো হবে
         const displayPosts = allPosts.slice(0, 10);
         list.innerHTML = "";
         displayPosts.forEach(post => {
@@ -139,7 +153,7 @@ async function loadRelatedPosts(currentData) {
                     <div class="rel-info">
                         <h4 class="rel-title">${post.title}</h4>
                         <p class="rel-price">৳ ${pAmt} (${pUnit})</p>
-                        <p class="rel-loc">${post.location?.village}, ${post.location?.thana}</p>
+                        <p class="rel-loc">${post.location?.village || ''}, ${post.location?.thana || ''}</p>
                     </div>
                 </div>`;
         });
