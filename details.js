@@ -200,38 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// header_logic.js
 
-// ⭐ ফাংশন ১: হেডার প্রোফাইল লোড করার জন্য ⭐
-function loadHeaderProfile(user) {
-    const headerProfileImage = document.getElementById('profileImage');
-    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
-
-    if (headerProfileImage && defaultProfileIcon) {
-        // ফায়ারবেস লোড হয়েছে ধরে নিয়ে ডেটা লোড করার চেষ্টা
-        if (typeof db !== 'undefined' && db.collection) {
-             db.collection('users').doc(user.uid).get().then(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    if (data.profilePictureUrl) {
-                        headerProfileImage.src = data.profilePictureUrl;
-                        headerProfileImage.style.display = 'block';
-                        defaultProfileIcon.style.display = 'none';
-                    } else {
-                        // যদি URL না থাকে, ডিফল্ট আইকন দেখান
-                        headerProfileImage.style.display = 'none';
-                        defaultProfileIcon.style.display = 'block';
-                    }
-                }
-            }).catch(error => {
-                console.error("Header profile load failed:", error);
-                // ফেইল হলেও ডিফল্ট আইকন দেখান
-                headerProfileImage.style.display = 'none';
-                defaultProfileIcon.style.display = 'block';
-            });
-        }
-    }
-}
 
 // Auth State Change Handler 
     auth.onAuthStateChanged(user => {
