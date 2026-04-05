@@ -169,35 +169,7 @@ function openLightbox(url) {
     document.getElementById('lightbox').style.display = 'flex';
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const menuButton = document.getElementById('menuButton');
-    const closeMenu = document.getElementById('closeMenu');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
 
-    // মেনু খোলা
-    if (menuButton) {
-        menuButton.addEventListener('click', () => {
-            sidebar.classList.add('active');
-            overlay.classList.add('active');
-        });
-    }
-
-    // মেনু বন্ধ করা
-    const closeSidebar = () => {
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-    };
-
-    if (closeMenu) closeMenu.addEventListener('click', closeSidebar);
-    if (overlay) overlay.addEventListener('click', closeSidebar);
-
-    // হেডার বাটনগুলোর লিঙ্ক
-    document.getElementById('notificationButton')?.addEventListener('click', () => location.href = 'notifications.html');
-    document.getElementById('headerPostButton')?.addEventListener('click', () => location.href = 'post.html');
-    document.getElementById('messageButton')?.addEventListener('click', () => location.href = 'messages.html');
-    document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
-});
 
 // Auth State Change Handler 
     auth.onAuthStateChanged(user => {
