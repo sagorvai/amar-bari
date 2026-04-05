@@ -12,40 +12,43 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
-        :root { --primary: #007bff; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f4f7f6; }
-        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-bottom: 50px; }
+        :root { --primary: #007bff; --success: #28a745; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f4f7f6; }
+        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-bottom: 60px; }
         .container { max-width: 800px; margin: auto; padding: 15px; }
         
-        /* কার্ড ডিজাইন */
+        /* কার্ড ও হেডার */
         .content-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .post-title { font-size: 24px; color: var(--dark); margin: 0 0 10px 0; }
-        .post-price { font-size: 22px; color: #28a745; font-weight: bold; margin-bottom: 15px; display: block; }
-        .post-desc { color: #444; line-height: 1.7; border-top: 1px solid #eee; padding-top: 15px; white-space: pre-line; }
+        .post-title { font-size: 24px; color: var(--dark); margin: 0 0 8px 0; line-height: 1.4; }
+        .post-price { font-size: 22px; color: var(--success); font-weight: bold; margin-bottom: 12px; display: block; }
+        .post-desc { color: #444; line-height: 1.7; border-top: 1px solid #eee; padding-top: 15px; white-space: pre-line; font-size: 15px; }
 
-        /* গ্যালারি */
+        /* ইমেজ গ্যালারি */
         .gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 20px 0; }
         .gal-item { border-radius: 8px; overflow: hidden; cursor: pointer; background: #eee; height: 100px; }
-        .gal-item:first-child { grid-column: span 4; height: 320px; }
-        .gal-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .gal-item:first-child { grid-column: span 4; height: 350px; }
+        .gal-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: 0.3s; }
+        .gal-item:hover img { opacity: 0.8; }
 
-        /* সেকশন হেডিং ও টেবিল */
-        .section-title { font-size: 18px; color: var(--dark); margin: 25px 0 10px 0; display: flex; align-items: center; gap: 8px; font-weight: bold; }
-        .info-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
-        .info-table tr { border-bottom: 1px solid #f1f1f1; }
-        .info-table td { padding: 12px 10px; font-size: 15px; }
-        .info-table td:first-child { color: var(--gray); font-weight: 600; width: 45%; }
-        .info-table td:last-child { text-align: right; color: #333; }
+        /* সেকশন হেডিং */
+        .section-header { background: #fff; padding: 12px 15px; border-radius: 8px 8px 0 0; margin-top: 20px; border-bottom: 2px solid var(--primary); display: flex; align-items: center; gap: 10px; font-weight: bold; color: var(--dark); }
+        
+        /* ডাটা টেবিল */
+        .info-table { width: 100%; border-collapse: collapse; background: white; border-radius: 0 0 8px 8px; overflow: hidden; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+        .info-table tr { border-bottom: 1px solid #f8f9fa; }
+        .info-table td { padding: 12px 15px; font-size: 14.5px; }
+        .info-table td:first-child { color: var(--gray); width: 40%; font-weight: 500; }
+        .info-table td:last-child { text-align: right; color: #222; font-weight: 600; }
 
-        /* বাটন */
+        /* বাটন গ্রুপ */
         .action-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
-        .btn { padding: 12px; border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 15px; }
-        .btn-call { background: #28a745; color: white; }
+        .btn { padding: 12px; border: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 15px; }
+        .btn-call { background: var(--success); color: white; }
         .btn-share { background: var(--primary); color: white; }
-        .btn-map { background: #e74c3c; color: white; width: 100%; margin-top: 10px; }
+        .btn-map { background: #e74c3c; color: white; width: 100%; margin-top: 15px; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
 
         /* লাইটবক্স */
-        #lightbox { display: none; position: fixed; z-index: 10000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
-        #lb-img { max-width: 90%; max-height: 80%; border: 2px solid #fff; }
+        #lightbox { display: none; position: fixed; z-index: 10000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); justify-content: center; align-items: center; }
+        #lb-img { max-width: 95%; max-height: 85%; border: 2px solid #fff; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -61,23 +64,26 @@
 
         <div class="action-bar">
             <a href="#" id="p-call" class="btn btn-call"><i class="material-icons">call</i> কল করুন</a>
-            <button class="btn btn-share" id="p-share"><i class="material-icons">share</i> শেয়ার</button>
+            <button class="btn btn-share" id="p-share"><i class="material-icons">share</i> শেয়ার করুন</button>
         </div>
 
-        <div class="section-title">🏠 প্রপার্টির তথ্য</div>
+        <div class="section-header"><i class="material-icons">home</i> 🏠 প্রপার্টির তথ্য</div>
         <table class="info-table" id="table-basic"></table>
 
-        <div id="section-owner" style="display: none;">
-            <div class="section-title">📑 মালিকানা তথ্য</div>
-            <table class="info-table" id="table-owner"></table>
+        <div id="section-ownership" style="display: none;">
+            <div class="section-header"><i class="material-icons">assignment</i> 📑 মালিকানা তথ্য</div>
+            <table class="info-table" id="table-ownership"></table>
         </div>
 
-        <div class="section-title">📍 অবস্থান</div>
+        <div class="section-header"><i class="material-icons">place</i> 📍 অবস্থান</div>
         <table class="info-table" id="table-location"></table>
         
         <a href="#" id="p-map" target="_blank" class="btn btn-map" style="display: none;">
-            <i class="material-icons">location_on</i> গুগোল ম্যাপে সঠিক লোকেশন দেখুন
+            <i class="material-icons">map</i> গুগোল ম্যাপে লোকেশন দেখুন
         </a>
+
+        <div class="section-header"><i class="material-icons">contact_phone</i> 📞 যোগাযোগ</div>
+        <table class="info-table" id="table-contact"></table>
     </div>
 
     <div id="lightbox" onclick="this.style.display='none'">
