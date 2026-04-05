@@ -200,3 +200,144 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+// header_logic.js
+
+// ⭐ ফাংশন ১: হেডার প্রোফাইল লোড করার জন্য ⭐
+function loadHeaderProfile(user) {
+    const headerProfileImage = document.getElementById('profileImage');
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+
+    if (headerProfileImage && defaultProfileIcon) {
+        // ফায়ারবেস লোড হয়েছে ধরে নিয়ে ডেটা লোড করার চেষ্টা
+        if (typeof db !== 'undefined' && db.collection) {
+             db.collection('users').doc(user.uid).get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.profilePictureUrl) {
+                        headerProfileImage.src = data.profilePictureUrl;
+                        headerProfileImage.style.display = 'block';
+                        defaultProfileIcon.style.display = 'none';
+                    } else {
+                        // যদি URL না থাকে, ডিফল্ট আইকন দেখান
+                        headerProfileImage.style.display = 'none';
+                        defaultProfileIcon.style.display = 'block';
+                    }
+                }
+            }).catch(error => {
+                console.error("Header profile load failed:", error);
+                // ফেইল হলেও ডিফল্ট আইকন দেখান
+                headerProfileImage.style.display = 'none';
+                defaultProfileIcon.style.display = 'block';
+            });
+        }
+    }
+}
+
+// ফাংশন ২: লগআউট হ্যান্ডেলার
+const handleLogout = async (e) => {
+    e.preventDefault();
+    try {
+        await auth.signOut(); 
+        alert('সফলভাবে লগআউট করা হয়েছে!');
+        window.location.href = 'index.html'; 
+    } catch (error) {
+        console.error("লগআউট ব্যর্থ হয়েছে:", error);
+        alert("লগআউট ব্যর্থ হয়েছে।");
+    }
+};
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- হেডার UI উপাদানগুলো ---
+    const menuButton = document.getElementById('menuButton');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const notificationButton = document.getElementById('notificationButton');
+    const headerPostButton = document.getElementById('headerPostButton');
+    const messageButton = document.getElementById('messageButton');
+    const profileImageWrapper = document.getElementById('profileImageWrapper'); 
+    const headerProfileImage = document.getElementById('profileImage');
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+    const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
+    const loginLinkSidebar = document.getElementById('login-link-sidebar');
+
+
+    // ⭐ অথেন্টিকেশন স্টেট চেঞ্জ লজিক (প্রোফাইল ইমেজ এবং সাইডবার লিঙ্ক ম্যানেজ করে) ⭐
+    if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // লগইন অবস্থায়: প্রোফাইল ইমেজ লোড এবং সঠিক সাইডবার লিঙ্ক দেখানো
+                loadHeaderProfile(user); 
+                if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+
+                // সাইডবার লিঙ্ক আপডেট
+                if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
+                if (loginLinkSidebar) {
+                    loginLinkSidebar.textContent = 'লগআউট';
+                    loginLinkSidebar.href = '#'; 
+                    loginLinkSidebar.onclick = handleLogout; 
+                }
+            } else {
+                // লগআউট অবস্থায়: ডিফল্ট আইকন দেখানো এবং সাইডবার লিঙ্ক আপডেট
+                if (headerProfileImage && defaultProfileIcon) {
+                    headerProfileImage.style.display = 'none';
+                    defaultProfileIcon.style.display = 'block';
+                }
+                if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
+                
+                // সাইডবার লিঙ্ক আপডেট
+                if (postLinkSidebar) postLinkSidebar.style.display = 'none';
+                if (loginLinkSidebar) {
+                    loginLinkSidebar.textContent = 'লগইন';
+                    loginLinkSidebar.href = 'auth.html';
+                    loginLinkSidebar.onclick = null;
+                }
+            }
+        });
+    }
+
+    // ⭐ হেডার আইকন কার্যকারিতা (মেনু এবং ওভারলে ফিক্স) ⭐
+    
+    // মেনু বাটন এবং সাইডবার টগল
+    if (menuButton) {
+        menuButton.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+    }
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+
+    // নোটিফিকেশন আইকন রিডাইরেক্ট
+    if (notificationButton) {
+        notificationButton.addEventListener('click', () => {
+             window.location.href = 'notifications.html'; 
+        });
+    }
+
+    // পোস্ট আইকন রিডাইরেক্ট
+    if (headerPostButton) {
+        headerPostButton.addEventListener('click', () => {
+            window.location.href = 'post.html'; 
+        });
+    }
+
+    // ম্যাসেজ আইকন রিডাইরেক্ট
+    if (messageButton) {
+        messageButton.addEventListener('click', () => {
+             window.location.href = 'messages.html';
+        });
+    }
+    
+    // প্রোফাইল ইমেজ রিডাইরেক্ট
+    if (profileImageWrapper) {
+        profileImageWrapper.addEventListener('click', () => {
+             window.location.href = 'profile.html'; 
+        });
+    }
+});
