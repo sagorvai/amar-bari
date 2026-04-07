@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function renderDetails(data) {
     document.getElementById('p-title').textContent = data.title || "";
+    document.getElementById('p-location').textContent = data.location || "";
     document.getElementById('p-desc').textContent = data.description || "";
 
     // ১. দাম ও ইউনিট (ভাড়া ও বিক্রয় উভয় ঠিক করা হলো)
