@@ -158,7 +158,7 @@ async function loadRelatedPosts(currentData) {
                     <div class="rel-info">
                         <h4 class="rel-title">${post.title}</h4>
                         <p class="rel-price">৳ ${pAmt} (${pUnit})</p>
-                        <p class="rel-loc">${post.location?.village || ''}, ${post.location?.thana || ''}</p>
+                        <p class="rel-loc">${post.location?.village || ''}, ${post.location?.thana || ${post.location?.district || ''}</p>
                     </div>
                 </div>`;
         });
