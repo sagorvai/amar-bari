@@ -25,12 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function renderDetails(data) {
     document.getElementById('p-title').textContent = data.title || "";
-
-    // লোকেশনের তথ্য সংগ্রহ ও একত্রিত করা
-    const district = property.location?.district || 'অজানা জেলা';
-    const thana = property.location?.thana || 'অজানা থানা';
-    const village = property.location?.village || property.location?.area || 'অজানা গ্রাম/এলাকা'; 
-    const fullLocation = `${village}, ${thana}, ${district}`;
+    <p class="rel-loc">${post.location?.village || ''}, ${post.location?.thana || ''}, ${post.location?.district || ''}</p>
     document.getElementById('p-desc').textContent = data.description || "";
 
     // ১. দাম ও ইউনিট (ভাড়া ও বিক্রয় উভয় ঠিক করা হলো)
