@@ -45,8 +45,10 @@ row(basic, 'বর্ণনা', postData.description);
 
 /* ---------------- Dynamic Property Fields ---------------- */
 row(basic, 'রুম', postData.rooms);
-row(basic, 'বাথরুম', postData.bathrooms);
+row(basic, 'ডাইনিং', postData.dining);
 row(basic, 'কিচেন', postData.kitchen);
+row(basic, 'বাথরুম', postData.bathrooms);
+row(basic, 'বেলকনি', postData.balcony);
 row(basic, 'ফ্লোর নং', postData.floorNo);
 row(basic, 'প্রপার্টির বয়স', postData.propertyAge);
 row(basic, 'ফেসিং', postData.facing);
