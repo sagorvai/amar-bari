@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function renderDetails(data) {
     document.getElementById('p-title').textContent = data.title || "";
-    <p class="rel-loc">${post.location?.village || ''}, ${post.location?.thana || ''}, ${post.location?.district || ''}</p>
+    
     document.getElementById('p-desc').textContent = data.description || "";
 
     // ১. দাম ও ইউনিট (ভাড়া ও বিক্রয় উভয় ঠিক করা হলো)
