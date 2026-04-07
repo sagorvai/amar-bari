@@ -227,7 +227,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="input-group">
                         <label for="road-width">চলাচলের রাস্তা (ফিট):</label>
                         <input type="number" id="road-width" required value="${stagedData?.roadWidth || ''}">
-                    </div>
+                        
+                    
+                        <div class="input-group">
+                            <label for="dining">ডাইনিং রুম:</label>
+                            <input type="number" id="dining" required value="${stagedData?.dining || ''}">
+                        </div>
+                        
+                    
+                        <div class="input-group">
+                            <label for="balcony">বেলকনি:</label>
+                            <input type="number" id="balcony" required value="${stagedData?.balcony || ''}">
+                        </div>
                 `;
             }
             
