@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function renderDetails(data) {
     document.getElementById('p-title').textContent = data.title || "";
-    document.getElementById('p-location').textContent = data.location || "";
+
     // লোকেশনের তথ্য সংগ্রহ ও একত্রিত করা
     const district = property.location?.district || 'অজানা জেলা';
     const thana = property.location?.thana || 'অজানা থানা';
