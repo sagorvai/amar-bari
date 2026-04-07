@@ -100,6 +100,7 @@ function renderDetails(data) {
     const locT = 'table-location';
     document.getElementById(locT).innerHTML = "";
     addRow(locT, "জেলা", data.location?.district);
+    addRow(locT, "এরিয়া", data.location?.areaType);
     addRow(locT, "উপজেলা", data.location?.upazila);
     addRow(locT, "থানা", data.location?.thana);
     addRow(locT, "ইউনিয়ন", data.location?.union);
@@ -116,9 +117,9 @@ function renderDetails(data) {
     // ৫. 📞 যোগাযোগ
     const conT = 'table-contact';
     document.getElementById(conT).innerHTML = "";
-    addRow(conT, "প্রাথমিক ফোন", data.phoneNumber);
+    addRow(conT, "প্রাথমিক ফোন", data.secondaryPhone);
     addRow(conT, "অতিরিক্ত ফোন", data.secondaryPhone);
-    document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
+    document.getElementById('p-call').href = `tel:${data.secondaryPhone}`;
 }
 
 // সম্পর্কিত পোস্ট লজিক (আগের মতোই সঠিক আছে)
