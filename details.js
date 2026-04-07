@@ -63,8 +63,8 @@ function renderDetails(data) {
     // ভাড়ার জন্য বিশেষ তথ্য (উঠার তারিখ, ধরন, এডভ্যান্স)
     if (data.category === 'ভাড়া') {
         addRow(basicT, "ভাড়ার ধরন", data.rentType); // ফ্যামিলি/ব্যাচেলর
-        addRow(basicT, "ওঠার তারিখ", data.availableDate);
-        addRow(basicT, "অগ্রিম (এডভ্যান্স)", data.advanceAmount ? `৳ ${data.advanceAmount}` : "");
+        addRow(basicT, "ওঠার তারিখ", data.moveInDate);
+        addRow(basicT, "অগ্রিম (এডভ্যান্স)", data.advance ? `৳ ${data.advance}` : "");
     }
 
     addRow(basicT, "বেডরুম", data.bedrooms || data.rooms);
