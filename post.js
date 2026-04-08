@@ -870,6 +870,14 @@ const balcony = document.getElementById('balcony')?.value || "";
                 status: 'pending', // Will be set to 'published' in preview.js
                 listerType: getValue('lister-type'),
 
+                const stagedData = {
+    category: postCategory,
+    type: propertyType,
+    dining: dining,    // নতুন যুক্ত হলো
+    balcony: balcony,  // নতুন যুক্ত হলো
+    // ... বাকি সব আগের মতোই থাকবে
+};
+            
                 // ঠিকানা ডেটা
                 location: {
                     division: getValue('division'),
