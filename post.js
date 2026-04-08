@@ -35,6 +35,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const propertyForm = document.getElementById('property-form');
     const submitBtn = document.querySelector('#property-form button[type="submit"]');
 
+    const dining = document.getElementById('dining')?.value || "";
+const balcony = document.getElementById('balcony')?.value || "";
+    
     // --- NEW/FIXED: Function to load and pre-fill data from session storage for editing ---
     function loadStagedData() {
         const stagedDataString = sessionStorage.getItem('stagedPropertyData');
