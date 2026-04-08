@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     <div class="input-group">
                             <label for="dining">ডাইনিং:</label>
-                            <input type="number" id="dining-rooms" required value="${stagedData?.diningrooms || ''}">
+                            <input type="number" id="dining" required value="${stagedData?.dining || ''}">
                         </div>
 
                         <div class="input-group">
@@ -915,11 +915,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (type === 'বাড়ি') {
                     propertyData.floors = getValue('floors');
+                    propertyData.dining = getValue('dining');
+                    propertyData.balcony = getValue('balcony');
                     propertyData.houseArea = getValue('house-area');
                     propertyData.houseAreaUnit = getValue('house-area-unit');
                     propertyData.roadWidth = getValue('road-width');
                 } else if (type === 'ফ্লাট') {
                     propertyData.rooms = getValue('rooms');
+                    propertyData.dining = getValue('dining');
+                    propertyData.balcony = getValue('balcony');
                     propertyData.bathrooms = getValue('bathrooms');
                     propertyData.kitchen = getValue('kitchen');
                     propertyData.roadWidth = getValue('road-width');
