@@ -69,8 +69,10 @@ function renderDetails(data) {
     }
 
     addRow(basicT, "বেডরুম", data.bedrooms || data.rooms);
+    addRow(basicT, "ডাইনিং", data.dining);
     addRow(basicT, "বাথরুম", data.bathrooms);
     addRow(basicT, "কিচেন", data.kitchen);
+    addRow(basicT, "বেলকনি", data.balcony);
     addRow(basicT, "ফ্লোর নম্বর", data.floorNo || data.floorLevel);
     addRow(basicT, "রাস্তা", data.roadWidth ? `${data.roadWidth} ফিট` : "");
     addRow(basicT, "ফেসিং", data.facing);
