@@ -228,8 +228,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label for="road-width">চলাচলের রাস্তা (ফিট):</label>
                         <input type="number" id="road-width" required value="${stagedData?.roadWidth || ''}">
                     </div>
+
+                    <div class="input-group">
+                            <label for="dining">ডাইনিং:</label>
+                            <input type="number" id="dining-rooms" required value="${stagedData?.diningrooms || ''}">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="balcony">বেলকনি:</label>
+                            <input type="number" id="balcony" required value="${stagedData?.balcony || ''}">
+                        </div>
                 `;
             }
+
             
             if (type === 'বাড়ি') {
                  descriptionHTML += `
