@@ -423,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <label for="land-area">পরিমাণ:</label>
                     <input type="number" id="land-area" placeholder="পরিমাণ" required value="${stagedData?.landArea || ''}">
                     <select id="land-area-unit" class="unit-select" required>
-                        <option value="শতক" ${stagedData?.landAreaUnit === 'মাসিক' ? 'selected' : ''}>মাসিক</option>
+                       <option value="শতক" ${stagedData?.landAreaUnit === 'মাসিক' ? 'selected' : ''}>মাসিক</option>
                         <option value="একর" ${stagedData?.landAreaUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট</option>
                     </select>
                 </div>
@@ -966,7 +966,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     propertyData.monthlyRent = getValue('monthly-rent');
                     propertyData.advance = getValue('advance');
                     propertyData.price = getValue('price');
-                    propertyData.landAreaUnit = getValue('landAreaUnit');
+                    propertyData.commercialAreaUnit = getValue('commercial-area-unit');
                     propertyData.priceUnit = getValue('price-unit');
                     propertyData.moveInDate = getValue('move-in-date');
                     if (type === 'বাড়ি' || type === 'ফ্লাট') {
