@@ -444,7 +444,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="মাসিক" ${stagedData?.priceUnit === 'মাসিক' ? 'selected' : ''}>মাসিক (টাকায়)</option>
                         <option value="স্কয়ার ফিট" ${stagedData?.priceUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট (টাকায়)</option>
                 </div>
-
+               <h3>এডভান্স জামানত</h3>
                <div class="input-group">
                     <label for="advance">এডভান্স / জামানত (টাকায়):</label>
                     <input type="number" id="advance" placeholder="টাকায়" required value="${stagedData?.advance || ''}">
