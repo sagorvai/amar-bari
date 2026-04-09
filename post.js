@@ -956,7 +956,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (category === 'ভাড়া') {
                     propertyData.monthlyRent = getValue('monthly-rent');
                     propertyData.advance = getValue('advance');
-                    propertyData.rentUnit = getValue('rentUnit');
+                    propertyData.priceUnit = getValue('priceUnit');
                     propertyData.moveInDate = getValue('move-in-date');
                     if (type === 'বাড়ি' || type === 'ফ্লাট') {
                          propertyData.rentType = getValue('rent-type');
