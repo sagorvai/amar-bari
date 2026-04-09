@@ -446,6 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         } else if (category === 'ভাড়া') {
             priceRentHTML += `
+                
                 <div class="input-group">
                     <label for="monthly-rent">মাসিক ভাড়া (টাকায়):</label>
                     <input type="number" id="monthly-rent" required value="${stagedData?.monthlyRent || ''}">
@@ -453,6 +454,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="মাসিক" ${stagedData?.priceUnit === 'মাসিক' ? 'selected' : ''}>মাসিক (টাকায়)</option>
                         <option value="স্কয়ার ফিট" ${stagedData?.priceUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট (টাকায়)</option>
                 </div>
+               
+               <div class="form-group" style="margin-top: 20px;"> <label for="advance-amount">এডভ্যান্স / জামানত (ঐচ্ছিক)</label>
                <div class="input-group">
                     <label for="advance">এডভান্স / জামানত (টাকায়):</label>
                     <input type="number" id="advance" placeholder="এডভান্স / জামানত" required value="${stagedData?.advance || ''}">
