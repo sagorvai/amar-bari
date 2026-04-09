@@ -458,11 +458,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                
         
-               <div class="input-group"><h3>এডভান্স / জামানত </h3>;
-                    <label for="advance-amount">এডভ্যান্স / জামানত </label>
-                    <label for="advance">এডভান্স / জামানত (টাকায়):</label>
-                    <input type="number" id="advance" placeholder="এডভান্স / জামানত" required value="${stagedData?.advance || ''}">
-                </div>
+               <div class="input-group">
+                        <label for="advance">এডভান্স / জামানত </label>
+                        <input type="date" id="advance" required value="${stagedData?.advance || ''}">
+                    </div>
             `;
         }
         
