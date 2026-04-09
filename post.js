@@ -455,7 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="স্কয়ার ফিট" ${stagedData?.priceUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট (টাকায়)</option>
                 </div>
                
-               <div class="form-group" style="margin-top: 20px;"> <label for="advance-amount">এডভ্যান্স / জামানত (ঐচ্ছিক)</label>
+               <div class="form-group" style="margin-top: 30px;"> <label for="advance-amount">এডভ্যান্স / জামানত (ঐচ্ছিক)</label>
                <div class="input-group">
                     <label for="advance">এডভান্স / জামানত (টাকায়):</label>
                     <input type="number" id="advance" placeholder="এডভান্স / জামানত" required value="${stagedData?.advance || ''}">
