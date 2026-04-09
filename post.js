@@ -444,24 +444,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="মাসিক" ${stagedData?.priceUnit === 'মাসিক' ? 'selected' : ''}>মাসিক (টাকায়)</option>
                         <option value="স্কয়ার ফিট" ${stagedData?.priceUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট (টাকায়)</option>
                 </div>
-               
+               <div class="input-group">
+                    <label for="advance">এডভান্স / জামানত (টাকায়):</label>
+                    <input type="number" id="advance" placeholder="এডভান্স / জামানত" required value="${stagedData?.advance || ''}">
+                </div>
             `;
         }
         
         
         priceRentHTML += '</div>'; // price-rent-section বন্ধ
         fieldsHTML += priceRentHTML;
-
-        // --- সেকশন ৪: এডভান্স / জামানত ---
-       let advanceHTML = `
-        <div class="form-section advance-section">
-               <h3>এডভান্স জামানত</h3>
-               <div class="input-group">
-                    <label for="advance">এডভান্স / জামানত (টাকায়):</label>
-                    <input type="number" id="advance" placeholder="এডভান্স / জামানত" required value="${stagedData?.advance || ''}">
-                </div>
-                `;
-              fieldsHTML += advanceHTML;
 
         
         // --- সেকশন ৪: ঠিকানা পর্ব ---
@@ -964,6 +956,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (category === 'ভাড়া') {
                     propertyData.monthlyRent = getValue('monthly-rent');
                     propertyData.advance = getValue('advance');
+                    propertyData.rentUnit = getValue('rentUnit');
                     propertyData.moveInDate = getValue('move-in-date');
                     if (type === 'বাড়ি' || type === 'ফ্লাট') {
                          propertyData.rentType = getValue('rent-type');
