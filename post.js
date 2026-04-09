@@ -457,10 +457,10 @@ document.addEventListener('DOMContentLoaded', function() {
                
 
                
-        
+             <h3>এডভান্স / জামানত</h3>
                <div class="input-group">
                         <label for="advance">এডভান্স / জামানত </label>
-                        <input type="text" id="advance" required value="${stagedData?.advance || ''}">
+                        <input type="number" id="advance" required value="${stagedData?.advance || ''}">
                     </div>
             `;
         }
