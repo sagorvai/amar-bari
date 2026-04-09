@@ -458,9 +458,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                
         
-        
-               <div class="input-group">
-                   <div class="form-group" style="margin-top: 30px;"> <label for="advance-amount">এডভ্যান্স / জামানত </label>
+               <div class="input-group"><h3>এডভান্স / জামানত </h3>;
+                    <label for="advance-amount">এডভ্যান্স / জামানত </label>
                     <label for="advance">এডভান্স / জামানত (টাকায়):</label>
                     <input type="number" id="advance" placeholder="এডভান্স / জামানত" required value="${stagedData?.advance || ''}">
                 </div>
