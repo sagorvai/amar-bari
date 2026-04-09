@@ -419,6 +419,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // দাম/ভাড়ার ফিল্ড
         if (category === 'বিক্রয়') {
             priceRentHTML += `
+               <div class="input-group input-inline-unit">
+                    <label for="land-area">পরিমাণ:</label>
+                    <input type="number" id="land-area" placeholder="পরিমাণ" required value="${stagedData?.landArea || ''}">
+                    <select id="land-area-unit" class="unit-select" required>
+                        <option value="শতক" ${stagedData?.landAreaUnit === 'মাসিক' ? 'selected' : ''}>মাসিক</option>
+                        <option value="একর" ${stagedData?.landAreaUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট</option>
+                    </select>
+                </div>
+                
                 <div class="input-group input-inline-unit">
                     <label for="price">দাম:</label>
                     <input type="number" id="price" placeholder="মোট দাম" required value="${stagedData?.price || ''}">
@@ -957,7 +966,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     propertyData.monthlyRent = getValue('monthly-rent');
                     propertyData.advance = getValue('advance');
                     propertyData.price = getValue('price');
-                propertyData.priceUnit = getValue('price-unit');
+                    propertyData.landAreaUnit = getValue('landAreaUnit');
+                    propertyData.priceUnit = getValue('price-unit');
                     propertyData.moveInDate = getValue('move-in-date');
                     if (type === 'বাড়ি' || type === 'ফ্লাট') {
                          propertyData.rentType = getValue('rent-type');
