@@ -440,6 +440,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="input-group">
                     <label for="monthly-rent">মাসিক ভাড়া (টাকায়):</label>
                     <input type="number" id="monthly-rent" required value="${stagedData?.monthlyRent || ''}">
+                    <select id="price-unit" class="unit-select" required>
+                        <option value="মাসিক" ${stagedData?.priceUnit === 'মাসিক' ? 'selected' : ''}>মাসিক (টাকায়)</option>
+                        <option value="স্কয়ার ফিট" ${stagedData?.priceUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট (টাকায়)</option>
                 </div>
                 <div class="input-group">
                     <label for="advance">এডভান্স / জামানত (টাকায়):</label>
