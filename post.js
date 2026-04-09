@@ -460,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
                <div class="input-group">
                         <label for="advance">এডভান্স / জামানত </label>
-                        <input type="date" id="advance" required value="${stagedData?.advance || ''}">
+                        <input type="text" id="advance" required value="${stagedData?.advance || ''}">
                     </div>
             `;
         }
