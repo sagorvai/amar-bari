@@ -455,14 +455,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="স্কয়ার ফিট" ${stagedData?.priceUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট (টাকায়)</option>
                 </div>
                
-               <div class="form-group" style="margin-top: 30px;"> <label for="advance-amount">এডভ্যান্স / জামানত (ঐচ্ছিক)</label>
-               <div class="input-group">
-                    <label for="advance">এডভান্স / জামানত (টাকায়):</label>
-                    <input type="number" id="advance" placeholder="এডভান্স / জামানত" required value="${stagedData?.advance || ''}">
-                </div>
-            `;
-        }
-        
+               
+        // --- ভাড়া ক্যাটাগরির জন্য এডভ্যান্স ফিল্ডের কোড (post.js এর ভেতরে) ---
+
+// নিচের অংশটুকু তোমার ফাইলে খুঁজে দেখবে যেখানে advanceAmount জেনারেট হচ্ছে
+const rentFields = `
+    <div class="form-group" style="margin-top: 20px;"> <label for="advance-amount">এডভ্যান্স / জামানত </label>
+        <div class="input-with-unit">
+            <input type="number" id="advance-amount" placeholder="পরিমাণ লিখুন">
+            <span class="unit-label">টাকা</span>
+        </div>
+    </div>
+    `;
+    }
         
         priceRentHTML += '</div>'; // price-rent-section বন্ধ
         fieldsHTML += priceRentHTML;
