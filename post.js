@@ -467,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
        else if (category === 'ভাড়া') {
             advanceHTML += `
             
-        <div class="form-section advance-section">
+        
                 <h3>এডভান্স / জামানত</h3>
                 <div class="input-group">
                         <label for="advance">এডভান্স / জামানত </label>
