@@ -506,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let contactHTML = `
             <div class="form-section contact-section">
                 <h3>যোগাযোগের তথ্য</h3>
-                <div ="inclassput-group">
+                <div class="input-group">
                     <label for="primary-phone">ফোন নম্বর (লিখুন):</label>
                     <input type="tel" id="primary-phone" placeholder="ফোন নম্বর" value="${stagedData?.primaryPhone || ''}">
                 </div>
