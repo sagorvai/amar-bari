@@ -464,8 +464,8 @@ document.addEventListener('DOMContentLoaded', function() {
         priceRentHTML += '</div>'; // price-rent-section বন্ধ
         fieldsHTML += priceRentHTML;
 
-        if (category === 'ভাড়া') {
-            priceRentHTML += `
+       else if (category === 'ভাড়া') {
+            advanceHTML += `
             
         <div class="form-section advance-section">
                 <h3>এডভান্স / জামানত</h3>
@@ -474,7 +474,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="number" id="advance" required value="${stagedData?.advance || ''}">
                ' ; }
 
-        fieldsHTML += priceRentHTML;
+        fieldsHTML += advanceHTML;
         
         // --- সেকশন ৪: ঠিকানা পর্ব ---
         let addressHTML = `
