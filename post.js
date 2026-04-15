@@ -506,10 +506,9 @@ document.addEventListener('DOMContentLoaded', function() {
         let contactHTML = `
             <div class="form-section contact-section">
                 <h3>যোগাযোগের তথ্য</h3>
-                <div class="input-group">
-                    <label for="primary-phone">ফোন নম্বর (প্রোফাইল থেকে অটো-এড):</label>
-                    <input type="tel" id="primary-phone" placeholder="ফোন নম্বর" required disabled>
-                    <p class="small-text">লগইন করার পরে স্বয়ংক্রিয়ভাবে পূরণ হবে।</p>
+                <div ="inclassput-group">
+                    <label for="primary-phone">ফোন নম্বর :</label>
+                    <input type="tel" id="primary-phone" placeholder="ফোন নম্বর" value="${stagedData?.primaryPhone || ''}">
                 </div>
                 <div class="input-group">
                     <label for="secondary-phone">অতিরিক্ত ফোন নম্বর (ঐচ্ছিক):</label>
