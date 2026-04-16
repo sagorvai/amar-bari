@@ -455,7 +455,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="স্কয়ার ফিট" ${stagedData?.priceUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট (টাকায়)</option>
                 </div>
                
-
+               <h3>এডভান্স / জামানত</h3>
+                <div class="input-group">
+                        <label for="advance">এডভান্স / জামানত </label>
+                        <input type="number" id="advance" required value="${stagedData?.advance || ''}">
                
              
             `;
@@ -464,17 +467,6 @@ document.addEventListener('DOMContentLoaded', function() {
         priceRentHTML += '</div>'; // price-rent-section বন্ধ
         fieldsHTML += priceRentHTML;
 
-       else if (category === 'ভাড়া') {
-            advanceHTML += `
-            
-        
-                <h3>এডভান্স / জামানত</h3>
-                <div class="input-group">
-                        <label for="advance">এডভান্স / জামানত </label>
-                        <input type="number" id="advance" required value="${stagedData?.advance || ''}">
-               ' ; }
-
-        fieldsHTML += advanceHTML;
         
         // --- সেকশন ৪: ঠিকানা পর্ব ---
         let addressHTML = `
