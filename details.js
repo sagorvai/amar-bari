@@ -120,9 +120,9 @@ function renderDetails(data) {
     // ৫. 📞 যোগাযোগ
     const conT = 'table-contact';
     document.getElementById(conT).innerHTML = "";
-    addRow(conT, "প্রাথমিক ফোন", data.secondaryPhone);
+    addRow(conT, "প্রাথমিক ফোন", data.phoneNumber);
     addRow(conT, "অতিরিক্ত ফোন", data.secondaryPhone);
-    document.getElementById('p-call').href = `tel:${data.secondaryPhone}`;
+    document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
 }
 
 // সম্পর্কিত পোস্ট লজিক (আগের মতোই সঠিক আছে)
