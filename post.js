@@ -332,6 +332,23 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label for="donor-name">দাতার নাম:</label>
                         <input type="text" id="donor-name" required value="${stagedData?.owner?.donorName || ''}">
                     </div>
+
+                    <div class="input-inline-group">
+                        <div class="input-group" style="flex: 1;">
+                            <label for="khotian-no-input">খতিয়ান (ধরন):</label>
+                            <select id="khotian-no-type-select" required>
+                                <option value="">-- নির্বাচন করুন --</option>
+                                <option value="RS" ${stagedData?.owner?.khotianNoType === 'RS' ? 'selected' : ''}>RS</option>
+                                <option value="BRS" ${stagedData?.owner?.khotianNoType === 'BRS' ? 'selected' : ''}>BRS</option>
+                                <option value="নামজারি" ${stagedData?.owner?.khotianNoType === 'নামজারি' ? 'selected' : ''}>নামজারি</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="flex: 2;">
+                            <label for="khotian-no-input">খতিয়ান নং (লিখুন):</label>
+                            <input type="text" id="khotian-no-input" placeholder="খতিয়ান নম্বর" required value="${stagedData?.owner?.khotianNo || ''}">
+                        </div>
+                    </div>
+                    
                     <div class="input-inline-group">
                         <div class="input-group" style="flex: 1;">
                             <label for="dag-no-type-select">দাগ নং (ধরন):</label>
@@ -912,6 +929,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // মালিকানা বিবরণ
                 propertyData.owner = {
                     donorName: getValue('donor-name'),
+                    khotianNoType: getValue('khotian-no-type-select'),
+                    khotianNo: getValue('khotian-no-input'),
                     dagNoType: getValue('dag-no-type-select'),
                     dagNo: getValue('dag-no-input'),
                     mouja: getValue('mouja-owner'),
