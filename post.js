@@ -768,6 +768,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="text" id="upazila-name" required value="${stagedData?.location?.upazila || ''}">
                     </div>
                     <div class="input-group">
+                        <label for="thana-name">থানা:</label>
+                        <input type="text" id="thana-name" required value="${stagedData?.location?.thana || ''}">
+                    </div>
+                    <div class="input-group">
                         <label for="union-name">ইউনিয়ন:</label>
                         <input type="text" id="union-name" required value="${stagedData?.location?.union || ''}">
                     </div>
