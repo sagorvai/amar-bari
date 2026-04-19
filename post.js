@@ -182,6 +182,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         ${(type === 'ফ্লাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="${parkingUtilityValue}" id="utility-parking" ${parkingChecked}> ${parkingUtilityValue}</label>` : ''}
 
+
+                        <label><input type="checkbox" name="utility" value="সিকিউরিটি গার্ড" id="utility-security" ${stagedData?.utilities?.includes('সিকিউরিটি গার্ড') ? 'checked' : ''}> সিকিউরিটি গার্ড</label>
+                        <label><input type="checkbox" name="utility" value="সিসিটিভি" id="utility-ccTv" ${stagedData?.utilities?.includes('সিসিটিভি') ? 'checked' : ''}> সিসিটিভি</label>
                         <label><input type="checkbox" name="utility" value="গ্যাস সংযোগ" id="utility-gas" ${stagedData?.utilities?.includes('গ্যাস সংযোগ') ? 'checked' : ''}> গ্যাস সংযোগ</label>
                         <label><input type="checkbox" name="utility" value="জেনারেটর" id="utility-generator" ${stagedData?.utilities?.includes('জেনারেটর') ? 'checked' : ''}> জেনারেটর/পাওয়ার ব্যাকআপ</label>
                         <label><input type="checkbox" name="utility" value="ওয়াসা পানি" id="utility-wasa" ${stagedData?.utilities?.includes('ওয়াসা পানি') ? 'checked' : ''}> ওয়াসা পানি</label>
