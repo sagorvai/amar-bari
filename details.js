@@ -94,6 +94,9 @@ function renderDetails(data) {
         const ownT = 'table-owner';
         document.getElementById(ownT).innerHTML = "";
         addRow(ownT, "দাতার নাম", data.owner.donorName);
+        let khotian = data.owner.khotianNo;
+        let khotianType = data.owner.khotianNoType || "";
+        addRow(ownT, "খতিয়ান নং", khotian ? `${khotian} (${khotianType})` : "");
         let dag = data.owner.dagNo;
         let dagType = data.owner.dagNoType || "";
         addRow(ownT, "দাগ নং", dag ? `${dag} (${dagType})` : "");
