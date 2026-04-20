@@ -61,6 +61,7 @@ function renderDetails(data) {
     addRow(basicT, "ক্যাটাগরি", data.category);
     addRow(basicT, "টাইপ", data.type);
     addRow(basicT, "জমির ধরন", data.landType);
+    addRow(basicT, "প্রপার্টির বয়স", data.propertyAge);
     
     // ভাড়ার জন্য বিশেষ তথ্য (উঠার তারিখ, ধরন, এডভ্যান্স)
     if (data.category === 'ভাড়া') {
