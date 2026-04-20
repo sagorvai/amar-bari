@@ -67,17 +67,17 @@ function renderDetails(data) {
     if (data.category === 'ভাড়া') {
         addRow(basicT, "ভাড়ার ধরন", data.rentType); // ফ্যামিলি/ব্যাচেলর
         addRow(basicT, "ওঠার তারিখ", data.moveInDate);
-        addRow(basicT, "অগ্রিম (এডভ্যান্স)", data.advance ? `৳ ${data.advance}` : "");
+        addRow(basicT, "অগ্রিম (এডভ্যান্স)", data.advance ? `৳ ${data.advance} টাকা` : "");
     }
 
-    addRow(basicT, "বেডরুম", data.bedrooms || data.rooms);
-    addRow(basicT, "ডাইনিং", data.dining);
-    addRow(basicT, "বাথরুম", data.bathrooms);
-    addRow(basicT, "কিচেন", data.kitchen);
-    addRow(basicT, "বেলকনি", data.balcony);
+    addRow(basicT, "বেডরুম", data.bedrooms || data.rooms? `${data.rooms} টি` : "");
+    addRow(basicT, "ডাইনিং", data.dining? `${data.dining} টি` : "");
+    addRow(basicT, "বাথরুম", data.bathrooms? `${data.bathrooms} টি` : "");
+    addRow(basicT, "কিচেন", data.kitchen? `${data.kitchen} টি` : "");
+    addRow(basicT, "বেলকনি", data.balcony? `${data.balcony} টি` : "");
     addRow(basicT, "ফ্লোর নম্বর", data.floorNo || data.floorLevel);
     addRow(basicT, "রাস্তা", data.roadWidth ? `${data.roadWidth} ফিট` : "");
-    addRow(basicT, "ফেসিং", data.facing);
+    addRow(basicT, "ফেসিং", data.facing? `${data.facing} দিক` : "");
     
     // সুবিধা সমূহ (Utilities - কমা দিয়ে সুন্দর করে দেখানো)
     if (data.utilities && data.utilities.length > 0) {
