@@ -103,7 +103,7 @@ function createPropertyCardHTML(property) {
     const fullLocation = `${village}, ${thana}, ${district}`;
 
     const category = property.category || 'বিক্রয়';
-    const propertyType = property.propertyType || 'প্রপার্টি';
+    const propertyType = property.Type || '-';
     
     // প্রপার্টির পরিমাপ
     const sizeSqft = property.sizeSqft || property.landArea || '-'; 
