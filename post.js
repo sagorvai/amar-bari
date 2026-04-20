@@ -413,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="number" id="house-area" placeholder="পরিমাণ" required value="${stagedData?.houseArea || ''}">
                     <select id="house-area-unit" class="unit-select" required>
                         <option value="শতক" ${stagedData?.houseAreaUnit === 'শতক' ? 'selected' : ''}>শতক</option>
-                        <option value="মোট" ${stagedData?.houseAreaUnit === 'মোট' ? 'selected' : ''}>মোট (স্কয়ার ফিট)</option>
+                        <option value="স্কয়ার ফিট" ${stagedData?.houseAreaUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট</option>
                     </select>
                 </div>
             `;
