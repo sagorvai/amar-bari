@@ -144,10 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 1. Property Age & Facing
             descriptionHTML += `
                 <div class="input-inline-group">
-                    <div class="input-group">
-                        <label for="property-age">প্রপার্টির বয়স (বছর):</label>
-                        <input type="number" id="property-age" placeholder="0 (নতুন) বা বয়স" min="0" required value="${stagedData?.propertyAge || ''}">
-                    </div>
+                    
                     <div class="input-group">
                         <label for="facing">প্রপার্টির দিক:</label>
                         <select id="facing">
@@ -227,6 +224,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (type === 'বাড়ি' || type === 'ফ্লাট') {
                 descriptionHTML += `
+                    <div class="input-group">
+                        <label for="property-age">প্রপার্টির বয়স (বছর):</label>
+                        <input type="number" id="property-age" placeholder="0 (নতুন) বা বয়স" min="0" required value="${stagedData?.propertyAge || ''}">
+                    </div>
                     <div class="input-group">
                         <label for="road-width">চলাচলের রাস্তা (ফিট):</label>
                         <input type="number" id="road-width" required value="${stagedData?.roadWidth || ''}">
