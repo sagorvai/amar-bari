@@ -505,13 +505,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div id="sub-address-fields">
                 </div>
-                <div class="input-group google-map-pinning">
-                    <label for="google-map">Google ম্যাপ লোকেশন (পিন করুন):</label>
-                    <input type="text" id="google-map-pin" placeholder="ম্যাপ থেকে পিন করার অপশন থাকবে" value="${stagedData?.googleMap || ''}">
-                    <p class="small-text">বর্তমানে টেক্সট ইনপুট হিসেবে রাখা হলো।</p>
-                </div>
-            </div>
-        `;
+                
+     <div class="form-group">
+        <label for="googleMap">Google ম্যাপ লোকেশন (পিন করুন):</label>
+        <input type="text" id="googleMap" name="googleMap" placeholder="ম্যাপ লিংক অথবা পিন করুন">
+        
+        <div id="map-container" style="height: 300px; width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; z-index: 1;"></div>
+        <p style="font-size: 12px; color: #666; margin-top: 5px;">ম্যাপে সঠিক জায়গায় ট্যাপ করে লোকেশন পিন করুন।</p>
+    </div>
+`;
+        
         fieldsHTML += addressHTML;
         
         // --- সেকশন ৫: যোগাযোগ পর্ব ---
@@ -537,6 +540,34 @@ document.addEventListener('DOMContentLoaded', function() {
         specificFieldsContainer.innerHTML = fieldsHTML;
 
 
+        // ম্যাপ সচল করার লজিক
+setTimeout(() => {
+    const mapElement = document.getElementById('map-container');
+    if (mapElement) {
+        // ম্যাপ সেটআপ (ঢাকা সেন্টার করে শুরু হবে)
+        var map = L.map('map-container').setView([23.8103, 90.4125], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var marker;
+
+        // ম্যাপে ক্লিক করলে পিন পড়বে এবং ইনপুট বক্সে লিংক যাবে
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+
+            if (marker) map.removeLayer(marker);
+            marker = L.marker([lat, lng]).addTo(map);
+
+            // গুগল ম্যাপস ফরম্যাটে ইউআরএল তৈরি
+            const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+            document.getElementById('googleMap').value = googleMapsUrl;
+        });
+    }
+}, 100); // ফিল্ড রেন্ডার হওয়ার জন্য সামান্য সময় দেওয়া হয়েছে
+        
         // Load initial sub-address fields if data exists
         if (stagedData?.location?.areaType) {
             generateSubAddressFields(stagedData.location.areaType, stagedData);
