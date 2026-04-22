@@ -1097,50 +1097,50 @@ setTimeout(() => {
                         primaryPhoneInput.disabled = true; 
                     }
 
-                    // FIXED: Header UI update - use Firestore profile image if available
-                    if (headerProfileImage && defaultProfileIcon) {
-                        const profileURL = userData?.profileImageURL || user.photoURL;
-                        if (profileURL) {
-                            headerProfileImage.src = profileURL; 
-                            headerProfileImage.style.display = 'block';
-                            defaultProfileIcon.style.display = 'none';
-                        } else {
-                            headerProfileImage.style.display = 'none';
-                            defaultProfileIcon.style.display = 'block';
-                        }
-                    }
-                    if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
-                    
-                    // NEW: Load staged data on successful auth
-                    loadStagedData(); 
+                    // --- এই কোডটি দিয়ে আগের auth.onAuthStateChanged অংশটি প্রতিস্থাপন করো ---
+auth.onAuthStateChanged(user => {
+    const profileImg = document.getElementById('profileImage'); 
+    const defaultIcon = document.getElementById('defaultProfileIcon');
+    const loginLinkSidebar = document.getElementById('loginLinkSidebar');
+    const postLinkSidebar = document.getElementById('postLinkSidebar');
 
-                }).catch(error => {
-                    console.error("Failed to fetch user data for profile image:", error);
-                    // Default to showing profile wrapper if fetch fails
-                    if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
-                    loadStagedData(); 
-                });
-                
+    if (user) {
+        // ১. প্রোফাইল ছবি লোড করার লজিক
+        db.collection('users').doc(user.uid).get().then(doc => {
+            if (doc.exists && doc.data().profileImage) {
+                if (profileImg) {
+                    profileImg.src = doc.data().profileImage;
+                    profileImg.style.display = 'block';
+                }
+                if (defaultIcon) defaultIcon.style.display = 'none';
             } else {
-                if (propertyFormDisplay) propertyFormDisplay.style.display = 'none';
-                if (authWarningMessage) authWarningMessage.style.display = 'block';
-                if (postLinkSidebar) postLinkSidebar.style.display = 'none';
-                
-                if (loginLinkSidebar) {
-                    loginLinkSidebar.textContent = 'লগইন';
-                    loginLinkSidebar.href = 'auth.html';
-                    loginLinkSidebar.onclick = null;
-                }
-                
-                // Reset/Hide Header UI
-                if (headerProfileImage && defaultProfileIcon) {
-                    headerProfileImage.style.display = 'none';
-                    defaultProfileIcon.style.display = 'block';
-                }
-                if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+                if (profileImg) profileImg.style.display = 'none';
+                if (defaultIcon) defaultIcon.style.display = 'block';
             }
-        });
+        }).catch(err => console.error("ইমেজ লোড করতে সমস্যা:", err));
+
+        // ২. সাইডবার মেনু আপডেট (তোমার আগের লজিক)
+        if (loginLinkSidebar) {
+            loginLinkSidebar.textContent = 'লগআউট';
+            loginLinkSidebar.href = '#';
+            loginLinkSidebar.onclick = () => auth.signOut();
+        }
+        if (postLinkSidebar) postLinkSidebar.style.display = 'block';
+
+    } else {
+        // ইউজার লগআউট থাকলে
+        if (profileImg) profileImg.style.display = 'none';
+        if (defaultIcon) defaultIcon.style.display = 'block';
+        
+        if (loginLinkSidebar) {
+            loginLinkSidebar.textContent = 'লগইন';
+            loginLinkSidebar.href = 'auth.html';
+            loginLinkSidebar.onclick = null;
+        }
+        if (postLinkSidebar) postLinkSidebar.style.display = 'none';
     }
+});
+    
 
     // --- হেডার আইকন কার্যকারিতা ---
 
