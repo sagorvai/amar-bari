@@ -1140,7 +1140,7 @@ auth.onAuthStateChanged(user => {
         if (postLinkSidebar) postLinkSidebar.style.display = 'none';
     }
 });
-    
+                }
 
     // --- হেডার আইকন কার্যকারিতা ---
 
