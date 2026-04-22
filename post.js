@@ -1057,46 +1057,7 @@ setTimeout(() => {
     const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
     const loginLinkSidebar = document.getElementById('login-link-sidebar');
     
-    if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
-        auth.onAuthStateChanged(user => {
-            const authWarningMessage = document.getElementById('auth-warning-message');
-            const propertyFormDisplay = document.getElementById('property-form');
-            const primaryPhoneInput = document.getElementById('primary-phone');
-
-            const handleLogout = async () => {
-                try {
-                    await auth.signOut();
-                    alert('সফলভাবে লগআউট করা হয়েছে!');
-                    window.location.href = 'index.html';
-                } catch (error) {
-                    console.error("লগআউট ব্যর্থ হয়েছে:", error);
-                    alert("লগআউট ব্যর্থ হয়েছে।");
-                }
-            };
-
-            if (user) {
-                // FIXED: Fetch user data from Firestore to get profile image URL and phone number
-                db.collection('users').doc(user.uid).get().then(doc => {
-                    const userData = doc.data();
-
-                    if (propertyFormDisplay) propertyFormDisplay.style.display = 'block';
-                    if (authWarningMessage) authWarningMessage.style.display = 'none';
-                    if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
-                    
-                    if (loginLinkSidebar) {
-                        loginLinkSidebar.textContent = 'লগআউট';
-                        loginLinkSidebar.href = '#';
-                        loginLinkSidebar.onclick = handleLogout;
-                    }
-                    
-                    if (primaryPhoneInput && userData?.phoneNumber) {
-                        primaryPhoneInput.value = userData.phoneNumber; 
-                        primaryPhoneInput.disabled = true; 
-                    } else if (primaryPhoneInput && user.phoneNumber) {
-                        primaryPhoneInput.value = user.phoneNumber;
-                        primaryPhoneInput.disabled = true; 
-                    }
-
+    
                     // --- এই কোডটি দিয়ে আগের auth.onAuthStateChanged অংশটি প্রতিস্থাপন করো ---
 auth.onAuthStateChanged(user => {
     const profileImg = document.getElementById('profileImage'); 
@@ -1140,7 +1101,7 @@ auth.onAuthStateChanged(user => {
         if (postLinkSidebar) postLinkSidebar.style.display = 'none';
     }
 });
-                }
+                
 
     // --- হেডার আইকন কার্যকারিতা ---
 
