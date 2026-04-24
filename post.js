@@ -914,7 +914,7 @@ setTimeout(() => {
                 const checked = document.querySelectorAll('input[name="utility"]:checked');
                 return Array.from(checked).map(c => c.value);
             };
-            const googleMap = document.getElementById('googleMap')?.value || "";
+            
             // ডেটা সংগ্রহ
             const type = getValue('post-type');
             const googleMap = getValue('google-map-pin');
