@@ -917,7 +917,7 @@ setTimeout(() => {
 
             // ডেটা সংগ্রহ
             const type = getValue('post-type');
-            const googleMapStatic = getValue('google-map-pin');
+            const googleMap = getValue('google-map-pin');
 
             // মূল ডেটা অবজেক্ট
             const propertyData = {
@@ -927,7 +927,7 @@ setTimeout(() => {
                 description: getValue('description'),
                 phoneNumber: getValue('primary-phone'),
                 secondaryPhone: getValue('secondary-phone'),
-                googleMap: googleMapStatic,
+                googleMap: googleMap,
                 userId: user.uid,
                 status: 'pending', // Will be set to 'published' in preview.js
                 listerType: getValue('lister-type'),
