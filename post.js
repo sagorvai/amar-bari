@@ -927,7 +927,7 @@ setTimeout(() => {
                 description: getValue('description'),
                 phoneNumber: getValue('primary-phone'),
                 secondaryPhone: getValue('secondary-phone'),
-                googleMap: googleMap,
+                googleMap: getValue('googleMap'),
                 userId: user.uid,
                 status: 'pending', // Will be set to 'published' in preview.js
                 listerType: getValue('lister-type'),
