@@ -358,6 +358,14 @@
             <table class="info-table" id="table-owner"></table>
         </div>
 
+        <div id="section-owner" style="display:none;">
+    <div class="section-header">📑 মালিকানা তথ্য</div>
+    <table class="info-table" id="table-owner"></table>
+    <button id="btn-verify-khotian" class="btn-verify">
+        <i class="material-icons">verified_user</i> খতিয়ান যাচাই করুন
+    </button>
+        </div>
+       
         <div class="section-header">📍 অবস্থান</div>
         <table class="info-table" id="table-location"></table>
         <a href="#" id="p-map" target="_blank" class="btn-map" style="display:none;"><i class="material-icons">map</i> ম্যাপে দেখুন</a>
@@ -383,5 +391,20 @@
         <p>&copy; 2026 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
     </div>
     </footer>
+
+    <div id="land-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-info">
+                <span id="m-division"></span> | <span id="m-district"></span> | 
+                <span id="m-upazila"></span> | <span id="m-mouza"></span> | 
+                <span id="m-khotian"></span>
+            </div>
+            <span class="close-modal" id="close-land-modal">&times;</span>
+        </div>
+        <iframe src="" id="land-iframe" frameborder="0"></iframe>
+    </div>
+    </div>
+
 </body>
     </html>
