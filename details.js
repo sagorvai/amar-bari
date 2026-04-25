@@ -52,10 +52,9 @@ function renderDetails(data) {
         <tr><td>টাইপ</td><td>${data.type}</td></tr>
         <tr><td>বেডরুম</td><td>${data.bedrooms || 'নাই'}</td></tr>
         <tr><td>বাথরুম</td><td>${data.bathrooms || 'নাই'}</td></tr>
-        <tr><td>আয়তন</td><td>${data.size || '-'} ${data.sizeUnit || ''}</td></tr>
     `;
 
-    // টেবিল ২: মালিকানা তথ্য
+    // টেবিল ২: মালিকানা তথ্য (বিক্রয় ক্যাটাগরি হলে)
     if (data.category === 'বিক্রয়') {
         document.getElementById('section-owner').style.display = 'block';
         const ownerTable = document.getElementById('table-owner');
@@ -65,7 +64,7 @@ function renderDetails(data) {
             <tr><td>খতিয়ান নং</td><td>${data.khotianNo || '-'}</td></tr>
         `;
 
-        // --- খতিয়ান যাচাই বাটন লজিক ---
+        // --- নতুন: খতিয়ান যাচাই বাটন কার্যকারিতা ---
         const verifyBtn = document.getElementById('btn-verify-khotian');
         const modal = document.getElementById('land-modal');
         const iframe = document.getElementById('land-iframe');
@@ -73,13 +72,13 @@ function renderDetails(data) {
 
         if (verifyBtn) {
             verifyBtn.onclick = () => {
-                const upazilaOrThana = data.upazila || data.thana || '-';
+                const upazilaText = data.upazila || data.thana || '-';
                 infoText.innerHTML = `
-                    <span>বিভাগ: ${data.division || '-'}</span> | 
-                    <span>জেলা: ${data.district || '-'}</span> | 
-                    <span>${upazilaOrThana}</span> | 
-                    <span>মৌজা: ${data.mouja || '-'}</span> | 
-                    <span>খতিয়ান: ${data.khotianNo || '-'}</span>
+                    <span><b>বিভাগ:</b> ${data.division || '-'}</span> | 
+                    <span><b>জেলা:</b> ${data.district || '-'}</span> | 
+                    <span><b>উপজেলা/থানা:</b> ${upazilaText}</span> | 
+                    <span><b>মৌজা:</b> ${data.mouja || '-'}</span> | 
+                    <span><b>খতিয়ান:</b> ${data.khotianNo || '-'}</span>
                 `;
                 iframe.src = "https://dlrms.land.gov.bd/";
                 modal.style.display = 'flex';
@@ -88,16 +87,14 @@ function renderDetails(data) {
 
         document.getElementById('close-land-modal').onclick = () => {
             modal.style.display = 'none';
-            iframe.src = "";
+            iframe.src = ""; // রিসেট
         };
     }
 
     // টেবিল ৩: অবস্থান
     const locTable = document.getElementById('table-location');
     locTable.innerHTML = `
-        <tr><td>বিভাগ</td><td>${data.division}</td></tr>
         <tr><td>জেলা</td><td>${data.district}</td></tr>
-        <tr><td>উপজেলা/থানা</td><td>${data.upazila || data.thana || '-'}</td></tr>
         <tr><td>এলাকা</td><td>${data.area}</td></tr>
     `;
 
@@ -111,7 +108,6 @@ function renderDetails(data) {
     const contactTable = document.getElementById('table-contact');
     contactTable.innerHTML = `
         <tr><td>ফোন</td><td>${data.phone || '-'}</td></tr>
-        <tr><td>নাম</td><td>${data.ownerName || '-'}</td></tr>
     `;
 }
 
@@ -152,7 +148,7 @@ function openLightbox(url) {
     document.getElementById('lightbox').style.display = 'flex';
 }
 
-// সাইডবার ও অন্যান্য মেনু লজিক (হুবহু রাখা হয়েছে)
+// সাইডবার লজিক (হুবহু তোমার ফাইল অনুযায়ী)
 document.addEventListener('DOMContentLoaded', () => {
     const menuButton = document.getElementById('menuButton');
     const closeMenu = document.getElementById('closeMenu');
