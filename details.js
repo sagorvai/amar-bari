@@ -80,7 +80,7 @@ function renderDetails(data) {
                 `;
 
                 // সরকারি সাইট রান করা
-                landIframe.src = "https://dlrms.land.gov.bd/";
+                landIframe.src = "https://www.bikroy.com/";
                 landModal.style.display = 'flex';
             };
         }
