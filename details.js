@@ -107,7 +107,7 @@ function renderDetails(data) {
     if (vBtn) {
             vBtn.onclick = () => {
                 
-                m.src = "https://dlrms.land.gov.bd/";
+                m.href = "https://dlrms.land.gov.bd/";
                 m.style.display = 'flex';
             };
     }
