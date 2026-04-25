@@ -90,27 +90,25 @@ function renderDetails(data) {
     addRow(basicT, "পরিমাণ", area ? `${area} (${areaUnit})` : "");
 
     // ৩. 📑 মালিকানা তথ্য
-    if (data.category === 'বিক্রয়' && data.owner) {
-        document.getElementById('section-owner').style.display = 'block';
-        const ownT = 'table-owner';
-        document.getElementById(ownT).innerHTML = "";
-        addRow(ownT, "দাতার নাম", data.owner.donorName);
-        let khotian = data.owner.khotianNo;
-        let khotianType = data.owner.khotianNoType || "";
-        addRow(ownT, "খতিয়ান নং", khotian ? `${khotian} (${khotianType})` : "");
-        let dag = data.owner.dagNo;
-        let dagType = data.owner.dagNoType || "";
-        addRow(ownT, "দাগ নং", dag ? `${dag} (${dagType})` : "");
-        addRow(ownT, "মৌজা", data.owner.mouja);
-    }
-    const vBtn = document.getElementById('btn-verify-khotian');
-    if (vBtn) {
-            vBtn.onclick = () => {
-                
-                m.href = "https://dlrms.land.gov.bd/";
-                m.style.display = 'flex';
-            };
-    }
+const ownerSection = document.getElementById('section-owner');
+if (data.category === 'বিক্রয়' && data.owner) {
+    ownerSection.style.display = 'block';
+    const ownT = 'table-owner';
+    document.getElementById(ownT).innerHTML = "";
+    addRow(ownT, "দাতার নাম", data.owner.donorName);
+    
+    let khotian = data.owner.khotianNo;
+    let khotianType = data.owner.khotianNoType || "";
+    addRow(ownT, "খতিয়ান নং", khotian ? `${khotian} (${khotianType})` : "");
+    
+    let dag = data.owner.dagNo;
+    let dagType = data.owner.dagNoType || "";
+    addRow(ownT, "দাগ নং", dag ? `${dag} (${dagType})` : "");
+    
+    addRow(ownT, "মৌজা", data.owner.mouja);
+} else {
+    ownerSection.style.display = 'none';
+}
     
     // ৪. 📍 অবস্থান
     const locT = 'table-location';
