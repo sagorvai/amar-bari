@@ -36,13 +36,14 @@
 
         .btn-map { display: block; width: 100%; text-align: center; padding: 12px; background: #fff; color: var(--primary); text-decoration: none; border: 1px solid var(--primary); border-radius: 8px; margin-top: 10px; font-weight: bold; }
 
-        /* --- নতুন মডাল সিএসএস (Fixed Design) --- */
-        .btn-verify { width: 100%; background: var(--success); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; font-weight: bold; }
-        .land-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; flex-direction: column; }
-        .land-modal-header { background: #1b5e20; color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; }
-        .land-modal-info { font-size: 12px; line-height: 1.4; flex: 1; padding-right: 10px; }
-        .land-close { font-size: 30px; cursor: pointer; color: white; }
-        #land-iframe { flex: 1; width: 100%; background: white; border: none; }
+        /* --- খতিয়ান মডাল ডিজাইন --- */
+        .btn-verify { width: 100%; background: var(--success); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; font-weight: bold; font-size: 15px; }
+        #land-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 99999; flex-direction: column; }
+        .land-header { background: #1b5e20; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #land-info-text { font-size: 11px; line-height: 1.5; flex: 1; padding-right: 10px; }
+        #land-info-text b { color: #ffeb3b; }
+        .close-land { font-size: 32px; cursor: pointer; font-weight: bold; line-height: 0.8; }
+        #land-iframe { flex: 1; width: 100%; border: none; background: white; }
     </style>
 </head>
 <body>
@@ -51,7 +52,6 @@
         <div class="top-bar">
             <button class="back-btn" onclick="history.back()"><i class="material-icons">arrow_back</i></button>
             <div class="top-title" id="p-title-top">লোডিং...</div>
-            <i class="material-icons">more_vert</i>
         </div>
 
         <div class="p-slider" id="p-slider">
@@ -88,21 +88,22 @@
         <div class="related-section">
             <h3 style="margin-top:30px;">সম্পর্কিত পোস্ট</h3>
             <div class="related-grid" id="related-list"></div>
-            <div class="see-more-container" id="see-more-box" style="display:none;">
-                <button class="btn-see-more" id="btn-see-more">See More...</button>
+            <div id="see-more-box" style="display:none;">
+                <button class="btn-see-more">See More...</button>
             </div>
         </div>
     </div>
 
-    <div id="land-modal" class="land-modal-overlay">
-        <div class="land-modal-header">
-            <div class="land-modal-info" id="land-info-text"></div>
-            <div class="land-close" id="land-close">&times;</div>
+    <div id="land-modal">
+        <div class="land-header">
+            <div id="land-info-text">তথ্য লোড হচ্ছে...</div>
+            <div class="close-land" id="close-land-modal">&times;</div>
         </div>
-        <iframe id="land-iframe" src=""></iframe>
+        <iframe src="" id="land-iframe"></iframe>
     </div>
 
     <div id="lightbox" onclick="this.style.display='none'"><img id="lb-img"></div>
+
     <script src="details.js"></script> 
 </body>
-                    </html>
+    </html>
