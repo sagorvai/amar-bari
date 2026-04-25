@@ -54,6 +54,8 @@ function renderDetails(data) {
         table.innerHTML += `<tr><td>${label}</td><td>${value}</td></tr>`;
     };
 
+    
+    
     // ২. 🏠 প্রপার্টির তথ্য
     const basicT = 'table-basic';
     document.getElementById(basicT).innerHTML = ""; 
@@ -104,6 +106,34 @@ function renderDetails(data) {
         addRow(ownT, "মৌজা", data.owner.mouja);
     }
 
+
+    // খতিয়ান যাচাই লজিক
+const verifyBtn = document.getElementById('btn-verify-khotian');
+const modal = document.getElementById('land-modal');
+
+if (verifyBtn) {
+    verifyBtn.onclick = () => {
+        // হেডারে তথ্য বসানো
+        document.getElementById('m-division').textContent = "বিভাগ: " + (data.division || '-');
+        document.getElementById('m-district').textContent = "জেলা: " + (data.district || '-');
+        document.getElementById('m-upazila').textContent = (data.upazila || data.thana || '-') ;
+        document.getElementById('m-mouza').textContent = "মৌজা: " + (data.mouja || '-');
+        document.getElementById('m-khotian').textContent = "খতিয়ান: " + (data.khotianNo || '-');
+
+        // আইফ্রেমে লিংক সেট করা
+        document.getElementById('land-iframe').src = "https://dlrms.land.gov.bd/";
+        
+        // মডাল দেখানো
+        modal.style.display = 'flex';
+    };
+}
+
+// মডাল বন্ধ করা
+document.getElementById('close-land-modal').onclick = () => {
+    modal.style.display = 'none';
+    document.getElementById('land-iframe').src = ""; // মেমোরি বাঁচাতে ইউআরএল খালি করা
+};
+    
     // ৪. 📍 অবস্থান
     const locT = 'table-location';
     document.getElementById(locT).innerHTML = "";
