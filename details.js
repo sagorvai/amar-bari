@@ -103,7 +103,15 @@ function renderDetails(data) {
         addRow(ownT, "দাগ নং", dag ? `${dag} (${dagType})` : "");
         addRow(ownT, "মৌজা", data.owner.mouja);
     }
-
+    const vBtn = document.getElementById('btn-verify-khotian');
+    if (vBtn) {
+            vBtn.onclick = () => {
+                
+                m.src = "https://dlrms.land.gov.bd/";
+                m.style.display = 'flex';
+            };
+    }
+    
     // ৪. 📍 অবস্থান
     const locT = 'table-location';
     document.getElementById(locT).innerHTML = "";
