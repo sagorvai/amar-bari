@@ -80,7 +80,7 @@ function renderDetails(data) {
                 `;
 
                 // সরকারি সাইট রান করা
-                landIframe.src = "https://khulna-mach-ghor.netlify.app/";
+                landIframe.src = "https://www.maps.google.com/";
                 landModal.style.display = 'flex';
             };
         }
