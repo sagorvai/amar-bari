@@ -25,181 +25,125 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function renderDetails(data) {
     document.getElementById('p-title').textContent = data.title || "";
-    
+    document.getElementById('p-title-top').textContent = data.title || "বিস্তারিত";
     document.getElementById('p-desc').textContent = data.description || "";
 
-    // ১. দাম ও ইউনিট (ভাড়া ও বিক্রয় উভয় ঠিক করা হলো)
+    // দাম ও ইউনিট
     let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let unit = data.priceUnit || data.rentUnit || ""; 
-    document.getElementById('p-price').textContent = amount ? `৳ ${amount} (${unit})` : "আলোচনা সাপেক্ষ";
+    document.getElementById('p-price').textContent = `${amount} ${unit}`;
 
-    // ইমেজ গ্যালারি
-    let images = [];
-    if (data.images) data.images.forEach(img => images.push(img.url || img));
-    if (data.documents?.khotian) images.push(data.documents.khotian.url || data.documents.khotian);
-    if (data.documents?.sketch) images.push(data.documents.sketch.url || data.documents.sketch);
-
-    const gallery = document.getElementById('p-gallery');
-    gallery.innerHTML = '';
-    images.slice(0, 5).forEach(url => {
-        const div = document.createElement('div');
-        div.className = 'gal-item';
-        div.innerHTML = `<img src="${url}" onclick="openLightbox('${url}')">`;
-        gallery.appendChild(div);
-    });
-
-    const addRow = (tableId, label, value) => {
-        if (!value || value === "" || value === "undefined") return;
-        const table = document.getElementById(tableId);
-        table.innerHTML += `<tr><td>${label}</td><td>${value}</td></tr>`;
-    };
-
+    // স্লাইডার
+    const slider = document.getElementById('p-slider');
+    const countLabel = document.getElementById('slider-count');
+    const images = data.images || [];
     
-    
-    // ২. 🏠 প্রপার্টির তথ্য
-    const basicT = 'table-basic';
-    document.getElementById(basicT).innerHTML = ""; 
-
-    addRow(basicT, "ক্যাটাগরি", data.category);
-    addRow(basicT, "টাইপ", data.type);
-    addRow(basicT, "জমির ধরন", data.landType);
-    addRow(basicT, "প্রপার্টির বয়স", data.propertyAge? `${data.propertyAge} বছর` : "");
-    
-    // ভাড়ার জন্য বিশেষ তথ্য (উঠার তারিখ, ধরন, এডভ্যান্স)
-    if (data.category === 'ভাড়া') {
-        addRow(basicT, "ভাড়ার ধরন", data.rentType); // ফ্যামিলি/ব্যাচেলর
-        addRow(basicT, "ওঠার তারিখ", data.moveInDate);
-        addRow(basicT, "অগ্রিম (এডভ্যান্স)", data.advance ? `৳ ${data.advance} টাকা` : "");
+    if (images.length > 0) {
+        slider.innerHTML = images.map((img, index) => 
+            `<img src="${img.url}" style="${index === 0 ? '' : 'display:none'}" onclick="openLightbox('${img.url}')">`
+        ).join('') + slider.innerHTML;
+        countLabel.textContent = `1/${images.length}`;
     }
 
-    addRow(basicT, "বেডরুম", data.bedrooms || data.rooms? `${data.rooms} টি` : "");
-    addRow(basicT, "ডাইনিং", data.dining? `${data.dining} টি` : "");
-    addRow(basicT, "বাথরুম", data.bathrooms? `${data.bathrooms} টি` : "");
-    addRow(basicT, "কিচেন", data.kitchen? `${data.kitchen} টি` : "");
-    addRow(basicT, "বেলকনি", data.balcony? `${data.balcony} টি` : "");
-    addRow(basicT, "ফ্লোর নম্বর", data.floorNo || data.floorLevel);
-    addRow(basicT, "রাস্তা", data.roadWidth ? `${data.roadWidth} ফিট` : "");
-    addRow(basicT, "ফেসিং", data.facing? `${data.facing} দিক` : "");
-    
-    // সুবিধা সমূহ (Utilities - কমা দিয়ে সুন্দর করে দেখানো)
-    if (data.utilities && data.utilities.length > 0) {
-        addRow(basicT, "সুবিধা সমূহ", Array.isArray(data.utilities) ? data.utilities.join(', ') : data.utilities);
-    }
+    // টেবিল ১: বেসিক তথ্য
+    const basicTable = document.getElementById('table-basic');
+    basicTable.innerHTML = `
+        <tr><td>ক্যাটাগরি</td><td>${data.category}</td></tr>
+        <tr><td>টাইপ</td><td>${data.type}</td></tr>
+        <tr><td>বেডরুম</td><td>${data.bedrooms || 'নাই'}</td></tr>
+        <tr><td>বাথরুম</td><td>${data.bathrooms || 'নাই'}</td></tr>
+        <tr><td>আয়তন</td><td>${data.size || '-'} ${data.sizeUnit || ''}</td></tr>
+    `;
 
-    // পরিমাণের পাসে ব্র্যাকেটে ইউনিট
-    let area = data.landArea || data.houseArea || data.areaSqft || data.commercialArea;
-    let areaUnit = data.landAreaUnit || data.houseAreaUnit || data.commercialAreaUnit || "";
-    addRow(basicT, "পরিমাণ", area ? `${area} (${areaUnit})` : "");
-
-    // ৩. 📑 মালিকানা তথ্য
-    if (data.category === 'বিক্রয়' && data.owner) {
+    // টেবিল ২: মালিকানা তথ্য
+    if (data.category === 'বিক্রয়') {
         document.getElementById('section-owner').style.display = 'block';
-        const ownT = 'table-owner';
-        document.getElementById(ownT).innerHTML = "";
-        addRow(ownT, "দাতার নাম", data.owner.donorName);
-        let khotian = data.owner.khotianNo;
-        let khotianType = data.owner.khotianNoType || "";
-        addRow(ownT, "খতিয়ান নং", khotian ? `${khotian} (${khotianType})` : "");
-        let dag = data.owner.dagNo;
-        let dagType = data.owner.dagNoType || "";
-        addRow(ownT, "দাগ নং", dag ? `${dag} (${dagType})` : "");
-        addRow(ownT, "মৌজা", data.owner.mouja);
+        const ownerTable = document.getElementById('table-owner');
+        ownerTable.innerHTML = `
+            <tr><td>মালিকানা</td><td>${data.ownershipType || '-'}</td></tr>
+            <tr><td>মৌজা</td><td>${data.mouja || '-'}</td></tr>
+            <tr><td>খতিয়ান নং</td><td>${data.khotianNo || '-'}</td></tr>
+        `;
+
+        // --- খতিয়ান যাচাই বাটন লজিক ---
+        const verifyBtn = document.getElementById('btn-verify-khotian');
+        const modal = document.getElementById('land-modal');
+        const iframe = document.getElementById('land-iframe');
+        const infoText = document.getElementById('modal-info-text');
+
+        if (verifyBtn) {
+            verifyBtn.onclick = () => {
+                const upazilaOrThana = data.upazila || data.thana || '-';
+                infoText.innerHTML = `
+                    <span>বিভাগ: ${data.division || '-'}</span> | 
+                    <span>জেলা: ${data.district || '-'}</span> | 
+                    <span>${upazilaOrThana}</span> | 
+                    <span>মৌজা: ${data.mouja || '-'}</span> | 
+                    <span>খতিয়ান: ${data.khotianNo || '-'}</span>
+                `;
+                iframe.src = "https://dlrms.land.gov.bd/";
+                modal.style.display = 'flex';
+            };
+        }
+
+        document.getElementById('close-land-modal').onclick = () => {
+            modal.style.display = 'none';
+            iframe.src = "";
+        };
     }
 
-
-    // খতিয়ান যাচাই লজিক
-const verifyBtn = document.getElementById('btn-verify-khotian');
-const modal = document.getElementById('land-modal');
-
-if (verifyBtn) {
-    verifyBtn.onclick = () => {
-        // হেডারে তথ্য বসানো
-        document.getElementById('m-division').textContent = "বিভাগ: " + (data.division || '-');
-        document.getElementById('m-district').textContent = "জেলা: " + (data.district || '-');
-        document.getElementById('m-upazila').textContent = (data.upazila || data.thana || '-') ;
-        document.getElementById('m-mouza').textContent = "মৌজা: " + (data.mouja || '-');
-        document.getElementById('m-khotian').textContent = "খতিয়ান: " + (data.khotianNo || '-');
-
-        // আইফ্রেমে লিংক সেট করা
-        document.getElementById('land-iframe').src = "https://dlrms.land.gov.bd/";
-        
-        // মডাল দেখানো
-        modal.style.display = 'flex';
-    };
-}
-
-// মডাল বন্ধ করা
-document.getElementById('close-land-modal').onclick = () => {
-    modal.style.display = 'none';
-    document.getElementById('land-iframe').src = ""; // মেমোরি বাঁচাতে ইউআরএল খালি করা
-};
-    
-    // ৪. 📍 অবস্থান
-    const locT = 'table-location';
-    document.getElementById(locT).innerHTML = "";
-    addRow(locT, "জেলা", data.location?.district);
-    addRow(locT, "এরিয়া", data.location?.areaType);
-    addRow(locT, "উপজেলা", data.location?.upazila);
-    addRow(locT, "থানা", data.location?.thana);
-    addRow(locT, "ইউনিয়ন", data.location?.union);
-    addRow(locT, "ওয়ার্ড নম্বর", data.location?.wardNo);
-    addRow(locT, "গ্রাম/এলাকা", data.location?.village);
-    addRow(locT, "রাস্তা", data.location?.road);
+    // টেবিল ৩: অবস্থান
+    const locTable = document.getElementById('table-location');
+    locTable.innerHTML = `
+        <tr><td>বিভাগ</td><td>${data.division}</td></tr>
+        <tr><td>জেলা</td><td>${data.district}</td></tr>
+        <tr><td>উপজেলা/থানা</td><td>${data.upazila || data.thana || '-'}</td></tr>
+        <tr><td>এলাকা</td><td>${data.area}</td></tr>
+    `;
 
     if (data.googleMap) {
-        const m = document.getElementById('p-map');
-        m.href = data.googleMap;
-        m.style.display = 'flex';
+        const mapBtn = document.getElementById('p-map');
+        mapBtn.style.display = 'block';
+        mapBtn.href = data.googleMap;
     }
 
-    // ৫. 📞 যোগাযোগ
-    const conT = 'table-contact';
-    document.getElementById(conT).innerHTML = "";
-    addRow(conT, "প্রাথমিক ফোন", data.phoneNumber);
-    addRow(conT, "অতিরিক্ত ফোন", data.secondaryPhone);
-    document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
+    // টেবিল ৪: যোগাযোগ
+    const contactTable = document.getElementById('table-contact');
+    contactTable.innerHTML = `
+        <tr><td>ফোন</td><td>${data.phone || '-'}</td></tr>
+        <tr><td>নাম</td><td>${data.ownerName || '-'}</td></tr>
+    `;
 }
 
-// সম্পর্কিত পোস্ট লজিক (আগের মতোই সঠিক আছে)
 async function loadRelatedPosts(currentData) {
     const list = document.getElementById('related-list');
     const seeMoreBox = document.getElementById('see-more-box');
     try {
         const snapshot = await db.collection('properties')
             .where('category', '==', currentData.category)
-            .limit(50) 
+            .limit(4)
             .get();
-
-        let allPosts = [];
+        
+        let count = 0;
         snapshot.forEach(doc => {
-            if (doc.id !== postId) allPosts.push({ id: doc.id, ...doc.data() });
-        });
-
-        allPosts.sort((a, b) => {
-            const aVillage = (a.location?.village === currentData.location?.village) ? 1 : 0;
-            const bVillage = (b.location?.village === currentData.location?.village) ? 1 : 0;
-            if (aVillage !== bVillage) return bVillage - aVillage;
-            const aThana = (a.location?.thana === currentData.location?.thana) ? 1 : 0;
-            const bThana = (b.location?.thana === currentData.location?.thana) ? 1 : 0;
-            return bThana - aThana;
-        });
-
-        const displayPosts = allPosts.slice(0, 10);
-        list.innerHTML = "";
-        displayPosts.forEach(post => {
-            let pAmt = post.category === 'বিক্রয়' ? post.price : post.monthlyRent;
-            let pUnit = post.priceUnit || post.rentUnit || "";
+            if (doc.id === postId) return;
+            if (count >= 3) return;
+            const d = doc.data();
+            const img = (d.images && d.images[0]) ? d.images[0].url : 'https://via.placeholder.com/150';
+            const price = d.category === 'বিক্রয়' ? d.price : d.monthlyRent;
+            
             list.innerHTML += `
-                <div class="rel-card" onclick="location.href='details.html?id=${post.id}'">
-                    <img src="${post.images?.[0]?.url || post.images?.[0] || 'placeholder.jpg'}">
-                    <div class="rel-info">
-                        <h4 class="rel-title">${post.title}</h4>
-                        <p class="rel-price">৳ ${pAmt} (${pUnit})</p>
-                        <p class="rel-loc">${post.location?.village || ''}, ${post.location?.thana || ''}, ${post.location?.district || ''}</p>
+                <div class="related-card" onclick="location.href='details.html?id=${doc.id}'">
+                    <img src="${img}">
+                    <div class="related-info">
+                        <div class="related-title">${d.title}</div>
+                        <div class="related-price">${price} ${d.priceUnit || d.rentUnit || ""}</div>
                     </div>
-                </div>`;
+                </div>
+            `;
+            count++;
         });
-        if (allPosts.length > 10) seeMoreBox.style.display = 'block';
+        if (snapshot.size > 1) seeMoreBox.style.display = 'block';
     } catch (e) { console.error(e); }
 }
 
@@ -208,13 +152,13 @@ function openLightbox(url) {
     document.getElementById('lightbox').style.display = 'flex';
 }
 
+// সাইডবার ও অন্যান্য মেনু লজিক (হুবহু রাখা হয়েছে)
 document.addEventListener('DOMContentLoaded', () => {
     const menuButton = document.getElementById('menuButton');
     const closeMenu = document.getElementById('closeMenu');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
 
-    // মেনু খোলা
     if (menuButton) {
         menuButton.addEventListener('click', () => {
             sidebar.classList.add('active');
@@ -222,7 +166,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // মেনু বন্ধ করা
     const closeSidebar = () => {
         sidebar.classList.remove('active');
         overlay.classList.remove('active');
@@ -231,14 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closeMenu) closeMenu.addEventListener('click', closeSidebar);
     if (overlay) overlay.addEventListener('click', closeSidebar);
 
-    // হেডার বাটনগুলোর লিঙ্ক
     document.getElementById('notificationButton')?.addEventListener('click', () => location.href = 'notifications.html');
     document.getElementById('headerPostButton')?.addEventListener('click', () => location.href = 'post.html');
     document.getElementById('messageButton')?.addEventListener('click', () => location.href = 'messages.html');
     document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
-
-
-
-
-
