@@ -36,14 +36,23 @@
 
         .btn-map { display: block; width: 100%; text-align: center; padding: 12px; background: #fff; color: var(--primary); text-decoration: none; border: 1px solid var(--primary); border-radius: 8px; margin-top: 10px; font-weight: bold; }
 
-        /* --- খতিয়ান মডাল ডিজাইন --- */
+        /* --- নতুন খতিয়ান মডাল ডিজাইন --- */
         .btn-verify { width: 100%; background: var(--success); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; font-weight: bold; font-size: 15px; }
-        #land-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 99999; flex-direction: column; }
-        .land-header { background: #1b5e20; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        #land-info-text { font-size: 11px; line-height: 1.5; flex: 1; padding-right: 10px; }
-        #land-info-text b { color: #ffeb3b; }
-        .close-land { font-size: 32px; cursor: pointer; font-weight: bold; line-height: 0.8; }
-        #land-iframe { flex: 1; width: 100%; border: none; background: white; }
+        #land-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-card { width: 90%; max-width: 400px; background: white; border-radius: 15px; overflow: hidden; position: relative; animation: popIn 0.3s ease-out; }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-card-header { background: #1b5e20; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .modal-card-body { padding: 20px; font-size: 14px; line-height: 1.8; color: #333; }
+        .modal-card-body b { color: #1b5e20; }
+        .modal-card-footer { padding: 15px; background: #f9f9f9; text-align: center; }
+        .btn-portal { width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        .related-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .related-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .related-card img { width: 100%; height: 100px; object-fit: cover; }
+        .related-info { padding: 8px; }
+        .related-title { font-size: 13px; font-weight: bold; height: 36px; overflow: hidden; }
+        .related-price { color: var(--primary); font-size: 12px; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -52,6 +61,7 @@
         <div class="top-bar">
             <button class="back-btn" onclick="history.back()"><i class="material-icons">arrow_back</i></button>
             <div class="top-title" id="p-title-top">লোডিং...</div>
+            <i class="material-icons">more_vert</i>
         </div>
 
         <div class="p-slider" id="p-slider">
@@ -95,15 +105,21 @@
     </div>
 
     <div id="land-modal">
-        <div class="land-header">
-            <div id="land-info-text">তথ্য লোড হচ্ছে...</div>
-            <div class="close-land" id="close-land-modal">&times;</div>
+        <div class="modal-card">
+            <div class="modal-card-header">
+                <span>খতিয়ান যাচাই তথ্য</span>
+                <span id="close-land-modal" style="cursor: pointer; font-size: 24px;">&times;</span>
+            </div>
+            <div id="land-info-text" class="modal-card-body">
+                </div>
+            <div class="modal-card-footer">
+                <p style="font-size: 11px; color: #666; margin-bottom: 10px;">তথ্যগুলো নোট করে নিচের বাটনে ক্লিক করুন।</p>
+                <button id="go-to-land-site" class="btn-portal">পোর্টাল খুলুন ও যাচাই করুন</button>
+            </div>
         </div>
-        <iframe src="" id="land-iframe"></iframe>
     </div>
 
     <div id="lightbox" onclick="this.style.display='none'"><img id="lb-img"></div>
-
     <script src="details.js"></script> 
 </body>
-    </html>
+            </html>
