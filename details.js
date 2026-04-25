@@ -80,7 +80,7 @@ function renderDetails(data) {
                 `;
 
                 // সরকারি সাইট রান করা
-                landIframe.src = "https://www.bikroy.com/";
+                landIframe.src = "https://khulna-mach-ghor.netlify.app/";
                 landModal.style.display = 'flex';
             };
         }
