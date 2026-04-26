@@ -7,6 +7,31 @@ const menuButton = document.getElementById('menuButton');
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
 
+// ম্যাপ বাটনে ক্লিক করলে
+const mapButton = document.querySelector('[data-category="map"]'); // আপনার বাটনের আইডি বা ক্লাস অনুযায়ী
+if (mapButton) {
+    mapButton.addEventListener('click', () => {
+        document.getElementById('property-grid-container').style.display = 'none';
+        document.getElementById('map-section').style.display = 'block';
+        
+        // ম্যাপ লোড করা (সব ক্যাটাগরি একসাথে দেখতে চাইলে 'all' দিন)
+        setTimeout(() => {
+            initMap('all');
+        }, 200); 
+    });
+}
+
+// বিক্রয় বা ভাড়া বাটনে ক্লিক করলে আবার গ্রিড ফিরে আসবে
+navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const cat = btn.getAttribute('data-category');
+        if (cat !== 'map') {
+            document.getElementById('property-grid-container').style.display = 'block';
+            document.getElementById('map-section').style.display = 'none';
+        }
+    });
+});
+
 // নেভিগেশন ও প্রোফাইল উপাদান
 const notificationButton = document.getElementById('notificationButton'); 
 const messageButton = document.getElementById('messageButton');
@@ -381,3 +406,58 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 });
+
+let map; // গ্লোবাল ম্যাপ ভেরিয়েবল
+
+function initMap(category = 'all') {
+    // যদি আগে ম্যাপ তৈরি করা থাকে তবে তা রিমুভ করে নতুন করে তৈরি করবে
+    if (map) {
+        map.remove();
+    }
+
+    // ম্যাপের ডিফল্ট ভিউ সেট করা (যেমন: বাংলাদেশের কেন্দ্রবিন্দু)
+    map = L.map('map-container').setView([23.6850, 90.3563], 7);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // ফায়ারস্টোর থেকে প্রপার্টি ডেটা সংগ্রহ
+    db.collection('properties').get().then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            
+            // ফিল্টার অনুযায়ী ডেটা চেক (বিক্রয়/ভাড়া)
+            if (category !== 'all' && data.category !== category) return;
+
+            // যদি লোকেশন ডেটা থাকে (latitude এবং longitude)
+            if (data.location && data.location.lat && data.location.lng) {
+                
+                // রঙ নির্ধারণ (বিক্রয় = লাল, ভাড়া = নীল)
+                const pinColor = data.category === 'বিক্রয়' ? 'red' : 'blue';
+                const postType = data.type || "প্রপার্টি"; // যেমন: জমি, বাড়ি
+
+                // কাস্টম আইকন (পিনের ওপর টাইপ দেখানোর জন্য)
+                const customIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="background-color:${pinColor}; color:white; padding:2px 6px; border-radius:4px; font-size:10px; white-space:nowrap; border:1px solid white;">${postType}</div>`,
+                    iconSize: [40, 20],
+                    iconAnchor: [20, 20]
+                });
+
+                // ম্যাপে মার্কার যোগ করা
+                const marker = L.marker([data.location.lat, data.location.lng], { icon: customIcon }).addTo(map);
+
+                // পপআপ সেট করা (পিনে ক্লিক করলে বিস্তারিত দেখাবে)
+                marker.bindPopup(`
+                    <div style="font-family: Arial;">
+                        <img src="${data.images ? data.images[0] : ''}" style="width:100px; height:auto; border-radius:5px;"><br>
+                        <strong>${data.title}</strong><br>
+                        মূল্য: ৳${data.price || data.monthlyRent}<br>
+                        <a href="details.html?id=${doc.id}" style="color:blue;">বিস্তারিত দেখুন</a>
+                    </div>
+                `);
+            }
+        });
+    });
+        }
