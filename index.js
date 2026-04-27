@@ -57,20 +57,38 @@ function updateIconCounts() {
     if (postCount) postCount.style.display = 'none';
 }
 
-// লোকেশন ডেটা থাকলে পিন বসাবে
+// --- ম্যাপের জন্য কাস্টম আইকন তৈরির ফাংশন (নতুন যুক্ত) ---
+function createCustomMarker(category, propertyType) {
+    const color = category === 'বিক্রয়' ? '#ff4d4d' : '#28a745';
+    return L.divIcon({
+        html: `<div style="background-color: ${color}; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; white-space: nowrap; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); text-align: center;">${propertyType}</div>`,
+        className: 'custom-pin',
+        iconSize: [60, 30],
+        iconAnchor: [30, 15]
+    });
+}
+
+// --- ম্যাপ ইনিশিয়ালাইজ করার ফাংশন (নতুন যুক্ত) ---
+async function initMap() {
+    if (map) { map.remove(); }
+    map = L.map('map-container').setView([23.8103, 90.4125], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    try {
+        const snapshot = await db.collection('properties').where('status', '==', 'published').get();
+        snapshot.forEach(doc => {
+            const data = doc.data();
             if (data.location && data.location.lat && data.location.lng) {
-                const pinColor = data.category === 'বিক্রয়' ? 'red' : 'blue';
-                const postType = data.type || "প্রপার্টি";
-
-                // কাস্টম আইকন ডিজাইন
-                const customIcon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style="background-color:${pinColor}; color:white; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap; border:1px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${postType}</div>`,
-                    iconSize: [40, 20],
-                    iconAnchor: [20, 10]
-                });
-
-                const marker = L.marker([data.location.lat, data.location.lng], { icon: customIcon }).addTo(map);
+                const marker = L.marker([data.location.lat, data.location.lng], {
+                    icon: createCustomMarker(data.category, data.Type || 'প্রপার্টি')
+                }).addTo(map);
+                marker.on('click', () => { window.location.href = `details.html?id=${doc.id}`; });
+            }
+        });
+    } catch (error) { console.error("Map Load Error:", error); }
+}
 
 // --- স্লাইডার নেভিগেশন লজিক (আপনার মূল কোড) ---
 function setupSliderLogic() {
