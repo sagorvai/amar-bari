@@ -180,26 +180,51 @@ function createPropertyCardHTML(property) {
     `;
 }
 
-// --- fetchAndDisplayProperties ফাংশন ---
-async function fetchAndDisplayProperties(category, searchTerm = '') {
-    
-    propertyG.innerHTML = '<p class=\"loading-message\">প্রপার্টি লোড হচ্ছে...</p>';
-    
-    // 'map' ক্যাটাগরি হ্যান্ডেলিং
-    const isMapView = category === 'map';
-    const propertyGridContainer = document.getElementById('property-grid-container');
-    const mapSection = document.getElementById('map-section');
-    
-    if (isMapView) {
-        propertyGridContainer.style.display = 'none';
-        mapSection.style.display = 'block';
-        propertyG.innerHTML = ''; 
-        return;
-    } else {
-        propertyGridContainer.style.display = 'block';
-        mapSection.style.display = 'none';
-    }
+let map; // গ্লোবাল ম্যাপ ভেরিয়েবল
 
+// --- ১. ম্যাপ ইনিশিয়ালাইজেশন ফাংশন ---
+function initMap(category = 'all') {
+    // যদি আগে ম্যাপ তৈরি করা থাকে তবে তা রিমুভ করবে
+    if (map) { map.remove(); }
+
+    // ম্যাপের ডিফল্ট ভিউ (বাংলাদেশ কেন্দ্রিক)
+    map = L.map('map-container').setView([23.6850, 90.3563], 7);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // ফায়ারস্টোর থেকে ডেটা ফেচ
+    db.collection('properties').get().then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            
+            // ফিল্টার অনুযায়ী ডেটা চেক
+            if (category !== 'all' && data.category !== category) return;
+
+            // লোকেশন ডেটা থাকলে পিন বসাবে
+            if (data.location && data.location.lat && data.location.lng) {
+                const pinColor = data.category === 'বিক্রয়' ? 'red' : 'blue';
+                const postType = data.type || "প্রপার্টি";
+
+                // কাস্টম আইকন ডিজাইন
+                const customIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="background-color:${pinColor}; color:white; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap; border:1px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${postType}</div>`,
+                    iconSize: [40, 20],
+                    iconAnchor: [20, 10]
+                });
+
+                const marker = L.marker([data.location.lat, data.location.lng], { icon: customIcon }).addTo(map);
+
+                // পিনে ক্লিক করলে সরাসরি ডিটেইলস পেজে নিয়ে যাবে
+                marker.on('click', function() {
+                    window.location.href = `details.html?id=${doc.id}`;
+                });
+            }
+        });
+    });
+}
     // ফায়ারবেস কোয়েরি (ইন্ডেক্সিং প্রয়োজন)
     let query = db.collection('properties')
                   .where('category', '==', category)
