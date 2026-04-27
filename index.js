@@ -82,7 +82,7 @@ async function initMap() {
             const data = doc.data();
             if (data.location && data.location.lat && data.location.lng) {
                 const marker = L.marker([data.location.lat, data.location.lng], {
-                    icon: createCustomMarker(data.category, data.Type || 'প্রপার্টি')
+                    icon: createCustomMarker(data.category, data.type || 'প্রপার্টি')
                 }).addTo(map);
                 marker.on('click', () => { window.location.href = `details.html?id=${doc.id}`; });
             }
