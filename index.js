@@ -213,7 +213,7 @@ async function initMap() {
             // যদি প্রপার্টিতে ল্যাটিটিউড এবং লঙ্গিটিউড থাকে
             if (data.location && data.location.lat && data.location.lng) {
                 const marker = L.marker([data.location.lat, data.location.lng], {
-                    icon: createCustomMarker(data.category, data.Type || 'বাড়ি')
+                    icon: createCustomMarker(data.category, data.type || 'প্রপার্টি')
                 }).addTo(map);
 
                 // পিনে ক্লিক করলে ইন্ডেক্স পেইজে ওই প্রপার্টির ডিটেইলসে বা নির্দিষ্ট কার্ডে নিয়ে যাবে
