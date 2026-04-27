@@ -104,7 +104,7 @@ async function initMap() {
             const data = doc.data();
             if (data.location && data.location.lat && data.location.lng) {
                 const marker = L.marker([data.location.lat, data.location.lng], {
-                    icon: createCustomMarker(data.category, data.Type || 'বাড়ি''জমি''প্লট''ফ্লাট''অফিস''দোকান')
+                    icon: createCustomMarker(data.category, data.Type || )
                 }).addTo(map);
 
                 marker.on('click', () => {
