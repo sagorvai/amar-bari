@@ -184,7 +184,50 @@ function createPropertyCardHTML(property) {
 async function fetchAndDisplayProperties(category, searchTerm = '') {
     
     propertyG.innerHTML = '<p class=\"loading-message\">প্রপার্টি লোড হচ্ছে...</p>';
-    
+
+    let map; // গ্লোবাল ভেরিয়েবল যাতে বারবার ম্যাপ তৈরি না হয়
+
+async function initMap() {
+    // যদি ম্যাপ আগে থেকে থাকে তবে তা রিমুভ করে নতুন করে তৈরি করা
+    if (map) {
+        map.remove();
+    }
+
+    // ডিফল্ট ঢাকা লোকেশনে ম্যাপ সেট করা
+    map = L.map('map-container').setView([23.8103, 90.4125], 7);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    try {
+        // সব পাবলিশড প্রপার্টি ফেচ করা
+        const snapshot = await db.collection('properties')
+                                 .where('status', '==', 'published')
+                                 .get();
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const id = doc.id;
+            
+            // যদি প্রপার্টিতে ল্যাটিটিউড এবং লঙ্গিটিউড থাকে
+            if (data.location && data.location.lat && data.location.lng) {
+                const marker = L.marker([data.location.lat, data.location.lng], {
+                    icon: createCustomMarker(data.category, data.Type || 'বাড়ি')
+                }).addTo(map);
+
+                // পিনে ক্লিক করলে ইন্ডেক্স পেইজে ওই প্রপার্টির ডিটেইলসে বা নির্দিষ্ট কার্ডে নিয়ে যাবে
+                marker.on('click', () => {
+                    window.location.href = `details.html?id=${id}`;
+                });
+            }
+        });
+    } catch (error) {
+        console.error("ম্যাপ ডেটা লোড করতে সমস্যা:", error);
+    }
+                    }
+
+
     // 'map' ক্যাটাগরি হ্যান্ডেলিং
     const isMapView = category === 'map';
     const propertyGridContainer = document.getElementById('property-grid-container');
@@ -381,3 +424,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 });
+
+            // পিনের জন্য কাস্টম আইকন তৈরি
+function createCustomMarker(category, propertyType) {
+    const color = category === 'বিক্রয়' ? '#ff4d4d' : '#28a745'; // বিক্রয় হলে লাল, ভাড়া হলে সবুজ
+    
+    return L.divIcon({
+        html: `<div style="
+                background-color: ${color}; 
+                color: white; 
+                padding: 5px 10px; 
+                border-radius: 20px; 
+                font-size: 12px; 
+                font-weight: bold; 
+                white-space: nowrap;
+                border: 2px solid white;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                text-align: center;">
+                ${propertyType}
+               </div>`,
+        className: 'custom-pin',
+        iconSize: [60, 30],
+        iconAnchor: [30, 15]
+    });
+}
