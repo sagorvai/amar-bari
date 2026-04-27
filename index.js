@@ -25,6 +25,8 @@ const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
 const globalSearchInput = document.getElementById('globalSearchInput');
 
+let map; // গ্লোবাল ম্যাপ ভেরিয়ে
+
 // --- সব পেজের হেডারে প্রোফাইল ইমেজ লোড করার সঠিক ফাংশন ---
 async function loadProfilePicture(user) {
     // তোমার হেডারের ইমেজ এবং আইকন আইডি অনুযায়ী এগুলো নিশ্চিত করো
