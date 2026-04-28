@@ -561,7 +561,7 @@ function initMap(lat, lng) {
         console.log("New Position:", position.lat, position.lng);
     });
 }
-    }});
+    }}
         
         // ফিল্ড রেন্ডার হওয়ার জন্য সামান্য সময় দেওয়া হয়েছে
         
