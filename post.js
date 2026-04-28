@@ -541,27 +541,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
         // ম্যাপ সচল করার লজিক
-
-        setTimeout(() => {
+setTimeout(() => {
     const mapElement = document.getElementById('map-container');
     if (mapElement) {
         // ম্যাপ সেটআপ (ঢাকা সেন্টার করে শুরু হবে)
         var map = L.map('map-container').setView([23.8103, 90.4125], 13);
-        let marker;
-function initMap(lat, lng) {
-    const map = L.map('map').setView([lat, lng], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    // মার্কার তৈরি এবং ড্র্যাগ করার অনুমতি দেওয়া
-    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
-    // ইউজার যখন পিন সরাবে, তখন নতুন পজিশন কনসোলে দেখাবে (চেক করার জন্য)
-    marker.on('dragend', function(event) {
-        const position = marker.getLatLng();
-        console.log("New Position:", position.lat, position.lng);
-    });
-}
-    }}
+        var marker;
+
+        // ম্যাপে ক্লিক করলে পিন পড়বে এবং ইনপুট বক্সে লিংক যাবে
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+
+            if (marker) map.removeLayer(marker);
+            marker = L.marker([lat, lng]).addTo(map);
+
+        });
+    }
+}, 100); 
         
         // ফিল্ড রেন্ডার হওয়ার জন্য সামান্য সময় দেওয়া হয়েছে
         
