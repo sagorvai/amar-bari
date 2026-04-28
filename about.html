@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>নটিফিকেশনস - আমার বাড়ি.কম</title>
+    <title>আমাদের সম্পর্কে - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
@@ -343,36 +343,28 @@
   // header_logic.js
 
 // ⭐ ফাংশন ১: হেডার প্রোফাইল লোড করার জন্য ⭐
-function loadHeaderProfile(user) {
-    const headerProfileImage = document.getElementById('profileImage');
+// --- সব পেজের হেডারে প্রোফাইল ইমেজ লোড করার সঠিক ফাংশন ---
+async function loadProfilePicture(user) {
+    const headerProfileImage = document.getElementById('profileImage'); 
     const defaultProfileIcon = document.getElementById('defaultProfileIcon');
 
     if (headerProfileImage && defaultProfileIcon) {
-        // ফায়ারবেস লোড হয়েছে ধরে নিয়ে ডেটা লোড করার চেষ্টা
-        if (typeof db !== 'undefined' && db.collection) {
-             db.collection('users').doc(user.uid).get().then(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    if (data.profilePictureUrl) {
-                        headerProfileImage.src = data.profilePictureUrl;
-                        headerProfileImage.style.display = 'block';
-                        defaultProfileIcon.style.display = 'none';
-                    } else {
-                        // যদি URL না থাকে, ডিফল্ট আইকন দেখান
-                        headerProfileImage.style.display = 'none';
-                        defaultProfileIcon.style.display = 'block';
-                    }
-                }
-            }).catch(error => {
-                console.error("Header profile load failed:", error);
-                // ফেইল হলেও ডিফল্ট আইকন দেখান
+        try {
+            const doc = await db.collection('users').doc(user.uid).get();
+            if (doc.exists && doc.data().profilePic) {
+                headerProfileImage.src = doc.data().profilePic;
+                headerProfileImage.style.display = 'block';
+                defaultProfileIcon.style.display = 'none';
+            } else {
                 headerProfileImage.style.display = 'none';
                 defaultProfileIcon.style.display = 'block';
-            });
+            }
+        } catch (error) {
+            console.error("Header Profile Load Error:", error);
         }
     }
 }
-
+        
 // ফাংশন ২: লগআউট হ্যান্ডেলার
 const handleLogout = async (e) => {
     e.preventDefault();
