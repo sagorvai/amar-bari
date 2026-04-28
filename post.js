@@ -562,8 +562,7 @@ setTimeout(() => {
             marker = L.marker([lat, lng]).addTo(map);
 
             // গুগল ম্যাপস ফরম্যাটে ইউআরএল তৈরি
-            const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-            document.getElementById('googleMap').value = googleMapsUrl;
+            
         });
     }
 }, 100); // ফিল্ড রেন্ডার হওয়ার জন্য সামান্য সময় দেওয়া হয়েছে
@@ -927,7 +926,7 @@ setTimeout(() => {
                 description: getValue('description'),
                 phoneNumber: getValue('primary-phone'),
                 secondaryPhone: getValue('secondary-phone'),
-                googleMap: getValue('googleMap'),
+                
                 userId: user.uid,
                 status: 'pending', // Will be set to 'published' in preview.js
                 listerType: getValue('lister-type'),
@@ -944,6 +943,8 @@ setTimeout(() => {
                     wardNo: getValue('ward-no'),
                     village: getValue('village-name'),
                     road: getValue('road-name'),
+                    lat: latlng.lat, // URL এর বদলে সংখ্যা হিসেবে সেভ
+                    lng: latlng.lng
                 },
                 
                 // NEW: Built Property Details
