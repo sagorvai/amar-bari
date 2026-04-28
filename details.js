@@ -122,11 +122,11 @@ if (data.category === 'বিক্রয়' && data.owner) {
     addRow(locT, "গ্রাম/এলাকা", data.location?.village);
     addRow(locT, "রাস্তা", data.location?.road);
 
-    if (data.googleMap) {
-        const m = document.getElementById('p-map');
-        m.href = data.googleMap;
-        m.style.display = 'flex';
+    // ফাংশনের শেষে ম্যাপ কল করার এই অংশটুকু নিশ্চিত করুন
+    if (data.location && data.location.lat && data.location.lng) {
+        initSinglePropertyMap(data);
     }
+
 
     // ৫. 📞 যোগাযোগ
     const conT = 'table-contact';
@@ -134,6 +134,61 @@ if (data.category === 'বিক্রয়' && data.owner) {
     addRow(conT, "প্রাথমিক ফোন", data.phoneNumber);
     addRow(conT, "অতিরিক্ত ফোন", data.secondaryPhone);
     document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
+}
+    
+// শুধুমাত্র এই প্রপার্টির জন্য ম্যাপ ফাংশন
+function initSinglePropertyMap(data) {
+    const mapContainer = document.getElementById('map-container');
+    if (!mapContainer) return;
+
+    // ম্যাপ সেটআপ (জুম লেভেল ১৫ দেওয়া হয়েছে যাতে লোকেশন পরিষ্কার বোঝা যায়)
+    const map = L.map('map-container').setView([data.location.lat, data.location.lng], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // শুধুমাত্র লাল রঙের সুচালো পিন ডিজাইন
+    const propertyType = data.Type || data.propertyType || 'প্রপার্টি';
+
+    const redPinIcon = L.divIcon({
+        html: `
+            <div style="position: relative; width: 60px; height: 35px; display: flex; flex-direction: column; align-items: center;">
+                <div style="
+                    background-color: #e74c3c; 
+                    color: white; 
+                    padding: 4px 8px; 
+                    border-radius: 15px; 
+                    font-size: 11px; 
+                    font-weight: bold; 
+                    white-space: nowrap;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+                    z-index: 2;
+                    text-align: center;
+                    min-width: 50px;">
+                    ${propertyType}
+                </div>
+                <div style="
+                    width: 0; 
+                    height: 0; 
+                    border-left: 7px solid transparent;
+                    border-right: 7px solid transparent;
+                    border-top: 10px solid #e74c3c;
+                    margin-top: -2px;
+                    z-index: 1;">
+                </div>
+            </div>`,
+        className: 'custom-pin',
+        iconSize: [60, 45],
+        iconAnchor: [30, 45]
+    });
+
+    // ম্যাপে মার্কার বা পিন বসানো
+    L.marker([data.location.lat, data.location.lng], { icon: redPinIcon })
+     .addTo(map)
+     .bindPopup(`<b>${data.title}</b><br>লোকেশন এখানে`)
+     .openPopup();
 }
 
 // সম্পর্কিত পোস্ট লজিক (আগের মতোই সঠিক আছে)
