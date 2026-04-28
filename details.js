@@ -149,7 +149,7 @@ function initSinglePropertyMap(data) {
     }).addTo(map);
 
     // শুধুমাত্র লাল রঙের সুচালো পিন ডিজাইন
-    const propertyType = data.Type || data.propertyType || 'প্রপার্টি';
+    const propertyType = data.type || data.propertyType || 'প্রপার্টি';
 
     const redPinIcon = L.divIcon({
         html: `
