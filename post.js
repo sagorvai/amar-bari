@@ -542,7 +542,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // ম্যাপ সচল করার লজিক
 
-
+        setTimeout(() => {
+    const mapElement = document.getElementById('map-container');
+    if (mapElement) {
+        // ম্যাপ সেটআপ (ঢাকা সেন্টার করে শুরু হবে)
+        var map = L.map('map-container').setView([23.8103, 90.4125], 13);
         let marker;
 function initMap(lat, lng) {
     const map = L.map('map').setView([lat, lng], 13);
@@ -557,7 +561,8 @@ function initMap(lat, lng) {
         console.log("New Position:", position.lat, position.lng);
     });
 }
-
+    }});
+        
         // ফিল্ড রেন্ডার হওয়ার জন্য সামান্য সময় দেওয়া হয়েছে
         
         // Load initial sub-address fields if data exists
