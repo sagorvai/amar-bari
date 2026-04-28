@@ -4,7 +4,8 @@
 const db = firebase.firestore();
 const storage = firebase.storage();
 const auth = firebase.auth();
-
+// Global marker variable for map
+let marker;
 // --- REMOVED: fileToBase64 and dataURLtoBlob functions (Base64 dependency removed) ---
 
 
@@ -29,12 +30,39 @@ const uploadStagedImage = async (file, index, userId, docType = 'main') => {
     };
 };
 
+// --- Leaflet Map Initialization Function ---
+function initMap(lat, lng) {
+    const map = L.map('map').setView([lat, lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // ড্র্যাগেবল মার্কার তৈরি
+    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+
+    marker.on('dragend', function(event) {
+        const position = marker.getLatLng();
+        console.log("লোকেশন আপডেট হয়েছে:", position.lat, position.lng);
+    });
+            }
+
 document.addEventListener('DOMContentLoaded', function() {
     const postCategorySelect = document.getElementById('post-category');
     const dynamicFieldsContainer = document.getElementById('dynamic-fields-container');
     const propertyForm = document.getElementById('property-form');
     const submitBtn = document.querySelector('#property-form button[type="submit"]');
 
+    // ম্যাপ সচল করা
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            initMap(position.coords.latitude, position.coords.longitude);
+        }, () => {
+            initMap(23.8103, 90.4125); // Default: Dhaka
+        });
+    } else {
+        initMap(23.8103, 90.4125);
+    }
+    
     // --- NEW/FIXED: Function to load and pre-fill data from session storage for editing ---
     function loadStagedData() {
         const stagedDataString = sessionStorage.getItem('stagedPropertyData');
@@ -540,30 +568,7 @@ document.addEventListener('DOMContentLoaded', function() {
         specificFieldsContainer.innerHTML = fieldsHTML;
 
 
-        // ম্যাপ সচল করার লজিক
-setTimeout(() => {
-    const mapElement = document.getElementById('map-container');
-    if (mapElement) {
-        // ম্যাপ সেটআপ (ঢাকা সেন্টার করে শুরু হবে)
-        var map = L.map('map-container').setView([23.8103, 90.4125], 13);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        var marker;
-
-        // ম্যাপে ক্লিক করলে পিন পড়বে এবং ইনপুট বক্সে লিংক যাবে
-        map.on('click', function(e) {
-            var lat = e.latlng.lat;
-            var lng = e.latlng.lng;
-
-            if (marker) map.removeLayer(marker);
-            marker = L.marker([lat, lng]).addTo(map);
-
-        });
-    }
-}, 100); 
+        
         
         // ফিল্ড রেন্ডার হওয়ার জন্য সামান্য সময় দেওয়া হয়েছে
         
