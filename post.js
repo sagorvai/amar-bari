@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                
                <h3>এডভান্স / জামানত</h3>
-                <div class="input-group">
+                <div class="input-group advance-group">
                         <label for="advance">এডভান্স / জামানত </label>
                         <input type="number" id="advance" placeholder="এডভান্স / জামানত? " required value="${stagedData?.advance || ''}">
                
