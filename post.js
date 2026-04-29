@@ -508,7 +508,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
      <div class="form-group">
         <label for="googleMap">Google ম্যাপ লোকেশন (পিন করুন):</label>
-        <input type="text" id="googleMap" name="googleMap" placeholder="ম্যাপ লিংক অথবা পিন করুন">
+        <input type="hidden" id="lat">
+<input type="hidden" id="lng">
         
         <div id="map-container" style="height: 300px; width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; z-index: 1;"></div>
         <p style="font-size: 12px; color: #666; margin-top: 5px;">ম্যাপে সঠিক জায়গায় ট্যাপ করে লোকেশন পিন করুন।</p>
@@ -555,16 +556,16 @@ setTimeout(() => {
 
         // ম্যাপে ক্লিক করলে পিন পড়বে এবং ইনপুট বক্সে লিংক যাবে
         map.on('click', function(e) {
-            var lat = e.latlng.lat;
-            var lng = e.latlng.lng;
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
 
-            if (marker) map.removeLayer(marker);
-            marker = L.marker([lat, lng]).addTo(map);
+    if (marker) map.removeLayer(marker);
+    marker = L.marker([lat, lng]).addTo(map);
 
-            // গুগল ম্যাপস ফরম্যাটে ইউআরএল তৈরি
-            const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-            document.getElementById('googleMap').value = googleMapsUrl;
-        });
+    // 👉 hidden input-এ lat/lng রাখো
+    document.getElementById('lat').value = lat;
+    document.getElementById('lng').value = lng;
+});
     }
 }, 100); // ফিল্ড রেন্ডার হওয়ার জন্য সামান্য সময় দেওয়া হয়েছে
         
@@ -927,7 +928,7 @@ setTimeout(() => {
                 description: getValue('description'),
                 phoneNumber: getValue('primary-phone'),
                 secondaryPhone: getValue('secondary-phone'),
-                googleMap: getValue('googleMap'),
+                
                 userId: user.uid,
                 status: 'pending', // Will be set to 'published' in preview.js
                 listerType: getValue('lister-type'),
@@ -944,6 +945,9 @@ setTimeout(() => {
                     wardNo: getValue('ward-no'),
                     village: getValue('village-name'),
                     road: getValue('road-name'),
+                    // ✅ NEW
+    lat: parseFloat(getValue('lat')) || null,
+    lng: parseFloat(getValue('lng')) || null
                 },
                 
                 // NEW: Built Property Details
