@@ -11,6 +11,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginLinkSidebar = document.getElementById('login-link-sidebar');
     const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
 
+    const urlParams = new URLSearchParams(window.location.search);
+const chatIdFromUrl = urlParams.get('chatId');
+
+if (chatIdFromUrl) {
+    // এখানে আপনার লজিক দিয়ে সেই চ্যাটটি লোড করুন
+    loadChat(chatIdFromUrl); 
+}
+    
     let currentChatId = null;
     let currentReceiverId = null;
     let unsubscribeMessages = null; // To stop listening to previous chat
