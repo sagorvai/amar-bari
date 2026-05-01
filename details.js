@@ -28,6 +28,15 @@ function renderDetails(data) {
     
     document.getElementById('p-desc').textContent = data.description || "";
 
+    // বাটন ক্লিকের ইভেন্ট হ্যান্ডলার
+    const messageBtn = document.getElementById('messageButton');
+    if (messageBtn) {
+        messageBtn.onclick = () => {
+            // এখানে data.userId ব্যবহার করা হয়েছে, কারণ প্রপার্টি ডকুমেন্টে এটিই মালিকের আইডি
+            initiateChat(id, data.userId, data.title);
+        };
+    }
+    
     // ১. দাম ও ইউনিট (ভাড়া ও বিক্রয় উভয় ঠিক করা হলো)
     let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let unit = data.priceUnit || data.rentUnit || ""; 
@@ -137,7 +146,7 @@ if (data.category === 'বিক্রয়' && data.owner) {
 }
 
 // বিস্তারিত পেইজে চ্যাট শুরু করার জন্য ফাংশন
-async function initiateChat(propertyId, userId, propertyTitle) {
+async function initiateChat(propertyId, ownerId, propertyTitle) {
     const currentUserId = firebase.auth().currentUser ? firebase.auth().currentUser.uid : null;
 
     if (!currentUserId) {
