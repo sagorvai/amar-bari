@@ -28,6 +28,34 @@ function renderDetails(data) {
     
     document.getElementById('p-desc').textContent = data.description || "";
 
+    
+    // বাটন ইভেন্ট হ্যান্ডলার সেট করা
+    const messageBtn = document.getElementById('message-seller-btn');
+    
+    // যদি বর্তমান ইউজার নিজেই সেলার হয়, তবে বাটনটি লুকিয়ে ফেলতে পারেন
+    const currentUser = auth.currentUser;
+    if (currentUser && currentUser.uid === data.userId) {
+        messageBtn.style.display = 'none';
+    }
+
+    messageBtn.addEventListener('click', () => {
+        if (!currentUser) {
+            alert("মেসেজ করতে অনুগ্রহ করে লগইন করুন।");
+            window.location.href = 'auth.html';
+            return;
+        }
+
+        // messages.js এর window.startChat ফাংশনটি কল করা
+        // এখানে 'data.ownerId' নিশ্চিত করুন যে ফায়ারস্টোরে এই নামে ফিল্ড আছে
+        if (typeof window.startChat === 'function') {
+            window.startChat(postId, data.userId, data.title);
+        } else {
+            console.error("Chat function not found!");
+            alert("দুঃখিত, মেসেজ সিস্টেমটি বর্তমানে কাজ করছে না।");
+        }
+    });
+    
+    
     // ১. দাম ও ইউনিট (ভাড়া ও বিক্রয় উভয় ঠিক করা হলো)
     let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let unit = data.priceUnit || data.rentUnit || ""; 
