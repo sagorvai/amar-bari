@@ -174,19 +174,7 @@ async function initiateChat(propertyId, userId, propertyTitle) {
     window.location.href = `messages.html?chatId=${chatIdentifier}`;
 }
 
-// renderDetails ফাংশনের ভেতরে নিচের অংশটি যুক্ত করুন
-function renderDetails(data, id) {
-    // ... আপনার আগের কোড ...
 
-    // বাটন ক্লিকের ইভেন্ট হ্যান্ডলার
-    const messageBtn = document.getElementById('messageButton');
-    if (messageBtn) {
-        messageBtn.onclick = () => {
-            // এখানে data.userId ব্যবহার করা হয়েছে, কারণ প্রপার্টি ডকুমেন্টে এটিই মালিকের আইডি
-            initiateChat(id, data.userId, data.title);
-        };
-    }
-}
 
 // শুধুমাত্র এই প্রপার্টির জন্য ম্যাপ ফাংশন
 function initSinglePropertyMap(data) {
