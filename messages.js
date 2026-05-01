@@ -247,5 +247,5 @@ document.addEventListener('DOMContentLoaded', function() {
         // ব্যবহারকারীকে messages.html এ রিডাইরেক্ট করুন
         // আমরা URL প্যারামিটার ব্যবহার করে নির্দিষ্ট চ্যাটটি খুলতে পারি।
         window.location.href = `messages.html?chatId=${chatIdentifier}`;
+      
     };
-});
