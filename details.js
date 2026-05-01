@@ -135,7 +135,59 @@ if (data.category === 'বিক্রয়' && data.owner) {
     addRow(conT, "অতিরিক্ত ফোন", data.secondaryPhone);
     document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
 }
-    
+
+// বিস্তারিত পেইজে চ্যাট শুরু করার জন্য ফাংশন
+async function initiateChat(propertyId, userId, propertyTitle) {
+    const currentUserId = firebase.auth().currentUser ? firebase.auth().currentUser.uid : null;
+
+    if (!currentUserId) {
+        alert("চ্যাট শুরু করতে অনুগ্রহ করে লগইন করুন।");
+        window.location.href = 'auth.html';
+        return;
+    }
+
+    // প্রপার্টির মালিক (ownerId) এবং বর্তমান ইউজার একই কি না যাচাই
+    if (currentUserId === ownerId) {
+        alert("এটি আপনার নিজের প্রপার্টি, তাই এখানে চ্যাট অপশন নেই।");
+        return;
+    }
+
+    // চ্যাট আইডি তৈরি (ইউনিক আইডি নিশ্চিত করতে)
+    const sortedIds = [currentUserId, ownerId].sort();
+    const chatIdentifier = `${sortedIds[0]}_${sortedIds[1]}_${propertyId}`;
+
+    const chatRef = db.collection("chats").doc(chatIdentifier);
+    const chatDoc = await chatRef.get();
+
+    // যদি চ্যাট না থাকে, তবে নতুন চ্যাট তৈরি করুন
+    if (!chatDoc.exists) {
+        await chatRef.set({
+            propertyId: propertyId,
+            propertyTitle: propertyTitle,
+            participants: [currentUserId, ownerId],
+            lastMessage: 'নতুন কথোপকথন শুরু হলো',
+            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+
+    // মেসেজ পেইজে রিডাইরেক্ট করুন
+    window.location.href = `messages.html?chatId=${chatIdentifier}`;
+}
+
+// renderDetails ফাংশনের ভেতরে নিচের অংশটি যুক্ত করুন
+function renderDetails(data, id) {
+    // ... আপনার আগের কোড ...
+
+    // বাটন ক্লিকের ইভেন্ট হ্যান্ডলার
+    const messageBtn = document.getElementById('messageButton');
+    if (messageBtn) {
+        messageBtn.onclick = () => {
+            // এখানে data.userId ব্যবহার করা হয়েছে, কারণ প্রপার্টি ডকুমেন্টে এটিই মালিকের আইডি
+            initiateChat(id, data.userId, data.title);
+        };
+    }
+}
+
 // শুধুমাত্র এই প্রপার্টির জন্য ম্যাপ ফাংশন
 function initSinglePropertyMap(data) {
     const mapContainer = document.getElementById('map-container');
