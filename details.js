@@ -21,6 +21,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderDetails(data);
         loadRelatedPosts(data);
     }
+
+    document.getElementById('p-message')?.addEventListener('click', handleMessageClick);
+
+async function handleMessageClick() {
+    const currentUser = firebase.auth().currentUser;
+
+    if (!currentUser) {
+        alert("মেসেজ করতে লগইন করুন");
+        window.location.href = "auth.html";
+        return;
+    }
+
+    const ownerId = window.propertyOwnerId;
+
+    if (!ownerId) {
+        alert("Seller info পাওয়া যায়নি");
+        return;
+    }
+
+    const chatId = await createOrGetChat(currentUser.uid, ownerId);
+    window.location.href = `messages.html?chatId=${chatId}`;
+}
 });
 
 function renderDetails(data) {
@@ -55,38 +77,8 @@ function renderDetails(data) {
     };
 
     window.propertyOwnerId = data.userId;
-    document.getElementById('p-message')?.addEventListener('click', async () => {
-    const currentUser = firebase.auth().currentUser;
-
-    if (!currentUser) {
-        alert("মেসেজ করতে লগইন করুন");
-        window.location.href = "auth.html";
-        return;
-    }
-
-    const ownerId = window.propertyOwnerId; // নিচে সেট করবো
-
-    const chatId = await createOrGetChat(currentUser.uid, ownerId);
-    window.location.href = `messages.html?chatId=${chatId}`;
-});
-
-// chat create function
-async function createOrGetChat(user1, user2) {
-    const chatId = [user1, user2].sort().join("_");
-
-    const chatRef = db.collection("chats").doc(chatId);
-    const doc = await chatRef.get();
-
-    if (!doc.exists) {
-        await chatRef.set({
-            users: [user1, user2],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    }
-
-    return chatId;
-}
     
+
     // ২. 🏠 প্রপার্টির তথ্য
     const basicT = 'table-basic';
     document.getElementById(basicT).innerHTML = ""; 
@@ -167,6 +159,23 @@ if (data.category === 'বিক্রয়' && data.owner) {
     addRow(conT, "প্রাথমিক ফোন", data.phoneNumber);
     addRow(conT, "অতিরিক্ত ফোন", data.secondaryPhone);
     document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
+}
+
+// 🔥 এইটা renderDetails এর বাইরে রাখো
+async function createOrGetChat(user1, user2) {
+    const chatId = [user1, user2].sort().join("_");
+
+    const chatRef = db.collection("chats").doc(chatId);
+    const doc = await chatRef.get();
+
+    if (!doc.exists) {
+        await chatRef.set({
+            users: [user1, user2],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+
+    return chatId;
 }
     
 // শুধুমাত্র এই প্রপার্টির জন্য ম্যাপ ফাংশন
