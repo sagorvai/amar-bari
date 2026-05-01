@@ -6,7 +6,7 @@ const firebaseConfig = {
     messagingSenderId: "719084789035",
     appId: "1:719084789035:web:f4da765290b3519d0e82fe"
 };
-
+let currentPropertyData = null;
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -18,7 +18,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeMenu = document.getElementById('closeMenu');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
+    const messageButton = document.getElementById('messageButton');
+    if (messageButton) {
+        messageButton.addEventListener('click', () => {
+            const currentUser = firebase.auth().currentUser;
+            
+            if (!currentUser) {
+                alert("চ্যাট শুরু করতে লগইন করুন।");
+                window.location.href = 'auth.html';
+                return;
+            }
 
+            // এখন currentPropertyData থেকে আইডি নিচ্ছি
+            if (currentPropertyData && postId) {
+                // messages.js এ থাকা ফাংশনটি কল করছি
+                // এখানে data.userId হলো আপনার প্রপার্টির মালিকের আইডি
+                window.startChat(postId, currentPropertyData.userId, currentPropertyData.title);
+            } else {
+                alert("প্রপার্টির তথ্য লোড হয়নি, কিছুক্ষণ অপেক্ষা করুন।");
+            }
+        });
+    }
     // মেনু খোলা
     if (menuButton) {
         menuButton.addEventListener('click', () => {
@@ -108,6 +128,10 @@ function renderDetails(data) {
     // আপনার বিদ্যমান প্রপার্টি ডাটা রেন্ডারিং লজিক
     document.getElementById('p-title').textContent = data.title || "";
     document.getElementById('p-desc').textContent = data.description || "";
+    currentPropertyData = data;
+    document.getElementById('p-title').textContent = data.title || "";
+    document.getElementById('p-desc').textContent = data.description || "";
+    // ... আপনার বাকি কোড এখানে থাকবে ...
 
     // ১. দাম ও ইউনিট
     let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
