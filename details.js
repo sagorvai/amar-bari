@@ -54,6 +54,39 @@ function renderDetails(data) {
         table.innerHTML += `<tr><td>${label}</td><td>${value}</td></tr>`;
     };
 
+    window.propertyOwnerId = data.userId;
+    document.getElementById('p-message')?.addEventListener('click', async () => {
+    const currentUser = firebase.auth().currentUser;
+
+    if (!currentUser) {
+        alert("মেসেজ করতে লগইন করুন");
+        window.location.href = "auth.html";
+        return;
+    }
+
+    const ownerId = window.propertyOwnerId; // নিচে সেট করবো
+
+    const chatId = await createOrGetChat(currentUser.uid, ownerId);
+    window.location.href = `messages.html?chatId=${chatId}`;
+});
+
+// chat create function
+async function createOrGetChat(user1, user2) {
+    const chatId = [user1, user2].sort().join("_");
+
+    const chatRef = db.collection("chats").doc(chatId);
+    const doc = await chatRef.get();
+
+    if (!doc.exists) {
+        await chatRef.set({
+            users: [user1, user2],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+
+    return chatId;
+}
+    
     // ২. 🏠 প্রপার্টির তথ্য
     const basicT = 'table-basic';
     document.getElementById(basicT).innerHTML = ""; 
