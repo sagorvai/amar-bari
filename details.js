@@ -113,19 +113,31 @@ async function handleShare() {
 
 // ================= CHAT CREATE =================
 async function createOrGetChat(user1, user2) {
+
+    if (!user1 || !user2) {
+        throw new Error("User ID missing");
+    }
+
     const chatId = [user1, user2].sort().join("_");
 
     const chatRef = db.collection("chats").doc(chatId);
-    const doc = await chatRef.get();
 
-    if (!doc.exists) {
-        await chatRef.set({
-            users: [user1, user2],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+    try {
+        const doc = await chatRef.get();
+
+        if (!doc.exists) {
+            await chatRef.set({
+                users: [user1, user2],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        return chatId;
+
+    } catch (e) {
+        console.error("CREATE CHAT ERROR:", e);
+        throw e;
     }
-
-    return chatId;
 }
 
 // ================= RENDER =================
