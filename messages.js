@@ -1,4 +1,3 @@
-// Firebase
 const db = firebase.firestore();
 const auth = firebase.auth();
 
@@ -26,10 +25,10 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // 🔥 chat list load
+        // চ্যাট লিস্ট লোড
         loadChatList(user.uid);
 
-        // 🔥 যদি URL এ chatId থাকে → direct open
+        // যদি URL এ chatId থাকে → direct open
         if (urlChatId) {
             openChatDirect(urlChatId, user.uid);
         }
@@ -39,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadChatList(userId) {
 
         db.collection("chats")
-            .where("users", "array-contains", userId) // 🔥 FIXED
+            .where("users", "array-contains", userId)
             .orderBy("createdAt", "desc")
             .onSnapshot(snapshot => {
 
@@ -49,39 +48,67 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     const chat = doc.data();
                     const chatId = doc.id;
-
                     const receiverId = chat.users.find(id => id !== userId);
 
-                    const item = document.createElement('div');
-                    item.className = "chat-item";
-                    item.dataset.chatId = chatId;
-                    item.dataset.receiverId = receiverId;
+                    // ডাইনামিকালি ইউজারের নাম ফেচ করা
+                    db.collection("users").doc(receiverId).get().then(userDoc => {
+                        const receiverName = userDoc.exists && userDoc.data().name ? userDoc.data().name : "ইউজার";
 
-                    item.innerHTML = `
-                        <div class="chat-info">
-                            <h4>User</h4>
-                            <p>${chat.lastMessage || "Start chat"}</p>
-                        </div>
-                    `;
+                        const item = document.createElement('div');
+                        item.className = "chat-item";
+                        item.dataset.chatId = chatId;
+                        item.dataset.receiverId = receiverId;
 
-                    item.onclick = () => selectChat(chatId, "User", receiverId);
+                        item.innerHTML = `
+                            <div class="chat-info">
+                                <h4>${receiverName}</h4>
+                                <p>${chat.lastMessage || "Start chat"}</p>
+                            </div>
+                        `;
 
-                    chatListPanel.appendChild(item);
+                        item.onclick = () => selectChat(chatId, receiverName, receiverId);
+
+                        chatListPanel.appendChild(item);
+                    }).catch(e => {
+                        console.error("Error loading user details", e);
+                        
+                        // ফলব্যাক হিসেবে ডিফল্ট নাম
+                        const item = document.createElement('div');
+                        item.className = "chat-item";
+                        item.dataset.chatId = chatId;
+                        item.dataset.receiverId = receiverId;
+
+                        item.innerHTML = `
+                            <div class="chat-info">
+                                <h4>ইউজার</h4>
+                                <p>${chat.lastMessage || "Start chat"}</p>
+                            </div>
+                        `;
+
+                        item.onclick = () => selectChat(chatId, "ইউজার", receiverId);
+                        chatListPanel.appendChild(item);
+                    });
                 });
             });
     }
 
     // ================= DIRECT OPEN =================
     async function openChatDirect(chatId, userId) {
+        try {
+            const chatDoc = await db.collection("chats").doc(chatId).get();
 
-        const chatDoc = await db.collection("chats").doc(chatId).get();
+            if (!chatDoc.exists) return;
 
-        if (!chatDoc.exists) return;
+            const chat = chatDoc.data();
+            const receiverId = chat.users.find(id => id !== userId);
 
-        const chat = chatDoc.data();
-        const receiverId = chat.users.find(id => id !== userId);
+            const userDoc = await db.collection("users").doc(receiverId).get();
+            const receiverName = userDoc.exists && userDoc.data().name ? userDoc.data().name : "ইউজার";
 
-        selectChat(chatId, "User", receiverId);
+            selectChat(chatId, receiverName, receiverId);
+        } catch (e) {
+            console.error("Direct open error", e);
+        }
     }
 
     // ================= SELECT CHAT =================
@@ -99,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
         unsubscribeMessages = db.collection("chats")
             .doc(chatId)
             .collection("messages")
-            .orderBy("createdAt", "asc") // 🔥 FIXED
+            .orderBy("createdAt", "asc")
             .onSnapshot(snapshot => {
 
                 chatMessagesContainer.innerHTML = '';
