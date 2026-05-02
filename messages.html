@@ -14,7 +14,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <script>
-      // **আপনার বিদ্যমান Firebase কনফিগারেশন**
       const firebaseConfig = {
         apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
         authDomain: "amar-bari-website.firebaseapp.com",
@@ -27,25 +26,19 @@
       if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
       }
-      
-      // এই স্ক্রিপ্ট ব্লকটি কেবল Firebase ইনিশিয়ালাইজেশনের জন্য রাখা হলো।
-      // সকল Header/Sidebar/Auth লজিক নিচের প্রধান লজিক ব্লকে স্থানান্তরিত করা হয়েছে।
     </script>
     
     <style>
-        /* CSS ভেরিয়েবল */
         :root {
             --primary-color: #007bff;
         }
 
-        /* গ্লোবাল ফিক্স */
         body {
             margin: 0; 
-            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
+            padding-top: 50px; 
             font-family: Arial, sans-serif; 
         }
 
-        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
         .main-header {
              position: fixed; 
              top: 0;
@@ -57,7 +50,6 @@
              padding-bottom: 0;
         }
         
-        /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
         .sidebar {
             z-index: 1050; 
         }
@@ -100,7 +92,6 @@
             margin-right: 5px;
         }
 
-        /* ডানের ব্লক (আইকন) ফিক্স */
         .header-actions {
              display: flex;
              align-items: center;
@@ -109,7 +100,6 @@
              flex-shrink: 0; 
         }
         
-        /* কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
         .icon-wrapper {
              position: relative;
              display: inline-flex;
@@ -120,7 +110,6 @@
              width: 30px; 
         }
         
-        /* কমন নোটিফিকেশন কাউন্ট স্টাইল */
         .notification-count {
             position: absolute;
             top: -5px; 
@@ -137,12 +126,10 @@
             display: none; 
         }
         
-        /* আইকন কালার */
         .notification-icon { color: var(--primary-color); }
         .message-icon { color: var(--primary-color); }
         .post-icon-header { color: #28a745; }
 
-        /* প্রোফাইল ইমেজ স্টাইল */
         .profile-image-wrapper {
             cursor: pointer;
             width: 35px; 
@@ -160,26 +147,6 @@
             object-fit: cover;
         }
         
-        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
-        @media (max-width: 600px) {
-            body {
-                padding-top: 46px; 
-            }
-            .logo-title {
-                 font-size: 1.5em; 
-                 margin-left: 0px;
-            }
-            .header-actions {
-                 gap: 8px; 
-            }
-            .profile-image-wrapper {
-                 width: 30px; 
-                 height: 30px;
-            }
-        
-        /* ❌ এখানে অতিরিক্ত বন্ধনী ছিল, যা সরানো হয়েছে */
-        
-        /* মেসেজিং পেজের জন্য নির্দিষ্ট স্টাইল */
         .message-container {
             display: flex;
             max-width: 1200px;
@@ -260,14 +227,13 @@
             color: #6c757d;
         }
         
-        /* Individual Message Bubbles */
         .message-bubble {
             max-width: 80%;
             padding: 8px 12px;
             border-radius: 15px;
             margin-bottom: 10px;
             line-height: 1.4;
-            word-wrap: break-word; /* লম্বা টেক্সট ভাঙার জন্য */
+            word-wrap: break-word;
         }
         .message-bubble.sent {
             background-color: #007bff;
@@ -298,8 +264,35 @@
             color: #6c757d;
             font-size: 1.2em;
         }
-        }
         
+        @media (max-width: 600px) {
+            body {
+                padding-top: 46px; 
+            }
+            .logo-title {
+                 font-size: 1.5em; 
+                 margin-left: 0px;
+            }
+            .header-actions {
+                 gap: 8px; 
+            }
+            .profile-image-wrapper {
+                 width: 30px; 
+                 height: 30px;
+            }
+            .message-container {
+                 flex-direction: column;
+            }
+            .chat-list-panel {
+                 width: 100%;
+                 border-right: none;
+                 border-bottom: 1px solid #eee;
+                 max-height: 250px;
+            }
+            .chat-area-panel {
+                 width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -335,13 +328,13 @@
                 
                 <div class="profile-image-wrapper" id="profileImageWrapper">
                     <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
-                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
+                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i>
+                </div>
                 
                 <div class="notification-dropdown" id="notification-dropdown">
-                    </div>
+                </div>
             </div>
         </div>
-        
     </header>
     
     <div class="sidebar" id="sidebar">
@@ -360,7 +353,6 @@
             <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
             
             <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
         </nav>
     </div>
 
@@ -371,7 +363,7 @@
         <div class="message-container">
             <div class="chat-list-panel" id="chat-list-panel">
                 <p style="text-align: center; color: #6c757d;">আপনার কথোপকথনগুলো এখানে দেখা যাবে।</p>
-                </div>
+            </div>
             
             <div class="chat-area-panel">
                 <div class="chat-header" id="chat-header">কোনো চ্যাট নির্বাচন করা হয়নি</div>
@@ -388,7 +380,6 @@
                 </div>
             </div>
         </div>
-        
     </main>
 
     <footer class="footer">
@@ -398,14 +389,10 @@
     </footer>
 
     <script>
-        // ধরে নেওয়া হচ্ছে db এবং auth ভ্যারিয়েবলগুলো বিশ্বব্যাপী (globally) সংজ্ঞায়িত আছে।
-
-        // --- ফাংশন ১: হেডার প্রোফাইল লোড করার জন্য ---
         function loadHeaderProfile(user) {
             const headerProfileImage = document.getElementById('profileImage');
             const defaultProfileIcon = document.getElementById('defaultProfileIcon');
 
-            // db এর গ্লোবাল অ্যাক্সেস ধরে নেওয়া হয়েছে
             db.collection('users').doc(user.uid).get().then(doc => {
                 if (doc.exists) {
                     const data = doc.data();
@@ -420,11 +407,9 @@
             });
         }
 
-        // --- ফাংশন ২: লগআউট হ্যান্ডেলার ---
         const handleLogout = async (e) => {
             e.preventDefault();
             try {
-                // auth এর গ্লোবাল অ্যাক্সেস ধরে নেওয়া হয়েছে
                 await auth.signOut();
                 alert('সফলভাবে লগআউট করা হয়েছে!');
                 window.location.href = 'index.html';
@@ -434,10 +419,7 @@
             }
         };
 
-
         document.addEventListener('DOMContentLoaded', function() {
-            
-            // --- হেডার UI উপাদানগুলো ---
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
@@ -450,17 +432,12 @@
             const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
             const loginLinkSidebar = document.getElementById('login-link-sidebar');
 
-
-            // --- অথেন্টিকেশন স্টেট চেঞ্জ লজিক (হেডার/সাইডবার UI আপডেট) ---
-            // ধরে নেওয়া হচ্ছে auth ভ্যারিয়েবল গ্লোবালি সংজ্ঞায়িত আছে।
             if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
                 auth.onAuthStateChanged(user => {
                     if (user) {
-                        // লগইন অবস্থায়: প্রোফাইল ইমেজ লোড এবং সঠিক সাইডবার লিঙ্ক দেখানো
                         loadHeaderProfile(user);
                         if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
 
-                        // সাইডবার লিঙ্ক আপডেট
                         if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
                         if (loginLinkSidebar) {
                             loginLinkSidebar.textContent = 'লগআউট';
@@ -468,14 +445,12 @@
                             loginLinkSidebar.onclick = handleLogout;
                         }
                     } else {
-                        // লগআউট অবস্থায়: ডিফল্ট আইকন দেখানো এবং সাইডবার লিঙ্ক আপডেট
                         if (headerProfileImage && defaultProfileIcon) {
                             headerProfileImage.style.display = 'none';
                             defaultProfileIcon.style.display = 'block';
                         }
                         if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
                         
-                        // সাইডবার লিঙ্ক আপডেট
                         if (postLinkSidebar) postLinkSidebar.style.display = 'none';
                         if (loginLinkSidebar) {
                             loginLinkSidebar.textContent = 'লগইন';
@@ -486,9 +461,6 @@
                 });
             }
 
-            // --- হেডার আইকন কার্যকারিতা ---
-            
-            // মেনু বাটন এবং সাইডবার টগল (ফিক্সড লজিক)
             if (menuButton) {
                 menuButton.addEventListener('click', () => {
                     sidebar.classList.toggle('active');
@@ -502,28 +474,24 @@
                 });
             }
 
-            // নোটিফিকেশন আইকন রিডাইরেক্ট
             if (notificationButton) {
                 notificationButton.addEventListener('click', () => {
                      window.location.href = 'notifications.html';
                 });
             }
 
-            // পোস্ট আইকন রিডাইরেক্ট
             if (headerPostButton) {
                 headerPostButton.addEventListener('click', () => {
                     window.location.href = 'post.html';
                 });
             }
 
-            // ম্যাসেজ আইকন রিডাইরেক্ট
             if (messageButton) {
                 messageButton.addEventListener('click', () => {
                      window.location.href = 'messages.html';
                 });
             }
             
-            // প্রোফাইল ইমেজ রিডাইরেক্ট
             if (profileImageWrapper) {
                 profileImageWrapper.addEventListener('click', () => {
                      window.location.href = 'profile.html';
@@ -534,4 +502,4 @@
     
     <script src="messages.js"></script> 
 </body>
-    </html>
+                    </html>
