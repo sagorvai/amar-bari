@@ -72,12 +72,12 @@ async function handleMessageClick() {
     const propertyTitle = document.getElementById('p-title')?.textContent || "Property Chat";
 
     try {
-        // চ্যাট তৈরির সময় প্রপার্টি আইডি ও টাইটেল পাঠানো হচ্ছে
         const chatId = await createOrGetChat(currentUser.uid, ownerId, postId, propertyTitle);
         window.location.href = `messages.html?chatId=${chatId}`;
     } catch (e) {
-        console.error(e);
-        alert("চ্যাট তৈরি করতে সমস্যা হয়েছে");
+        console.error("CREATE CHAT ERROR:", e);
+        // ত্রুটিটি স্ক্রিনে দেখাবে
+        alert("চ্যাট তৈরি করতে সমস্যা হয়েছে: " + e.message);
     }
 }
 
