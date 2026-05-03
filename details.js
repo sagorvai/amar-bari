@@ -68,12 +68,27 @@ async function handleMessageClick() {
         return;
     }
 
-    // প্রপার্টির টাইটেল সংগ্রহ করা
     const propertyTitle = document.getElementById('p-title')?.textContent || "Property Chat";
 
     try {
-        const chatId = await createOrGetChat(currentUser.uid, ownerId, postId, propertyTitle);
-        window.location.href = `messages.html?chatId=${chatId}`;
+        // চ্যাট আইডি তৈরি: উভয় ইউজার আইডি এবং প্রপার্টি আইডি ব্যবহার করে ইউনিক আইডি তৈরি
+        const sortedIds = [currentUser.uid, ownerId].sort();
+        const chatIdentifier = `${sortedIds[0]}_${sortedIds[1]}_${postId}`;
+
+        const chatRef = db.collection("chats").doc(chatIdentifier);
+
+        // সরাসরি চ্যাট ডকুমেন্ট তৈরি বা আপডেট করুন
+        await chatRef.set({
+            propertyId: postId,
+            propertyTitle: propertyTitle,
+            participants: [currentUser.uid, ownerId],
+            lastMessage: 'নতুন কথোপকথন শুরু হলো',
+            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        // ব্যবহারকারীকে messages.html এ রিডাইরেক্ট করুন
+        window.location.href = `messages.html?chatId=${chatIdentifier}`;
+
     } catch (e) {
         console.error("CREATE CHAT ERROR:", e);
         alert("চ্যাট তৈরি করতে সমস্যা হয়েছে: " + e.message);
@@ -111,36 +126,6 @@ async function handleShare() {
     } else {
         await navigator.clipboard.writeText(url);
         alert("লিংক কপি হয়েছে ✅");
-    }
-}
-
-// ================= CHAT CREATE =================
-async function createOrGetChat(user1, user2, propertyId, propertyTitle) {
-
-    if (!user1 || !user2 || !propertyId) {
-        throw new Error("IDs missing");
-    }
-
-    const sortedIds = [user1, user2].sort();
-    const chatId = `${sortedIds[0]}_${sortedIds[1]}_${propertyId}`;
-
-    const chatRef = db.collection("chats").doc(chatId);
-
-    try {
-        // রিড পারমিশন এড়াতে সরাসরি .set() মেথড ব্যবহার করা হয়েছে 
-        await chatRef.set({
-            propertyId: propertyId,
-            propertyTitle: propertyTitle,
-            participants: [user1, user2],
-            lastMessage: 'নতুন কথোপকথন শুরু হলো',
-            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-
-        return chatId;
-
-    } catch (e) {
-        console.error("CREATE CHAT ERROR:", e);
-        throw e;
     }
 }
 
@@ -236,4 +221,4 @@ async function loadRelatedPosts(currentData) {
 function openLightbox(url) {
     document.getElementById('lb-img').src = url;
     document.getElementById('lightbox').style.display = 'flex';
-                          }
+                           }
