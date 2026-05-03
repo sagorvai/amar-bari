@@ -1,170 +1,112 @@
-// Firebase
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
 
-    const chatListPanel = document.getElementById('chat-list-panel');
-    const chatHeader = document.getElementById('chat-header');
-    const chatMessagesContainer = document.getElementById('chat-messages');
-    const messageInput = document.getElementById('message-input');
-    const sendButton = document.getElementById('send-button');
+const list = document.getElementById('chat-list-panel');
+const header = document.getElementById('chat-header');
+const box = document.getElementById('chat-messages');
+const input = document.getElementById('message-input');
+const btn = document.getElementById('send-button');
 
-    let currentChatId = null;
-    let currentReceiverId = null;
-    let unsubscribeMessages = null;
+let currentChat = null;
+let receiver = null;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlChatId = urlParams.get("chatId");
+auth.onAuthStateChanged(user => {
 
-    // ================= AUTH =================
-    auth.onAuthStateChanged(user => {
+ if (!user) return location.href="auth.html";
 
-        if (!user) {
-            alert("লগইন করুন");
-            window.location.href = "auth.html";
-            return;
-        }
+ loadChats(user.uid);
 
-        // 🔥 chat list load
-        loadChatList(user.uid);
+});
 
-        // 🔥 যদি URL এ chatId থাকে → direct open
-        if (urlChatId) {
-            openChatDirect(urlChatId, user.uid);
-        }
-    });
+function loadChats(uid){
 
-    // ================= CHAT LIST =================
-    function loadChatList(userId) {
+ db.collection("chats")
+ .where("users","array-contains",uid)
+ .orderBy("lastUpdated","desc")
+ .onSnapshot(snap=>{
 
-        db.collection("chats")
-            .where("users", "array-contains", userId) // 🔥 FIXED
-            .orderBy("createdAt", "desc")
-            .onSnapshot(snapshot => {
+ list.innerHTML="";
 
-                chatListPanel.innerHTML = '';
+ snap.forEach(doc=>{
+   const c = doc.data();
 
-                snapshot.forEach(doc => {
+   const div = document.createElement("div");
+   div.className="post-group";
 
-                    const chat = doc.data();
-                    const chatId = doc.id;
+   const unread = c.unread?.[uid]||0;
+   if(unread>0) div.classList.add("unread");
 
-                    const receiverId = chat.users.find(id => id !== userId);
+   div.innerHTML=`${c.postTitle} (${unread})`;
 
-                    const item = document.createElement('div');
-                    item.className = "chat-item";
-                    item.dataset.chatId = chatId;
-                    item.dataset.receiverId = receiverId;
+   div.onclick=()=>openChat(doc.id,uid,c);
 
-                    item.innerHTML = `
-                        <div class="chat-info">
-                            <h4>User</h4>
-                            <p>${chat.lastMessage || "Start chat"}</p>
-                        </div>
-                    `;
+   list.appendChild(div);
+ });
 
-                    item.onclick = () => selectChat(chatId, "User", receiverId);
+ });
 
-                    chatListPanel.appendChild(item);
-                });
-            });
-    }
+}
 
-    // ================= DIRECT OPEN =================
-    async function openChatDirect(chatId, userId) {
+function openChat(id,uid,data){
 
-        const chatDoc = await db.collection("chats").doc(chatId).get();
+ currentChat=id;
+ receiver=data.users.find(u=>u!==uid);
 
-        if (!chatDoc.exists) return;
+ header.textContent=data.postTitle;
 
-        const chat = chatDoc.data();
-        const receiverId = chat.users.find(id => id !== userId);
+ db.collection("chats").doc(id)
+ .update({[`unread.${uid}`]:0});
 
-        selectChat(chatId, "User", receiverId);
-    }
+ db.collection("chats").doc(id)
+ .collection("messages")
+ .orderBy("createdAt")
+ .onSnapshot(snap=>{
 
-    // ================= SELECT CHAT =================
-    function selectChat(chatId, chatName, receiverId) {
+ box.innerHTML="";
 
-        if (unsubscribeMessages) unsubscribeMessages();
+ snap.forEach(d=>{
+   const m=d.data();
 
-        currentChatId = chatId;
-        currentReceiverId = receiverId;
+   const div=document.createElement("div");
+   div.className="message-bubble "+(m.sender===uid?"sent":"received");
 
-        chatHeader.textContent = chatName;
-        messageInput.disabled = false;
-        sendButton.disabled = false;
+   div.textContent=m.text;
 
-        unsubscribeMessages = db.collection("chats")
-            .doc(chatId)
-            .collection("messages")
-            .orderBy("createdAt", "asc") // 🔥 FIXED
-            .onSnapshot(snapshot => {
+   box.appendChild(div);
+ });
 
-                chatMessagesContainer.innerHTML = '';
+ });
 
-                snapshot.forEach(doc => {
-                    displayMessage(doc.data(), auth.currentUser.uid);
-                });
+}
 
-                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-            });
-    }
+btn.onclick=send;
+input.onkeypress=e=>{if(e.key==="Enter") send();};
 
-    // ================= MESSAGE SHOW =================
-    function displayMessage(message, uid) {
+async function send(){
 
-        const div = document.createElement('div');
-        const isMe = message.sender === uid;
+ const text=input.value.trim();
+ if(!text||!currentChat) return;
 
-        div.className = "message-bubble " + (isMe ? "sent" : "received");
+ const uid=auth.currentUser.uid;
 
-        div.innerHTML = `
-            ${message.text}
-        `;
+ await db.collection("chats").doc(currentChat)
+ .collection("messages")
+ .add({
+   text,
+   sender:uid,
+   createdAt:firebase.firestore.FieldValue.serverTimestamp()
+ });
 
-        chatMessagesContainer.appendChild(div);
-    }
+ await db.collection("chats").doc(currentChat)
+ .update({
+   lastMessage:text,
+   lastUpdated:firebase.firestore.FieldValue.serverTimestamp(),
+   [`unread.${receiver}`]:firebase.firestore.FieldValue.increment(1)
+ });
 
-    // ================= SEND =================
-    async function sendMessage() {
-
-        const text = messageInput.value.trim();
-        const userId = auth.currentUser.uid;
-
-        if (!text || !currentChatId) return;
-
-        try {
-            await db.collection("chats")
-                .doc(currentChatId)
-                .collection("messages")
-                .add({
-                    text: text,
-                    sender: userId,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-            await db.collection("chats")
-                .doc(currentChatId)
-                .update({
-                    lastMessage: text,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-            messageInput.value = "";
-
-        } catch (e) {
-            console.error(e);
-            alert("মেসেজ পাঠানো যায়নি");
-        }
-    }
-
-    // ================= EVENTS =================
-    sendButton.addEventListener('click', sendMessage);
-
-    messageInput.addEventListener('keypress', e => {
-        if (e.key === "Enter") sendMessage();
-    });
+ input.value="";
+}
 
 });
