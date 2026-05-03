@@ -76,7 +76,6 @@ async function handleMessageClick() {
         window.location.href = `messages.html?chatId=${chatId}`;
     } catch (e) {
         console.error("CREATE CHAT ERROR:", e);
-        // ত্রুটিটি স্ক্রিনে দেখাবে
         alert("চ্যাট তৈরি করতে সমস্যা হয়েছে: " + e.message);
     }
 }
@@ -116,7 +115,6 @@ async function handleShare() {
 }
 
 // ================= CHAT CREATE =================
-// আপডেট করা ফাংশন যা messages.js এর কাঠামোর সাথে মিলে
 async function createOrGetChat(user1, user2, propertyId, propertyTitle) {
 
     if (!user1 || !user2 || !propertyId) {
@@ -129,17 +127,14 @@ async function createOrGetChat(user1, user2, propertyId, propertyTitle) {
     const chatRef = db.collection("chats").doc(chatId);
 
     try {
-        const doc = await chatRef.get();
-
-        if (!doc.exists) {
-            await chatRef.set({
-                propertyId: propertyId,
-                propertyTitle: propertyTitle,
-                participants: [user1, user2],
-                lastMessage: 'নতুন কথোপকথন শুরু হলো',
-                lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
+        // রিড পারমিশন এড়াতে সরাসরি .set() মেথড ব্যবহার করা হয়েছে 
+        await chatRef.set({
+            propertyId: propertyId,
+            propertyTitle: propertyTitle,
+            participants: [user1, user2],
+            lastMessage: 'নতুন কথোপকথন শুরু হলো',
+            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
 
         return chatId;
 
@@ -241,4 +236,4 @@ async function loadRelatedPosts(currentData) {
 function openLightbox(url) {
     document.getElementById('lb-img').src = url;
     document.getElementById('lightbox').style.display = 'flex';
-                }
+                          }
