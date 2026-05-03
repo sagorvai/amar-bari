@@ -15,6 +15,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const postId = urlParams.get('id');
 
 let currentUser = null;
+let propertyFirstImage = "";
 
 // ================= AUTH READY =================
 auth.onAuthStateChanged(user => {
@@ -49,7 +50,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ================= MESSAGE =================
 async function handleMessageClick() {
-
     if (!currentUser) {
         alert("মেসেজ করতে লগইন করুন");
         window.location.href = "auth.html";
@@ -69,12 +69,35 @@ async function handleMessageClick() {
     }
 
     try {
-        const chatId = await createOrGetChat(currentUser.uid, ownerId);
-        window.location.href = `messages.html?chatId=${chatId}`;
+        const chatIdentifier = await startChat({
+            userId: ownerId,
+            title: document.getElementById('p-title').textContent || "",
+            image: propertyFirstImage
+        });
+        window.location.href = `messages.html?chatId=${chatIdentifier}`;
     } catch (e) {
         console.error(e);
         alert("চ্যাট তৈরি করতে সমস্যা হয়েছে");
     }
+}
+
+async function startChat(propertyData) {
+    if (!currentUser) throw new Error("User not logged in");
+    const chatIdentifier = `${[currentUser.uid, propertyData.userId].sort().join("_")}_${postId}`;
+    const chatRef = db.collection("chats").doc(chatIdentifier);
+
+    const doc = await chatRef.get();
+    if (!doc.exists) {
+        await chatRef.set({
+            participants: [currentUser.uid, propertyData.userId],
+            propertyId: postId,
+            propertyTitle: propertyData.title,
+            propertyImage: propertyData.image,
+            lastMessage: "নতুন কথোপকথন শুরু হলো",
+            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+    return chatIdentifier;
 }
 
 // ================= SAVE =================
@@ -111,38 +134,8 @@ async function handleShare() {
     }
 }
 
-// ================= CHAT CREATE =================
-async function createOrGetChat(user1, user2) {
-
-    if (!user1 || !user2) {
-        throw new Error("User ID missing");
-    }
-
-    const chatId = [user1, user2].sort().join("_");
-
-    const chatRef = db.collection("chats").doc(chatId);
-
-    try {
-        const doc = await chatRef.get();
-
-        if (!doc.exists) {
-            await chatRef.set({
-                users: [user1, user2],
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-
-        return chatId;
-
-    } catch (e) {
-        console.error("CREATE CHAT ERROR:", e);
-        throw e;
-    }
-}
-
 // ================= RENDER =================
 function renderDetails(data) {
-
     window.propertyOwnerId = data.userId;
 
     document.getElementById('p-title').textContent = data.title || "";
@@ -161,7 +154,13 @@ function renderDetails(data) {
 
     // Images
     let images = [];
-    if (data.images) data.images.forEach(img => images.push(img.url || img));
+    if (data.images) {
+        data.images.forEach(img => images.push(img.url || img));
+    }
+    
+    if (images.length > 0) {
+        propertyFirstImage = images[0];
+    }
 
     const gallery = document.getElementById('p-gallery');
     gallery.innerHTML = '';
@@ -232,4 +231,4 @@ async function loadRelatedPosts(currentData) {
 function openLightbox(url) {
     document.getElementById('lb-img').src = url;
     document.getElementById('lightbox').style.display = 'flex';
-}
+            }
