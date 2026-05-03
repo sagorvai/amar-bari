@@ -15,7 +15,6 @@ const urlParams = new URLSearchParams(window.location.search);
 const postId = urlParams.get('id');
 
 let currentUser = null;
-let propertyFirstImage = "";
 
 // ================= AUTH READY =================
 auth.onAuthStateChanged(user => {
@@ -50,6 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ================= MESSAGE =================
 async function handleMessageClick() {
+
     if (!currentUser) {
         alert("মেসেজ করতে লগইন করুন");
         window.location.href = "auth.html";
@@ -68,36 +68,17 @@ async function handleMessageClick() {
         return;
     }
 
+    // প্রপার্টির টাইটেল সংগ্রহ করা
+    const propertyTitle = document.getElementById('p-title')?.textContent || "Property Chat";
+
     try {
-        const chatIdentifier = await startChat({
-            userId: ownerId,
-            title: document.getElementById('p-title').textContent || "",
-            image: propertyFirstImage
-        });
-        window.location.href = `messages.html?chatId=${chatIdentifier}`;
+        // চ্যাট তৈরির সময় প্রপার্টি আইডি ও টাইটেল পাঠানো হচ্ছে
+        const chatId = await createOrGetChat(currentUser.uid, ownerId, postId, propertyTitle);
+        window.location.href = `messages.html?chatId=${chatId}`;
     } catch (e) {
         console.error(e);
         alert("চ্যাট তৈরি করতে সমস্যা হয়েছে");
     }
-}
-
-async function startChat(propertyData) {
-    if (!currentUser) throw new Error("User not logged in");
-    const chatIdentifier = `${[currentUser.uid, propertyData.userId].sort().join("_")}_${postId}`;
-    const chatRef = db.collection("chats").doc(chatIdentifier);
-
-    const doc = await chatRef.get();
-    if (!doc.exists) {
-        await chatRef.set({
-            participants: [currentUser.uid, propertyData.userId],
-            propertyId: postId,
-            propertyTitle: propertyData.title,
-            propertyImage: propertyData.image,
-            lastMessage: "নতুন কথোপকথন শুরু হলো",
-            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    }
-    return chatIdentifier;
 }
 
 // ================= SAVE =================
@@ -134,8 +115,43 @@ async function handleShare() {
     }
 }
 
+// ================= CHAT CREATE =================
+// আপডেট করা ফাংশন যা messages.js এর কাঠামোর সাথে মিলে
+async function createOrGetChat(user1, user2, propertyId, propertyTitle) {
+
+    if (!user1 || !user2 || !propertyId) {
+        throw new Error("IDs missing");
+    }
+
+    const sortedIds = [user1, user2].sort();
+    const chatId = `${sortedIds[0]}_${sortedIds[1]}_${propertyId}`;
+
+    const chatRef = db.collection("chats").doc(chatId);
+
+    try {
+        const doc = await chatRef.get();
+
+        if (!doc.exists) {
+            await chatRef.set({
+                propertyId: propertyId,
+                propertyTitle: propertyTitle,
+                participants: [user1, user2],
+                lastMessage: 'নতুন কথোপকথন শুরু হলো',
+                lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        return chatId;
+
+    } catch (e) {
+        console.error("CREATE CHAT ERROR:", e);
+        throw e;
+    }
+}
+
 // ================= RENDER =================
 function renderDetails(data) {
+
     window.propertyOwnerId = data.userId;
 
     document.getElementById('p-title').textContent = data.title || "";
@@ -154,13 +170,7 @@ function renderDetails(data) {
 
     // Images
     let images = [];
-    if (data.images) {
-        data.images.forEach(img => images.push(img.url || img));
-    }
-    
-    if (images.length > 0) {
-        propertyFirstImage = images[0];
-    }
+    if (data.images) data.images.forEach(img => images.push(img.url || img));
 
     const gallery = document.getElementById('p-gallery');
     gallery.innerHTML = '';
@@ -231,4 +241,4 @@ async function loadRelatedPosts(currentData) {
 function openLightbox(url) {
     document.getElementById('lb-img').src = url;
     document.getElementById('lightbox').style.display = 'flex';
-            }
+                }
