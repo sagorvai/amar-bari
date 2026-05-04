@@ -48,52 +48,53 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ================= MESSAGE =================
-async function handleMessageClick() {
-
+async function startChat(postId, postTitle) {
+    const currentUser = firebase.auth().currentUser;
     if (!currentUser) {
-        alert("মেসেজ করতে লগইন করুন");
-        window.location.href = "auth.html";
+        alert("চ্যাট করার জন্য দয়া করে লগইন করুন।");
+        location.href = "login.html";
         return;
     }
 
-    const ownerId = window.propertyOwnerId;
-
-    if (!ownerId) {
-        alert("ডাটা এখনো লোড হয়নি");
+    // ১. প্রপার্টির ডেটাবেজ থেকে মালিকের আইডি (ownerId) বের করে নিন
+    const propertyDoc = await db.collection('properties').doc(postId).get();
+    if (!propertyDoc.exists) {
+        alert("প্রপার্টি খুঁজে পাওয়া যায়নি।");
         return;
     }
+    
+    const propertyData = propertyDoc.data();
+    // আপনার ডাটাবেজে থাকা userId-ই হলো ownerId
+    const ownerId = propertyData.userId; 
 
     if (currentUser.uid === ownerId) {
-        alert("নিজের পোস্টে মেসেজ করা যাবে না");
+        alert("এটি আপনার নিজের পোস্ট।");
         return;
     }
 
-    const propertyTitle = document.getElementById('p-title')?.textContent || "Property Chat";
+    const chatsRef = db.collection('chats');
+    const existingChat = await chatsRef
+        .where('postId', '==', postId)
+        .where('participants', 'array-contains', currentUser.uid)
+        .get();
 
-    try {
-        // চ্যাট আইডি তৈরি: উভয় ইউজার আইডি এবং প্রপার্টি আইডি ব্যবহার করে ইউনিক আইডি তৈরি
-        const sortedIds = [currentUser.uid, ownerId].sort();
-        const chatIdentifier = `${sortedIds[0]}_${sortedIds[1]}_${postId}`;
-
-        const chatRef = db.collection("chats").doc(chatIdentifier);
-
-        // সরাসরি চ্যাট ডকুমেন্ট তৈরি বা আপডেট করুন
-        await chatRef.set({
-            propertyId: postId,
-            propertyTitle: propertyTitle,
+    let chatId;
+    if (!existingChat.empty) {
+        chatId = existingChat.docs[0].id;
+    } else {
+        // ২. চ্যাট ডকুমেন্টে postId এবং postTitle অবশ্যই সংরক্ষণ করতে হবে
+        const newChat = await chatsRef.add({
+            postId: postId,
+            postTitle: postTitle,
             participants: [currentUser.uid, ownerId],
-            lastMessage: 'নতুন কথোপকথন শুরু হলো',
-            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-
-        // ব্যবহারকারীকে messages.html এ রিডাইরেক্ট করুন
-        window.location.href = `messages.html?chatId=${chatIdentifier}`;
-
-    } catch (e) {
-        console.error("CREATE CHAT ERROR:", e);
-        alert("চ্যাট তৈরি করতে সমস্যা হয়েছে: " + e.message);
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastMessage: "চ্যাট শুরু হয়েছে..."
+        });
+        chatId = newChat.id;
     }
-}
+
+    location.href = `messages.html?chatId=${chatId}`;
+            }
 
 // ================= SAVE =================
 function handleSave() {
