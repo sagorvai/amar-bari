@@ -39,35 +39,48 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadChatList(userId) {
 
         db.collection("chats")
-            .where("users", "array-contains", userId) // 🔥 FIXED
+            .where("users", "array-contains", userId)
             .orderBy("createdAt", "desc")
-            .onSnapshot(snapshot => {
+            .onSnapshot(async snapshot => {
 
                 chatListPanel.innerHTML = '';
 
-                snapshot.forEach(doc => {
+                for (const doc of snapshot.docs) {
 
                     const chat = doc.data();
                     const chatId = doc.id;
 
                     const receiverId = chat.users.find(id => id !== userId);
 
+                    // ডাইনামিকালি ইউজারের নাম ফেচ করা
+                    let receiverName = "ব্যবহারকারী";
+                    try {
+                        const userDoc = await db.collection("users").doc(receiverId).get();
+                        if (userDoc.exists) {
+                            const userData = userDoc.data();
+                            receiverName = userData.name || userData.fullName || userData.displayName || "ব্যবহারকারী";
+                        }
+                    } catch (e) {
+                        console.error("Error fetching user name:", e);
+                    }
+
                     const item = document.createElement('div');
                     item.className = "chat-item";
                     item.dataset.chatId = chatId;
                     item.dataset.receiverId = receiverId;
 
+                    // চ্যাট লিস্টের টাইটেল হিসেবে postTitle ব্যবহার করা হচ্ছে
                     item.innerHTML = `
                         <div class="chat-info">
-                            <h4>User</h4>
+                            <h4>${chat.postTitle || "প্রপার্টি চ্যাট"}</h4>
                             <p>${chat.lastMessage || "Start chat"}</p>
                         </div>
                     `;
 
-                    item.onclick = () => selectChat(chatId, "User", receiverId);
+                    item.onclick = () => selectChat(chatId, receiverName, receiverId);
 
                     chatListPanel.appendChild(item);
-                });
+                }
             });
     }
 
@@ -81,7 +94,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const chat = chatDoc.data();
         const receiverId = chat.users.find(id => id !== userId);
 
-        selectChat(chatId, "User", receiverId);
+        let receiverName = "ব্যবহারকারী";
+        try {
+            const userDoc = await db.collection("users").doc(receiverId).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                receiverName = userData.name || userData.fullName || userData.displayName || "ব্যবহারকারী";
+            }
+        } catch (e) {
+            console.error("Error fetching user name for direct open:", e);
+        }
+
+        selectChat(chatId, receiverName, receiverId);
     }
 
     // ================= SELECT CHAT =================
@@ -92,6 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
         currentChatId = chatId;
         currentReceiverId = receiverId;
 
+        // হেডে ডাইনামিক নাম সেট করা
         chatHeader.textContent = chatName;
         messageInput.disabled = false;
         sendButton.disabled = false;
@@ -99,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
         unsubscribeMessages = db.collection("chats")
             .doc(chatId)
             .collection("messages")
-            .orderBy("createdAt", "asc") // 🔥 FIXED
+            .orderBy("createdAt", "asc")
             .onSnapshot(snapshot => {
 
                 chatMessagesContainer.innerHTML = '';
