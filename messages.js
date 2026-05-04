@@ -26,10 +26,10 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // 🔥 chat list load
+        // চ্যাট লিস্ট লোড করুন
         loadChatList(user.uid);
 
-        // 🔥 যদি URL এ chatId থাকে → direct open
+        // যদি URL এ chatId থাকে → ডিরেক্ট ওপেন করুন
         if (urlChatId) {
             openChatDirect(urlChatId, user.uid);
         }
