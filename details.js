@@ -21,7 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('messageOwnerButton')?.addEventListener('click', startChat);
     document.getElementById('saveButton')?.addEventListener('click', toggleSave);
     document.getElementById('shareButton')?.addEventListener('click', sharePost);
-
+    // এই লাইনটি আপনার ডিটেইলস পেজের DOMContentLoaded এর ভেতরে রাখুন
+    document.getElementById('messageOwnerButton')?.addEventListener('click', startChat);
+    
     const menuButton = document.getElementById('menuButton');
     const closeMenu = document.getElementById('closeMenu');
     const sidebar = document.getElementById('sidebar');
@@ -175,6 +177,9 @@ function renderDetails(data) {
     document.getElementById('p-title').textContent = data.title || "";
     document.getElementById('p-desc').textContent = data.description || "";
 
+    currentOwnerId = data.userId || data.uid || data.ownerId; // মালিকের আইডি সেট
+    currentPostTitle = data.title; // পোস্টের শিরোনাম সেট
+    
     let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let unit = data.priceUnit || data.rentUnit || ""; 
     document.getElementById('p-price').textContent = amount ? `৳ ${amount} (${unit})` : "আলোচনা সাপেক্ষ";
@@ -391,3 +396,59 @@ function openLightbox(url) {
     document.getElementById('lb-img').src = url;
     document.getElementById('lightbox').style.display = 'flex';
     }
+
+// --- Post-based Chat System Logic ---
+async function startChat() {
+    const currentUser = firebase.auth().currentUser;
+    
+    // ১. লগইন চেক
+    if (!currentUser) {
+        alert("চ্যাট শুরু করার জন্য দয়া করে লগইন করুন।");
+        location.href = "login.html";
+        return;
+    }
+
+    // ২. নিজের পোস্ট কি না চেক
+    if (!currentOwnerId) {
+        alert("পোস্টের মালিকের তথ্য পাওয়া যায়নি।");
+        return;
+    }
+    if (currentUser.uid === currentOwnerId) {
+        alert("এটি আপনার নিজের পোস্ট, তাই চ্যাট করার প্রয়োজন নেই।");
+        return;
+    }
+
+    // ৩. চ্যাট চেক বা নতুন চ্যাট তৈরি
+    const chatsRef = db.collection('chats');
+    try {
+        // ইতিমধ্যে এই পোস্টের জন্য চ্যাট আছে কি না চেক করছে
+        const existingChat = await chatsRef
+            .where('postId', '==', postId)
+            .where('users', 'array-contains', currentUser.uid)
+            .get();
+
+        let chatId;
+
+        if (!existingChat.empty) {
+            // চ্যাট থাকলে সেই আইডি নিচ্ছে
+            chatId = existingChat.docs[0].id;
+        } else {
+            // নতুন চ্যাট তৈরি করছে
+            const newChat = await chatsRef.add({
+                postId: postId,
+                postTitle: currentPostTitle || "প্রপার্টি চ্যাট",
+                users: [currentUser.uid, currentOwnerId], // দুইজন ইউজার আইডি
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastMessage: "চ্যাট শুরু হয়েছে..."
+            });
+            chatId = newChat.id;
+        }
+
+        // চ্যাট পেজে রিডাইরেক্ট
+        location.href = `messages.html?chatId=${chatId}`;
+
+    } catch (e) {
+        console.error("Error starting chat:", e);
+        alert("চ্যাট শুরু করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।");
+    }
+}
