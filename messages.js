@@ -9,6 +9,7 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth(); // হেডার বা অন্য পেজের অথেন্টিকেশন চেকের জন্য গ্লোবাল অ্যাক্সেস
 
 let currentUser = null;
 let currentChatId = null;
@@ -16,7 +17,7 @@ let unsubscribe = null; // রিয়েল-টাইম মেসেজ ল�
 
 document.addEventListener('DOMContentLoaded', () => {
     // ব্যবহারকারী লগইন করা আছে কিনা তা যাচাই
-    firebase.auth().onAuthStateChanged(async (user) => {
+    auth.onAuthStateChanged(async (user) => {
         if (!user) {
             alert('চ্যাট দেখতে অনুগ্রহ করে লগইন করুন।');
             location.href = 'auth.html';
@@ -36,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // সেন্ড বাটনের ইভেন্ট লিসেনার
-    document.getElementById('send-btn')?.addEventListener('click', sendMessage);
+    document.getElementById('send-button')?.addEventListener('click', sendMessage);
     
     // এন্টার প্রেস করলে মেসেজ পাঠানো
     document.getElementById('message-input')?.addEventListener('keypress', (e) => {
@@ -47,13 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // ১. চ্যাট লিস্ট লোড করার ফাংশন
 async function loadChatList() {
     const userId = currentUser.uid;
-    const chatListContainer = document.getElementById('chat-list');
+    const chatListContainer = document.getElementById('chat-list-panel');
     if (!chatListContainer) return;
 
-    chatListContainer.innerHTML = '<p>চ্যাট লোড হচ্ছে...</p>';
+    chatListContainer.innerHTML = '<p style="text-align: center; color: #6c757d;">চ্যাট লোড হচ্ছে...</p>';
 
     try {
-        // দুটি কোয়েরি করে ডাটা একত্রিত করা হলো (যেহেতু ইউজার বায়ার বা সেলার দুই পক্ষের যেকোনো এক হতে পারে)
+        // দুটি কোয়েরি করে ডাটা একত্রিত করা হলো
         const buyerQuery = await db.collection('chats').where('buyerId', '==', userId).get();
         const sellerQuery = await db.collection('chats').where('sellerId', '==', userId).get();
 
@@ -77,20 +78,22 @@ async function loadChatList() {
         chatListContainer.innerHTML = '';
 
         if (chats.length === 0) {
-            chatListContainer.innerHTML = '<p>কোনো চ্যাট লিস্ট পাওয়া যায়নি।</p>';
+            chatListContainer.innerHTML = '<p style="text-align: center; color: #6c757d;">কোনো কথোপকথন পাওয়া যায়নি।</p>';
             return;
         }
 
         chats.forEach(chat => {
             const chatItem = document.createElement('div');
             chatItem.className = 'chat-item';
+            if (chat.id === currentChatId) chatItem.classList.add('active');
+
             chatItem.id = `chat-${chat.id}`;
             chatItem.onclick = () => openChat(chat.id);
 
             chatItem.innerHTML = `
                 <div class="chat-info">
-                    <h4 class="chat-title">${chat.postTitle || 'প্রপার্টি চ্যাট'}</h4>
-                    <p class="chat-last-msg">${chat.lastMessage || 'চ্যাট শুরু হলো'}</p>
+                    <h4>${chat.postTitle || 'প্রপার্টি চ্যাট'}</h4>
+                    <p>${chat.lastMessage || 'চ্যাট শুরু হলো'}</p>
                 </div>
             `;
             chatListContainer.appendChild(chatItem);
@@ -98,7 +101,7 @@ async function loadChatList() {
 
     } catch (error) {
         console.error('Error loading chats:', error);
-        chatListContainer.innerHTML = '<p>চ্যাট লোড করতে সমস্যা হয়েছে।</p>';
+        chatListContainer.innerHTML = '<p style="text-align: center; color: red;">চ্যাট লোড করতে সমস্যা হয়েছে।</p>';
     }
 }
 
@@ -111,13 +114,20 @@ async function openChat(chatId) {
     const activeItem = document.getElementById(`chat-${chatId}`);
     if (activeItem) activeItem.classList.add('active');
 
-    const messagesContainer = document.getElementById('messages-container');
-    if (messagesContainer) messagesContainer.innerHTML = '<p>মেসেজ লোড হচ্ছে...</p>';
+    const messagesContainer = document.getElementById('chat-messages');
+    if (messagesContainer) messagesContainer.innerHTML = '<p style="text-align: center; color: #6c757d;">মেসেজ লোড হচ্ছে...</p>';
 
     // পুরাতন লিসেনার থাকলে তা বন্ধ করা
     if (unsubscribe) unsubscribe();
 
     try {
+        // হেডার টাইটেল আপডেট করা
+        const chatDoc = await db.collection('chats').doc(chatId).get();
+        if (chatDoc.exists) {
+            const chatData = chatDoc.data();
+            document.getElementById('chat-header').textContent = chatData.postTitle || 'প্রপার্টি চ্যাট';
+        }
+
         unsubscribe = db.collection('chats')
             .doc(chatId)
             .collection('messages')
@@ -127,7 +137,7 @@ async function openChat(chatId) {
                 messagesContainer.innerHTML = '';
 
                 if (snapshot.empty) {
-                    messagesContainer.innerHTML = '<p>এখানে কোনো মেসেজ নেই। আপনি মেসেজ পাঠানো শুরু করতে পারেন।</p>';
+                    messagesContainer.innerHTML = '<p style="text-align: center; color: #6c757d;">এখানে কোনো মেসেজ নেই। মেসেজ পাঠানো শুরু করতে পারেন।</p>';
                     return;
                 }
 
@@ -136,11 +146,11 @@ async function openChat(chatId) {
                     const isSender = msg.senderId === currentUser.uid;
 
                     const messageDiv = document.createElement('div');
-                    messageDiv.className = `message ${isSender ? 'sent' : 'received'}`;
+                    messageDiv.className = `message-bubble ${isSender ? 'sent' : 'received'}`;
 
                     messageDiv.innerHTML = `
-                        <p>${msg.text || ''}</p>
-                        <span class="timestamp">${formatTimestamp(msg.createdAt)}</span>
+                        ${msg.text || ''}
+                        <span class="message-time">${formatTimestamp(msg.createdAt)}</span>
                     `;
                     messagesContainer.appendChild(messageDiv);
                 });
@@ -148,6 +158,10 @@ async function openChat(chatId) {
                 // স্ক্রল একদম নিচে নিয়ে যাওয়া
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             });
+
+        // ইনপুট ফিল্ড ও বাটন আনলক বা সক্রিয় করা
+        document.getElementById('message-input').disabled = false;
+        document.getElementById('send-button').disabled = false;
 
     } catch (error) {
         console.error('Error opening chat:', error);
@@ -197,4 +211,4 @@ function formatTimestamp(timestamp) {
     if (!timestamp) return '';
     const date = timestamp.toDate();
     return date.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
-                                       }
+    }
