@@ -1,394 +1,350 @@
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>প্রপার্টি ডিটেইলস - আমার বাড়ি.কম</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+const firebaseConfig = {
+    apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+    authDomain: "amar-bari-website.firebaseapp.com",
+    projectId: "amar-bari-website",
+    storageBucket: "amar-bari-website.firebasestorage.app",
+    messagingSenderId: "719084789035",
+    appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+};
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const urlParams = new URLSearchParams(window.location.search);
+const postId = urlParams.get('id');
+
+// গ্লোবালি পোস্টের ডাটা সংরক্ষণ করার জন্য ভেরিয়েবল
+let currentPostData = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!postId) return;
+    const doc = await db.collection('properties').doc(postId).get();
+    if (doc.exists) {
+        const data = doc.data();
+        currentPostData = data; // ডাটা সংরক্ষণ করা হলো
+        renderDetails(data);
+        loadRelatedPosts(data);
+    }
+});
+
+function renderDetails(data) {
+    document.getElementById('p-title').textContent = data.title || "";
+    document.getElementById('p-desc').textContent = data.description || "";
+
+    // ১. দাম ও ইউনিট (ভাড়া ও বিক্রয় উভয় ঠিক করা হলো)
+    let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
+    let unit = data.priceUnit || data.rentUnit || ""; 
+    document.getElementById('p-price').textContent = amount ? `৳ ${amount} (${unit})` : "আলোচনা সাপেক্ষ";
+
+    // লোকেশন স্ট্রিং দেখানো
+    if (document.getElementById('p-location') && data.location) {
+        document.getElementById('p-location').textContent = 
+            data.location.village && data.location.district ? `${data.location.village}, ${data.location.district}` : "";
+    }
+
+    // ইমেজ গ্যালারি
+    let images = [];
+    if (data.images) data.images.forEach(img => images.push(img.url || img));
+    if (data.documents?.khotian) images.push(data.documents.khotian.url || data.documents.khotian);
+    if (data.documents?.sketch) images.push(data.documents.sketch.url || data.documents.sketch);
+
+    const gallery = document.getElementById('p-gallery');
+    gallery.innerHTML = '';
+    images.slice(0, 5).forEach(url => {
+        const div = document.createElement('div');
+        div.className = 'gal-item';
+        div.innerHTML = `<img src="${url}" onclick="openLightbox('${url}')">`;
+        gallery.appendChild(div);
+    });
+
+    const addRow = (tableId, label, value) => {
+        if (!value || value === "" || value === "undefined") return;
+        const table = document.getElementById(tableId);
+        table.innerHTML += `<tr><td>${label}</td><td>${value}</td></tr>`;
+    };
+
+    // ২. 🏠 প্রপার্টির তথ্য
+    const basicT = 'table-basic';
+    document.getElementById(basicT).innerHTML = ""; 
+
+    addRow(basicT, "ক্যাটাগরি", data.category);
+    addRow(basicT, "টাইপ", data.type);
+    addRow(basicT, "জমির ধরন", data.landType);
+    addRow(basicT, "প্রপার্টির বয়স", data.propertyAge? `${data.propertyAge} বছর` : "");
     
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    if (data.category === 'ভাড়া') {
+        addRow(basicT, "ভাড়ার ধরন", data.rentType);
+        addRow(basicT, "ওঠার তারিখ", data.moveInDate);
+        addRow(basicT, "অগ্রিম (এডভ্যান্স)", data.advance ? `৳ ${data.advance} টাকা` : "");
+    }
 
-    <style>
-        :root { --primary: #007bff; --success: #28a745; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f4f7f6; }
-        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-bottom: 50px; }
-        .container { max-width: 800px; margin: auto; padding: 15px; }
+    addRow(basicT, "বেডরুম", data.bedrooms || data.rooms? `${data.rooms} টি` : "");
+    addRow(basicT, "ডাইনিং", data.dining? `${data.dining} টি` : "");
+    addRow(basicT, "বাথরুম", data.bathrooms? `${data.bathrooms} টি` : "");
+    addRow(basicT, "কিচেন", data.kitchen? `${data.kitchen} টি` : "");
+    addRow(basicT, "বেলকনি", data.balcony? `${data.balcony} টি` : "");
+    addRow(basicT, "ফ্লোর নম্বর", data.floorNo || data.floorLevel);
+    addRow(basicT, "রাস্তা", data.roadWidth ? `${data.roadWidth} ফিট` : "");
+    addRow(basicT, "ফেসিং", data.facing? `${data.facing} দিক` : "");
+    
+    if (data.utilities && data.utilities.length > 0) {
+        addRow(basicT, "সুবিধা সমূহ", Array.isArray(data.utilities) ? data.utilities.join(', ') : data.utilities);
+    }
+
+    let area = data.landArea || data.houseArea || data.areaSqft || data.commercialArea;
+    let areaUnit = data.landAreaUnit || data.houseAreaUnit || data.commercialAreaUnit || "";
+    addRow(basicT, "পরিমাণ", area ? `${area} (${areaUnit})` : "");
+
+    // ৩. 📑 মালিকানা তথ্য
+    const ownerSection = document.getElementById('section-owner');
+    if (data.category === 'বিক্রয়' && data.owner) {
+        ownerSection.style.display = 'block';
+        const ownT = 'table-owner';
+        document.getElementById(ownT).innerHTML = "";
+        addRow(ownT, "দাতার নাম", data.owner.donorName);
         
-        .top-bar { display: flex; align-items: center; gap: 10px; padding: 10px 0; margin-bottom: 15px; }
-        .btn-back { background: none; border: none; color: var(--dark); cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 16px; }
-
-        .content-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .post-title { font-size: 22px; color: var(--dark); margin: 0 0 8px 0; }
-        .post-price { font-size: 20px; color: var(--success); font-weight: bold; margin-bottom: 12px; display: block; }
-        .post-desc { color: #444; line-height: 1.7; border-top: 1px solid #eee; padding-top: 15px; white-space: pre-line; }
-
-        .gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 20px 0; }
-        .gal-item { border-radius: 8px; overflow: hidden; cursor: pointer; background: #eee; height: 100px; }
-        .gal-item:first-child { grid-column: span 4; height: 350px; }
-        .gal-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-        .action-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
-        .btn-act { padding: 10px; border: 1px solid #ddd; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; text-decoration: none; font-size: 12px; font-weight: bold; background: white; color: var(--dark); }
-        .btn-call { color: var(--success); border-color: var(--success); }
-
-        .section-header { background: #fff; padding: 12px 15px; border-radius: 8px 8px 0 0; margin-top: 25px; border-bottom: 2px solid var(--primary); font-weight: bold; display: flex; align-items: center; gap: 10px; }
-        .info-table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 10px; }
-        .info-table td { padding: 12px 15px; border-bottom: 1px solid #f8f9fa; font-size: 14px; }
-        .info-table td:last-child { text-align: right; font-weight: 600; }
-
-        .btn-map { background: #e74c3c; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; }
-
-        /* Related Posts */
-        .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 15px; }
-        .rel-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; }
-        .rel-card img { width: 100%; height: 110px; object-fit: cover; }
-        .rel-info { padding: 8px; }
-        .rel-title { font-size: 13px; font-weight: bold; margin: 0; height: 36px; overflow: hidden; }
-        .rel-price { color: var(--success); font-size: 12px; font-weight: bold; margin: 4px 0; }
-        .rel-loc { font-size: 11px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        let khotian = data.owner.khotianNo;
+        let khotianType = data.owner.khotianNoType || "";
+        addRow(ownT, "খতিয়ান নং", khotian ? `${khotian} (${khotianType})` : "");
         
-        .see-more-container { text-align: center; margin-top: 20px; }
-        .btn-see-more { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        let dag = data.owner.dagNo;
+        let dagType = data.owner.dagNoType || "";
+        addRow(ownT, "দাগ নং", dag ? `${dag} (${dagType})` : "");
+        
+        addRow(ownT, "মৌজা", data.owner.mouja);
+    } else {
+        ownerSection.style.display = 'none';
+    }
+    
+    // ৪. 📍 অবস্থান
+    const locT = 'table-location';
+    document.getElementById(locT).innerHTML = "";
+    addRow(locT, "জেলা", data.location?.district);
+    addRow(locT, "এরিয়া", data.location?.areaType);
+    addRow(locT, "উপজেলা", data.location?.upazila);
+    addRow(locT, "থানা", data.location?.thana);
+    addRow(locT, "ইউনিয়ন", data.location?.union);
+    addRow(locT, "ওয়ার্ড নম্বর", data.location?.wardNo);
+    addRow(locT, "গ্রাম/এলাকা", data.location?.village);
+    addRow(locT, "রাস্তা", data.location?.road);
 
-        #lightbox { display: none; position: fixed; z-index: 999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
-        #lb-img { max-width: 90%; max-height: 80%; }
+    if (data.location && data.location.lat && data.location.lng) {
+        initSinglePropertyMap(data);
+    }
 
-        /* CSS ভেরিয়েবল */
-        :root {
-            --primary-color: #007bff;
-        }
+    // ৫. 📞 যোগাযোগ
+    const conT = 'table-contact';
+    document.getElementById(conT).innerHTML = "";
+    addRow(conT, "প্রাথমিক ফোন", data.phoneNumber);
+    addRow(conT, "অতিরিক্ত ফোন", data.secondaryPhone);
+    document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
+}
+    
+function initSinglePropertyMap(data) {
+    const mapContainer = document.getElementById('map-container');
+    if (!mapContainer) return;
 
-        /* গ্লোবাল ফিক্স */
-        body {
-            margin: 0; 
-            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
-            font-family: Arial, sans-serif; 
-        }
- 
-        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
-        .main-header {
-             position: fixed; 
-             top: 0;
-             left: 0;
-             right: 0;
-             background-color: white; 
-             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-             z-index: 1000; 
-             padding-bottom: 0;
-        }
-        
-        /* --- ⭐ FIX 2: সাইডবার পজিশনিং, ট্রানজিশন ও রঙ যোগ করা হলো ⭐ --- */
-        .sidebar {
-            position: fixed; 
-            top: 0;
-            left: -250px; 
-            width: 250px; 
-            height: 100%;
-            background-color: #34495e; /* গাঢ় নীল/ধূসর রঙ */
-            transition: left 0.3s ease; 
-            box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
-            z-index: 1050; 
-            overflow-y: auto;
-            padding-top: 50px; 
-        }
-        
-        .sidebar.active {
-            left: 0; 
-        }
-        
-        .overlay {
-            position: fixed; 
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5); 
-            z-index: 1040; 
-            display: none; 
-        }
-        
-        .overlay.active {
-            display: block; 
-        }
-        
-        /* সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা */
-        .sidebar a {
-            color: #ffffff; 
-            padding: 12px 15px; 
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            font-weight: 500;
-        }
+    const map = L.map('map-container').setView([data.location.lat, data.location.lng], 15);
 
-        .sidebar a i.material-icons {
-            color: #ffffff; 
-            margin-right: 10px;
-        }
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-        .sidebar a:hover {
-            background-color: #3e5369; 
-        }
-        
-        /* সাইডবারের লোগো লিঙ্ক */
-        .sidebar-logo {
-            padding: 15px;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: white !important; 
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 5px;
-        }
-        /* --- [সাইডবার ফিক্স শেষ] --- */
+    const propertyType = data.type || data.propertyType || 'প্রপার্টি';
 
-        .header-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between; 
-            padding: 8px 15px; 
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            flex-shrink: 0; 
-        }
-
-        .menu-icon {
-             margin-right: 0; 
-             cursor: pointer;
-        }
-        
-        .logo-title {
-            display: flex;
-            align-items: center;
-            font-size: 1.8em; 
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-left: 0px; 
-            text-decoration: none; 
-            white-space: nowrap; 
-        }
-        .logo-title:visited {
-             color: var(--primary-color);
-        }
-        .logo-icon {
-            margin-right: 5px;
-        }
-
-        /* ডানের ব্লক (আইকন) ফিক্স */
-        .header-actions {
-             display: flex;
-             align-items: center;
-             gap: 12px; 
-             position: relative; 
-             flex-shrink: 0; 
-        }
-        
-        /* কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
-        .icon-wrapper {
-             position: relative;
-             display: inline-flex;
-             cursor: pointer;
-             align-items: center; 
-             justify-content: center;
-             height: 30px; 
-             width: 30px; 
-        }
-        
-        /* কমন নোটিফিকেশন কাউন্ট স্টাইল */
-        .notification-count {
-            position: absolute;
-            top: -5px; 
-            right: -8px; 
-            background-color: red;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 5px; 
-            font-size: 0.7em;
-            font-weight: bold;
-            min-width: 10px;
-            text-align: center;
-            line-height: 1; 
-            display: none; 
-        }
-        
-        /* আইকন কালার */
-        .notification-icon { color: var(--primary-color); }
-        .message-icon { color: var(--primary-color); }
-        .post-icon-header { color: #28a745; }
-
-        /* ⭐ FIX 3: প্রোফাইল ইমেজ স্টাইল (ছবি লোড না হলেও ডিফল্ট আইকন দেখা যাবে) ⭐ */
-        .profile-image-wrapper {
-            cursor: pointer;
-            width: 35px; 
-            height: 35px;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 2px solid var(--primary-color); 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #profileImage {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: none; /* ডিফল্টভাবে ছবি লুকানো থাকবে */
-        }
-        #defaultProfileIcon {
-            display: block; /* ডিফল্টভাবে আইকন দেখাবে */
-            font-size: 24px;
-            color: var(--primary-color);
-        }
-        
-        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
-        @media (max-width: 600px) {
-            body {
-                padding-top: 46px; 
-            }
-            .logo-title {
-                 font-size: 1.5em; 
-                 margin-left: 0px;
-            }
-            .header-actions {
-                 gap: 8px; 
-            }
-            .profile-image-wrapper {
-                 width: 30px; 
-                 height: 30px;
-            }
-        }
-        
-    </style>
-</head>
-<body>
-
-    <header class="main-header">
-        <div class="header-top">
-            
-            <div class="header-left">
-                <i class="material-icons menu-icon" id="menuButton">menu</i>
-                
-                <a href="index.html" class="logo-title">
-                   <i class="material-icons logo-icon">home</i>  
-                    <span>আমার বাড়ি.কম</span>
-                </a>
-            </div>
-            
-            <div class="header-actions">
-                
-                <div class="icon-wrapper" id="notificationButton"> 
-                    <i class="material-icons notification-icon">notifications</i>
-                    <span class="notification-count" id="notification-count"></span>
+    const redPinIcon = L.divIcon({
+        html: `
+            <div style="position: relative; width: 60px; height: 35px; display: flex; flex-direction: column; align-items: center;">
+                <div style="
+                    background-color: #e74c3c; 
+                    color: white; 
+                    padding: 4px 8px; 
+                    border-radius: 15px; 
+                    font-size: 11px; 
+                    font-weight: bold; 
+                    white-space: nowrap;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+                    z-index: 2;
+                    text-align: center;
+                    min-width: 50px;">
+                    ${propertyType}
                 </div>
-                
-                <div class="icon-wrapper" id="headerPostButton">
-                    <i class="material-icons post-icon-header">add_circle_outline</i>
-                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
+                <div style="
+                    width: 0; 
+                    height: 0; 
+                    border-left: 7px solid transparent;
+                    border-right: 7px solid transparent;
+                    border-top: 10px solid #e74c3c;
+                    margin-top: -2px;
+                    z-index: 1;">
                 </div>
-                
-                <div class="icon-wrapper" id="messageButton">
-                    <i class="material-icons message-icon">message</i>
-                    <span class="notification-count" id="message-count"></span>
-                </div>
-                
-                <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile">
-                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> 
-                </div>
-                
-                <div class="notification-dropdown" id="notification-dropdown">
+            </div>`,
+        className: 'custom-pin',
+        iconSize: [60, 45],
+        iconAnchor: [30, 45]
+    });
+
+    L.marker([data.location.lat, data.location.lng], { icon: redPinIcon })
+     .addTo(map)
+     .bindPopup(`<b>${data.title}</b><br>লোকেশন এখানে`)
+     .openPopup();
+}
+
+async function loadRelatedPostsFunction(currentData) {
+    // আগের loadRelatedPosts ফাংশনটি
+    const list = document.getElementById('related-list');
+    const seeMoreBox = document.getElementById('see-more-box');
+    try {
+        const snapshot = await db.collection('properties')
+            .where('category', '==', currentData.category)
+            .limit(50) 
+            .get();
+
+        let allPosts = [];
+        snapshot.forEach(doc => {
+            if (doc.id !== postId) allPosts.push({ id: doc.id, ...doc.data() });
+        });
+
+        allPosts.sort((a, b) => {
+            const aVillage = (a.location?.village === currentData.location?.village) ? 1 : 0;
+            const bVillage = (b.location?.village === currentData.location?.village) ? 1 : 0;
+            if (aVillage !== bVillage) return bVillage - aVillage;
+            const aThana = (a.location?.thana === currentData.location?.thana) ? 1 : 0;
+            const bThana = (b.location?.thana === currentData.location?.thana) ? 1 : 0;
+            return bThana - aThana;
+        });
+
+        const displayPosts = allPosts.slice(0, 10);
+        list.innerHTML = "";
+        displayPosts.forEach(post => {
+            let pAmt = post.category === 'বিক্রয়' ? post.price : post.monthlyRent;
+            let pUnit = post.priceUnit || post.rentUnit || "";
+            list.innerHTML += `
+                <div class="rel-card" onclick="location.href='details.html?id=${post.id}'">
+                    <img src="${post.images?.[0]?.url || post.images?.[0] || 'placeholder.jpg'}">
+                    <div class="rel-info">
+                        <h4 class="rel-title">${post.title}</h4>
+                        <p class="rel-price">৳ ${pAmt} (${pUnit})</p>
+                        <p class="rel-loc">${post.location?.village || ''}, ${post.location?.thana || ''}, ${post.location?.district || ''}</p>
                     </div>
-            </div>
-        </div>
-        
-    </header>
-    
-    <div class="sidebar" id="sidebar">
-        <nav>
-            <a href="index.html" class="sidebar-logo">
-                <i class="material-icons">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
+                </div>`;
+        });
+        if (allPosts.length > 10) seeMoreBox.style.display = 'block';
+    } catch (e) { console.error(e); }
+}
+
+async function loadRelatedPosts(currentData) {
+    loadPostsFunction(currentData);
+}
+
+function openLightbox(url) {
+    document.getElementById('lb-img').src = url;
+    document.getElementById('lightbox').style.display = 'flex';
+}
+
+// DOMContentLoaded ইভেন্টসমূহ
+document.addEventListener('DOMContentLoaded', () => {
+    const menuButton = document.getElementById('menuButton');
+    const closeMenu = document.getElementById('closeMenu');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+
+    if (menuButton) {
+        menuButton.addEventListener('click', () => {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+        });
+    }
+
+    const closeSidebar = () => {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+    };
+
+    if (closeMenu) closeMenu.addEventListener('click', closeSidebar);
+    if (overlay) overlay.addEventListener('click', closeSidebar);
+
+    // হেডার বাটনগুলোর লিঙ্ক
+    document.getElementById('notificationButton')?.addEventListener('click', () => location.href = 'notifications.html');
+    document.getElementById('headerPostButtonHeader')?.addEventListener('click', () => location.href = 'post.html');
+    document.getElementById('headerPostButtonSidebar')?.addEventListener('click', () => location.href = 'post.html');
+    document.getElementById('headerPostButton')?.addEventListener('click', () => location.href = 'post.html');
+    document.getElementById('messageButton')?.addEventListener('click', () => location.href = 'messages.html');
+    document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
+
+    // ★ নতুন চ্যাট সিস্টেমের লজিক (p-message বাটনের জন্য)
+    const messageButton = document.getElementById('p-message');
+    if (messageButton) {
+        messageButton.addEventListener('click', async () => {
+            const user = firebase.auth().currentUser;
             
-            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
-            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            
-            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
-            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
-            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            
-            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
-        </nav>
-    </div>
+            // ১. ব্যবহারকারী লগইন করা আছে কিনা যাচাই
+            if (!user) {
+                alert('চ্যাট শুরু করতে অনুগ্রহ করে লগইন করুন।');
+                location.href = 'auth.html';
+                return;
+            }
 
-    <div class="overlay" id="overlay"></div>
-    
-    <div class="container">
-        <div class="top-bar">
-            <button class="btn-back" onclick="window.history.back()"><i class="material-icons">arrow_back</i> ফিরে যান</button>
-        </div>
+            // ২. পোস্ট ডাটা লোড হয়েছে কিনা যাচাই
+            if (!currentPostData) {
+                alert('প্রপার্টির তথ্য লোড হচ্ছে, কিছুক্ষণ অপেক্ষা করুন।');
+                return;
+            }
 
-        <div class="content-card">
-            <h1 id="p-title" class="post-title">লোড হচ্ছে...</h1>
-            <span id="p-price" class="post-price"></span>
-           <span id="p-location" class="post-location"></span>
-            <div id="p-desc" class="post-desc"></div>
-        </div>
+            const data = currentPostData;
+            const buyerId = user.uid;
+            // পোস্ট ক্রিয়েটরের আইডি (Data-তে userId বা uid থাকলে সেটি ধরবে)
+            const sellerId = data.userId || data.uid; 
 
-        <div class="gallery-grid" id="p-gallery"></div>
+            if (!sellerId) {
+                alert('প্রপার্টি পোস্টকারীর (Seller) আইডি পাওয়া যায়নি।');
+                return;
+            }
 
-        <div class="action-bar">
-            <a href="#" id="p-call" class="btn-act btn-call"><i class="material-icons">call</i> কল</a>
-            <button class="btn-act" id="p-message"><i class="material-icons">chat</i> মেসেজ</button>
-            <button class="btn-act" id="p-save"><i class="material-icons">bookmark_border</i> সেভ</button>
-            <button class="btn-act" id="p-share"><i class="material-icons">share</i> শেয়ার</button>
-        </div>
+            // নিজের পোস্টে নিজে চ্যাট করার বাধা
+            if (buyerId === sellerId) {
+                alert('আপনি নিজের প্রপার্টিতে নিজে চ্যাট করতে পারবেন না।');
+                return;
+            }
 
-        <div class="section-header">🏠 প্রপার্টির তথ্য</div>
-        <table class="info-table" id="table-basic"></table>
+            try {
+                const chatRef = db.collection('chats');
+                
+                // ৩. আগে থেকেই চ্যাট খোলা আছে কিনা চেক করা
+                const snapshot = await chatRef
+                    .where('postId', '==', postId)
+                    .where('buyerId', '==', buyerId)
+                    .where('sellerId', '==', sellerId)
+                    .get();
 
-        <div id="section-owner" style="display:none;">
-    <div class="section-header">📑 মালিকানা তথ্য</div>
-    <table class="info-table" id="table-owner"></table>
-    
-    <a href="https://dlrms.land.gov.bd/" target="_blank" id="btn-verify-khotian" class="btn-map" style="background: #27ae60; margin-top: 10px; text-decoration: none;">
-        <i class="material-icons">verified</i> খতিয়ান যাচাই করুন
-    </a>
-                                                       </div>
+                let chatId = '';
 
-        <div class="section-header">📍 অবস্থান</div>
-        <table class="info-table" id="table-location"></table>
-        <div id="map-container" style="height: 350px; width: 100%; border-radius: 12px; margin-top: 20px;"></div>
+                if (!snapshot.empty) {
+                    chatId = snapshot.docs[0].id;
+                } else {
+                    // ৪. নতুন চ্যাট লিস্ট তৈরি করা
+                    const newChat = {
+                        postId: postId,
+                        postTitle: data.title,
+                        buyerId: buyerId,
+                        sellerId: sellerId,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessage: 'চ্যাট শুরু হলো',
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    const newDoc = await chatRef.add(newChat);
+                    chatId = newDoc.id;
+                }
 
-        <div class="section-header">📞 যোগাযোগ</div>
-        <table class="info-table" id="table-contact"></table>
+                // ৫. চ্যাট পেজে রিডাইরেক্ট করা
+                location.href = `messages.html?chatId=${chatId}`;
 
-        <div class="related-section">
-            <h3 style="margin-top:30px;">সম্পর্কিত পোস্ট</h3>
-            <div class="related-grid" id="related-list"></div>
-            <div class="see-more-container" id="see-more-box" style="display:none;">
-                <button class="btn-see-more" id="btn-see-more">See More...</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="lightbox" onclick="this.style.display='none'"><img id="lb-img"></div>
-
-    <script src="details.js"></script> 
-
-    <footer class="footer">
-    <div class="container">
-        <p>&copy; 2026 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
-    </div>
-    </footer>
-</body>
-    </html>
+            } catch (error) {
+                console.error('Error in creating chat list:', error);
+                alert('চ্যাট লিস্ট তৈরি করতে সমস্যা হয়েছে।');
+            }
+        });
+    }
+});
