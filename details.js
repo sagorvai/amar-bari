@@ -28,6 +28,8 @@ function renderDetails(data) {
     
     document.getElementById('p-desc').textContent = data.description || "";
 
+    document.getElementById('message-btn').onclick = () => startChat(data.userId, postId, data.title);
+    
     // ১. দাম ও ইউনিট (ভাড়া ও বিক্রয় উভয় ঠিক করা হলো)
     let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let unit = data.priceUnit || data.rentUnit || ""; 
@@ -270,6 +272,36 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+// details.js এর শেষে বা উপযুক্ত স্থানে এটি যোগ করুন
+async function startChat(ownerId, propertyId, propertyTitle) {
+    const currentUser = firebase.auth().currentUser;
+    if (!currentUser) {
+        alert("চ্যাট করতে হলে আগে লগইন করুন।");
+        window.location.href = 'auth.html';
+        return;
+    }
+
+    if (currentUser.uid === ownerId) {
+        alert("এটি আপনার নিজের পোস্ট!");
+        return;
+    }
+
+    // চ্যাট আইডি তৈরি (ক্রেতা এবং বিক্রেতার আইডির সংমিশ্রণ)
+    const chatId = currentUser.uid < ownerId ? 
+                   `${currentUser.uid}_${ownerId}` : 
+                   `${ownerId}_${currentUser.uid}`;
+
+    // চ্যাট ডকুমেন্ট তৈরি বা আপডেট
+    await db.collection('chats').doc(chatId).set({
+        participants: [currentUser.uid, ownerId],
+        lastMessage: "প্রপার্টি নিয়ে কথা বলতে চাই: " + propertyTitle,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        propertyId: propertyId
+    }, { merge: true });
+
+    // মেসেজ পেজে পাঠিয়ে দেওয়া
+    window.location.href = `messages.html?chatId=${chatId}&propertyId=${propertyId}`;
+}
 
 
 
