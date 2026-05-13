@@ -14,26 +14,17 @@ const auth = firebase.auth();
 const urlParams = new URLSearchParams(window.location.search);
 const postId = urlParams.get('id');
 
-// গ্লোবাল ভেরিয়েবল ডেটা সেভ করে রাখার জন্য
-let currentPropertyData = null;
-
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!postId) {
-        console.error("Post ID not found in URL");
-        return;
-    }
-
+    if (!postId) return;
     try {
         const doc = await db.collection('properties').doc(postId).get();
         if (doc.exists) {
-            currentPropertyData = doc.data();
-            renderDetails(currentPropertyData);
-            loadRelatedPosts(currentPropertyData);
-        } else {
-            console.error("No such property document!");
+            const data = doc.data();
+            renderDetails(data);
+            loadRelatedPosts(data);
         }
     } catch (error) {
-        console.error("Error fetching property:", error);
+        console.error("Error loading property details:", error);
     }
 });
 
@@ -75,81 +66,69 @@ function renderDetails(data) {
         "ঠিকানা": data.address
     });
 
-    // ৪. কন্টাক্ট টেবিল এবং চ্যাট বাটন সেটআপ
+    // ৪. কন্টাক্ট টেবিল এবং চ্যাট বাটন (এখানে সরাসরি বাটন যোগ করা হয়েছে)
     const contactTable = document.getElementById('table-contact');
     if (contactTable) {
         contactTable.innerHTML = `
             <tr><td>ফোন</td><td>${data.phone || 'গোপন রাখা হয়েছে'}</td></tr>
             <tr>
                 <td colspan="2" style="text-align:center; padding-top:15px;">
-                    <button id="message-btn" class="btn-map" style="background:#007bff; width:100%; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                    <button id="message-btn" class="btn-map" style="background:#007bff; width:100%; border:none; padding:12px; color:white; border-radius:8px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center;">
                         <i class="material-icons" style="margin-right:8px;">chat</i> সরাসরি মেসেজ দিন
                     </button>
                 </td>
             </tr>
         `;
 
-        // বাটনে ক্লিক লিসেনার (সরাসরি DOM থেকে ধরা হয়েছে)
-        const msgBtn = document.getElementById('message-btn');
-        if (msgBtn) {
-            msgBtn.addEventListener('click', () => {
-                startChat(data.userId, postId, data.title);
-            });
-        }
+        document.getElementById('message-btn').onclick = () => {
+            handleStartChat(data.userId, postId, data.title);
+        };
     }
 
-    // ৫. ম্যাপ রেন্ডার (Leaflet)
-    if (data.location && data.location.lat) {
-        const mapContainer = document.getElementById('map-container');
-        if (mapContainer) {
-            const map = L.map('map-container').setView([data.location.lat, data.location.lng], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            L.marker([data.location.lat, data.location.lng]).addTo(map);
-        }
+    // ৫. ম্যাপ রেন্ডার
+    if (data.location && typeof L !== 'undefined') {
+        const map = L.map('map-container').setView([data.location.lat, data.location.lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.marker([data.location.lat, data.location.lng]).addTo(map);
     }
 }
 
-// --- উন্নত চ্যাট সিস্টেম ফাংশন ---
-async function startChat(ownerId, propertyId, propertyTitle) {
-    // অথেন্টিকেশন স্টেট চেক করা
-    auth.onAuthStateChanged(async (user) => {
-        if (!user) {
-            alert("চ্যাট করতে হলে আগে লগইন করুন।");
-            window.location.href = 'auth.html';
-            return;
-        }
+// --- সরাসরি চ্যাট শুরু করার লজিক ---
+async function handleStartChat(ownerId, propertyId, propertyTitle) {
+    const user = auth.currentUser;
+    if (!user) {
+        alert("মেসেজ দিতে হলে দয়া করে আগে লগইন করুন।");
+        window.location.href = 'auth.html';
+        return;
+    }
 
-        if (user.uid === ownerId) {
-            alert("এটি আপনার নিজের পোস্ট! আপনি নিজেকে মেসেজ দিতে পারবেন না।");
-            return;
-        }
+    if (user.uid === ownerId) {
+        alert("এটি আপনার নিজের পোস্ট!");
+        return;
+    }
 
-        // চ্যাট আইডি তৈরি
-        const chatId = user.uid < ownerId ? 
-                       `${user.uid}_${ownerId}` : 
-                       `${ownerId}_${user.uid}`;
+    // ইউনিক চ্যাট আইডি (ক্রেতা এবং বিক্রেতার আইডি দিয়ে)
+    const chatId = user.uid < ownerId ? `${user.uid}_${ownerId}` : `${ownerId}_${user.uid}`;
 
-        try {
-            // চ্যাট শুরু করার আগে বাটন ডিসেবল করে দেওয়া যাতে মাল্টিপল ক্লিক না হয়
-            const btn = document.getElementById('message-btn');
-            if (btn) btn.disabled = true;
+    try {
+        // চ্যাট লিস্টে এই চ্যাটটি তৈরি বা আপডেট করা
+        await db.collection('chats').doc(chatId).set({
+            participants: [user.uid, ownerId],
+            propertyId: propertyId,
+            propertyTitle: propertyTitle,
+            lastMessage: "আমি এই প্রপার্টিটি নিয়ে কথা বলতে আগ্রহী।",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            // চ্যাট তালিকায় নাম দেখানোর জন্য অতিরিক্ত তথ্য (ঐচ্ছিক)
+            buyerId: user.uid,
+            sellerId: ownerId
+        }, { merge: true });
 
-            await db.collection('chats').doc(chatId).set({
-                participants: [user.uid, ownerId],
-                lastMessage: "প্রপার্টি নিয়ে কথা বলতে চাই: " + propertyTitle,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                propertyId: propertyId,
-                propertyTitle: propertyTitle
-            }, { merge: true });
-
-            // মেসেজ পেজে নিয়ে যাওয়া
-            window.location.href = `messages.html?chatId=${chatId}`;
-        } catch (error) {
-            console.error("Error starting chat:", error);
-            alert("দুঃখিত, চ্যাট শুরু করা যাচ্ছে না। আবার চেষ্টা করুন।");
-            if (btn) btn.disabled = false;
-        }
-    });
+        // সরাসরি মেসেজ পেজে নিয়ে যাওয়া
+        window.location.href = `messages.html?chatId=${chatId}`;
+    } catch (error) {
+        console.error("Chat start failed:", error);
+        alert("দুঃখিত, চ্যাট শুরু করা যাচ্ছে না।");
+    }
 }
 
 function renderTable(targetId, infoMap) {
@@ -157,7 +136,7 @@ function renderTable(targetId, infoMap) {
     if (!table) return;
     table.innerHTML = '';
     for (let key in infoMap) {
-        if (infoMap[key] !== undefined && infoMap[key] !== null) {
+        if (infoMap[key]) {
             const row = `<tr><td>${key}</td><td>${infoMap[key]}</td></tr>`;
             table.innerHTML += row;
         }
@@ -170,56 +149,30 @@ async function loadRelatedPosts(currentData) {
     try {
         const snap = await db.collection('properties')
             .where('district', '==', currentData.district)
-            .limit(6).get();
+            .limit(5).get();
         
-        relatedList.innerHTML = '';
         snap.forEach(doc => {
             if (doc.id === postId) return;
             const d = doc.data();
             const div = document.createElement('div');
             div.className = 'related-item';
             div.innerHTML = `
-                <img src="${d.images && d.images[0] ? d.images[0].url : 'placeholder.jpg'}" alt="Property">
+                <img src="${d.images[0].url}">
                 <p>${d.title}</p>
             `;
             div.onclick = () => location.href = `details.html?id=${doc.id}`;
             relatedList.appendChild(div);
         });
-    } catch (e) { console.error("Error loading related posts:", e); }
+    } catch (e) { console.error(e); }
 }
 
 function openLightbox(url) {
-    const lbImg = document.getElementById('lb-img');
-    const lb = document.getElementById('lightbox');
-    if (lbImg && lb) {
-        lbImg.src = url;
-        lb.style.display = 'flex';
-    }
+    document.getElementById('lb-img').src = url;
+    document.getElementById('lightbox').style.display = 'flex';
 }
 
-// সাইডবার এবং অন্যান্য হেডার অ্যাকশন
+// সাইডবার এবং সাধারণ হেডার লজিক
 document.addEventListener('DOMContentLoaded', () => {
-    const menuButton = document.getElementById('menuButton');
-    const closeMenu = document.getElementById('closeMenu');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-
-    if (menuButton && sidebar && overlay) {
-        menuButton.addEventListener('click', () => {
-            sidebar.classList.add('active');
-            overlay.classList.add('active');
-        });
-    }
-
-    const closeSidebar = () => {
-        if (sidebar) sidebar.classList.remove('active');
-        if (overlay) overlay.classList.remove('active');
-    };
-
-    if (closeMenu) closeMenu.addEventListener('click', closeSidebar);
-    if (overlay) overlay.addEventListener('click', closeSidebar);
-
-    // হেডার আইকন ইভেন্ট লিসেনার
     document.getElementById('notificationButton')?.addEventListener('click', () => location.href = 'notifications.html');
     document.getElementById('headerPostButton')?.addEventListener('click', () => location.href = 'post.html');
     document.getElementById('messageButton')?.addEventListener('click', () => location.href = 'messages.html');
