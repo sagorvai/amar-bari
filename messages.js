@@ -1,3 +1,4 @@
+// Firebase Configuration (আপনার details.js থেকে কপি করুন)
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -9,206 +10,60 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const auth = firebase.auth(); // হেডার বা অন্য পেজের অথেন্টিকেশন চেকের জন্য গ্লোবাল অ্যাক্সেস
+const auth = firebase.auth();
 
-let currentUser = null;
-let currentChatId = null;
-let unsubscribe = null; // রিয়েল-টাইম মেসেজ লিসেনার স্টোর করার জন্য
+const urlParams = new URLSearchParams(window.location.search);
+const chatId = urlParams.get('chatId');
 
-document.addEventListener('DOMContentLoaded', () => {
-    // ব্যবহারকারী লগইন করা আছে কিনা তা যাচাই
-    auth.onAuthStateChanged(async (user) => {
-        if (!user) {
-            alert('চ্যাট দেখতে অনুগ্রহ করে লগইন করুন।');
-            location.href = 'auth.html';
-            return;
-        }
-        currentUser = user;
-        
-        // চ্যাট লিস্ট লোড করা শুরু করুন
-        await loadChatList();
+const chatMessages = document.getElementById('chat-messages');
+const chatForm = document.getElementById('chat-form');
+const msgInput = document.getElementById('msg-input');
 
-        // URL-এ chatId থাকলে সেই চ্যাটটি ওপেন করা
-        const urlParams = new URLSearchParams(window.location.search);
-        const chatIdFromUrl = urlParams.get('chatId');
-        if (chatIdFromUrl) {
-            openChat(chatIdFromUrl);
-        }
-    });
-
-    // সেন্ড বাটনের ইভেন্ট লিসেনার
-    document.getElementById('send-button')?.addEventListener('click', sendMessage);
-    
-    // এন্টার প্রেস করলে মেসেজ পাঠানো
-    document.getElementById('message-input')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
+auth.onAuthStateChanged(user => {
+    if (user && chatId) {
+        loadMessages();
+    } else if (!user) {
+        window.location.href = 'auth.html';
+    }
 });
 
-// ১. চ্যাট লিস্ট লোড করার ফাংশন
-async function loadChatList() {
-    const userId = currentUser.uid;
-    const chatListContainer = document.getElementById('chat-list-panel');
-    if (!chatListContainer) return;
-
-    chatListContainer.innerHTML = '<p style="text-align: center; color: #6c757d;">চ্যাট লোড হচ্ছে...</p>';
-
-    try {
-        // দুটি কোয়েরি করে ডাটা একত্রিত করা হলো
-        const buyerQuery = await db.collection('chats').where('buyerId', '==', userId).get();
-        const sellerQuery = await db.collection('chats').where('sellerId', '==', userId).get();
-
-        const chats = [];
-        
-        buyerQuery.forEach(doc => chats.push({ id: doc.id, ...doc.data() }));
-        sellerQuery.forEach(doc => {
-            // ডুপ্লিকেট এড়াতে চেক করা
-            if (!chats.some(c => c.id === doc.id)) {
-                chats.push({ id: doc.id, ...doc.data() });
-            }
+// মেসেজ লোড করা (Real-time)
+function loadMessages() {
+    db.collection('chats').doc(chatId).collection('messages')
+        .orderBy('timestamp', 'asc')
+        .onSnapshot(snapshot => {
+            chatMessages.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const msgDiv = document.createElement('div');
+                msgDiv.classList.add('msg');
+                msgDiv.classList.add(data.senderId === auth.currentUser.uid ? 'sent' : 'received');
+                msgDiv.textContent = data.text;
+                chatMessages.appendChild(msgDiv);
+            });
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         });
-
-        // সর্বশেষ মেসেজের সময় অনুযায়ী সাজানো
-        chats.sort((a, b) => {
-            const timeA = a.lastMessageTime?.toDate() || new Date(0);
-            const timeB = b.lastMessageTime?.toDate() || new Date(0);
-            return timeB - timeA;
-        });
-
-        chatListContainer.innerHTML = '';
-
-        if (chats.length === 0) {
-            chatListContainer.innerHTML = '<p style="text-align: center; color: #6c757d;">কোনো কথোপকথন পাওয়া যায়নি।</p>';
-            return;
-        }
-
-        chats.forEach(chat => {
-            const chatItem = document.createElement('div');
-            chatItem.className = 'chat-item';
-            if (chat.id === currentChatId) chatItem.classList.add('active');
-
-            chatItem.id = `chat-${chat.id}`;
-            chatItem.onclick = () => openChat(chat.id);
-
-            chatItem.innerHTML = `
-                <div class="chat-info">
-                    <h4>${chat.postTitle || 'প্রপার্টি চ্যাট'}</h4>
-                    <p>${chat.lastMessage || 'চ্যাট শুরু হলো'}</p>
-                </div>
-            `;
-            chatListContainer.appendChild(chatItem);
-        });
-
-    } catch (error) {
-        console.error('Error loading chats:', error);
-        chatListContainer.innerHTML = '<p style="text-align: center; color: red;">চ্যাট লোড করতে সমস্যা হয়েছে।</p>';
-    }
 }
 
-// ২. নির্দিষ্ট চ্যাট ওপেন ও মেসেজ লোড করার ফাংশন
-async function openChat(chatId) {
-    currentChatId = chatId;
+// মেসেজ পাঠানো
+chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = msgInput.value.trim();
+    if (!text) return;
+
+    const user = auth.currentUser;
     
-    // সবগুলো চ্যাট আইটেম থেকে active ক্লাস সরিয়ে দিন, এবং বর্তমানটিতে যুক্ত করুন
-    document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
-    const activeItem = document.getElementById(`chat-${chatId}`);
-    if (activeItem) activeItem.classList.add('active');
+    await db.collection('chats').doc(chatId).collection('messages').add({
+        text: text,
+        senderId: user.uid,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
 
-    const messagesContainer = document.getElementById('chat-messages');
-    if (messagesContainer) messagesContainer.innerHTML = '<p style="text-align: center; color: #6c757d;">মেসেজ লোড হচ্ছে...</p>';
+    // শেষ মেসেজ আপডেট করা
+    await db.collection('chats').doc(chatId).update({
+        lastMessage: text,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
 
-    // পুরাতন লিসেনার থাকলে তা বন্ধ করা
-    if (unsubscribe) unsubscribe();
-
-    try {
-        // হেডার টাইটেল আপডেট করা
-        const chatDoc = await db.collection('chats').doc(chatId).get();
-        if (chatDoc.exists) {
-            const chatData = chatDoc.data();
-            document.getElementById('chat-header').textContent = chatData.postTitle || 'প্রপার্টি চ্যাট';
-        }
-
-        unsubscribe = db.collection('chats')
-            .doc(chatId)
-            .collection('messages')
-            .orderBy('createdAt', 'asc')
-            .onSnapshot(snapshot => {
-                if (!messagesContainer) return;
-                messagesContainer.innerHTML = '';
-
-                if (snapshot.empty) {
-                    messagesContainer.innerHTML = '<p style="text-align: center; color: #6c757d;">এখানে কোনো মেসেজ নেই। মেসেজ পাঠানো শুরু করতে পারেন।</p>';
-                    return;
-                }
-
-                snapshot.forEach(doc => {
-                    const msg = doc.data();
-                    const isSender = msg.senderId === currentUser.uid;
-
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = `message-bubble ${isSender ? 'sent' : 'received'}`;
-
-                    messageDiv.innerHTML = `
-                        ${msg.text || ''}
-                        <span class="message-time">${formatTimestamp(msg.createdAt)}</span>
-                    `;
-                    messagesContainer.appendChild(messageDiv);
-                });
-
-                // স্ক্রল একদম নিচে নিয়ে যাওয়া
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            });
-
-        // ইনপুট ফিল্ড ও বাটন আনলক বা সক্রিয় করা
-        document.getElementById('message-input').disabled = false;
-        document.getElementById('send-button').disabled = false;
-
-    } catch (error) {
-        console.error('Error opening chat:', error);
-    }
-}
-
-// ৩. নতুন মেসেজ পাঠানোর ফাংশন
-async function sendMessage() {
-    const messageInput = document.getElementById('message-input');
-    if (!messageInput || !currentChatId) return;
-
-    const text = messageInput.value.trim();
-    if (text === '') return;
-
-    try {
-        const newMessage = {
-            senderId: currentUser.uid,
-            text: text,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        // মেসেজটি chats -> messages সাবকালেকশনে যোগ করা
-        await db.collection('chats')
-            .doc(currentChatId)
-            .collection('messages')
-            .add(newMessage);
-
-        // সর্বশেষ মেসেজটি আপডেট করা
-        await db.collection('chats')
-            .doc(currentChatId)
-            .update({
-                lastMessage: text,
-                lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-        // ইনপুট বক্স পরিষ্কার করা
-        messageInput.value = '';
-
-    } catch (error) {
-        console.error('Error sending message:', error);
-        alert('মেসেজ পাঠাতে সমস্যা হয়েছে।');
-    }
-}
-
-// ৪. টাইম ফরম্যাট করার ফাংশন
-function formatTimestamp(timestamp) {
-    if (!timestamp) return '';
-    const date = timestamp.toDate();
-    return date.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
-    }
+    msgInput.value = '';
+});
