@@ -127,6 +127,71 @@ if (data.category === 'বিক্রয়' && data.owner) {
         initSinglePropertyMap(data);
     }
 
+    const messageBtn = document.getElementById('messageOwnerBtn');
+
+messageBtn?.addEventListener('click', async () => {
+
+    const user = firebase.auth().currentUser;
+
+    if (!user) {
+        alert("মেসেজ করতে লগইন করুন");
+        window.location.href = "auth.html";
+        return;
+    }
+
+    // নিজের পোস্টে নিজে মেসেজ না
+    if (user.uid === data.userId) {
+        alert("নিজের পোস্টে মেসেজ করা যাবে না");
+        return;
+    }
+
+    try {
+
+        const buyerId = user.uid;
+        const sellerId = data.userId;
+        const propertyId = postId;
+
+        // UNIQUE CHAT ID
+        const chatId = `${propertyId}_${buyerId}_${sellerId}`;
+
+        const chatRef = db.collection('chats').doc(chatId);
+
+        const chatDoc = await chatRef.get();
+
+        // না থাকলে create
+        if (!chatDoc.exists) {
+
+            await chatRef.set({
+                participants: [buyerId, sellerId],
+
+                propertyId: propertyId,
+                propertyTitle: data.title || "",
+                propertyImage: data.images?.[0]?.url || "",
+
+                buyerId,
+                sellerId,
+
+                buyerName: user.displayName || "ক্রেতা",
+
+                sellerName: data.ownerName || "বিক্রেতা",
+
+                lastMessage: "",
+                lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+        }
+
+        // redirect
+        window.location.href = `messages.html?chatId=${chatId}`;
+
+    } catch (error) {
+        console.error(error);
+        alert("চ্যাট তৈরি করা যায়নি");
+    }
+
+});
 
     // ৫. 📞 যোগাযোগ
     const conT = 'table-contact';
@@ -135,7 +200,8 @@ if (data.category === 'বিক্রয়' && data.owner) {
     addRow(conT, "অতিরিক্ত ফোন", data.secondaryPhone);
     document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
 }
-    
+
+
 // শুধুমাত্র এই প্রপার্টির জন্য ম্যাপ ফাংশন
 function initSinglePropertyMap(data) {
     const mapContainer = document.getElementById('map-container');
