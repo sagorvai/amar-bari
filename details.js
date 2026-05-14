@@ -14,17 +14,21 @@ const auth = firebase.auth();
 const urlParams = new URLSearchParams(window.location.search);
 const postId = urlParams.get('id');
 
+// গ্লোবাল ভেরিয়েবল
+let currentPropertyData = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
     if (!postId) return;
+    
     try {
         const doc = await db.collection('properties').doc(postId).get();
         if (doc.exists) {
-            const data = doc.data();
-            renderDetails(data);
-            loadRelatedPosts(data);
+            currentPropertyData = doc.data();
+            renderDetails(currentPropertyData);
+            loadRelatedPosts(currentPropertyData);
         }
     } catch (error) {
-        console.error("Error loading property details:", error);
+        console.error("Error:", error);
     }
 });
 
@@ -32,26 +36,24 @@ function renderDetails(data) {
     document.getElementById('p-title').textContent = data.title || "";
     document.getElementById('p-desc').textContent = data.description || "";
 
-    // ১. দাম ও ইউনিট
+    // দাম ও ইউনিট
     let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let unit = data.priceUnit || data.rentUnit || ""; 
     document.getElementById('p-price').textContent = `${amount} ${unit}`;
 
-    // ২. ইমেজ গ্যালারি
+    // ইমেজ গ্যালারি
     const gallery = document.getElementById('gallery');
-    if (gallery) {
+    if (gallery && data.images) {
         gallery.innerHTML = '';
-        if (data.images && data.images.length > 0) {
-            data.images.forEach(img => {
-                const imgEl = document.createElement('img');
-                imgEl.src = img.url;
-                imgEl.onclick = () => openLightbox(img.url);
-                gallery.appendChild(imgEl);
-            });
-        }
+        data.images.forEach(img => {
+            const imgEl = document.createElement('img');
+            imgEl.src = img.url;
+            imgEl.onclick = () => openLightbox(img.url);
+            gallery.appendChild(imgEl);
+        });
     }
 
-    // ৩. ইনফো টেবিল রেন্ডার
+    // টেবিল রেন্ডার
     renderTable('table-main', {
         "ক্যাটাগরি": data.propertyType,
         "অবস্থা": data.category,
@@ -66,69 +68,67 @@ function renderDetails(data) {
         "ঠিকানা": data.address
     });
 
-    // ৪. কন্টাক্ট টেবিল এবং চ্যাট বাটন (এখানে সরাসরি বাটন যোগ করা হয়েছে)
+    // কন্টাক্ট এবং চ্যাট বাটন
     const contactTable = document.getElementById('table-contact');
     if (contactTable) {
         contactTable.innerHTML = `
-            <tr><td>ফোন</td><td>${data.phone || 'গোপন রাখা হয়েছে'}</td></tr>
+            <tr><td>ফোন</td><td>${data.phone || 'গোপন'}</td></tr>
             <tr>
                 <td colspan="2" style="text-align:center; padding-top:15px;">
-                    <button id="message-btn" class="btn-map" style="background:#007bff; width:100%; border:none; padding:12px; color:white; border-radius:8px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center;">
-                        <i class="material-icons" style="margin-right:8px;">chat</i> সরাসরি মেসেজ দিন
+                    <button id="message-btn" class="btn-map" style="background:#007bff; width:100%; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">
+                        <i class="material-icons" style="vertical-align: middle;">chat</i> সরাসরি মেসেজ দিন
                     </button>
                 </td>
             </tr>
         `;
 
         document.getElementById('message-btn').onclick = () => {
-            handleStartChat(data.userId, postId, data.title);
+            startChatLogic(data.userId, postId, data.title);
         };
     }
 
-    // ৫. ম্যাপ রেন্ডার
-    if (data.location && typeof L !== 'undefined') {
+    // ম্যাপ রেন্ডার
+    if (data.location && window.L) {
         const map = L.map('map-container').setView([data.location.lat, data.location.lng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         L.marker([data.location.lat, data.location.lng]).addTo(map);
     }
 }
 
-// --- সরাসরি চ্যাট শুরু করার লজিক ---
-async function handleStartChat(ownerId, propertyId, propertyTitle) {
-    const user = auth.currentUser;
-    if (!user) {
-        alert("মেসেজ দিতে হলে দয়া করে আগে লগইন করুন।");
-        window.location.href = 'auth.html';
-        return;
-    }
+// চ্যাট শুরুর লজিক (Fix with Auth Observer)
+function startChatLogic(ownerId, propertyId, propertyTitle) {
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            alert("মেসেজ দিতে হলে আগে লগইন করুন।");
+            window.location.href = 'auth.html';
+            return;
+        }
 
-    if (user.uid === ownerId) {
-        alert("এটি আপনার নিজের পোস্ট!");
-        return;
-    }
+        if (user.uid === ownerId) {
+            alert("এটি আপনার নিজের পোস্ট!");
+            return;
+        }
 
-    // ইউনিক চ্যাট আইডি (ক্রেতা এবং বিক্রেতার আইডি দিয়ে)
-    const chatId = user.uid < ownerId ? `${user.uid}_${ownerId}` : `${ownerId}_${user.uid}`;
+        const chatId = user.uid < ownerId ? `${user.uid}_${ownerId}` : `${ownerId}_${user.uid}`;
 
-    try {
-        // চ্যাট লিস্টে এই চ্যাটটি তৈরি বা আপডেট করা
-        await db.collection('chats').doc(chatId).set({
-            participants: [user.uid, ownerId],
-            propertyId: propertyId,
-            propertyTitle: propertyTitle,
-            lastMessage: "আমি এই প্রপার্টিটি নিয়ে কথা বলতে আগ্রহী।",
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            // চ্যাট তালিকায় নাম দেখানোর জন্য অতিরিক্ত তথ্য (ঐচ্ছিক)
-            buyerId: user.uid,
-            sellerId: ownerId
-        }, { merge: true });
+        try {
+            // চ্যাট ডকুমেন্ট তৈরি
+            await db.collection('chats').doc(chatId).set({
+                participants: [user.uid, ownerId],
+                propertyId: propertyId,
+                propertyTitle: propertyTitle,
+                lastMessage: "আমি এই প্রপার্টিটি নিয়ে আগ্রহী।",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                buyerId: user.uid,
+                sellerId: ownerId
+            }, { merge: true });
 
-        // সরাসরি মেসেজ পেজে নিয়ে যাওয়া
-        window.location.href = `messages.html?chatId=${chatId}`;
-    } catch (error) {
-        console.error("Chat start failed:", error);
-        alert("দুঃখিত, চ্যাট শুরু করা যাচ্ছে না।");
-    }
+            window.location.href = `messages.html?chatId=${chatId}`;
+        } catch (e) {
+            console.error(e);
+            alert("চ্যাট শুরু করা সম্ভব হচ্ছে না।");
+        }
+    });
 }
 
 function renderTable(targetId, infoMap) {
@@ -137,8 +137,7 @@ function renderTable(targetId, infoMap) {
     table.innerHTML = '';
     for (let key in infoMap) {
         if (infoMap[key]) {
-            const row = `<tr><td>${key}</td><td>${infoMap[key]}</td></tr>`;
-            table.innerHTML += row;
+            table.innerHTML += `<tr><td>${key}</td><td>${infoMap[key]}</td></tr>`;
         }
     }
 }
@@ -156,10 +155,7 @@ async function loadRelatedPosts(currentData) {
             const d = doc.data();
             const div = document.createElement('div');
             div.className = 'related-item';
-            div.innerHTML = `
-                <img src="${d.images[0].url}">
-                <p>${d.title}</p>
-            `;
+            div.innerHTML = `<img src="${d.images[0].url}"><p>${d.title}</p>`;
             div.onclick = () => location.href = `details.html?id=${doc.id}`;
             relatedList.appendChild(div);
         });
@@ -167,11 +163,15 @@ async function loadRelatedPosts(currentData) {
 }
 
 function openLightbox(url) {
-    document.getElementById('lb-img').src = url;
-    document.getElementById('lightbox').style.display = 'flex';
+    const lb = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lb-img');
+    if (lb && lbImg) {
+        lbImg.src = url;
+        lb.style.display = 'flex';
+    }
 }
 
-// সাইডবার এবং সাধারণ হেডার লজিক
+// কমন হেডার লিঙ্ক
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('notificationButton')?.addEventListener('click', () => location.href = 'notifications.html');
     document.getElementById('headerPostButton')?.addEventListener('click', () => location.href = 'post.html');
