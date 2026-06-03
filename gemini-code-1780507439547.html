@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>প্রপার্টি ডিটেইলস - আমার বাড়ি.কম</title>\n    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        :root { --primary: #007bff; --success: #28a745; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f4f7f6; }
+        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-bottom: 50px; }
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+        
+        /* Image Slider styles */
+        .slider-container { position: relative; width: 100%; height: 350px; background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .slider-track { display: flex; width: 100%; height: 100%; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
+        .slide { min-width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #111; }
+        .slide img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+        .slider-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #fff; border: none; padding: 12px 16px; cursor: pointer; font-size: 18px; border-radius: 50%; display: none; z-index: 5; transition: background 0.3s; }
+        .slider-btn:hover { background: rgba(0,0,0,0.8); }
+        .slider-btn.prev { left: 15px; }
+        .slider-btn.next { right: 15px; }
+        .slider-dots { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 5; }
+        .dot { width: 10px; height: 10px; background: rgba(255,255,255,0.5); border-radius: 50%; cursor: pointer; transition: background 0.3s, transform 0.3s; }
+        .dot.active { background: #fff; transform: scale(1.2); }
+
+        /* পোস্টদাতার নতুন সেকশন (ছবি ও বাটনের মাঝে) */
+        .publisher-section { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 12px 16px; border-radius: 12px; margin-top: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .publisher-info { display: flex; align-items: center; gap: 12px; }
+        .publisher-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #ddd; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .publisher-text { display: flex; flex-direction: column; }
+        .publisher-name { font-size: 15px; font-weight: 600; color: var(--dark); margin: 0; }
+        .post-time { font-size: 12px; color: var(--gray); margin: 2px 0 0 0; display: flex; align-items: center; gap: 4px; }
+        .btn-like { background: none; border: none; color: #7f8c8d; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 50%; transition: background 0.2s, color 0.2s; }
+        .btn-like:hover { background: #f0f0f0; }
+        .btn-like.liked { color: #e74c3c; animation: pulse 0.3s ease-in-out; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        /* Action Buttons Grid */
+        .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; }
+        .action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 10px 5px; cursor: pointer; color: var(--dark); font-size: 13px; font-weight: 500; transition: background 0.2s, transform 0.1s; text-decoration: none; }
+        .action-btn:active { transform: scale(0.97); }
+        .action-btn i { font-size: 22px; margin-bottom: 4px; }
+        .action-btn.btn-call { background: var(--success); color: #fff; border: none; }
+        .action-btn.btn-chat { background: var(--primary); color: #fff; border: none; }
+        
+        /* Table Styles */
+        .info-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .info-table td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: var(--dark); }
+        .info-table tr:last-child td { border-bottom: none; }
+        .info-table td.label { font-weight: 600; color: var(--gray); width: 35%; }
+        
+        .section-header { font-size: 16px; font-weight: 600; color: var(--dark); margin: 25px 0 10px 0; display: flex; align-items: center; gap: 6px; }
+        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; justify-content: center; align-items: center; }
+        #lightbox img { max-width: 90%; max-height: 90%; border-radius: 8px; }
+
+        /* Related Grid */
+        .related-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px; }
+        .related-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; }
+        .related-card img { width: 100%; height: 120px; object-fit: cover; }
+        .related-card-body { padding: 10px; }
+        .related-title { font-size: 13px; font-weight: 600; color: var(--dark); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .related-price { font-size: 13px; font-weight: bold; color: var(--success); margin: 5px 0 0 0; }
+        .see-more-container { text-align: center; margin-top: 20px; }
+        .btn-see-more { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 14px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="slider-container" id="slider-box">
+            <div class="slider-track" id="slider-track"></div>
+            <button class="slider-btn prev" id="slider-prev">&#10094;</button>
+            <button class="slider-btn next" id="slider-next">&#10095;</button>
+            <div class="slider-dots" id="slider-dots"></div>
+        </div>
+
+        <div class="publisher-section">
+            <div class="publisher-info">
+                <img src="" alt="Post Owner" class="publisher-img" id="publisher-avatar">
+                <div class="publisher-text">
+                    <h4 class="publisher-name" id="publisher-name">লোডিং...</h4>
+                    <p class="post-time" id="publisher-time">
+                        <i class="material-icons" style="font-size: 14px;">schedule</i>-- -- ----
+                    </p>
+                </div>
+            </div>
+            <button class="btn-like" id="btn-post-like">
+                <i class="material-icons">favorite_border</i>
+            </button>
+        </div>
+
+        <div class="action-grid">
+            <a href="#" class="action-btn btn-call" id="btn-call-owner">
+                <i class="material-icons">call</i>কল করুন
+            </a>
+            <button class="action-btn btn-chat" id="messageOwnerBtn">
+                <i class="material-icons">chat</i>মেসেজ
+            </button>
+            <button class="action-btn" id="btn-save-post">
+                <i class="material-icons">bookmark_border</i>সংরক্ষণ
+            </button>
+            <button class="action-btn" id="btn-share-post">
+                <i class="material-icons">share</i>শেয়ার
+            </button>
+        </div>
+
+        <h2 id="p-title" style="margin: 20px 0 10px 0; font-size: 20px; color: var(--dark);"></h2>
+        <p id="p-desc" style="font-size: 14px; color: #555; line-height: 1.6; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin: 0;"></p>
+
+        <div class="section-header">📊 প্রধান তথ্য</div>
+        <table class="info-table" id="table-main"></table>
+
+        <div class="section-header">🏡 অভ্যন্তরীণ বিবরণ</div>
+        <table class="info-table" id="table-interior"></table>
+
+        <div class="section-header">🏢 বাহ্যিক সুবিধা ও শর্তাবলী</div>
+        <table class="info-table" id="table-rules"></table>
+
+        <div id="section-owner" style="display:none;">
+            <div class="section-header">📑 মালিকানা তথ্য</div>
+            <table class="info-table" id="table-owner"></table>
+            <a href="https://dlrms.land.gov.bd/" target="_blank" id="btn-verify-khotian" class="btn-map" style="background: #27ae60; margin-top: 10px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; color: white; padding: 10px 15px; border-radius: 8px; font-size: 14px;">
+                <i class="material-icons">verified</i> খতিয়ান যাচাই করুন
+            </a>
+        </div>
+
+        <div class="section-header">📍 অবস্থান</div>
+        <table class="info-table" id="table-location"></table>
+        <div id="map-container" style="height: 350px; width: 100%; border-radius: 12px; margin-top: 20px;"></div>
+
+        <div class="section-header">📞 যোগাযোগ</div>
+        <table class="info-table" id="table-contact"></table>
+
+        <div class="related-section">
+            <h3 style="margin-top:30px;">সম্পর্কিত পোস্ট</h3>
+            <div class="related-grid" id="related-list"></div>
+            <div class="see-more-container" id="see-more-box" style="display:none;">
+                <button class="btn-see-more" id="btn-see-more">See More...</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lightbox" onclick="this.style.display='none'"><img id=\"lb-img\"></div>
+
+</body>
+</html>
