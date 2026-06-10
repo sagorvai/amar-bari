@@ -142,23 +142,27 @@
         .message-icon { color: var(--primary-color); }
         .post-icon-header { color: #28a745; }
 
-        /* প্রোফাইল ইমেজ স্টাইল */
-        .profile-image-wrapper {
-            cursor: pointer;
-            width: 35px; 
-            height: 35px;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 2px solid var(--primary-color); 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #profileImage {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        /* প্রোফাইল ইমেজের বাইরের গোল বক্স */
+.profile-image-wrapper {
+    cursor: pointer;
+    width: 35px;          /* আপনার পছন্দমতো সাইজ */
+    height: 35px;         /* উইডথ ও হাইট একদম সমান রাখবেন */
+    border-radius: 50%;   /* গোল করার জন্য */
+    overflow: hidden;     /* বক্সের বাইরের অংশ কেটে ফেলার জন্য */
+    border: 2px solid var(--primary); /* বর্ডার */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 🎯 ইমেজের একাংশ কেটে যাওয়া রোধ করার ফিক্স */
+.profile-image-wrapper img {
+    width: 100%;          /* বক্সের পুরো উইডথ নিবে */
+    height: 100%;         /* বক্সের পুরো হাইট নিবে */
+    object-fit: cover;    /* 👈 এটি ছবিটিকে চ্যাপ্টা বা বিকৃত না করে গোল বক্সের মাঝে সুন্দরভাবে ফিট করবে */
+    object-position: center; /* ছবির মাঝখানের অংশ ফোকাস করবে */
+    display: block;
+}
         
         /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
         @media (max-width: 600px) {
@@ -212,11 +216,10 @@
                 </div>
                 
                 <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
-                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
-                
-                <div class="notification-dropdown" id="notification-dropdown">
-                    </div>
+    <img src="placeholder.jpg" alt="Profile" id="profileImage">
+</div>
+
+<div class="notification-dropdown" id="notification-dropdown"></div>
             </div>
         </div>
         
