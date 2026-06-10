@@ -231,6 +231,55 @@ function initSinglePropertyMap(data) {
      .openPopup();
 }
 
+// রেটিং 
+function setupStarRatingSystem() {
+    const starZone = document.getElementById('starRatingZone');
+    const statusText = document.getElementById('ratingStatusText');
+    if (!starZone) return;
+
+    const stars = starZone.querySelectorAll('i');
+    const storageKey = `rated_stars_${postId}`;
+    let savedRating = localStorage.getItem(storageKey);
+    
+    if (savedRating) {
+        updateStarDisplay(stars, parseInt(savedRating));
+        statusText.textContent = `আপনার রেটিং: ${savedRating} স্টার`;
+    }
+
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            const ratingValue = parseInt(star.getAttribute('data-value'));
+            localStorage.setItem(storageKey, ratingValue);
+            updateStarDisplay(stars, ratingValue);
+            statusText.textContent = `আপনার রেটিং: ${ratingValue} স্টার`;
+        });
+    });
+}
+
+function updateStarDisplay(stars, value) {
+    stars.forEach(star => {
+        const starVal = parseInt(star.getAttribute('data-value'));
+        if (starVal <= value) {
+            star.textContent = 'star';
+            star.classList.add('active');
+        } else {
+            star.textContent = 'star_border';
+            star.classList.remove('active');
+        }
+    });
+}
+
+function formatPostTime(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffMins < 1) return "এইমাত্র";
+    if (diffMins < 60) return `${diffMins} মিনিট আগে`;
+    if (diffHours < 24) return `${diffHours} ঘণ্টা আগে`;
+    return date.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
 // সম্পর্কিত পোস্ট লজিক (আগের মতোই সঠিক আছে)
 async function loadRelatedPosts(currentData) {
     const list = document.getElementById('related-list');
