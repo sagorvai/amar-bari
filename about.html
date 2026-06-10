@@ -276,12 +276,10 @@
                 </div>
                 
                 <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile">
-                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> 
-                </div>
-                
-                <div class="notification-dropdown" id="notification-dropdown">
-                    </div>
+    <img src="placeholder.jpg" alt="Profile" id="profileImage">
+</div>
+
+<div class="notification-dropdown" id="notification-dropdown"></div>
             </div>
         </div>
         
@@ -342,28 +340,29 @@
     <script>
   // header_logic.js
 
-// ⭐ ফাংশন ১: হেডার প্রোফাইল লোড করার জন্য ⭐
-// --- সব পেজের হেডারে প্রোফাইল ইমেজ লোড করার সঠিক ফাংশন ---
-async function loadProfilePicture(user) {
-    const headerProfileImage = document.getElementById('profileImage'); 
-    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
-
-    if (headerProfileImage && defaultProfileIcon) {
+// 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
+firebase.auth().onAuthStateChanged(async (user) => {
+    const headerProfileImg = document.querySelector('#profileImageWrapper img');
+    
+    if (user && headerProfileImg) {
         try {
-            const doc = await db.collection('users').doc(user.uid).get();
-            if (doc.exists && doc.data().profilePic) {
-                headerProfileImage.src = doc.data().profilePic;
-                headerProfileImage.style.display = 'block';
-                defaultProfileIcon.style.display = 'none';
+            // ফায়ারবেস 'users' কালেকশন থেকে ইউজারের ডাটা আনা হচ্ছে
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists && userDoc.data().profilePic) {
+                // ডাটাবেজে প্রোফাইল পিকচার থাকলে সেটি হেডারে সেট হবে
+                headerProfileImg.src = userDoc.data().profilePic;
+            } else if (user.photoURL) {
+                // গুগল লগইন করা থাকলে গুগল প্রোফাইল পিকচার সেট হবে
+                headerProfileImg.src = user.photoURL;
             } else {
-                headerProfileImage.style.display = 'none';
-                defaultProfileIcon.style.display = 'block';
+                // কোনো ছবি না থাকলে একটি ডিফল্ট অ্যাভাটার সেট হবে
+                headerProfileImg.src = 'assets/images/default-avatar.png'; // আপনার প্রজেক্টের ডিফল্ট ছবির পাথ দিন
             }
         } catch (error) {
-            console.error("Header Profile Load Error:", error);
+            console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
         }
     }
-}
+});
         
 // ফাংশন ২: লগআউট হ্যান্ডেলার
 const handleLogout = async (e) => {
