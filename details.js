@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = doc.data();
         renderDetails(data);
         loadRelatedPosts(data);
-        setupStarRatingSystem(); // 🆕 রেটিং মডিউল রানিং
+        setupStarRatingSystem();
     }
 });
 
@@ -28,12 +28,10 @@ function renderDetails(data) {
     document.getElementById('p-title').textContent = data.title || "";
     document.getElementById('p-desc').textContent = data.description || "";
 
-    // ১. দাম ও ইউনিট
     let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let unit = data.priceUnit || data.rentUnit || ""; 
     document.getElementById('p-price').textContent = amount ? `৳ ${amount} (${unit})` : "আলোচনা সাপেক্ষ";
 
-    // ২. ইমেজ গ্যালারি (আপনার মূল লজিক অনুযায়ী ফিক্সড)
     let images = [];
     if (data.images) data.images.forEach(img => images.push(img.url || img));
     if (data.documents?.khotian) images.push(data.documents.khotian.url || data.documents.khotian);
@@ -50,7 +48,7 @@ function renderDetails(data) {
         });
     }
 
-    // 🆕 ফায়ারবেস থেকে রিয়েল-টাইম পোস্টদাতা ইনফো নিয়ে আসা
+    // 🆕 ফায়ারবেস থেকে পোস্টদাতার ডাটা লোড ও প্রোফাইল পেইজ রিডাইরেক্ট লজিক
     if (data.userId) {
         db.collection('users').doc(data.userId).get().then(userDoc => {
             if (userDoc.exists) {
@@ -65,11 +63,18 @@ function renderDetails(data) {
         }).catch(() => {
             document.getElementById('pub-name').textContent = "আমার বাড়ি ইউজার";
         });
+
+        // 🆕 ছবি ও নামের বক্সের ওপর ক্লিক করলে সেলার প্রোফাইলে নিয়ে যাবে userId সহ
+        const authorTrigger = document.getElementById('authorProfileTrigger');
+        if (authorTrigger) {
+            authorTrigger.onclick = () => {
+                window.location.href = `seller-profile.html?userId=${data.userId}`;
+            };
+        }
     } else {
         document.getElementById('pub-name').textContent = "বিজ্ঞাপনদাতা";
     }
 
-    // টাইমস্ট্যাম্প হ্যান্ডলিং
     if (data.createdAt) {
         let dateObj = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
         document.getElementById('pub-time').textContent = formatPostTime(dateObj);
@@ -83,7 +88,6 @@ function renderDetails(data) {
         if (table) table.innerHTML += `<tr><td>${label}</td><td>${value}</td></tr>`;
     };
 
-    // 🏠 প্রপার্টির তথ্য
     const basicT = 'table-basic';
     if (document.getElementById(basicT)) {
         document.getElementById(basicT).innerHTML = ""; 
@@ -104,7 +108,7 @@ function renderDetails(data) {
         addRow(basicT, "কিচেন", data.kitchen? `${data.kitchen} টি` : "");
         addRow(basicT, "বেলকনি", data.balcony? `${data.balcony} টি` : "");
         addRow(basicT, "ফ্লোর নম্বর", data.floorNo || data.floorLevel);
-        addRow(basicT, "রাস্তা", data.roadWidth ? `${data.roadWidth} פיט` : "");
+        addRow(basicT, "রাস্তা", data.roadWidth ? `${data.roadWidth} ফিট` : "");
         addRow(basicT, "ফেসিং", data.facing? `${data.facing} দিক` : "");
         
         if (data.utilities && data.utilities.length > 0) {
@@ -116,7 +120,6 @@ function renderDetails(data) {
         addRow(basicT, "পরিমাণ", area ? `${area} (${areaUnit})` : "");
     }
 
-    // 📑 মালিকানা তথ্য
     const ownerSection = document.getElementById('section-owner');
     if (ownerSection) {
         if (data.category === 'বিক্রয়' && data.owner) {
@@ -138,7 +141,6 @@ function renderDetails(data) {
         }
     }
     
-    // 📍 অবস্থান
     const locT = 'table-location';
     if (document.getElementById(locT)) {
         document.getElementById(locT).innerHTML = "";
@@ -156,7 +158,6 @@ function renderDetails(data) {
         initSinglePropertyMap(data);
     }
 
-    // 📞 যোগাযোগ
     const conT = 'table-contact';
     if (document.getElementById(conT)) {
         document.getElementById(conT).innerHTML = "";
@@ -166,6 +167,17 @@ function renderDetails(data) {
     if (document.getElementById('p-call')) {
         document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
     }
+
+    const msgBtn = document.getElementById('p-message');
+    if (msgBtn) {
+        msgBtn.onclick = () => {
+            const user = firebase.auth().currentUser;
+            if (!user) { alert("মেসেজ করতে প্রথমে লগইন করুন।"); window.location.href = "auth.html"; return; }
+            if (user.uid === data.userId) { alert("এটি আপনার নিজের পোস্ট!"); return; }
+            const chatId = [user.uid, data.userId].sort().join('_') + `_${postId}`;
+            window.location.href = `messages.html?chatId=${chatId}&postId=${postId}`;
+        };
+    }
 }
     
 function initSinglePropertyMap(data) {
@@ -173,11 +185,9 @@ function initSinglePropertyMap(data) {
     if (!mapContainer) return;
     try {
         const map = L.map('map-container').setView([data.location.lat, data.location.lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        const propertyType = data.type || data.propertyType || 'প্রপার্টি';
+        const propertyType = data.type || 'প্রপার্টি';
         const redPinIcon = L.divIcon({
             html: `<div style="position: relative; width: 60px; height: 35px; display: flex; flex-direction: column; align-items: center;">
                     <div style="background-color: #e74c3c; color: white; padding: 4px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; white-space: nowrap; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-align: center; min-width: 50px;">${propertyType}</div>
@@ -188,14 +198,10 @@ function initSinglePropertyMap(data) {
             iconAnchor: [30, 45]
         });
 
-        L.marker([data.location.lat, data.location.lng], { icon: redPinIcon })
-         .addTo(map)
-         .bindPopup(`<b>${data.title}</b><br>লোকেশন এখানে`)
-         .openPopup();
+        L.marker([data.location.lat, data.location.lng], { icon: redPinIcon }).addTo(map).bindPopup(`<b>${data.title}</b>`).openPopup();
     } catch(e) { console.error(e); }
 }
 
-// 🆕 ৫-স্টার রেটিং সিস্টেম কন্ট্রোলার (লগইন ছাড়া আনলিমিটেড রেটিং দেওয়া যাবে)
 function setupStarRatingSystem() {
     const starZone = document.getElementById('starRatingZone');
     const statusText = document.getElementById('ratingStatusText');
@@ -258,13 +264,11 @@ async function loadRelatedPosts(currentData) {
         allPosts.sort((a, b) => {
             const aVillage = (a.location?.village === currentData.location?.village) ? 1 : 0;
             const bVillage = (b.location?.village === currentData.location?.village) ? 1 : 0;
-            if (aVillage !== bVillage) return bVillage - aVillage;
-            return 0;
+            return bVillage - aVillage;
         });
 
-        const displayPosts = allPosts.slice(0, 10);
         list.innerHTML = "";
-        displayPosts.forEach(post => {
+        allPosts.slice(0, 10).forEach(post => {
             let pAmt = post.category === 'বিক্রয়' ? post.price : post.monthlyRent;
             let pUnit = post.priceUnit || post.rentUnit || "";
             list.innerHTML += `
@@ -297,16 +301,9 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.classList.add('active');
         });
     }
-
     const closeSidebar = () => {
         sidebar.classList.remove('active');
         overlay.classList.remove('active');
     };
-
     if (overlay) overlay.addEventListener('click', closeSidebar);
-
-    document.getElementById('notificationButton')?.addEventListener('click', () => location.href = 'notifications.html');
-    document.getElementById('headerPostButton')?.addEventListener('click', () => location.href = 'post.html');
-    document.getElementById('messageButton')?.addEventListener('click', () => location.href = 'messages.html');
-    document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
