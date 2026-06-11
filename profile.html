@@ -22,10 +22,9 @@
             --dark: #2c3e50; 
             --gray: #7f8c8d; 
             --bg: #f4f7f6;
-            --gold: #f1c40f;
         }
-        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-top: 75px; }
-        .container { max-width: 800px; margin: auto; padding: 15px; }
+        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-top: 20px; }
+        .container { max-width: 800px; margin: auto; padding: 15px; box-sizing: border-box; }
 
         /* 👑 প্রিমিয়াম প্রোফাইল হেডার কার্ড */
         .profile-premium-card { 
@@ -41,20 +40,10 @@
 
         /* 🏙️ রিয়েল এস্টেট থিম কভার ফটো */
         .profile-cover-photo {
-            height: 150px;
+            height: 130px;
             background: var(--cover-gradient);
             position: relative;
             overflow: hidden;
-        }
-        .profile-cover-photo::before {
-            content: "location_city";
-            font-family: 'Material Icons';
-            position: absolute;
-            right: 15px;
-            bottom: -20px;
-            font-size: 150px;
-            color: rgba(255, 255, 255, 0.06);
-            pointer-events: none;
         }
 
         /* প্রোফাইল কন্টেন্ট এরিয়া */
@@ -65,9 +54,9 @@
             z-index: 5;
         }
 
-        /* গোল অ্যাভাটার এবং গ্লোয়িং বর্ডার */
+        /* গোল অ্যাভাটার */
         .avatar-container { position: relative; width: 110px; height: 110px; margin: 0 auto 12px auto; }
-        .profile-avatar-big { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.15); background: #fff; }
+        .profile-avatar-big { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.15); background: #eee; }
         
         .user-info h2 { margin: 0 0 5px 0; font-size: 24px; color: var(--dark); font-weight: bold; }
         
@@ -76,22 +65,27 @@
         .meta-item { display: flex; align-items: center; gap: 5px; background: #f0f4f8; padding: 6px 14px; border-radius: 20px; color: var(--dark); border: 1px solid #e1e8ed; }
         .meta-item i { font-size: 16px; color: var(--primary); }
 
-        .edit-badge { background: white; padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; color: var(--primary); display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--primary); transition: 0.2s; font-weight: 600; margin-top: 5px; }
+        .action-buttons-div { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        
+        .edit-badge { background: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; color: var(--primary); display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--primary); transition: 0.2s; font-weight: 600; }
         .edit-badge:hover { background: var(--primary); color: white; }
 
+        /* ➕ সরাসরি প্রোপার্টি যুক্ত করার নতুন বাটন */
+        .add-property-btn { background: var(--primary-gradient); padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 5px; border: none; transition: 0.2s; font-weight: 600; box-shadow: 0 4px 10px rgba(0,123,255,0.2); }
+        .add-property-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,123,255,0.3); }
+
         /* 📊 কালারফুল স্ট্যাটাস কন্টেইনার */
-        .stats-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 15px 10px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border-top: 4px solid var(--primary); transition: 0.2s; }
-        .stat-card:hover { transform: translateY(-2px); }
+        .stats-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 15px 5px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border-top: 4px solid var(--primary); }
         .stat-card.posts-style { border-top-color: #2ecc71; }
         .stat-card.saved-style { border-top-color: #ff7675; }
         .stat-card.rating-style { border-top-color: #f1c40f; }
-        .stat-card h4 { margin: 0 0 6px 0; color: var(--gray); font-size: 13px; font-weight: 600; text-transform: uppercase; }
-        .stat-card p { font-size: 20px; font-weight: bold; margin: 0; color: var(--dark); }
+        .stat-card h4 { margin: 0 0 6px 0; color: var(--gray); font-size: 12px; font-weight: 600; }
+        .stat-card p { font-size: 18px; font-weight: bold; margin: 0; color: var(--dark); }
 
         /* মডার্ন ট্যাব ডিজাইন */
         .profile-tabs { display: flex; gap: 10px; border-bottom: 2px solid #e1e8ed; margin-bottom: 20px; }
-        .tab-btn { padding: 12px 20px; border: none; background: none; cursor: pointer; font-size: 15px; font-weight: bold; color: var(--gray); transition: 0.3s; position: relative; }
+        .tab-btn { padding: 12px 15px; border: none; background: none; cursor: pointer; font-size: 15px; font-weight: bold; color: var(--gray); transition: 0.3s; position: relative; }
         .tab-btn.active { color: var(--primary); }
         .tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px; }
         
@@ -99,33 +93,24 @@
         .tab-content.active { display: block; }
         
         /* প্রপার্টি কার্ড গ্রিড */
-        .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 15px; }
+        .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
         .property-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e1e8ed; transition: 0.3s; }
-        .property-card:hover { transform: translateY(-4px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); border-color: var(--primary); }
-
-        /* ফ্লোটিং বাটন */
-        #floating-post-btn { position: fixed; bottom: 30px; right: 30px; background: var(--primary-gradient); color: white; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 20px rgba(0,123,255,0.4); cursor: pointer; z-index: 999; transition: 0.2s; }
-        #floating-post-btn:hover { transform: scale(1.08); }
-
-        /* মডাল (পপ-আপ) ডিজাইন */
+        
+        /* মডাল ডিজাইন */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); overflow-y: auto; backdrop-filter: blur(4px); }
-        .modal-content { background: white; margin: 8% auto; padding: 25px; width: 90%; max-width: 460px; border-radius: 16px; position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-content { background: white; margin: 15% auto; padding: 25px; width: 90%; max-width: 420px; border-radius: 16px; position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2); box-sizing: border-box; }
         .close-modal { position: absolute; right: 20px; top: 15px; font-size: 26px; cursor: pointer; color: #aaa; }
-        .close-modal:hover { color: #e74c3c; }
 
         .input-group { margin-bottom: 16px; text-align: left; }
         .input-group label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 14px; color: var(--dark); }
         .input-group input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        .input-group input:focus { border-color: var(--primary); outline: none; }
         
-        .submit-button { background: var(--primary-gradient); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; box-shadow: 0 4px 10px rgba(0,123,255,0.2); }
-        .submit-button:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+        .submit-button { background: var(--primary-gradient); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; }
+        .submit-button:disabled { background: #cbd5e1; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <!-- মেইন কন্টেন্ট -->
     <main class="main-content container">
         
         <!-- 👑 প্রিমিয়াম ড্যাশবোর্ড কার্ড -->
@@ -134,7 +119,8 @@
             
             <div class="profile-content-box">
                 <div class="avatar-container">
-                    <img src="default-avatar.png" id="user-avatar" class="profile-avatar-big" alt="User Avatar">
+                    <!-- কাস্টম ডিফল্ট নো-ইমেজ প্লেসহোল্ডার পাথ সেট করা হয়েছে -->
+                    <img src="https://www.w3schools.com/howto/img_avatar.png" id="user-avatar" class="profile-avatar-big" alt="User Avatar">
                 </div>
                 
                 <div class="user-info">
@@ -151,8 +137,14 @@
                         </div>
                     </div>
 
-                    <div class="edit-badge" id="edit-profile-show-btn">
-                        <i class="material-icons" style="font-size: 16px;">edit</i> প্রোফাইল সাজান
+                    <div class="action-buttons-div">
+                        <div class="edit-badge" id="edit-profile-show-btn">
+                            <i class="material-icons" style="font-size: 16px;">edit</i> প্রোফাইল সাজান
+                        </div>
+                        <!-- ➕ ভাসমান বাটন বাদ দিয়ে এখানে ডিরেক্ট বাটন যুক্ত করা হলো -->
+                        <button class="add-property-btn" id="direct-post-btn">
+                            <i class="material-icons" style="font-size: 16px;">add_circle</i> প্রোপার্টি যুক্ত করুন
+                        </button>
                     </div>
                 </div>
             </div>
@@ -177,7 +169,7 @@
         <!-- ট্যাব সুইচিং -->
         <div class="profile-tabs">
             <button class="tab-btn active" onclick="openTab(event, 'my-posts')">আমার পোস্ট সমূহ</button>
-            <button class="tab-btn" onclick="openTab(event, 'saved-posts')">বুকমার্ক প্রপার্টি</button>
+            <button class="tab-btn" onclick="openTab(event, 'saved-posts')">বुकমার্ক প্রপার্টি</button>
         </div>
 
         <!-- ট্যাব লিস্টিং কন্টেন্ট -->
@@ -190,39 +182,31 @@
             <div id="saved-properties-list" class="property-grid"></div>
             <p style="text-align:center; padding: 40px; color: var(--gray);">পছন্দের তালিকায় কোনো আইটেম পাওয়া যায়নি।</p>
         </div>
-
-        <!-- ফ্লোটিং অ্যাকশন প্লাস বাটন -->
-        <div id="floating-post-btn" title="নতুন প্রপার্টি লিস্টিং যোগ করুন">
-            <i class="material-icons" style="font-size: 28px;">add</i>
-        </div>
     </main>
 
-    <!-- 🛠️ প্রোফাইল এডিট ইন্টারেক্টিভ মডাল পপ-আপ -->
+    <!-- 🛠️ প্রোফাইল এডিট পপ-আপ -->
     <div id="editProfileModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" id="edit-profile-close-btn">&times;</span>
             <h3 style="margin: 0 0 20px 0; text-align: center; color: var(--dark);">তথ্য আপডেট করুন</h3>
             
             <div style="text-align: center; margin-bottom: 20px; position: relative; display: inline-block; width: 100%;">
-                <img src="default-avatar.png" id="edit-avatar-preview" style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                <label for="edit-profile-picture" style="position: absolute; bottom: 0; right: calc(50% - 55px); background: var(--dark); color: white; padding: 6px; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                <img src="https://www.w3schools.com/howto/img_avatar.png" id="edit-avatar-preview" style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary);">
+                <label for="edit-profile-picture" style="position: absolute; bottom: 0; right: calc(50% - 55px); background: var(--dark); color: white; padding: 6px; border-radius: 50%; cursor: pointer;">
                     <i class="material-icons" style="font-size: 18px;">photo_camera</i>
                 </label>
             </div>
 
             <form id="edit-profile-form">
                 <input type="file" id="edit-profile-picture" accept="image/png, image/jpeg" style="display: none;">
-                
                 <div class="input-group">
                     <label>আপনার পুরো নাম:</label>
-                    <input type="text" id="edit-full-name" required placeholder="যেমন: আলহাজ্ব রহমান">
+                    <input type="text" id="edit-full-name" required placeholder="আপনার নাম লিখুন">
                 </div>
-                
                 <div class="input-group">
                     <label>সরাসরি যোগাযোগের ফোন নম্বর:</label>
                     <input type="tel" id="edit-phone-number" placeholder="যেমন: ০১৭XXXXXXXX">
                 </div>
-                
                 <div style="margin-top: 20px;">
                     <button type="submit" class="submit-button" id="update-profile-btn">পরিবর্তন সেভ করুন</button>
                 </div>
@@ -242,7 +226,8 @@
         </div>
     </div>
 
-    <script src="profile (2).js"></script>
+    <!-- 🎯 স্ক্রিপ্ট ফাইল নেম একদম সঠিক পাথে ডিফাইন করা হয়েছে -->
+    <script src="profile.js"></script>
     <script>
         function openTab(evt, tabName) {
             var i, tabcontent, tablinks;
@@ -255,4 +240,4 @@
         }
     </script>
 </body>
-            </html>
+                        </html>
