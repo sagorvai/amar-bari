@@ -10,7 +10,6 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// URL থেকে টার্গেট পোস্টদাতার userId এবং পোস্টের id সংগ্রহ করা
 const sUrlParams = new URLSearchParams(window.location.search);
 const targetUserId = sUrlParams.get('userId');
 
@@ -25,31 +24,30 @@ document.addEventListener('DOMContentLoaded', () => {
     setupInteractiveProfileRating();
 });
 
-// ১. বিক্রেতার প্রোফাইল ইনফো (নাম, ছবি, বায়ো, ভেরিফিকেশন ও রেটিং রিড করা)
+// ১. বিক্রেতার ডাটা ফায়ারবেস থেকে পড়া এবং স্ক্রিনে রিডাইরেক্ট করা
 function loadSellerProfileData() {
     db.collection('users').doc(targetUserId).get().then(doc => {
         if (doc.exists) {
             const uData = doc.data();
             document.getElementById('s-name').textContent = uData.fullName || uData.name || "সম্মানিত বিক্রেতা";
-            document.getElementById('s-email').textContent = uData.email || "ইমেইল গোপন রাখা হয়েছে";
-            document.getElementById('s-uid-text').textContent = `আইডি: ...${targetUserId.substring(0,6)}`;
             
-            // বায়ো সেটআপ
+            // 🎯 ফিক্সড লজিক: ইমেইল কোনো হাইড ছাড়াই সরাসরি পুরোটা দেখানো হবে
+            document.getElementById('s-email').textContent = uData.email || "ইমেইল সরবরাহ করা হয়নি";
+            
+            document.getElementById('s-uid-text').textContent = `মেম্বার আইডি: ...${targetUserId.substring(0,6)}`;
+            
             if (uData.bio && uData.bio.trim() !== "") {
                 document.getElementById('s-bio').textContent = `"${uData.bio}"`;
             }
             
-            // প্রোফাইল পিকচার সেট করা
             if (uData.profilePic) {
                 document.getElementById('s-avatar').src = uData.profilePic;
             }
 
-            // ভাইরাল ফিচার: অফিসিয়াল ভেরিফাইড মেম্বার চেক
             if (uData.isVerified === true || uData.role === 'admin') {
                 document.getElementById('badgeVerified').style.display = 'flex';
             }
 
-            // ডাটাবেজ থেকে গড় রেটিং রেন্ডার করা
             displayCalculatedRating(uData.ratingCount || 0, uData.ratingSum || 0);
 
         } else {
@@ -60,7 +58,7 @@ function loadSellerProfileData() {
     });
 }
 
-// ২. এই বিক্রেতার করা সকল প্রপার্টি পোস্ট কুয়েরি করা ও টপ সেলার ব্যাজ প্রদান
+// ২. একটিভ লিস্টিং সমুহ প্রপার্টি কালেকশন থেকে নিয়ে আসা
 async function loadSellerProperties() {
     const grid = document.getElementById('seller-listings');
     if (!grid) return;
@@ -76,7 +74,6 @@ async function loadSellerProperties() {
             return;
         }
 
-        // ভাইরাল ফিচার: যদি ইউজারের ৩টির বেশি একটিভ পোস্ট থাকে তবে তাকে "Top Seller" ব্যাজ দেওয়া হবে
         if (snapshot.size >= 3) {
             document.getElementById('badgeTopSeller').style.display = 'flex';
         }
@@ -107,12 +104,12 @@ async function loadSellerProperties() {
         });
 
     } catch (error) {
-        console.error("পোস্ট তালিকা লোড করতে সমস্যা হয়েছে:", error);
+        console.error("পোস্ট তালিকা লোড করতে সমস্যা হয়েছে:", error);
         grid.innerHTML = `<div class="no-post">পোস্টগুলো লোড করা যাচ্ছে না।</div>`;
     }
 }
 
-// ৩. লাইভ ইন্টারেক্টিভ প্রোফাইল রেটিং সিস্টেম (ফায়ারবেস ট্রানজেকশন রাইট)
+// ৩. রিয়েল-টাইম ফায়ারবেস ট্রানজেকশন রেটিং জোন
 function setupInteractiveProfileRating() {
     const starZone = document.getElementById('profileStarsZone');
     if (!starZone) return;
@@ -120,7 +117,6 @@ function setupInteractiveProfileRating() {
     const stars = starZone.querySelectorAll('i');
     const localStoreKey = `has_rated_user_${targetUserId}`;
 
-    // আগে ভোট দিয়ে থাকলে স্টারগুলো লক এবং হাইলাইট থাকবে
     let alreadyRatedValue = localStorage.getItem(localStoreKey);
     if (alreadyRatedValue) {
         highlightStars(stars, parseInt(alreadyRatedValue));
@@ -135,19 +131,16 @@ function setupInteractiveProfileRating() {
             }
 
             const chosenRating = parseInt(star.getAttribute('data-star'));
-            
-            // ইউজার নিজের প্রোফাইলে নিজে রেটিং দেওয়া বন্ধ করা
             const currentAuthUser = firebase.auth().currentUser;
+            
             if (currentAuthUser && currentAuthUser.uid === targetUserId) {
                 alert("আপনার নিজের প্রোফাইলে নিজে রেটিং দিতে পারবেন না!");
                 return;
             }
 
-            // লোকাল স্টোরেজে সেভ করা যেন দ্বিতীয়বার ভোট না দিতে পারে
             localStorage.setItem(localStoreKey, chosenRating);
             highlightStars(stars, chosenRating);
 
-            // ফায়ারবেস Firestore এ এটমিক ডাটা রান (ভোট কাউন্ট বৃদ্ধি ও মোট যোগফল আপডেট)
             const userRef = db.collection('users').doc(targetUserId);
             try {
                 await db.runTransaction(async (transaction) => {
@@ -167,7 +160,7 @@ function setupInteractiveProfileRating() {
                 });
 
                 alert("সফলভাবে রেটিং দেওয়া হয়েছে! ধন্যবাদ।");
-                location.reload(); // নতুন এভারেজ আপডেট দেখার জন্য পেজ রিলোড
+                location.reload();
 
             } catch (err) {
                 console.error("রেটিং ট্রানজেকশন ব্যর্থ:", err);
@@ -197,4 +190,4 @@ function displayCalculatedRating(count, sum) {
     }
     let average = (sum / count).toFixed(1);
     label.textContent = `গড় রেটিং: ⭐ ${average} (${count}টি ভোট)`;
-}
+        }
