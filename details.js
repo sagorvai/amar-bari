@@ -276,6 +276,9 @@ function formatPostTime(date) {
     if (diffMins < 1) return "এইমাত্র";
     if (diffMins < 60) return `${diffMins} মিনিট আগে`;
     if (diffHours < 24) return `${diffHours} ঘণ্টা আগে`;
+    if (diffDays < 7) return `${diffDays} দিন আগে`;
+    if (Weeks < 4) return `${diffWeek} সপ্তাহ আগে`;
+    if (diffMonths < 3) return `${diffMonth} মাস আগে`;
     return date.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
