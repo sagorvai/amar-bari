@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -56,8 +55,10 @@
         .profile-avatar-big { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.15); background: #eee; }
         
         .user-info h2 { margin: 0 0 5px 0; font-size: 24px; color: var(--dark); font-weight: bold; }
+        #user-profession { font-size: 14px; color: var(--gray); font-weight: 500; margin: 0 0 15px 0; display: block; }
         
-        .meta-info-grid { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; font-size: 13px; }
+        /* কন্টাক্ট ও এক্সট্রা ইনফো ব্যাজ গ্রিড */
+        .meta-info-grid { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; font-size: 13px; }
         .meta-item { display: flex; align-items: center; gap: 5px; background: #f0f4f8; padding: 6px 14px; border-radius: 20px; color: var(--dark); border: 1px solid #e1e8ed; }
         .meta-item i { font-size: 16px; color: var(--primary); }
 
@@ -93,14 +94,14 @@
         
         /* মডাল ডিজাইন */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); overflow-y: auto; backdrop-filter: blur(4px); }
-        .modal-content { background: white; margin: 15% auto; padding: 25px; width: 90%; max-width: 420px; border-radius: 16px; position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2); box-sizing: border-box; }
+        .modal-content { background: white; margin: 5% auto; padding: 25px; width: 90%; max-width: 440px; border-radius: 16px; position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2); box-sizing: border-box; }
         .close-modal { position: absolute; right: 20px; top: 15px; font-size: 26px; cursor: pointer; color: #aaa; }
 
-        .input-group { margin-bottom: 16px; text-align: left; }
-        .input-group label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 14px; color: var(--dark); }
+        .input-group { margin-bottom: 14px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: var(--dark); }
         .input-group input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
         
-        .submit-button { background: var(--primary-gradient); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; }
+        .submit-button { background: var(--primary-gradient); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; margin-top: 10px; }
         .submit-button:disabled { background: #cbd5e1; cursor: not-allowed; }
     </style>
 </head>
@@ -108,7 +109,6 @@
 
     <main class="main-content container">
         
-        <!-- 👑 প্রিমিয়াম ড্যাশবোর্ড কার্ড -->
         <div class="profile-premium-card">
             <div class="profile-cover-photo"></div>
             
@@ -118,8 +118,8 @@
                 </div>
                 
                 <div class="user-info">
-                    <!-- ডিফল্ট একটি টেক্সট দেওয়া হলো যেন আটকে না থাকে -->
                     <h2 id="display-name">আমার প্রোফাইল</h2>
+                    <span id="user-profession">পেশা যুক্ত করুন</span>
                     
                     <div class="meta-info-grid">
                         <div class="meta-item">
@@ -129,6 +129,14 @@
                         <div class="meta-item">
                             <i class="material-icons">phone_iphone</i>
                             <span id="user-phone">ফোন সেট করা নেই</span>
+                        </div>
+                        <div class="meta-item" id="meta-location-box">
+                            <i class="material-icons">location_on</i>
+                            <span id="user-location">অবস্থান যুক্ত করুন</span>
+                        </div>
+                        <div class="meta-item" id="meta-office-box" style="display: none;">
+                            <i class="material-icons">business</i>
+                            <span id="user-office">...</span>
                         </div>
                     </div>
 
@@ -144,7 +152,6 @@
             </div>
         </div>
 
-        <!-- 📊 তথ্যবহুল কালারফুল স্ট্যাটাস কাউন্টার্স -->
         <div class="stats-container">
             <div class="stat-card posts-style">
                 <h4>আমার লিস্টিং</h4>
@@ -160,13 +167,11 @@
             </div>
         </div>
 
-        <!-- ট্যাব সুইচিং -->
         <div class="profile-tabs">
             <button class="tab-btn active" onclick="openTab(event, 'my-posts')">আমার পোস্ট সমূহ</button>
             <button class="tab-btn" onclick="openTab(event, 'saved-posts')">বুকমার্ক প্রপার্টি</button>
         </div>
 
-        <!-- ট্যাব লিস্টিং কন্টেন্ট -->
         <div id="my-posts" class="tab-content active">
             <div id="my-properties-list" class="property-grid"></div>
             <p id="empty-posts-message" style="display:none; text-align:center; padding: 40px; color: var(--gray);">আপনি এখনও কোনো প্রপার্টি বিজ্ঞাপন দেননি।</p>
@@ -178,37 +183,49 @@
         </div>
     </main>
 
-    <!-- 🛠️ প্রোফাইল এডিট পপ-আপ -->
     <div id="editProfileModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" id="edit-profile-close-btn">&times;</span>
             <h3 style="margin: 0 0 20px 0; text-align: center; color: var(--dark);">তথ্য আপডেট করুন</h3>
             
-            <div style="text-align: center; margin-bottom: 20px; position: relative; display: inline-block; width: 100%;">
-                <img src="https://www.w3schools.com/howto/img_avatar.png" id="edit-avatar-preview" style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary);">
-                <label for="edit-profile-picture" style="position: absolute; bottom: 0; right: calc(50% - 55px); background: var(--dark); color: white; padding: 6px; border-radius: 50%; cursor: pointer;">
-                    <i class="material-icons" style="font-size: 18px;">photo_camera</i>
+            <div style="text-align: center; margin-bottom: 15px; position: relative; display: inline-block; width: 100%;">
+                <img src="https://www.w3schools.com/howto/img_avatar.png" id="edit-avatar-preview" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary);">
+                <label for="edit-profile-picture" style="position: absolute; bottom: 0; right: calc(50% - 50px); background: var(--dark); color: white; padding: 6px; border-radius: 50%; cursor: pointer;">
+                    <i class="material-icons" style="font-size: 16px;">photo_camera</i>
                 </label>
             </div>
 
             <form id="edit-profile-form">
                 <input type="file" id="edit-profile-picture" accept="image/png, image/jpeg" style="display: none;">
+                
                 <div class="input-group">
                     <label>আপনার পুরো নাম:</label>
                     <input type="text" id="edit-full-name" required placeholder="আপনার নাম লিখুন">
                 </div>
                 <div class="input-group">
+                    <label>পেশা:</label>
+                    <input type="text" id="edit-profession" placeholder="যেমন: রিয়েল এস্টেট এজেন্ট, ব্যবসায়ী">
+                </div>
+                <div class="input-group">
                     <label>সরাসরি যোগাযোগের ফোন নম্বর:</label>
                     <input type="tel" id="edit-phone-number" placeholder="যেমন: ০১৭XXXXXXXX">
                 </div>
-                <div style="margin-top: 20px;">
+                <div class="input-group">
+                    <label>বর্তমান অবস্থান/শহর:</label>
+                    <input type="text" id="edit-location" placeholder="যেমন: ঢাকা, বাংলাদেশ">
+                </div>
+                <div class="input-group">
+                    <label>অফিসের ঠিকানা (ঐচ্ছিক):</label>
+                    <input type="text" id="edit-office" placeholder="যদি থাকে (যেমন: উত্তরা ব্রাঞ্চ, রোড-৪)">
+                </div>
+                
+                <div>
                     <button type="submit" class="submit-button" id="update-profile-btn">পরিবর্তন সেভ করুন</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- ডিটেইলস রিভিউ ভিউ মডাল -->
     <div id="propertyModal" class="modal">
         <div class="modal-content" style="max-width: 550px;">
             <span class="close-modal" onclick="closePropertyModal()">&times;</span>
@@ -220,7 +237,6 @@
         </div>
     </div>
 
-    <!-- স্ক্রিপ্ট ফাইল লিঙ্কিং -->
     <script src="profile.js"></script>
     <script>
         function openTab(evt, tabName) {
@@ -234,4 +250,4 @@
         }
     </script>
 </body>
-    </html>
+                        </html>
