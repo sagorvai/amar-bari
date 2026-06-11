@@ -15,171 +15,189 @@ const auth = firebase.auth();
 
 document.addEventListener('DOMContentLoaded', function() {
     
-    // UI Elements
-    const displayNameEl = document.getElementById('display-name');
-    const userEmailEl = document.getElementById('user-email');
-    const userAvatar = document.getElementById('user-avatar');
-    const propertiesList = document.getElementById('my-properties-list');
-    const totalPostsEl = document.getElementById('total-posts-count');
+    // UI Elements[cite: 12]
+    const displayNameEl = document.getElementById('display-name'); //[cite: 12]
+    const userEmailEl = document.getElementById('user-email'); //[cite: 12]
+    const userPhoneEl = document.getElementById('user-phone');
+    const userAvatar = document.getElementById('user-avatar'); //[cite: 12]
+    const propertiesList = document.getElementById('my-properties-list'); //[cite: 12]
+    const totalPostsEl = document.getElementById('total-posts-count'); //[cite: 12]
+    const myRatingScoreEl = document.getElementById('my-rating-score');
     
-    // Edit Modal Elements
-    const editModal = document.getElementById('editProfileModal');
-    const showEditBtn = document.getElementById('edit-profile-show-btn');
-    const closeEditBtn = document.getElementById('edit-profile-close-btn');
-    const editForm = document.getElementById('edit-profile-form');
-    const avatarPreview = document.getElementById('edit-avatar-preview');
-    const fileInput = document.getElementById('edit-profile-picture');
+    // Edit Modal Elements[cite: 12]
+    const editModal = document.getElementById('editProfileModal'); //[cite: 12]
+    const showEditBtn = document.getElementById('edit-profile-show-btn'); //[cite: 12]
+    const closeEditBtn = document.getElementById('edit-profile-close-btn'); //[cite: 12]
+    const editForm = document.getElementById('edit-profile-form'); //[cite: 12]
+    const avatarPreview = document.getElementById('edit-avatar-preview'); //[cite: 12]
+    const fileInput = document.getElementById('edit-profile-picture'); //[cite: 12]
 
-    // ১. ইউজার চেক ও ডেটা লোড
+    // ১. ইউজার স্টেট চেক[cite: 12]
     auth.onAuthStateChanged(user => {
         if (user) {
             loadUserProfile(user);
-            loadUserProperties(user.uid);
+            loadUserProperties(user.uid); //[cite: 12]
         } else {
-            window.location.href = 'auth.html';
+            window.location.href = 'auth.html'; //[cite: 12]
         }
     });
 
-    // ২. প্রোফাইল ডেটা লোড করা
+    // ২. প্রোফাইল ডেটা লোড[cite: 12]
     async function loadUserProfile(user) {
-        userEmailEl.textContent = user.email;
+        userEmailEl.textContent = user.email; //[cite: 12]
         try {
-            const doc = await db.collection('users').doc(user.uid).get();
+            const doc = await db.collection('users').doc(user.uid).get(); //[cite: 12]
             if (doc.exists) {
-                const data = doc.data();
-                displayNameEl.textContent = data.fullName || "ইউজার নাম নেই";
-                userAvatar.src = data.profilePic || 'default-avatar.png';
+                const data = doc.data(); //[cite: 12]
+                displayNameEl.textContent = data.fullName || "ইউজার নাম নেই"; //[cite: 12]
+                userAvatar.src = data.profilePic || 'default-avatar.png'; //[cite: 12]
                 
-                // পপ-আপ ফর্মে ডিফল্ট ভ্যালু সেট করা
-                document.getElementById('edit-full-name').value = data.fullName || "";
-                avatarPreview.src = data.profilePic || 'default-avatar.png';
+                if (data.phoneNumber) {
+                    userPhoneEl.textContent = data.phoneNumber;
+                }
+
+                // রেটিং এভারেজ ম্যাজিক ক্যালকুলেশন জোন
+                if (data.ratingCount && data.ratingCount > 0) {
+                    let avg = (data.ratingSum / data.ratingCount).toFixed(1);
+                    myRatingScoreEl.textContent = `⭐ ${avg}`;
+                } else {
+                    myRatingScoreEl.textContent = `⭐ ০.০`;
+                }
+                
+                // এডিট ফর্মে আগের মানগুলো পুশ করা[cite: 12]
+                document.getElementById('edit-full-name').value = data.fullName || ""; //[cite: 12]
+                document.getElementById('edit-phone-number').value = data.phoneNumber || "";
+                avatarPreview.src = data.profilePic || 'default-avatar.png'; //[cite: 12]
             }
-        } catch (e) { console.error("Error loading profile:", e); }
+        } catch (e) { console.error("Error loading profile:", e); } //[cite: 12]
     }
 
-    // নতুন পোস্ট বাটনে ক্লিক করলে post.html এ যাবে
-const floatingPostBtn = document.getElementById('floating-post-btn');
-if (floatingPostBtn) {
-    floatingPostBtn.onclick = () => {
-        window.location.href = 'post.html';
-    };
-}
+    // ফ্লোটিং বাটন নেভিগেশন[cite: 12]
+    const floatingPostBtn = document.getElementById('floating-post-btn'); //[cite: 12]
+    if (floatingPostBtn) {
+        floatingPostBtn.onclick = () => { window.location.href = 'post.html'; }; //[cite: 12]
+    }
     
-    // ৩. প্রপার্টি লিস্ট লোড করা
-    async function loadUserProperties(userId) {
-        propertiesList.innerHTML = '<p>লোড হচ্ছে...</p>';
+    // ৩. বিজ্ঞাপন তালিকা রিড ও প্রসেসিং[cite: 12]
+    async function loadUserProperties(userId) { //[cite: 12]
+        propertiesList.innerHTML = '<p>লোড হচ্ছে...</p>'; //[cite: 12]
         try {
-            const snapshot = await db.collection('properties').where('userId', '==', userId).get();
-            propertiesList.innerHTML = '';
-            totalPostsEl.textContent = snapshot.size;
+            const snapshot = await db.collection('properties').where('userId', '==', userId).get(); //[cite: 12]
+            propertiesList.innerHTML = ''; //[cite: 12]
+            totalPostsEl.textContent = snapshot.size; //[cite: 12]
 
             if (snapshot.empty) {
-                document.getElementById('empty-posts-message').style.display = 'block';
+                document.getElementById('empty-posts-message').style.display = 'block'; //[cite: 12]
                 return;
             }
 
-            snapshot.forEach(doc => {
-                const p = doc.data();
-                const card = document.createElement('div');
-                card.className = 'property-card';
-                card.style.cursor = "pointer";
-                card.onclick = () => showPropertyDetails(doc.id, p);
+            snapshot.forEach(doc => { //[cite: 12]
+                const p = doc.data(); //[cite: 12]
+                const card = document.createElement('div'); //[cite: 12]
+                card.className = 'property-card'; //[cite: 12]
+                card.style.cursor = "pointer"; //[cite: 12]
+                card.onclick = () => showPropertyDetails(doc.id, p); //[cite: 12]
                 
                 card.innerHTML = `
-                    <img src="${(p.images && p.images[0]) ? p.images[0].url : 'placeholder.jpg'}" style="width:100%; height:150px; object-fit:cover; border-radius:8px;">
-                    <h4 style="margin:10px 0 5px 0;">${p.title || 'শিরোনামহীন'}</h4>
-                    <p style="color:#2ecc71; font-weight:bold;">৳ ${p.price || p.rent || '০'}</p>
-                `;
-                propertiesList.appendChild(card);
+                    <img src="${(p.images && p.images[0]) ? (p.images[0].url || p.images[0]) : 'placeholder.jpg'}" style="width:100%; height:120px; object-fit:cover;">
+                    <div style="padding:10px;">
+                        <h4 style="margin:0 0 5px 0; font-size:13px; height:34px; overflow:hidden;">${p.title || 'শিরোনামহীন'}</h4>
+                        <p style="color:var(--success); font-weight:bold; margin:0; font-size:13px;">৳ ${p.price || p.monthlyRent || '০'}</p>
+                    </div>
+                `; //[cite: 12]
+                propertiesList.appendChild(card); //[cite: 12]
             });
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error(e); } //[cite: 12]
     }
 
-    // ৪. প্রোফাইল এডিট পপ-আপ কন্ট্রোল
-    if (showEditBtn) showEditBtn.onclick = () => editModal.style.display = 'block';
-    if (closeEditBtn) closeEditBtn.onclick = () => editModal.style.display = 'none';
+    // মডাল কন্ট্রোল[cite: 12]
+    if (showEditBtn) showEditBtn.onclick = () => editModal.style.display = 'block'; //[cite: 12]
+    if (closeEditBtn) closeEditBtn.onclick = () => editModal.style.display = 'none'; //[cite: 12]
     
-    // ৫. প্রিভিউ ইমেজ লোড
+    // রিয়েলটাইম ইমেজ ফাইল রিডার প্রিভিউ[cite: 12]
     if (fileInput) {
-        fileInput.addEventListener('change', function() {
-            const file = this.files[0];
+        fileInput.addEventListener('change', function() { //[cite: 12]
+            const file = this.files[0]; //[cite: 12]
             if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => avatarPreview.src = e.target.result;
-                reader.readAsDataURL(file);
+                const reader = new FileReader(); //[cite: 12]
+                reader.onload = (e) => avatarPreview.src = e.target.result; //[cite: 12]
+                reader.readAsDataURL(file); //[cite: 12]
             }
         });
     }
 
-    // ৬. প্রোফাইল আপডেট লজিক (একদম সঠিক ফর্ম সাবমিট)
+    // ৪. সাবমিট ও ট্রানজেকশনাল ফোন নম্বর ডাটাবেজ রাইট[cite: 12]
     if (editForm) {
-        editForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('update-profile-btn');
-            const user = auth.currentUser;
-            const newName = document.getElementById('edit-full-name').value;
-            const file = fileInput.files[0];
+        editForm.onsubmit = async (e) => { //[cite: 12]
+            e.preventDefault(); //[cite: 12]
+            const btn = document.getElementById('update-profile-btn'); //[cite: 12]
+            const user = auth.currentUser; //[cite: 12]
+            const newName = document.getElementById('edit-full-name').value; //[cite: 12]
+            const newPhone = document.getElementById('edit-phone-number').value;
+            const file = fileInput.files[0]; //[cite: 12]
             
-            btn.disabled = true;
-            btn.textContent = "আপডেট হচ্ছে...";
+            btn.disabled = true; //[cite: 12]
+            btn.textContent = "আপডেট হচ্ছে..."; //[cite: 12]
             
             try {
                 let updateData = { 
                     fullName: newName, 
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
+                    phoneNumber: newPhone, // 🎯 ফোন নম্বর ডাটাবেজে ম্যাপিং করা হলো
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp() //[cite: 12]
                 };
 
-                if (file) {
-                    const fileName = `avatar_${user.uid}_${Date.now()}`;
-                    const storageRef = storage.ref(`profile_pics/${user.uid}/${fileName}`);
-                    const snapshot = await storageRef.put(file);
-                    const downloadURL = await snapshot.ref.getDownloadURL();
-                    updateData.profilePic = downloadURL;
+                if (file) { //[cite: 12]
+                    const fileName = `avatar_${user.uid}_${Date.now()}`; //[cite: 12]
+                    const storageRef = storage.ref(`profile_pics/${user.uid}/${fileName}`); //[cite: 12]
+                    const snapshot = await storageRef.put(file); //[cite: 12]
+                    const downloadURL = await snapshot.ref.getDownloadURL(); //[cite: 12]
+                    updateData.profilePic = downloadURL; //[cite: 12]
                 }
 
-                await db.collection('users').doc(user.uid).set(updateData, { merge: true });
-                alert('প্রোফাইল সফলভাবে আপডেট হয়েছে!');
-                editModal.style.display = 'none';
-                location.reload(); 
+                await db.collection('users').doc(user.uid).set(updateData, { merge: true }); //[cite: 12]
+                alert('আপনার ড্যাশবোর্ড সফলভাবে আপডেট হয়েছে!'); //[cite: 12]
+                editModal.style.display = 'none'; //[cite: 12]
+                location.reload(); //[cite: 12]
                 
             } catch (error) {
-                console.error("Error:", error);
-                alert('সমস্যা হয়েছে: ' + error.message);
-                btn.disabled = false;
-                btn.textContent = "আবার চেষ্টা করুন";
+                console.error("Error:", error); //[cite: 12]
+                alert('সমস্যা হয়েছে: ' + error.message); //[cite: 12]
+                btn.disabled = false; //[cite: 12]
+                btn.textContent = "আবার চেষ্টা করুন"; //[cite: 12]
             }
         };
     }
 });
 
-// পপ-আপে প্রপার্টি ডিটেইলস ফাংশন (গ্লোবাল)
+// গ্লোবাল প্রপার্টি রিডার মডাল ভিউ[cite: 12]
 function showPropertyDetails(id, data) {
-    const modal = document.getElementById('propertyModal');
-    const contentInner = document.getElementById('modal-content-inner');
+    const modal = document.getElementById('propertyModal'); //[cite: 12]
+    const contentInner = document.getElementById('modal-content-inner'); //[cite: 12]
+    
+    let imgUrl = (data.images && data.images[0]) ? (data.images[0].url || data.images[0]) : 'placeholder.jpg';
     
     contentInner.innerHTML = `
-        <img src="${(data.images && data.images[0]) ? data.images[0].url : ''}" style="width:100%; border-radius:8px; margin-bottom:15px; height:200px; object-fit:cover;">
-        <h2>${data.title}</h2>
-        <p><strong>বিবরণ:</strong> ${data.description || 'নেই'}</p>
-        <p><strong>দাম:</strong> ৳ ${data.price || data.rent || 'আলোচনা সাপেক্ষ'}</p>
-        <p><strong>অবস্থান:</strong> ${data.location?.district || ''}, ${data.location?.upazila || ''}</p>
-    `;
+        <img src="${imgUrl}" style="width:100%; border-radius:12px; margin-bottom:15px; height:180px; object-fit:cover;">
+        <h2 style="font-size:18px; margin:0 0 10px 0; color:var(--dark);">${data.title}</h2>
+        <p style="font-size:14px; color:#555;"><strong>বিবরণ:</strong> ${data.description || 'নেই'}</p>
+        <p style="font-size:14px; color:var(--success); font-weight:bold;"><strong>মূল্য/ভাড়া:</strong> ৳ ${data.price || data.monthlyRent || 'আলোচনা সাপেক্ষ'}</p>
+    `; //[cite: 12]
 
-    document.getElementById('modal-delete-btn').onclick = (e) => {
-        e.stopPropagation();
-        deletePost(id);
+    document.getElementById('modal-delete-btn').onclick = (e) => { //[cite: 12]
+        e.stopPropagation(); //[cite: 12]
+        deletePost(id); //[cite: 12]
     };
     
-    modal.style.display = 'block';
+    modal.style.display = 'block'; //[cite: 12]
 }
 
 function closePropertyModal() {
-    document.getElementById('propertyModal').style.display = 'none';
+    document.getElementById('propertyModal').style.display = 'none'; //[cite: 12]
 }
 
 async function deletePost(id) {
-    if(confirm('পোস্টটি মুছে ফেলতে চান?')) {
-        await db.collection('properties').doc(id).delete();
-        location.reload();
+    if(confirm('বিজ্ঞাপনটি চিরতরে মুছে ফেলতে চান?')) { //[cite: 12]
+        await db.collection('properties').doc(id).delete(); //[cite: 12]
+        location.reload(); //[cite: 12]
     }
-                        }
+                                    }
