@@ -38,7 +38,6 @@
             border: 1px solid #e1e8ed;
         }
 
-        /* 🏙️ রিয়েল এস্টেট থিম কভার ফটো */
         .profile-cover-photo {
             height: 130px;
             background: var(--cover-gradient);
@@ -46,7 +45,6 @@
             overflow: hidden;
         }
 
-        /* প্রোফাইল কন্টেন্ট এরিয়া */
         .profile-content-box {
             padding: 0px 20px 25px 20px;
             position: relative;
@@ -54,13 +52,11 @@
             z-index: 5;
         }
 
-        /* গোল অ্যাভাটার */
         .avatar-container { position: relative; width: 110px; height: 110px; margin: 0 auto 12px auto; }
         .profile-avatar-big { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.15); background: #eee; }
         
         .user-info h2 { margin: 0 0 5px 0; font-size: 24px; color: var(--dark); font-weight: bold; }
         
-        /* কন্টাক্ট ব্যাজ গ্রিড */
         .meta-info-grid { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; font-size: 13px; }
         .meta-item { display: flex; align-items: center; gap: 5px; background: #f0f4f8; padding: 6px 14px; border-radius: 20px; color: var(--dark); border: 1px solid #e1e8ed; }
         .meta-item i { font-size: 16px; color: var(--primary); }
@@ -70,7 +66,6 @@
         .edit-badge { background: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; color: var(--primary); display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--primary); transition: 0.2s; font-weight: 600; }
         .edit-badge:hover { background: var(--primary); color: white; }
 
-        /* ➕ সরাসরি প্রোপার্টি যুক্ত করার নতুন বাটন */
         .add-property-btn { background: var(--primary-gradient); padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 5px; border: none; transition: 0.2s; font-weight: 600; box-shadow: 0 4px 10px rgba(0,123,255,0.2); }
         .add-property-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,123,255,0.3); }
 
@@ -119,12 +114,12 @@
             
             <div class="profile-content-box">
                 <div class="avatar-container">
-                    <!-- কাস্টম ডিফল্ট নো-ইমেজ প্লেসহোল্ডার পাথ সেট করা হয়েছে -->
                     <img src="https://www.w3schools.com/howto/img_avatar.png" id="user-avatar" class="profile-avatar-big" alt="User Avatar">
                 </div>
                 
                 <div class="user-info">
-                    <h2 id="display-name">লোড হচ্ছে...</h2>
+                    <!-- ডিফল্ট একটি টেক্সট দেওয়া হলো যেন আটকে না থাকে -->
+                    <h2 id="display-name">আমার প্রোফাইল</h2>
                     
                     <div class="meta-info-grid">
                         <div class="meta-item">
@@ -141,7 +136,6 @@
                         <div class="edit-badge" id="edit-profile-show-btn">
                             <i class="material-icons" style="font-size: 16px;">edit</i> প্রোফাইল সাজান
                         </div>
-                        <!-- ➕ ভাসমান বাটন বাদ দিয়ে এখানে ডিরেক্ট বাটন যুক্ত করা হলো -->
                         <button class="add-property-btn" id="direct-post-btn">
                             <i class="material-icons" style="font-size: 16px;">add_circle</i> প্রোপার্টি যুক্ত করুন
                         </button>
@@ -169,7 +163,7 @@
         <!-- ট্যাব সুইচিং -->
         <div class="profile-tabs">
             <button class="tab-btn active" onclick="openTab(event, 'my-posts')">আমার পোস্ট সমূহ</button>
-            <button class="tab-btn" onclick="openTab(event, 'saved-posts')">বुकমার্ক প্রপার্টি</button>
+            <button class="tab-btn" onclick="openTab(event, 'saved-posts')">বুকমার্ক প্রপার্টি</button>
         </div>
 
         <!-- ট্যাব লিস্টিং কন্টেন্ট -->
@@ -226,7 +220,7 @@
         </div>
     </div>
 
-    <!-- 🎯 স্ক্রিপ্ট ফাইল নেম একদম সঠিক পাথে ডিফাইন করা হয়েছে -->
+    <!-- স্ক্রিপ্ট ফাইল লিঙ্কিং -->
     <script src="profile.js"></script>
     <script>
         function openTab(evt, tabName) {
@@ -240,4 +234,4 @@
         }
     </script>
 </body>
-                        </html>
+    </html>
