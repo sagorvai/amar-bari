@@ -273,18 +273,23 @@ function formatPostTime(date) {
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHour = Math.floor(diffMins / 60);
-    const diffDay = Math.floor(diffHours / 24);
-    const Week = Math.floor(diffDays / 7);
-    const diffMonth = Math.floor(diffWeeks / 4);
-    
+    const diffDay = Math.floor(diffHour / 24);
+    const diffWeek = Math.floor(diffDay / 7);
+    const diffMonth = Math.floor(diffWeek / 4);
+
     if (diffMins < 1) return "এইমাত্র";
     if (diffMins < 60) return `${diffMins} মিনিট আগে`;
-    if (diffHour < 24) return `${diffHours} ঘণ্টা আগে`;
-    if (diffDay < 7) return `${diffDays} দিন আগে`;
-    if (Week < 4) return `${diffWeek} সপ্তাহ আগে`;
+    if (diffHour < 24) return `${diffHour} ঘণ্টা আগে`;
+    if (diffDay < 7) return `${diffDay} দিন আগে`;
+    if (diffWeek < 4) return `${diffWeek} সপ্তাহ আগে`;
     if (diffMonth < 3) return `${diffMonth} মাস আগে`;
-    return date.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
-}
+
+    return date.toLocaleDateString('bn-BD', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+                }
 
 async function loadRelatedPosts(currentData) {
     const list = document.getElementById('related-list');
