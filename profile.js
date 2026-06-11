@@ -19,6 +19,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const displayNameEl = document.getElementById('display-name');
     const userEmailEl = document.getElementById('user-email');
     const userPhoneEl = document.getElementById('user-phone');
+    const userProfessionEl = document.getElementById('user-profession');
+    const userLocationEl = document.getElementById('user-location');
+    const userOfficeEl = document.getElementById('user-office');
+    const metaOfficeBox = document.getElementById('meta-office-box');
     const userAvatar = document.getElementById('user-avatar');
     const propertiesList = document.getElementById('my-properties-list');
     const totalPostsEl = document.getElementById('total-posts-count');
@@ -32,91 +36,89 @@ document.addEventListener('DOMContentLoaded', function() {
     const avatarPreview = document.getElementById('edit-avatar-preview');
     const fileInput = document.getElementById('edit-profile-picture');
 
-    // ১. ফায়ারবেস অথেনটিকেশন চেক (সেফ মোড)
+    // ১. ফায়ারবেস অথেনটিকেশন স্টেট চেক
     auth.onAuthStateChanged(async (user) => {
         if (user) {
-            console.log("Logged in user UID:", user.uid);
-            
-            // নাম ও ইমেইলের বেসিক সেটআপ (ডাটাবেজ ডাউন থাকলেও এটি কাজ করবে)
+            console.log("Logged in user:", user.uid);
             userEmailEl.textContent = user.email;
-            displayNameEl.textContent = user.displayName || "ইউজার প্রোফাইল";
             
             // প্রোফাইল ডেটা লোড
             try {
                 await loadUserProfile(user);
             } catch (err) {
-                console.error("Profile load bypassed:", err);
+                console.error("Profile load error:", err);
             }
             
-            // প্রপার্টিজ লিস্টিং লোড
+            // লিস্টিং লোড
             try {
                 await loadUserProperties(user.uid);
             } catch (err) {
-                console.error("Properties load bypassed:", err);
+                console.error("Properties load error:", err);
                 propertiesList.innerHTML = '<p style="text-align:center; width:100%; color:var(--gray);">পোস্ট লোড করা যায়নি।</p>';
             }
             
         } else {
-            console.log("No active session found. Redirecting to auth page...");
             window.location.href = 'auth.html';
         }
     });
 
-    // ২. প্রোফাইল ডেটা রিড ফাংশন (সেফ-গার্ডেড)
+    // ২. ফায়ারস্টোর থেকে প্রোফাইল ডেটা রিড ও রেন্ডারিং
     async function loadUserProfile(user) {
         try {
             const doc = await db.collection('users').doc(user.uid).get();
             if (doc.exists) {
                 const data = doc.data();
                 
-                // নাম ডিসপ্লে ফিক্স
-                displayNameEl.textContent = data.fullName || data.name || user.displayName || "নাম নেই";
+                // বেসিক তথ্য ডিসপ্লে
+                displayNameEl.textContent = data.fullName || data.name || "ইউজার প্রোফাইল";
+                userProfessionEl.textContent = data.profession || "পেশা যুক্ত করুন";
+                userPhoneEl.textContent = data.phoneNumber || data.phone || "ফোন সেট করা নেই";
+                userLocationEl.textContent = data.location || "অবস্থান যুক্ত করুন";
                 
-                // ইমেজ ইউআরএল চেক
+                // ঐচ্ছিক অফিস অ্যাড্রেস ম্যানেজমেন্ট
+                if (data.officeAddress && data.officeAddress.trim() !== "") {
+                    userOfficeEl.textContent = data.officeAddress;
+                    metaOfficeBox.style.display = "flex";
+                } else {
+                    metaOfficeBox.style.display = "none";
+                }
+                
+                // অ্যাভাটার ফিক্স
                 if(data.profilePic || data.avatarUrl) {
                     let pPic = data.profilePic || data.avatarUrl;
                     userAvatar.src = pPic;
                     avatarPreview.src = pPic;
                 }
-                
-                // ফোন নম্বর চেক
-                if (data.phoneNumber || data.phone) {
-                    userPhoneEl.textContent = data.phoneNumber || data.phone;
-                }
 
-                // পাবলিক রেটিং অটো ক্যালকুলেশন
+                // রেটিং ক্যালকুলেশন
                 if (data.ratingCount && data.ratingCount > 0) {
                     let avg = ((data.ratingSum || 0) / data.ratingCount).toFixed(1);
                     myRatingScoreEl.textContent = `⭐ ${avg}`;
                 }
                 
-                // এডিট ইনপুট প্রিপপ্যুলেশন
+                // মডাল ইনপুট ফিল্ডগুলোতে আগের ডাটা বসানো
                 document.getElementById('edit-full-name').value = data.fullName || data.name || "";
+                document.getElementById('edit-profession').value = data.profession || "";
                 document.getElementById('edit-phone-number').value = data.phoneNumber || data.phone || "";
-            } else {
-                // যদি ইউজারের কোনো ডকুমেন্ট ফায়ারস্টোরে না থাকে
-                displayNameEl.textContent = user.displayName || "নতুন ইউজার";
+                document.getElementById('edit-location').value = data.location || "";
+                document.getElementById('edit-office').value = data.officeAddress || "";
             }
         } catch (e) { 
-            console.error("Firestore user collection error:", e);
-            displayNameEl.textContent = user.displayName || "আমার প্রোফাইল";
+            console.error("Firestore user fetch error:", e);
         }
     }
 
-    // প্রোপার্টি যুক্ত করার বাটনের অ্যাকশন লিংক
+    // প্রোপার্টি যুক্ত করার বাটন ক্লিক অ্যাকশন
     const directPostBtn = document.getElementById('direct-post-btn');
     if (directPostBtn) {
         directPostBtn.onclick = () => { window.location.href = 'post.html'; };
     }
     
-    // ৩. ইউজারের প্রপার্টি লোড করার ডাইনামিক ফাংশন
+    // ৩. ইউজারের প্রপার্টি লোড করার ফাংশন
     async function loadUserProperties(userId) {
         propertiesList.innerHTML = '<p style="text-align:center; width:100%;">খোঁজা হচ্ছে...</p>';
         try {
-            // ১ম চেষ্টা: standard 'userId' ফিল্ড দিয়ে কুয়েরি
             let snapshot = await db.collection('properties').where('userId', '==', userId).get();
-            
-            // ২য় চেষ্টা: যদি ১ম ফিল্ডে ডেটা না আসে, তবে 'uid' দিয়ে ট্রাই করবে
             if (snapshot.empty) {
                 snapshot = await db.collection('properties').where('uid', '==', userId).get();
             }
@@ -136,7 +138,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.style.cursor = "pointer";
                 card.onclick = () => showPropertyDetails(doc.id, p);
                 
-                // ছবি ডিটেকশন সেফটি
                 let imageUrl = 'https://via.placeholder.com/150?text=No+Image';
                 if (p.images && p.images.length > 0) {
                     imageUrl = p.images[0].url || p.images[0];
@@ -144,7 +145,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     imageUrl = p.image;
                 }
 
-                // প্রাইস ডাইনামিক ডিটেকশন (৳)
                 let displayPrice = p.price || p.rent || p.monthlyRent || p.amount || '০';
 
                 card.innerHTML = `
@@ -157,12 +157,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertiesList.appendChild(card);
             });
         } catch (e) { 
-            console.error("Firestore properties collection error:", e);
-            propertiesList.innerHTML = '<p style="text-align:center; width:100%; color:var(--gray);">লিস্টিং লোড করা সম্ভব হয়নি।</p>';
+            console.error("Properties loading error:", e);
         }
     }
 
-    // মডাল ওপেন ও ক্লোজ লজিক
+    // মডাল শো/হাইড ইভেন্টস
     if (showEditBtn) showEditBtn.onclick = () => editModal.style.display = 'block';
     if (closeEditBtn) closeEditBtn.onclick = () => editModal.style.display = 'none';
     
@@ -177,14 +176,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ৪. প্রোফাইল এডিট সাবমিট হ্যান্ডলার
+    // ৪. প্রোফাইল এডিট সাবমিট ও ফায়ারস্টোরে নতুন ফিল্ড আপলোড
     if (editForm) {
         editForm.onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('update-profile-btn');
             const user = auth.currentUser;
+            
+            // নতুন ইনপুট ভ্যালু সংগ্রহ
             const newName = document.getElementById('edit-full-name').value;
+            const newProfession = document.getElementById('edit-profession').value;
             const newPhone = document.getElementById('edit-phone-number').value;
+            const newLocation = document.getElementById('edit-location').value;
+            const newOffice = document.getElementById('edit-office').value;
             const file = fileInput.files[0];
             
             btn.disabled = true;
@@ -193,7 +197,10 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 let updateData = { 
                     fullName: newName, 
+                    profession: newProfession,
                     phoneNumber: newPhone,
+                    location: newLocation,
+                    officeAddress: newOffice,
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
@@ -206,12 +213,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 await db.collection('users').doc(user.uid).set(updateData, { merge: true });
-                alert('আপনার প্রোফাইল সফলভাবে আপডেট হয়েছে!');
+                alert('আপনার প্রোফাইল তথ্য সফলভাবে সেভ হয়েছে!');
                 editModal.style.display = 'none';
                 location.reload();
                 
             } catch (error) {
-                console.error("Error updating profile:", error);
+                console.error("Update profile error:", error);
                 alert('সমস্যা হয়েছে: ' + error.message);
                 btn.disabled = false;
                 btn.textContent = "আবার চেষ্টা করুন";
@@ -252,4 +259,4 @@ async function deletePost(id) {
         await db.collection('properties').doc(id).delete();
         location.reload();
     }
-    }
+        }
