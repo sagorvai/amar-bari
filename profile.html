@@ -40,16 +40,20 @@
 
         .profile-cover-photo {
             height: 140px;
-            /* সেলার থিম জলছাপ গ্রাফিক্স প্যাটার্ন (CSS Blueprint & City Grid Lines) */
-            background-color: #1e3c72;
-            background-image: 
-                linear-gradient(rgba(30, 60, 114, 0.85), rgba(42, 82, 152, 0.95)),
-                radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1) 0%, transparent 60%),
-                linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%),
-                linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%);
-            background-size: auto, auto, 40px 40px, 40px 40px;
+            background: var(--cover-gradient);
             position: relative;
         }
+        .profile-cover-photo::before {
+            content: "home";
+            content: "corporate_fare";
+            font-family: 'Material Icons';
+            position: absolute;
+            right: 15px;
+            bottom: -15px;
+            font-size: 120px;
+            color: rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+            }
 
         .profile-content-box {
             padding: 0px 16px 20px 16px;
