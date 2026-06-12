@@ -17,12 +17,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // UI Elements
     const displayNameEl = document.getElementById('display-name');
+    const userBioEl = document.getElementById('user-bio');
     const userEmailEl = document.getElementById('user-email');
     const userPhoneEl = document.getElementById('user-phone');
     const userProfessionEl = document.getElementById('user-profession');
     const userLocationEl = document.getElementById('user-location');
     const userOfficeEl = document.getElementById('user-office');
-    const metaOfficeBox = document.getElementById('meta-office-box');
+    const introOfficeItem = document.getElementById('intro-office-item');
     const userAvatar = document.getElementById('user-avatar');
     const propertiesList = document.getElementById('my-properties-list');
     const totalPostsEl = document.getElementById('total-posts-count');
@@ -36,10 +37,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const avatarPreview = document.getElementById('edit-avatar-preview');
     const fileInput = document.getElementById('edit-profile-picture');
 
-    // ১. ফায়ারবেস অথেনটিকেশন স্টেট চেক
+    // ১. ফায়ারবেস অথেনটিকেশন চেক
     auth.onAuthStateChanged(async (user) => {
         if (user) {
-            console.log("Logged in user:", user.uid);
             userEmailEl.textContent = user.email;
             
             // প্রোফাইল ডেটা লোড
@@ -54,7 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 await loadUserProperties(user.uid);
             } catch (err) {
                 console.error("Properties load error:", err);
-                propertiesList.innerHTML = '<p style="text-align:center; width:100%; color:var(--gray);">পোস্ট লোড করা যায়নি।</p>';
             }
             
         } else {
@@ -62,59 +61,62 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ২. ফায়ারস্টোর থেকে প্রোফাইল ডেটা রিড ও রেন্ডারিং
+    // ২. ফায়ারস্টোর থেকে ফেসবুক স্টাইল ডাটা রিড ও রেন্ডারিং
     async function loadUserProfile(user) {
         try {
             const doc = await db.collection('users').doc(user.uid).get();
             if (doc.exists) {
                 const data = doc.data();
                 
-                // বেসিক তথ্য ডিসপ্লে
+                // নাম ও বায়ো সেটআপ
                 displayNameEl.textContent = data.fullName || data.name || "ইউজার প্রোফাইল";
-                userProfessionEl.textContent = data.profession || "পেশা যুক্ত করুন";
-                userPhoneEl.textContent = data.phoneNumber || data.phone || "ফোন সেট করা নেই";
-                userLocationEl.textContent = data.location || "অবস্থান যুক্ত করুন";
+                userBioEl.textContent = data.bio || "আপনার সম্পর্কে কিছু বলুন...";
                 
-                // ঐচ্ছিক অফিস অ্যাড্রেস ম্যানেজমেন্ট
+                // ফেসবুক স্টাইল পরিচিতি লিস্ট রেন্ডারিং
+                userProfessionEl.textContent = data.profession || "যুক্ত করা নেই";
+                userPhoneEl.textContent = data.phoneNumber || data.phone || "ফোন সেট করা নেই";
+                userLocationEl.textContent = data.location || "যুক্ত করা নেই";
+                
+                // ঐচ্ছিক অফিস অ্যাড্রেস চেক
                 if (data.officeAddress && data.officeAddress.trim() !== "") {
                     userOfficeEl.textContent = data.officeAddress;
-                    metaOfficeBox.style.display = "flex";
+                    introOfficeItem.style.display = "flex";
                 } else {
-                    metaOfficeBox.style.display = "none";
+                    introOfficeItem.style.display = "none";
                 }
                 
-                // অ্যাভাটার ফিক্স
+                // প্রোফাইল পিকচার ফিক্স
                 if(data.profilePic || data.avatarUrl) {
                     let pPic = data.profilePic || data.avatarUrl;
                     userAvatar.src = pPic;
                     avatarPreview.src = pPic;
                 }
 
-                // রেটিং ক্যালকুলেশন
+                // রেটিং স্কোর
                 if (data.ratingCount && data.ratingCount > 0) {
                     let avg = ((data.ratingSum || 0) / data.ratingCount).toFixed(1);
                     myRatingScoreEl.textContent = `⭐ ${avg}`;
                 }
                 
-                // মডাল ইনপুট ফিল্ডগুলোতে আগের ডাটা বসানো
+                // মডাল এডিট ফিল্ড ভ্যালু প্রিপপ্যুলেশন
                 document.getElementById('edit-full-name').value = data.fullName || data.name || "";
+                document.getElementById('edit-bio').value = data.bio || "";
                 document.getElementById('edit-profession').value = data.profession || "";
                 document.getElementById('edit-phone-number').value = data.phoneNumber || data.phone || "";
                 document.getElementById('edit-location').value = data.location || "";
                 document.getElementById('edit-office').value = data.officeAddress || "";
             }
         } catch (e) { 
-            console.error("Firestore user fetch error:", e);
+            console.error("Firestore fetch error:", e);
         }
     }
 
-    // প্রোপার্টি যুক্ত করার বাটন ক্লিক অ্যাকশন
     const directPostBtn = document.getElementById('direct-post-btn');
     if (directPostBtn) {
         directPostBtn.onclick = () => { window.location.href = 'post.html'; };
     }
     
-    // ৩. ইউজারের প্রপার্টি লোড করার ফাংশন
+    // ৩. ইউজারের নিজস্ব প্রপার্টি কুয়েরি ফাংশন
     async function loadUserProperties(userId) {
         propertiesList.innerHTML = '<p style="text-align:center; width:100%;">খোঁজা হচ্ছে...</p>';
         try {
@@ -148,20 +150,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 let displayPrice = p.price || p.rent || p.monthlyRent || p.amount || '০';
 
                 card.innerHTML = `
-                    <img src="${imageUrl}" style="width:100%; height:110px; object-fit:cover;">
+                    <img src="${imageUrl}" style="width:100%; height:105px; object-fit:cover;">
                     <div style="padding:8px;">
-                        <h4 style="margin:0 0 4px 0; font-size:12px; height:32px; overflow:hidden; color:var(--dark);">${p.title || 'শিরোনামহীন'}</h4>
+                        <h4 style="margin:0 0 4px 0; font-size:12px; height:32px; overflow:hidden; color:var(--dark); font-weight:600;">${p.title || 'শিরোনামহীন'}</h4>
                         <p style="color:var(--success); font-weight:bold; margin:0; font-size:12px;">৳ ${displayPrice}</p>
                     </div>
                 `;
                 propertiesList.appendChild(card);
             });
         } catch (e) { 
-            console.error("Properties loading error:", e);
+            console.error("Properties list fetch error:", e);
         }
     }
 
-    // মডাল শো/হাইড ইভেন্টস
+    // মডাল কন্ট্রোল
     if (showEditBtn) showEditBtn.onclick = () => editModal.style.display = 'block';
     if (closeEditBtn) closeEditBtn.onclick = () => editModal.style.display = 'none';
     
@@ -176,15 +178,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ৪. প্রোফাইল এডিট সাবমিট ও ফায়ারস্টোরে নতুন ফিল্ড আপলোড
+    // ৪. প্রোফাইল এডিট সাবমিট ও বায়ো সেভ লজিক
     if (editForm) {
         editForm.onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('update-profile-btn');
             const user = auth.currentUser;
             
-            // নতুন ইনপুট ভ্যালু সংগ্রহ
             const newName = document.getElementById('edit-full-name').value;
+            const newBio = document.getElementById('edit-bio').value;
             const newProfession = document.getElementById('edit-profession').value;
             const newPhone = document.getElementById('edit-phone-number').value;
             const newLocation = document.getElementById('edit-location').value;
@@ -197,6 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 let updateData = { 
                     fullName: newName, 
+                    bio: newBio,
                     profession: newProfession,
                     phoneNumber: newPhone,
                     location: newLocation,
@@ -213,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 await db.collection('users').doc(user.uid).set(updateData, { merge: true });
-                alert('আপনার প্রোফাইল তথ্য সফলভাবে সেভ হয়েছে!');
+                alert('আপনার তথ্য সফলভাবে আপডেট হয়েছে!');
                 editModal.style.display = 'none';
                 location.reload();
                 
@@ -237,10 +240,10 @@ function showPropertyDetails(id, data) {
     }
     
     contentInner.innerHTML = `
-        <img src="${imageUrl}" style="width:100%; border-radius:12px; margin-bottom:15px; height:180px; object-fit:cover;">
-        <h2 style="font-size:18px; margin:0 0 10px 0; color:var(--dark);">${data.title || 'শিরোনামহীন'}</h2>
-        <p style="font-size:14px; color:#555;"><strong>বিবরণ:</strong> ${data.description || 'নেই'}</p>
-        <p style="font-size:14px; color:var(--success); font-weight:bold;"><strong>মূল্য/ভাড়া:</strong> ৳ ${data.price || data.rent || data.monthlyRent || 'আলোচনা সাপেক্ষ'}</p>
+        <img src="${imageUrl}" style="width:100%; border-radius:8px; margin-bottom:12px; height:160px; object-fit:cover;">
+        <h2 style="font-size:16px; margin:0 0 8px 0; color:var(--dark); font-weight:bold;">${data.title || 'শিরোনামহীন'}</h2>
+        <p style="font-size:13px; color:#555; margin:0 0 6px 0;"><strong>বিবরণ:</strong> ${data.description || 'নেই'}</p>
+        <p style="font-size:14px; color:var(--success); font-weight:bold; margin:0;"><strong>মূল্য/ভাড়া:</strong> ৳ ${data.price || data.rent || data.monthlyRent || 'আলোচনা সাপেক্ষ'}</p>
     `;
 
     document.getElementById('modal-delete-btn').onclick = (e) => {
@@ -259,4 +262,4 @@ async function deletePost(id) {
         await db.collection('properties').doc(id).delete();
         location.reload();
     }
-        }
+                        }
