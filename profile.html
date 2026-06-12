@@ -47,7 +47,7 @@
             position: relative;
         }
         .profile-cover-photo::before {
-            content: "internet";
+            content: "corporate_fare";
             
             font-family: 'Material Icons';
             position: absolute;
@@ -55,6 +55,17 @@
             bottom: -15px;
             font-size: 120px;
             color: rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+        }
+
+        .profile-cover-photo::after {
+            content: "home";
+            font-family: 'Material Icons';
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            font-size: 70px;
+            color: rgba(255, 255, 255, 0.05);
             pointer-events: none;
         }
 
