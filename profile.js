@@ -263,3 +263,103 @@ async function deletePost(id) {
         location.reload();
     }
                         }
+
+// FIXED: Header UI update - use Firestore profile image if available
+                    if (headerProfileImage && defaultProfileIcon) {
+                        const profileURL = userData?.profileImageURL || user.photoURL;
+                        if (profileURL) {
+                            headerProfileImage.src = profileURL; 
+                            headerProfileImage.style.display = 'block';
+                            defaultProfileIcon.style.display = 'none';
+                        } else {
+                            headerProfileImage.style.display = 'none';
+                            defaultProfileIcon.style.display = 'block';
+                        }
+                    }
+                    if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
+                    
+                    // NEW: Load staged data on successful auth
+                    loadStagedData(); 
+
+                }).catch(error => {
+                    console.error("Failed to fetch user data for profile image:", error);
+                    // Default to showing profile wrapper if fetch fails
+                    if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
+                    loadStagedData(); 
+                });
+                
+            } else {
+                if (propertyFormDisplay) propertyFormDisplay.style.display = 'none';
+                if (authWarningMessage) authWarningMessage.style.display = 'block';
+                if (postLinkSidebar) postLinkSidebar.style.display = 'none';
+                
+                if (loginLinkSidebar) {
+                    loginLinkSidebar.textContent = 'লগইন';
+                    loginLinkSidebar.href = 'auth.html';
+                    loginLinkSidebar.onclick = null;
+                }
+                
+                // Reset/Hide Header UI
+                if (headerProfileImage && defaultProfileIcon) {
+                    headerProfileImage.style.display = 'none';
+                    defaultProfileIcon.style.display = 'block';
+                }
+                if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+            }
+        });
+    }
+
+    // --- হেডার আইকন কার্যকারিতা ---
+
+    // নোটিফিকেশন আইকন রিডাইরেক্ট
+    if (notificationButton) {
+        notificationButton.addEventListener('click', () => {
+             window.location.href = 'notifications.html'; 
+        });
+    }
+
+    // পোস্ট আইকন রিডাইরেক্ট
+    if (headerPostButton) {
+        headerPostButton.addEventListener('click', () => {
+            window.location.href = 'post.html'; 
+        });
+    }
+
+    // ম্যাসেজ আইকন রিডাইরেক্ট
+    if (messageButton) {
+        messageButton.addEventListener('click', () => {
+             window.location.href = 'messages.html';
+        });
+    }
+    
+    // প্রোফাইল ইমেজ রিডাইরেক্ট
+    if (profileImageWrapper) {
+        profileImageWrapper.addEventListener('click', () => {
+             window.location.href = 'profile.html'; 
+        });
+    }
+});
+
+// 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
+firebase.auth().onAuthStateChanged(async (user) => {
+    const headerProfileImg = document.querySelector('#profileImageWrapper img');
+    
+    if (user && headerProfileImg) {
+        try {
+            // ফায়ারবেস 'users' কালেকশন থেকে ইউজারের ডাটা আনা হচ্ছে
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists && userDoc.data().profilePic) {
+                // ডাটাবেজে প্রোফাইল পিকচার থাকলে সেটি হেডারে সেট হবে
+                headerProfileImg.src = userDoc.data().profilePic;
+            } else if (user.photoURL) {
+                // গুগল লগইন করা থাকলে গুগল প্রোফাইল পিকচার সেট হবে
+                headerProfileImg.src = user.photoURL;
+            } else {
+                // কোনো ছবি না থাকলে একটি ডিফল্ট অ্যাভাটার সেট হবে
+                headerProfileImg.src = 'assets/images/default-avatar.png'; // আপনার প্রজেক্টের ডিফল্ট ছবির পাথ দিন
+            }
+        } catch (error) {
+            console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
+        }
+    }
+});
