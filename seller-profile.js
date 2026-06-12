@@ -8,153 +8,209 @@ const firebaseConfig = {
 };
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-
 const db = firebase.firestore();
 
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // URL থেকে Seller ID খুঁজে বের করা
-    const urlParams = new URLSearchParams(window.location.search);
-    const sellerId = urlParams.get('id');
+const sUrlParams = new URLSearchParams(window.location.search);
+const targetUserId = sUrlParams.get('userId');
 
-    if (!sellerId) {
-        alert("সেলার আইডি পাওয়া যায়নি!");
-        window.location.href = 'index.html';
+document.addEventListener('DOMContentLoaded', () => {
+    if (!targetUserId) {
+        alert("ভুল ব্যবহারকারী আইডি!");
+        window.history.back();
         return;
     }
-
-    // UI Elements
-    const loadingView = document.getElementById('loading-view');
-    const mainProfileView = document.getElementById('main-profile-view');
-    
-    const sellerNameEl = document.getElementById('seller-name');
-    const sellerBioEl = document.getElementById('seller-bio');
-    const sellerEmailEl = document.getElementById('seller-email');
-    const sellerPhoneEl = document.getElementById('seller-phone');
-    const sellerProfessionEl = document.getElementById('seller-profession');
-    const sellerLocationEl = document.getElementById('seller-location');
-    const sellerOfficeEl = document.getElementById('seller-office');
-    const introOfficeItem = document.getElementById('intro-office-item');
-    const sellerAvatar = document.getElementById('seller-avatar');
-    
-    const chatBtn = document.getElementById('chat-btn');
-    const callBtn = document.getElementById('call-btn');
-    
-    const propertiesList = document.getElementById('seller-properties-list');
-    const totalPostsEl = document.getElementById('total-posts-count');
-    const ratingScoreEl = document.getElementById('seller-rating-score');
-
-    // ১. ফায়ারস্টোর থেকে সেলারের মূল ডাটা লোড করা
-    async function loadSellerData() {
-        try {
-            const doc = await db.collection('users').doc(sellerId).get();
-            if (!doc.exists) {
-                loadingView.innerHTML = "<p>দুঃখিত, এই সেলারের কোনো অ্যাকাউন্ট খুঁজে পাওয়া যায়নি।</p>";
-                return;
-            }
-
-            const data = doc.data();
-
-            // নাম এবং বায়ো সেটআপ
-            sellerNameEl.textContent = data.fullName || data.name || "আমাদের সেলার";
-            sellerBioEl.textContent = data.bio || "নিয়মিত এবং বিশ্বস্ত প্রপার্টি ডিলার।";
-
-            // ফেসবুক স্টাইল পরিচিতি ফিল্ডসমূহ
-            sellerProfessionEl.textContent = data.profession || "যুক্ত করা নেই";
-            sellerLocationEl.textContent = data.location || "যুক্ত করা নেই";
-            sellerEmailEl.textContent = data.email || "গোপন রাখা হয়েছে";
-            
-            let phoneNum = data.phoneNumber || data.phone || "";
-            if (phoneNum) {
-                sellerPhoneEl.textContent = phoneNum;
-                callBtn.href = `tel:${phoneNum}`; // সরাসরি কলে যুক্ত করা
-            } else {
-                sellerPhoneEl.textContent = "ফোন সেট করা নেই";
-                callBtn.style.display = "none";
-            }
-
-            // ঐচ্ছিক অফিস অ্যাড্রেস ম্যানেজমেন্ট
-            if (data.officeAddress && data.officeAddress.trim() !== "") {
-                sellerOfficeEl.textContent = data.officeAddress;
-                introOfficeItem.style.display = "flex";
-            } else {
-                introOfficeItem.style.display = "none";
-            }
-
-            // সেলার প্রোফাইল ইমেজ সেটআপ
-            if (data.profilePic || data.avatarUrl) {
-                sellerAvatar.src = data.profilePic || data.avatarUrl;
-            }
-
-            // রেটিং স্কোর ক্যালকুলেট
-            if (data.ratingCount && data.ratingCount > 0) {
-                let avg = ((data.ratingSum || 0) / data.ratingCount).toFixed(1);
-                ratingScoreEl.textContent = `⭐ ${avg}`;
-            }
-
-            // চ্যাট বাটন লিংকআপ (আপনার কাস্টম চ্যাট পেজের রুটিং অনুযায়ী)
-            if (chatBtn) {
-                chatBtn.href = `chat.html?sellerId=${sellerId}`;
-            }
-
-            // ডাটা লোড কমপ্লিট হলে মেইন ভিউ শো করা
-            loadingView.style.display = 'none';
-            mainProfileView.style.display = 'block';
-
-            // এই সেলারের সব প্রপার্টি লিস্টিং লোড করা
-            loadSellerProperties(sellerId);
-
-        } catch (error) {
-            console.error("Error fetching seller data:", error);
-            loadingView.innerHTML = "<p>প্রোফাইল লোড করার সময় সার্ভার ত্রুটি ঘটেছে।</p>";
-        }
-    }
-
-    // ২. নির্দিষ্ট সেলারের সমস্ত লাইভ প্রপার্টি বিজ্ঞাপন ফেচ করা
-    async function loadSellerProperties(uid) {
-        try {
-            let snapshot = await db.collection('properties').where('userId', '==', uid).get();
-            if (snapshot.empty) {
-                snapshot = await db.collection('properties').where('uid', '==', uid).get();
-            }
-
-            propertiesList.innerHTML = '';
-            totalPostsEl.textContent = snapshot.size;
-
-            if (snapshot.empty) {
-                document.getElementById('empty-posts-message').style.display = 'block';
-                return;
-            }
-
-            snapshot.forEach(doc => {
-                const p = doc.data();
-                const card = document.createElement('a');
-                card.className = 'property-card';
-                card.href = `details.html?id=${doc.id}`; // প্রপার্টি ডিটেইলস পেজ লিংক
-                
-                let imageUrl = 'https://via.placeholder.com/150?text=No+Image';
-                if (p.images && p.images.length > 0) {
-                    imageUrl = p.images[0].url || p.images[0];
-                } else if (p.image) {
-                    imageUrl = p.image;
-                }
-
-                let displayPrice = p.price || p.rent || p.monthlyRent || p.amount || '০';
-
-                card.innerHTML = `
-                    <img src="${imageUrl}" style="width:100%; height:105px; object-fit:cover;">
-                    <div style="padding:8px;">
-                        <h4 style="margin:0 0 4px 0; font-size:12px; height:32px; overflow:hidden; color:var(--dark); font-weight:600; text-decoration:none;">${p.title || 'শিরোনামহীন'}</h4>
-                        <p style="color:var(--success); font-weight:bold; margin:0; font-size:12px;">৳ ${displayPrice}</p>
-                    </div>
-                `;
-                propertiesList.appendChild(card);
-            });
-        } catch (e) { 
-            console.error("Error loading seller properties:", e);
-        }
-    }
-
-    // এক্সেকিউশন শুরু
-    loadSellerData();
+    loadSellerProfileData();
+    loadSellerProperties();
+    setupInteractiveProfileRating();
 });
+
+// ১. বিক্রেতার ডাটা ফায়ারবেস থেকে পড়া এবং স্ক্রিনে রিডাইরেক্ট করা
+function loadSellerProfileData() {
+    db.collection('users').doc(targetUserId).get().then(doc => {
+        if (doc.exists) {
+            const uData = doc.data();
+            
+            // নাম এবং বেসিক মেম্বার আইডি
+            document.getElementById('s-name').textContent = uData.fullName || uData.name || "সম্মানিত বিক্রেতা";
+            document.getElementById('s-uid-text').textContent = `মেম্বার আইডি: ...${targetUserId.substring(0,6)}`;
+            
+            // 🎯 সরাসরি ইমেইল প্রদর্শন (কোনো হাইড ছাড়া)
+            document.getElementById('s-email').textContent = uData.email || "ইমেইল সরবরাহ করা হয়নি";
+            
+            // 🎯 নতুন ফেসবুক স্টাইল পরিচিতি ফিল্ডসমূহ ম্যাপিং
+            document.getElementById('s-profession').textContent = uData.profession || "যুক্ত করা নেই";
+            document.getElementById('s-location').textContent = uData.location || "যুক্ত করা নেই";
+            
+            // মোবাইল ফিল্ড হ্যান্ডলিং
+            const phoneNum = uData.phoneNumber || uData.phone || "";
+            document.getElementById('s-phone').textContent = phoneNum ? phoneNum : "গোপন রাখা হয়েছে";
+
+            // ঐচ্ছিক অফিস অ্যাড্রেস কন্ডিশনাল ম্যানেজমেন্ট
+            const officeItem = document.getElementById('s-office-item');
+            if (uData.officeAddress && uData.officeAddress.trim() !== "") {
+                document.getElementById('s-office').textContent = uData.officeAddress;
+                officeItem.style.display = 'flex';
+            } else {
+                officeItem.style.display = 'none';
+            }
+
+            // বায়ো টেক্সট সেটআপ
+            if (uData.bio && uData.bio.trim() !== "") {
+                document.getElementById('s-bio').textContent = `"${uData.bio}"`;
+            } else {
+                document.getElementById('s-bio').textContent = "এই ইউজারের কোনো বিবরণ বা বায়ো পাওয়া যায়নি।";
+            }
+            
+            // প্রোফাইল পিকচার
+            if (uData.profilePic) {
+                document.getElementById('s-avatar').src = uData.profilePic;
+            }
+
+            // ভেরিফাইড ব্যাজ হ্যান্ডলার
+            if (uData.isVerified === true || uData.role === 'admin') {
+                document.getElementById('badgeVerified').style.display = 'flex';
+            }
+
+            displayCalculatedRating(uData.ratingCount || 0, uData.ratingSum || 0);
+
+        } else {
+            document.getElementById('s-name').textContent = "অজানা ব্যবহারকারী";
+        }
+    }).catch(err => {
+        console.error("ইউজার ডেটা লোড এরর:", err);
+    });
+}
+
+// ২. একটিভ লিস্টিং সমুহ প্রপার্টি কালেকশন থেকে নিয়ে আসা
+async function loadSellerProperties() {
+    const grid = document.getElementById('seller-listings');
+    if (!grid) return;
+
+    try {
+        const snapshot = await db.collection('properties')
+                                 .where('userId', '==', targetUserId)
+                                 .get();
+        grid.innerHTML = "";
+
+        if (snapshot.empty) {
+            grid.innerHTML = `<div class="no-post">এই ব্যবহারকারী এখনো কোনো প্রপার্টি পোস্ট করেননি।</div>`;
+            return;
+        }
+
+        if (snapshot.size >= 3) {
+            document.getElementById('badgeTopSeller').style.display = 'flex';
+        }
+
+        snapshot.forEach(doc => {
+            const post = doc.data();
+            let priceVal = post.category === 'বিক্রয়' ? post.price : post.monthlyRent;
+            let unitVal = post.priceUnit || post.rentUnit || "";
+            let thumbnail = (post.images && post.images[0]) ? (post.images[0].url || post.images[0]) : 'placeholder.jpg';
+            let locationText = `${post.location?.village || ''}, ${post.location?.thana || ''}`;
+
+            grid.innerHTML += `
+                <div class="post-card" onclick="location.href='details.html?id=${doc.id}'">
+                    <span class="card-tag">${post.category || 'লিস্টিং'}</span>
+                    <img src="${thumbnail}" alt="Property Image">
+                    <div class="post-info">
+                        <h4 class="post-title-text">${post.title || 'শিরোনামহীন প্রপার্টি'}</h4>
+                        <div class="post-meta-loc">
+                            <i class="material-icons">location_on</i>
+                            <span>${locationText}</span>
+                        </div>
+                        <div class="post-price-box">
+                            <p class="post-price-text">৳ ${priceVal || 'আলোচনা সাপেক্ষ'} ${unitVal}</p>
+                            <i class="material-icons" style="font-size:16px; color:var(--primary)">arrow_forward</i>
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+    } catch (error) {
+        console.error("পোস্ট তালিকা লোড করতে সমস্যা হয়েছে:", error);
+        grid.innerHTML = `<div class="no-post">পোস্টগুলো লোড করা যাচ্ছে না।</div>`;
+    }
+}
+
+// ৩. রিয়েল-টাইম ফায়ারবেস ট্রানজেকশন রেটিং জোন
+function setupInteractiveProfileRating() {
+    const starZone = document.getElementById('profileStarsZone');
+    if (!starZone) return;
+
+    const stars = starZone.querySelectorAll('i');
+    const localStoreKey = `has_rated_user_${targetUserId}`;
+
+    let alreadyRatedValue = localStorage.getItem(localStoreKey);
+    if (alreadyRatedValue) {
+        highlightStars(stars, parseInt(alreadyRatedValue));
+        document.getElementById('ratingHeader').textContent = "আপনি এই পোস্টদাতাকে রেটিং দিয়েছেন";
+    }
+
+    stars.forEach(star => {
+        star.addEventListener('click', async () => {
+            if (localStorage.getItem(localStoreKey)) {
+                alert("আপনি ইতিমধ্যে এই ব্যবহারকারীকে রেটিং দিয়েছেন!");
+                return;
+            }
+
+            const chosenRating = parseInt(star.getAttribute('data-star'));
+            const currentAuthUser = firebase.auth().currentUser;
+            
+            if (currentAuthUser && currentAuthUser.uid === targetUserId) {
+                alert("আপনার নিজের প্রোফাইলে নিজে রেটিং দিতে পারবেন না!");
+                return;
+            }
+
+            localStorage.setItem(localStoreKey, chosenRating);
+            highlightStars(stars, chosenRating);
+
+            const userRef = db.collection('users').doc(targetUserId);
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const sfDoc = await transaction.get(userRef);
+                    if (!sfDoc.exists) {
+                        transaction.set(userRef, { ratingCount: 1, ratingSum: chosenRating });
+                        return;
+                    }
+                    
+                    let newCount = (sfDoc.data().ratingCount || 0) + 1;
+                    let newSum = (sfDoc.data().ratingSum || 0) + chosenRating;
+                    
+                    transaction.update(userRef, {
+                        ratingCount: newCount,
+                        ratingSum: newSum
+                    });
+                });
+
+                alert("সফলভাবে রেটিং দেওয়া হয়েছে! ধন্যবাদ।");
+                location.reload();
+
+            } catch (err) {
+                console.error("রেটিং ট্রানজেকশন ব্যর্থ:", err);
+            }
+        });
+    });
+}
+
+function highlightStars(stars, value) {
+    stars.forEach(s => {
+        const sVal = parseInt(s.getAttribute('data-star'));
+        if (sVal <= value) {
+            s.textContent = 'star';
+            s.classList.add('active');
+        } else {
+            s.textContent = 'star_border';
+            s.classList.remove('active');
+        }
+    });
+}
+
+function displayCalculatedRating(count, sum) {
+    const label = document.getElementById('ratingStatsLabel');
+    if (count === 0) {
+        label.textContent = "গড় রেটিং: ০.০ (০টি ভোট)";
+        return;
+    }
+    let average = (sum / count).toFixed(1);
+    label.textContent = `গড় রেটিং: ⭐ ${average} (${count}টি ভোট)`;
+            }
