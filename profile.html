@@ -17,11 +17,13 @@
         :root { 
             --primary: #007bff; 
             --primary-gradient: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
-            --success: #2ecc71; 
-            --dark: #1c1e21; /* Facebook Dark Neutral */
-            --gray: #65676b; /* Facebook Secondary Text */
-            --bg: #f0f2f5;   /* Facebook Background */
-            --border: #ced0d4;
+            --cover-gradient: linear-gradient(135deg, rgba(24, 43, 73, 0.9) 0%, rgba(0, 123, 255, 0.85) 100%);
+            --success: #28a745; 
+            --dark: #1c1e21; /* Facebook style dark */
+            --gray: #65676b; /* Facebook secondary text */
+            --bg: #f0f2f5;   /* Facebook body bg */
+            --gold: #f1c40f;
+            --border: #e4e6eb;
         }
         body { background-color: var(--bg); font-family: 'Segoe UI', Helvetica, Arial, sans-serif; margin: 0; padding-top: 15px; color: var(--dark); }
         .container { max-width: 650px; margin: auto; padding: 10px; box-sizing: border-box; }
@@ -40,8 +42,8 @@
 
         .profile-cover-photo {
             height: 140px;
-            background: rgb(0,0,200);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            background: var(--cover-gradient);
+            
             position: relative;
         }
         .profile-cover-photo::before {
