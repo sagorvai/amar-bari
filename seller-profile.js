@@ -30,35 +30,40 @@ function loadSellerProfileData() {
         if (doc.exists) {
             const uData = doc.data();
             
-            // নাম এবং বেসিক মেম্বার আইডি
+            // নাম সেটআপ
             document.getElementById('s-name').textContent = uData.fullName || uData.name || "সম্মানিত বিক্রেতা";
-            document.getElementById('s-uid-text').textContent = `মেম্বার আইডি: ...${targetUserId.substring(0,6)}`;
             
-            // 🎯 সরাসরি ইমেইল প্রদর্শন (কোনো হাইড ছাড়া)
+            // 🎯 ইমেইল ফিক্স: ফায়ারস্টোর ডক ফাইল থেকে সরাসরি রিড (uData.email)
             document.getElementById('s-email').textContent = uData.email || "ইমেইল সরবরাহ করা হয়নি";
             
-            // 🎯 নতুন ফেসবুক স্টাইল পরিচিতি ফিল্ডসমূহ ম্যাপিং
+            // মেম্বার আইডি
+            document.getElementById('s-uid-text').textContent = `...${targetUserId.substring(0,6)}`;
+            
+            // 🎯 নতুন ফেসবুক পরিচিতি ফিল্ডসমূহ ম্যাপিং
             document.getElementById('s-profession').textContent = uData.profession || "যুক্ত করা নেই";
             document.getElementById('s-location').textContent = uData.location || "যুক্ত করা নেই";
             
-            // মোবাইল ফিল্ড হ্যান্ডলিং
-            const phoneNum = uData.phoneNumber || uData.phone || "";
-            document.getElementById('s-phone').textContent = phoneNum ? phoneNum : "গোপন রাখা হয়েছে";
-
-            // ঐচ্ছিক অফিস অ্যাড্রেস কন্ডিশনাল ম্যানেজমেন্ট
-            const officeItem = document.getElementById('s-office-item');
-            if (uData.officeAddress && uData.officeAddress.trim() !== "") {
-                document.getElementById('s-office').textContent = uData.officeAddress;
-                officeItem.style.display = 'flex';
+            // মোবাইল নম্বর ভ্যালিডেশন
+            let userPhone = uData.phoneNumber || uData.phone || "";
+            if (userPhone) {
+                document.getElementById('s-phone').textContent = userPhone;
             } else {
-                officeItem.style.display = 'none';
+                document.getElementById('s-phone').textContent = "ফোন নম্বর সেট করা নেই";
             }
 
-            // বায়ো টেক্সট সেটআপ
+            // অফিস ঠিকানা শর্তসাপেক্ষে প্রদর্শন
+            if (uData.officeAddress && uData.officeAddress.trim() !== "") {
+                document.getElementById('s-office').textContent = uData.officeAddress;
+                document.getElementById('s-office-item').style.display = 'flex';
+            } else {
+                document.getElementById('s-office-item').style.display = 'none';
+            }
+
+            // 🎯 বায়ো নামের নিচে সেটআপ
             if (uData.bio && uData.bio.trim() !== "") {
                 document.getElementById('s-bio').textContent = `"${uData.bio}"`;
             } else {
-                document.getElementById('s-bio').textContent = "এই ইউজারের কোনো বিবরণ বা বায়ো পাওয়া যায়নি।";
+                document.getElementById('s-bio').textContent = "আপনার সম্পর্কে কিছু বলুন...";
             }
             
             // প্রোফাইল পিকচার
@@ -66,7 +71,7 @@ function loadSellerProfileData() {
                 document.getElementById('s-avatar').src = uData.profilePic;
             }
 
-            // ভেরিফাইড ব্যাজ হ্যান্ডলার
+            // ভেরিফাইড ব্যাজ
             if (uData.isVerified === true || uData.role === 'admin') {
                 document.getElementById('badgeVerified').style.display = 'flex';
             }
@@ -213,4 +218,4 @@ function displayCalculatedRating(count, sum) {
     }
     let average = (sum / count).toFixed(1);
     label.textContent = `গড় রেটিং: ⭐ ${average} (${count}টি ভোট)`;
-            }
+                                        }
