@@ -63,7 +63,7 @@ function loadSellerProfileData() {
             if (uData.bio && uData.bio.trim() !== "") {
                 document.getElementById('s-bio').textContent = `"${uData.bio}"`;
             } else {
-                document.getElementById('s-bio').textContent = "আপনার সম্পর্কে কিছু বলুন...";
+                document.getElementById('s-bio').textContent = "";
             }
             
             // প্রোফাইল পিকচার
