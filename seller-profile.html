@@ -17,35 +17,35 @@
             --primary-gradient: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
             --cover-gradient: linear-gradient(135deg, rgba(24, 43, 73, 0.9) 0%, rgba(0, 123, 255, 0.85) 100%);
             --success: #28a745; 
-            --dark: #2c3e50; 
-            --gray: #7f8c8d; 
-            --bg: #f4f7f6;
+            --dark: #1c1e21; /* Facebook style dark */
+            --gray: #65676b; /* Facebook secondary text */
+            --bg: #f0f2f5;   /* Facebook body bg */
             --gold: #f1c40f;
+            --border: #e4e6eb;
         }
-        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-top: 70px; }
-        .container { max-width: 800px; margin: auto; padding: 15px; }
+        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-top: 70px; color: var(--dark); }
+        .container { max-width: 600px; margin: auto; padding: 10px; box-sizing: border-box; }
         
-        .btn-back { background: white; border: 1px solid #ddd; color: var(--dark); padding: 8px 16px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 14px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: fit-content; transition: 0.2s; }
+        .btn-back { background: white; border: 1px solid #ddd; color: var(--dark); padding: 8px 16px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 14px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: fit-content; transition: 0.2s; }
         .btn-back:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* 👑 প্রিমিয়াম প্রোফাইলカード */
+        /* 👑 প্রিমিয়াম প্রোফাইল কার্ড */
         .seller-premium-card { 
             background: white; 
-            border-radius: 16px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            border-radius: 12px; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
             text-align: center; 
-            margin-bottom: 25px; 
+            margin-bottom: 16px; 
             position: relative;
             overflow: hidden;
-            border: 1px solid #e1e8ed;
+            border: 1px solid var(--border);
         }
 
-        /* 🏙️ রিয়েল এস্টেট থিম কভার ফটো গ্রাফিক্স */
+        /* 🏙️ কভার ফটো গ্রাফিক্স */
         .profile-cover-photo {
-            height: 160px;
+            height: 140px;
             background: var(--cover-gradient);
             position: relative;
-            overflow: hidden;
         }
         .profile-cover-photo::before {
             content: "corporate_fare";
@@ -53,23 +53,13 @@
             position: absolute;
             right: 15px;
             bottom: -15px;
-            font-size: 140px;
+            font-size: 120px;
             color: rgba(255, 255, 255, 0.08);
-            pointer-events: none;
-        }
-        .profile-cover-photo::after {
-            content: "home";
-            font-family: 'Material Icons';
-            position: absolute;
-            left: 20px;
-            top: 20px;
-            font-size: 70px;
-            color: rgba(255, 255, 255, 0.05);
             pointer-events: none;
         }
 
         .profile-content-box {
-            padding: 0px 20px 30px 20px;
+            padding: 0px 16px 20px 16px;
             position: relative;
             margin-top: -60px;
             z-index: 5;
@@ -93,85 +83,65 @@
             border-radius: 20px;
             color: white;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            backdrop-filter: blur(5px);
         }
-        .badge-verified { background: #00b894; border: 1px solid rgba(255,255,255,0.2); }
-        .badge-top-seller { background: #6c5ce7; border: 1px solid rgba(255,255,255,0.2); }
+        .badge-verified { background: #00b894; }
+        .badge-top-seller { background: #6c5ce7; }
 
-        .avatar-container { 
-            position: relative; 
-            width: 110px; 
-            height: 110px; 
-            margin: 0 auto 12px auto; 
-        }
-        .seller-avatar { 
-            width: 100%; 
-            height: 100%; 
-            border-radius: 50%; 
-            object-fit: cover; 
-            border: 4px solid white; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-            background: #fff; 
-        }
-        .status-dot { 
-            position: absolute; 
-            bottom: 6px; 
-            right: 6px; 
-            width: 14px; 
-            height: 14px; 
-            background: #2ecc71; 
-            border: 2px solid white; 
-            border-radius: 50%; 
-            box-shadow: 0 0 10px #2ecc71; 
-        }
+        .avatar-container { position: relative; width: 110px; height: 110px; margin: 0 auto 10px auto; }
+        .seller-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.15); background: #fff; }
+        .status-dot { position: absolute; bottom: 6px; right: 6px; width: 14px; height: 14px; background: #2ecc71; border: 2px solid white; border-radius: 50%; }
 
-        .seller-name { font-size: 24px; font-weight: bold; color: var(--dark); margin: 0 0 8px 0; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .seller-name { font-size: 24px; font-weight: bold; color: var(--dark); margin: 0 0 4px 0; }
         
-        /* কন্টাক্ট ও ফেসবুক ইন্ট্রো ইনফো বক্স গ্রিড */
-        .meta-info-grid { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; font-size: 13px; font-weight: 500; }
-        .meta-item { display: flex; align-items: center; gap: 6px; background: #f0f4f8; padding: 7px 14px; border-radius: 20px; border: 1px solid #dce4ec; color: var(--dark); transition: 0.2s; }
-        .meta-item:hover { background: #e1e9f0; }
-        .meta-item i { font-size: 17px; color: var(--primary); }
-        
-        /* হাইলাইটেড কন্টাক্ট স্টাইল */
-        .meta-item.email-style { border-color: #ffbe76; background: #fff5e6; }
-        .meta-item.email-style i { color: #e67e22; }
-        .meta-item.phone-style { border-color: #a29bfe; background: #f5f4ff; }
-        .meta-item.phone-style i { color: #6c5ce7; }
+        /* 💬 বায়ো টেক্সট (এখন একদম নামের নিচে) */
+        .seller-bio { font-size: 14px; color: var(--gray); line-height: 1.4; margin: 6px auto 12px auto; max-width: 85%; font-style: italic; }
 
-        .seller-bio { font-size: 14px; color: #555; line-height: 1.6; border-top: 1px dashed #e1e8ed; padding-top: 15px; margin: 10px auto 0 auto; max-width: 600px; font-style: italic; }
+        /* 📋 ফেসবুক অরিজিনাল স্টাইল ইন্ট্রো পরিচিতি বক্স (সুবিন্যস্ত বামে এলাইন করা) */
+        .facebook-intro-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            padding: 16px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+        .facebook-intro-card h3 { margin: 0 0 12px 0; font-size: 17px; font-weight: bold; color: var(--dark); }
+        
+        .intro-list { list-style: none; padding: 0; margin: 0; }
+        .intro-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; color: var(--dark); }
+        .intro-item i { color: #8c939d; font-size: 20px; }
+        .intro-item strong { font-weight: 600; }
 
         /* ⭐ পাবলিক রেটিং এবং রিভিউ সেকশন */
-        .profile-rating-section { background: #fffdf3; border: 1px solid #fbf1c9; padding: 18px; border-radius: 14px; margin-top: 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
-        .rating-title { font-size: 13px; font-weight: bold; color: #b78a00; text-transform: uppercase; letter-spacing: 0.5px; }
+        .profile-rating-section { background: #fffdf3; border: 1px solid #fbf1c9; padding: 15px; border-radius: 12px; margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .rating-title { font-size: 13px; font-weight: bold; color: #b78a00; text-transform: uppercase; }
         .stars-display { display: flex; gap: 4px; }
-        .stars-display i { font-size: 28px; color: #ddd; cursor: pointer; transition: color 0.2s, transform 0.1s; }
-        .stars-display i:hover { transform: scale(1.15); }
-        .stars-display i.active { color: var(--gold); text-shadow: 0 2px 5px rgba(241, 196, 15, 0.3); }
-        .rating-stats-text { font-size: 12px; color: var(--dark); font-weight: 600; background: #fef6d3; padding: 4px 10px; border-radius: 10px; margin-top: 4px; }
+        .stars-display i { font-size: 26px; color: #ddd; cursor: pointer; transition: 0.1s; }
+        .stars-display i.active { color: var(--gold); }
+        .rating-stats-text { font-size: 12px; color: var(--dark); font-weight: 600; background: #fef6d3; padding: 4px 10px; border-radius: 10px; }
 
         /* প্রপার্টি লিস্টিং কার্ড ডিজাইন */
-        .list-title { font-size: 18px; font-weight: bold; color: var(--dark); margin: 35px 0 15px 0; display: flex; align-items: center; gap: 8px; border-left: 4px solid var(--primary); padding-left: 10px; }
-        .seller-posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 15px; }
-        .post-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); border: 1px solid #e1e8ed; position: relative; }
-        .post-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.12); border-color: var(--primary); }
-        .post-card img { width: 100%; height: 125px; object-fit: cover; background: #eee; }
+        .list-title { font-size: 16px; font-weight: bold; color: var(--dark); margin: 25px 0 12px 0; display: flex; align-items: center; gap: 6px; border-left: 4px solid var(--primary); padding-left: 8px; }
+        .seller-posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+        .post-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid var(--border); position: relative; }
+        .post-card img { width: 100%; height: 110px; object-fit: cover; background: #eee; }
         
-        .card-tag { position: absolute; top: 8px; left: 8px; background: rgba(0, 0, 0, 0.75); color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; backdrop-filter: blur(2px); }
-        .post-info { padding: 12px; }
-        .post-title-text { font-size: 13px; font-weight: bold; margin: 0; height: 36px; overflow: hidden; color: var(--dark); line-height: 1.4; }
-        .post-meta-loc { font-size: 11px; color: var(--gray); display: flex; align-items: center; gap: 2px; margin: 6px 0; }
+        .card-tag { position: absolute; top: 6px; left: 6px; background: rgba(0, 0, 0, 0.75); color: white; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; }
+        .post-info { padding: 8px; }
+        .post-title-text { font-size: 12px; font-weight: bold; margin: 0; height: 32px; overflow: hidden; color: var(--dark); line-height: 1.3; }
+        .post-meta-loc { font-size: 11px; color: var(--gray); display: flex; align-items: center; gap: 2px; margin: 4px 0; }
         .post-meta-loc i { font-size: 12px; }
-        .post-price-box { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; border-top: 1px solid #f5f5f5; padding-top: 8px; }
-        .post-price-text { color: var(--success); font-size: 13px; font-weight: bold; margin: 0; }
+        .post-price-box { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; border-top: 1px solid #f5f5f5; padding-top: 6px; }
+        .post-price-text { color: var(--success); font-size: 12px; font-weight: bold; margin: 0; }
         
-        .no-post { text-align: center; color: var(--gray); padding: 40px; font-weight: 500; width: 100%; grid-column: span 4; background: white; border-radius: 12px; }
+        .no-post { text-align: center; color: var(--gray); padding: 30px; font-weight: 500; width: 100%; background: white; border-radius: 8px; border: 1px solid var(--border); box-sizing: border-box; }
     </style>
 </head>
 <body>
 
     <header class="main-header" style="position: fixed; top: 0; left: 0; right: 0; background-color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.08); z-index: 1000; padding: 12px 15px;">
-        <div style="display: flex; align-items: center; max-width: 800px; margin: auto;">
+        <div style="display: flex; align-items: center; max-width: 600px; margin: auto;">
             <a href="index.html" style="display: flex; align-items: center; font-size: 1.4em; font-weight: bold; color: #007bff; text-decoration: none;">
                <i class="material-icons" style="margin-right: 5px;">home</i> <span>আমার বাড়ি.কম</span>
             </a>
@@ -181,8 +151,8 @@
     <div class="container">
         <button class="btn-back" onclick="window.history.back()"><i class="material-icons">arrow_back</i> ফিরে যান</button>
 
+        <!-- 👑 মূল কার্ড প্রোফাইল -->
         <div class="seller-premium-card">
-            
             <div class="profile-cover-photo">
                 <div class="viral-badge-box">
                     <div class="badge-item badge-verified" id="badgeVerified" style="display: none;">
@@ -200,52 +170,59 @@
                     <div class="status-dot"></div>
                 </div>
 
-                <h1 id="s-name" class="seller-name">লোড হচ্ছে...</h1>
+                <!-- 🎯 নাম -->
+                <h1 id="s-name" class="seller-name">로드 হচ্ছে...</h1>
                 
-                <!-- 📋 কন্টাক্ট এবং ফেসবুক পরিচিতি গ্রিড সেকশন -->
-                <div class="meta-info-grid">
-                    <div class="meta-item">
-                        <i class="material-icons">work</i>
-                        <span>পেশা: <span id="s-profession">...</span></span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="material-icons">location_on</i>
-                        <span>বাসস্থান: <span id="s-location">...</span></span>
-                    </div>
-                    <div class="meta-item" id="s-office-item" style="display: none;">
-                        <i class="material-icons">business</i>
-                        <span>অফিস: <span id="s-office">...</span></span>
-                    </div>
-                    <div class="meta-item class phone-style">
-                        <i class="material-icons">phone</i>
-                        <span id="s-phone">...</span>
-                    </div>
-                    <div class="meta-item email-style">
-                        <i class="material-icons">mail</i>
-                        <span id="s-email">...</span> 
-                    </div>
-                    <div class="meta-item">
-                        <i class="material-icons">assignment_ind</i>
-                        <span id="s-uid-text">মেম্বার আইডি: ...</span>
-                    </div>
-                </div>
-
+                <!-- 🎯 বায়ো (এখন পারফেক্টলি নামের নিচে) -->
                 <p id="s-bio" class="seller-bio">এই ইউজারের কোনো বিবরণ বা বায়ো পাওয়া যায়নি।</p>
-
-                <div class="profile-rating-section">
-                    <span class="rating-title" id="ratingHeader">এই পোস্টদাতাকে রেটিং দিন</span>
-                    <div class="stars-display" id="profileStarsZone">
-                        <i class="material-icons" data-star="1">star_border</i>
-                        <i class="material-icons" data-star="2">star_border</i>
-                        <i class="material-icons" data-star="3">star_border</i>
-                        <i class="material-icons" data-star="4">star_border</i>
-                        <i class="material-icons" data-star="5">star_border</i>
-                    </div>
-                    <span class="rating-stats-text" id="ratingStatsLabel">গড় রেটিং: ০.০ (০টি ভোট)</span>
-                </div>
             </div>
         </div>
 
+        <!-- 📋 ফেসবুক অরিজিনাল স্টাইল ইন্ট্রো পরিচিতি বক্স (একত্রিত ও সুবিন্যস্ত) -->
+        <div class="facebook-intro-card">
+            <h3>পরিচিতি (Intro)</h3>
+            <ul class="intro-list">
+                <li class="intro-item">
+                    <i class="material-icons">work</i>
+                    <span>পেশা: <strong id="s-profession">যুক্ত করা নেই</strong></span>
+                </li>
+                <li class="intro-item">
+                    <i class="material-icons">location_on</i>
+                    <span>বসবাস করেন: <strong id="s-location">যুক্ত করা নেই</strong></span>
+                </li>
+                <li class="intro-item" id="s-office-item" style="display: none;">
+                    <i class="material-icons">business</i>
+                    <span>অফিস: <strong id="s-office">...</strong></span>
+                </li>
+                <li class="intro-item">
+                    <i class="material-icons">phone</i>
+                    <span>মোবাইল: <strong id="s-phone">গোপন রাখা হয়েছে</strong></span>
+                </li>
+                <li class="intro-item">
+                    <i class="material-icons">mail</i>
+                    <span>ইমেইল: <strong id="s-email">ইমেইল সরবরাহ করা হয়নি</strong></span>
+                </li>
+                <li class="intro-item">
+                    <i class="material-icons">assignment_ind</i>
+                    <span>মেম্বার আইডি: <strong id="s-uid-text">...</strong></span>
+                </li>
+            </ul>
+
+            <!-- পাবলিক রেটিং জোন ইন্ট্রো বক্সের ভেতরেই বিল্ট-ইন -->
+            <div class="profile-rating-section">
+                <span class="rating-title" id="ratingHeader">এই পোস্টদাতাকে রেটিং দিন</span>
+                <div class="stars-display" id="profileStarsZone">
+                    <i class="material-icons" data-star="1">star_border</i>
+                    <i class="material-icons" data-star="2">star_border</i>
+                    <i class="material-icons" data-star="3">star_border</i>
+                    <i class="material-icons" data-star="4">star_border</i>
+                    <i class="material-icons" data-star="5">star_border</i>
+                </div>
+                <span class="rating-stats-text" id="ratingStatsLabel">গড় রেটিং: ০.০ (০টি ভোট)</span>
+            </div>
+        </div>
+
+        <!-- প্রপার্টি লিস্টিং -->
         <div class="list-title">
             <i class="material-icons" style="color:var(--primary)">maps_home_work</i> 
             <span>এই বিজ্ঞাপনদাতার একটিভ প্রপার্টি সমূহ:</span>
