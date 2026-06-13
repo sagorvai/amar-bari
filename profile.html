@@ -15,6 +15,7 @@
 
     <style>
         :root { 
+         
             --primary: #007bff; 
             --primary-gradient: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
             --success: #2ecc71; 
@@ -26,6 +27,54 @@
         body { background-color: var(--bg); font-family: 'Segoe UI', Helvetica, Arial, sans-serif; margin: 0; padding-top: 15px; color: var(--dark); }
         .container { max-width: 650px; margin: auto; padding: 10px; box-sizing: border-box; }
 
+        
+
+/* হেডার ফিক্সড পজিশন */
+.main-header {
+    position: fixed; 
+    top: 0; left: 0; right: 0;
+    background-color: white; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+    z-index: 1000; 
+    padding: 8px 15px;
+}
+
+.header-top { display: flex; align-items: center; justify-content: space-between; }
+.header-left { display: flex; align-items: center; }
+.menu-icon { cursor: pointer; margin-right: 10px; color: var(--primary-color); }
+
+.header-actions { display: flex; align-items: center; gap: 12px; }
+
+/* প্রোফাইল ইমেজ গোল করার স্টাইল */
+.profile-image-wrapper {
+    width: 35px; height: 35px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--primary-color);
+    cursor: pointer;
+}
+.profile-image-wrapper img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+
+/* সাইডবার স্টাইল */
+.sidebar {
+    position: fixed; 
+    top: 0; left: -250px; 
+    width: 250px; height: 100%;
+    background-color: #34495e;
+    transition: left 0.3s ease; 
+    z-index: 1050; 
+}
+.sidebar.active { left: 0; }
+.overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); display: none; z-index: 1040;
+}
+.overlay.active { display: block; }
+        
+        
         /* 👑 সেলার প্রোফাইল কভার (জলছাপ গ্রাফিক্স ডিজাইন সহ) */
         .profile-premium-card { 
             background: white; 
@@ -133,6 +182,62 @@
 <body>
 
     <main class="main-content container">
+        
+        <!-- হেডার অংশ -->
+<header class="main-header">
+    <div class="header-top">
+        <div class="header-left">
+            <!-- থ্রি লাইন মেনু আইকন -->
+            <i class="material-icons menu-icon" id="menuButton">menu</i>
+            
+            <a href="index.html" class="logo-title">
+                <i class="material-icons logo-icon">home</i>  
+                <span>আমার বাড়ি.কম</span>
+            </a>
+        </div>
+        
+        <div class="header-actions">
+            <!-- নোটিফিকেশন বাটন -->
+            <div class="icon-wrapper" id="notificationButton"> 
+                <i class="material-icons notification-icon">notifications</i>
+                <span class="notification-count" id="notification-count"></span>
+            </div>
+            
+            <!-- পোস্ট করার বাটন -->
+            <div class="icon-wrapper" id="headerPostButton">
+                <i class="material-icons post-icon-header">add_circle_outline</i>
+            </div>
+            
+            <!-- মেসেজ বাটন -->
+            <div class="icon-wrapper" id="messageButton">
+                <i class="material-icons message-icon">message</i>
+                <span class="notification-count" id="message-count"></span>
+            </div>
+
+            <!-- প্রোফাইল ইমেজ -->
+            <div class="profile-image-wrapper" id="profileImageWrapper">
+                <img src="placeholder.jpg" alt="Profile" id="profileImage">
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- সাইডবার (মেনু) অংশ -->
+<div class="sidebar" id="sidebar">
+    <nav>
+        <a href="index.html" class="sidebar-logo">
+            <i class="material-icons">home</i> 
+            <span>আমার বাড়ি.কম</span>
+        </a>
+        <a href="index.html"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+        <a href="post.html"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+        <a href="auth.html"><i class="material-icons">lock_open</i> লগইন</a>
+    </nav>
+</div>
+
+<!-- সাইডবার ওপেন হলে ব্যাকগ্রাউন্ড অন্ধকার করার জন্য ওভারলে -->
+<div class="overlay" id="overlay"></div>
+        
         
         <!-- 👑 সেলার প্রোফাইল কার্ড -->
         <div class="profile-premium-card">
