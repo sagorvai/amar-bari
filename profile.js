@@ -263,3 +263,44 @@ async function deletePost(id) {
         location.reload();
     }
                               }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const menuButton = document.getElementById('menuButton');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+
+    // সাইডবার ওপেন/ক্লোজ লজিক
+    menuButton?.addEventListener('click', () => {
+        sidebar.classList.add('active');
+        overlay.classList.add('active');
+    });
+
+    overlay?.addEventListener('click', () => {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+    });
+
+    // বাটন ক্লিক নেভিগেশন
+    document.getElementById('notificationButton')?.addEventListener('click', () => location.href = 'notifications.html');
+    document.getElementById('headerPostButton')?.addEventListener('click', () => location.href = 'post.html');
+    document.getElementById('messageButton')?.addEventListener('click', () => location.href = 'messages.html');
+    document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
+});
+
+// লগইন করা ইউজারের প্রোফাইল পিকচার সেট করা
+firebase.auth().onAuthStateChanged(async (user) => {
+    const headerProfileImg = document.querySelector('#profileImage img');
+    if (user && headerProfileImg) {
+        try {
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists && userDoc.data().profilePic) {
+                headerProfileImg.src = userDoc.data().profilePic;
+            } else if (user.photoURL) {
+                headerProfileImg.src = user.photoURL;
+            }
+        } catch (error) {
+            console.error("প্রোফাইল পিকচার লোড এরর:", error);
+        }
+    }
+});
+
