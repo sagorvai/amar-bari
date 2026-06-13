@@ -142,6 +142,269 @@
                     <i class="material-icons post-icon-header">add_circle_outline</i>
                     <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
                 </div>
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>আমাদের সম্পর্কে - আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <script>
+      // **আপনার বিদ্যমান Firebase কনফিগারেশন**
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+      };
+      
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+    </script>
+    
+    <style>
+        /* CSS ভেরিয়েবল */
+        :root {
+            --primary-color: #007bff;
+        }
+
+        /* গ্লোবাল ফিক্স */
+        body {
+            margin: 0; 
+            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
+            font-family: Arial, sans-serif; 
+        }
+
+        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
+        .main-header {
+             position: fixed; 
+             top: 0;
+             left: 0;
+             right: 0;
+             background-color: white; 
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             z-index: 1000; 
+             padding-bottom: 0;
+        }
+        
+        /* --- [ফিক্স: সাইডবার পজিশনিং এবং ট্রানজিশন] --- */
+        .sidebar {
+            position: fixed; 
+            top: 0;
+            left: -250px; 
+            width: 250px; 
+            height: 100%;
+            background-color: #34495e; /* আপনার পছন্দ করা গাঢ় নীল/ধূসর রঙ */
+            transition: left 0.3s ease; 
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
+            z-index: 1050; 
+            overflow-y: auto;
+            padding-top: 50px; /* হেডার এর নিচে থেকে শুরু হবে */
+        }
+        
+        .sidebar.active {
+            left: 0; 
+        }
+        
+        .overlay {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); 
+            z-index: 1040; 
+            display: none; 
+        }
+        
+        .overlay.active {
+            display: block; 
+        }
+        
+        /* সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা */
+        .sidebar a {
+            color: #ffffff; 
+            padding: 12px 15px; 
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .sidebar a i.material-icons {
+            color: #ffffff; 
+            margin-right: 10px;
+        }
+
+        .sidebar a:hover {
+            background-color: #3e5369; 
+        }
+        
+        /* সাইডবারের লোগো লিঙ্ক (প্রথম লিঙ্ক) */
+        .sidebar-logo {
+            padding: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white !important; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+        }
+        /* --- [ফিক্স শেষ] --- */
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; 
+            padding: 8px 15px; 
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0; 
+        }
+
+        .menu-icon {
+             margin-right: 0; 
+             cursor: pointer;
+        }
+        
+        .logo-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.8em; 
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 0px; 
+            text-decoration: none; 
+            white-space: nowrap; 
+        }
+        .logo-title:visited {
+             color: var(--primary-color);
+        }
+        .logo-icon {
+            margin-right: 5px;
+        }
+
+        /* ডানের ব্লক (আইকন) ফিক্স */
+        .header-actions {
+             display: flex;
+             align-items: center;
+             gap: 12px; 
+             position: relative; 
+             flex-shrink: 0; 
+        }
+        
+        /* কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
+        .icon-wrapper {
+             position: relative;
+             display: inline-flex;
+             cursor: pointer;
+             align-items: center; 
+             justify-content: center;
+             height: 30px; 
+             width: 30px; 
+        }
+        
+        /* কমন নোটিফিকেশন কাউন্ট স্টাইল */
+        .notification-count {
+            position: absolute;
+            top: -5px; 
+            right: -8px; 
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 5px; 
+            font-size: 0.7em;
+            font-weight: bold;
+            min-width: 10px;
+            text-align: center;
+            line-height: 1; 
+            display: none; 
+        }
+        
+        /* আইকন কালার */
+        .notification-icon { color: var(--primary-color); }
+        .message-icon { color: var(--primary-color); }
+        .post-icon-header { color: #28a745; }
+
+        /* প্রোফাইল ইমেজ স্টাইল */
+        .profile-image-wrapper {
+            cursor: pointer;
+            width: 35px; /* আইকন থেকে সামান্য বড় */
+            height: 35px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary-color); /* রঙের বর্ডার */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #profileImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
+        @media (max-width: 600px) {
+            body {
+                padding-top: 46px; 
+            }
+            .logo-title {
+                 font-size: 1.5em; 
+                 margin-left: 0px;
+            }
+            .header-actions {
+                 gap: 8px; 
+            }
+            .profile-image-wrapper {
+                 width: 30px; 
+                 height: 30px;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-top">
+            
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                
+                <a href="index.html" class="logo-title">
+                   <i class="material-icons logo-icon">home</i>  
+                    <span>আমার বাড়ি.কম</span>
+                </a>
+            </div>
+            
+            <div class="header-actions">
+                
+                <div class="icon-wrapper" id="notificationButton"> 
+                    <i class="material-icons notification-icon">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
+                </div>
+                
+                <div class="icon-wrapper" id="headerPostButton">
+                    <i class="material-icons post-icon-header">add_circle_outline</i>
+                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
+                </div>
                 
                 <div class="icon-wrapper" id="messageButton">
                     <i class="material-icons message-icon">message</i>
