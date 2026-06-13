@@ -76,61 +76,109 @@
         /* 📋 ফেসবুক স্টাইল সাজানো গোছানো পরিচিতি কার্ড (Intro Box) */
         .facebook-intro-card {
             background: white;
-            border-radius: 12px;
-            border: 1px solid #e4e6eb;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            padding: 16px;
-            margin-bottom: 16px;
-            text-align: left;
+.message-icon { color: var(--primary-color); }
+        .post-icon-header { color: #28a745; }
+
+        /* প্রোফাইল ইমেজ স্টাইল */
+        .profile-image-wrapper {
+            cursor: pointer;
+            width: 35px; /* আইকন থেকে সামান্য বড় */
+            height: 35px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary-color); /* রঙের বর্ডার */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .facebook-intro-card h3 { margin: 0 0 12px 0; font-size: 17px; font-weight: bold; color: var(--dark); }
+        #profileImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
         
-        .intro-list { list-style: none; padding: 0; margin: 0; }
-        .intro-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; color: var(--dark); }
-        .intro-item i { color: #8c939d; font-size: 20px; }
-        .intro-item strong { font-weight: 600; }
-
-        .action-buttons-div { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 5px; border-top: 1px solid #e4e6eb; padding-top: 15px; }
+        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
+        @media (max-width: 600px) {
+            body {
+                padding-top: 46px; 
+            }
+            .logo-title {
+                 font-size: 1.5em; 
+                 margin-left: 0px;
+            }
+            .header-actions {
+                 gap: 8px; 
+            }
+            .profile-image-wrapper {
+                 width: 30px; 
+                 height: 30px;
+            }
+        }
         
-        .edit-badge { background: #e4e6eb; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: var(--dark); display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; font-weight: 600; }
-        .edit-badge:hover { background: #d8dadf; }
-
-        .add-property-btn { background: var(--primary); padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 6px; border: none; transition: 0.2s; font-weight: 600; }
-        .add-property-btn:hover { background: #0069d9; }
-
-        /* 📊 স্ট্যাটাস কন্টেইনার */
-        .stats-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
-        .stat-card { background: white; padding: 12px 5px; border-radius: 8px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid #e4e6eb; }
-        .stat-card h4 { margin: 0 0 4px 0; color: var(--gray); font-size: 12px; font-weight: 600; }
-        .stat-card p { font-size: 16px; font-weight: bold; margin: 0; color: var(--dark); }
-
-        /* ট্যাব ডিজাইন */
-        .profile-tabs { display: flex; gap: 8px; border-bottom: 1px solid #ced0d4; margin-bottom: 16px; }
-        .tab-btn { padding: 10px 12px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gray); transition: 0.3s; position: relative; }
-        .tab-btn.active { color: var(--primary); }
-        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px; }
-        
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 12px; }
-        .property-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid #e4e6eb; transition: 0.3s; }
-        
-        /* মডাল */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); overflow-y: auto; backdrop-filter: blur(3px); }
-        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 92%; max-width: 440px; border-radius: 12px; position: relative; box-shadow: 0 12px 28px rgba(0,0,0,0.2); box-sizing: border-box; }
-        .close-modal { position: absolute; right: 16px; top: 12px; font-size: 24px; cursor: pointer; color: var(--gray); }
-
-        .input-group { margin-bottom: 12px; text-align: left; }
-        .input-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; color: var(--dark); }
-        .input-group input, .input-group textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 14px; font-family: inherit; }
-        .input-group textarea { resize: none; height: 60px; }
-        
-        .submit-button { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; margin-top: 8px; }
-        .submit-button:disabled { background: #cbd5e1; cursor: not-allowed; }
     </style>
 </head>
 <body>
+
+    <header class="main-header">
+        <div class="header-top">
+            
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                
+                <a href="index.html" class="logo-title">
+                   <i class="material-icons logo-icon">home</i>  
+                    <span>আমার বাড়ি.কম</span>
+                </a>
+            </div>
+            
+            <div class="header-actions">
+                
+                <div class="icon-wrapper" id="notificationButton"> 
+                    <i class="material-icons notification-icon">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
+                </div>
+                
+                <div class="icon-wrapper" id="headerPostButton">
+                    <i class="material-icons post-icon-header">add_circle_outline</i>
+                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
+                </div>
+                
+                <div class="icon-wrapper" id="messageButton">
+                    <i class="material-icons message-icon">message</i>
+                    <span class="notification-count" id="message-count"></span>
+                </div>
+                
+                <div class="profile-image-wrapper" id="profileImageWrapper">
+    <img src="placeholder.jpg" alt="Profile" id="profileImage">
+</div>
+
+<div class="notification-dropdown" id="notification-dropdown"></div>
+            </div>
+        </div>
+        
+    </header>
+    
+    <div class="sidebar" id="sidebar">
+        <nav>
+            <a href="index.html" class="sidebar-logo">
+                <i class="material-icons">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
+            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            
+            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
+            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            
+        </nav>
+    </div>
+    
+    <div class="overlay" id="overlay"></div>
 
     <main class="main-content container">
         
@@ -282,17 +330,24 @@
         </div>
     </div>
 
-    <script src="profile.js"></script>
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
+    </footer>
+    
+    <script src="notifications.js"></script> 
+    
     <script>
-        function openTab(evt, tabName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) { tabcontent[i].classList.remove("active"); }
-            tablinks = document.getElementsByClassName("tab-btn");
-            for (i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
-        }
-    </script>
-</body>
-        </html>
+  // header_logic.js
+
+// 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
+firebase.auth().onAuthStateChanged(async (user) => {
+    const headerProfileImg = document.querySelector('#profileImageWrapper img');
+    
+    if (user && headerProfileImg) {
+        try {
+            // ফায়ারবেস 'users' কালেকশন থেকে ইউজারের ডাটা আনা হচ্ছে
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists && userDoc.data().profilePic) {
+                // ডাটাবেজে প্রোফাইল পিকচার থাকলে সেটি হেডারে সেট হবে
