@@ -15,310 +15,160 @@
 
     <style>
         :root { 
-         
             --primary: #007bff; 
+            --primary-color: #007bff;
             --primary-gradient: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
             --success: #2ecc71; 
-            --dark: #1c1e21; /* Facebook Dark Neutral */
-            --gray: #65676b; /* Facebook Secondary Text */
-            --bg: #f0f2f5;   /* Facebook Background */
+            --dark: #1c1e21;
+            --gray: #65676b;
+            --bg: #f0f2f5;
             --border: #ced0d4;
         }
-        body { background-color: var(--bg); font-family: 'Segoe UI', Helvetica, Arial, sans-serif; margin: 0; padding-top: 15px; color: var(--dark); }
+        
+        body { background-color: var(--bg); font-family: 'Segoe UI', Helvetica, Arial, sans-serif; margin: 0; padding-top: 60px; color: var(--dark); }
+        
+        /* --- হেডার স্টাইল --- */
+        .main-header {
+             position: fixed; top: 0; left: 0; right: 0;
+             background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             z-index: 1000; padding: 8px 15px;
+        }
+        .header-top { display: flex; align-items: center; justify-content: space-between; }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .menu-icon { cursor: pointer; color: var(--dark); }
+        .logo-title { display: flex; align-items: center; font-size: 1.5em; font-weight: bold; color: var(--primary); text-decoration: none; }
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .icon-wrapper { position: relative; cursor: pointer; color: var(--primary); }
+        .profile-image-wrapper { 
+            width: 35px; height: 35px; border-radius: 50%; overflow: hidden; 
+            border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center;
+        }
+        .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- সাইডবার স্টাইল --- */
+        .sidebar {
+            position: fixed; top: 0; left: -250px; width: 250px; height: 100%;
+            background-color: #34495e; transition: left 0.3s ease; 
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5); z-index: 1050; padding-top: 20px;
+        }
+        .sidebar.active { left: 0; }
+        .sidebar a { color: white; padding: 12px 20px; display: flex; align-items: center; text-decoration: none; gap: 10px; }
+        .sidebar a:hover { background: #3e5369; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040; display: none; }
+        .overlay.active { display: block; }
+
+        /* প্রোফাইল কন্টেন্ট এরিয়া */
         .container { max-width: 650px; margin: auto; padding: 10px; box-sizing: border-box; }
-
-        
-
-/* হেডার ফিক্সড পজিশন */
-.main-header {
-    position: fixed; 
-    top: 0; left: 0; right: 0;
-    background-color: white; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-    z-index: 1000; 
-    padding: 8px 15px;
-}
-
-.header-top { display: flex; align-items: center; justify-content: space-between; }
-.header-left { display: flex; align-items: center; }
-.menu-icon { cursor: pointer; margin-right: 10px; color: var(--primary-color); }
-
-.header-actions { display: flex; align-items: center; gap: 12px; }
-
-/* প্রোফাইল ইমেজ গোল করার স্টাইল */
-.profile-image-wrapper {
-    width: 35px; height: 35px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 2px solid var(--primary-color);
-    cursor: pointer;
-}
-.profile-image-wrapper img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-}
-
-/* সাইডবার স্টাইল */
-.sidebar {
-    position: fixed; 
-    top: 0; left: -250px; 
-    width: 250px; height: 100%;
-    background-color: #34495e;
-    transition: left 0.3s ease; 
-    z-index: 1050; 
-}
-.sidebar.active { left: 0; }
-.overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); display: none; z-index: 1040;
-}
-.overlay.active { display: block; }
-        
-        
-        /* 👑 সেলার প্রোফাইল কভার (জলছাপ গ্রাফিক্স ডিজাইন সহ) */
-        .profile-premium-card { 
-            background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
-            text-align: center; 
-            margin-bottom: 16px; 
-            position: relative;
-            overflow: hidden;
-            border: 1px solid #e4e6eb;
-        }
-
+        .profile-premium-card { background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; border: 1px solid #e4e6eb; }
         .profile-cover-photo {
-            height: 140px;
-            /* সেলার থিম জলছাপ গ্রাফিক্স প্যাটার্ন (CSS Blueprint & City Grid Lines) */
-            background-color: #1e3c72;
-            background-image: 
-                linear-gradient(rgba(30, 60, 114, 0.85), rgba(42, 82, 152, 0.95)),
-                radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1) 0%, transparent 60%),
-                linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%),
-                linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%);
-            background-size: auto, auto, 40px 40px, 40px 40px;
-            position: relative;
+            height: 140px; background-color: #1e3c72;
+            background-image: linear-gradient(rgba(30, 60, 114, 0.85), rgba(42, 82, 152, 0.95)), radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1) 0%, transparent 60%);
         }
-
-        .profile-content-box {
-            padding: 0px 16px 20px 16px;
-            position: relative;
-            margin-top: -60px;
-            z-index: 5;
-        }
-
+        .profile-content-box { padding: 0px 16px 20px 16px; position: relative; margin-top: -60px; z-index: 5; }
         .avatar-container { position: relative; width: 120px; height: 120px; margin: 0 auto 10px auto; }
         .profile-avatar-big { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background: #eee; }
-        
         .user-info h2 { margin: 0 0 4px 0; font-size: 24px; color: var(--dark); font-weight: bold; }
-        
-        /* 💬 ফেসবুক স্টাইল বায়ো (Bio) */
-        .user-bio-text {
-            font-size: 14px;
-            color: var(--gray);
-            max-width: 85%;
-            margin: 8px auto 14px auto;
-            line-height: 1.4;
-            font-style: italic;
-        }
-
-        /* 📋 ফেসবুক স্টাইল সাজানো গোছানো পরিচিতি কার্ড (Intro Box) */
-        .facebook-intro-card {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e4e6eb;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            padding: 16px;
-            margin-bottom: 16px;
-            text-align: left;
-        }
-        .facebook-intro-card h3 { margin: 0 0 12px 0; font-size: 17px; font-weight: bold; color: var(--dark); }
-        
+        .user-bio-text { font-size: 14px; color: var(--gray); max-width: 85%; margin: 8px auto 14px auto; font-style: italic; }
+        .facebook-intro-card { background: white; border-radius: 12px; border: 1px solid #e4e6eb; padding: 16px; margin-bottom: 16px; text-align: left; }
         .intro-list { list-style: none; padding: 0; margin: 0; }
-        .intro-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; color: var(--dark); }
-        .intro-item i { color: #8c939d; font-size: 20px; }
-        .intro-item strong { font-weight: 600; }
-
+        .intro-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; }
         .action-buttons-div { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 5px; border-top: 1px solid #e4e6eb; padding-top: 15px; }
-        
-        .edit-badge { background: #e4e6eb; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: var(--dark); display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; font-weight: 600; }
-        .edit-badge:hover { background: #d8dadf; }
-
-        .add-property-btn { background: var(--primary); padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 6px; border: none; transition: 0.2s; font-weight: 600; }
-        .add-property-btn:hover { background: #0069d9; }
-
-        /* 📊 স্ট্যাটাস কন্টেইনার */
+        .edit-badge { background: #e4e6eb; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        .add-property-btn { background: var(--primary); padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: white; border: none; font-weight: 600; display: flex; align-items: center; gap: 5px; }
         .stats-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
-        .stat-card { background: white; padding: 12px 5px; border-radius: 8px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid #e4e6eb; }
-        .stat-card h4 { margin: 0 0 4px 0; color: var(--gray); font-size: 12px; font-weight: 600; }
-        .stat-card p { font-size: 16px; font-weight: bold; margin: 0; color: var(--dark); }
-
-        /* ট্যাব ডিজাইন */
-        .profile-tabs { display: flex; gap: 8px; border-bottom: 1px solid #ced0d4; margin-bottom: 16px; }
-        .tab-btn { padding: 10px 12px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gray); transition: 0.3s; position: relative; }
-        .tab-btn.active { color: var(--primary); }
-        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px; }
-        
+        .stat-card { background: white; padding: 12px 5px; border-radius: 8px; text-align: center; border: 1px solid #e4e6eb; }
+        .profile-tabs { display: flex; border-bottom: 1px solid #ced0d4; margin-bottom: 16px; }
+        .tab-btn { padding: 10px 15px; border: none; background: none; cursor: pointer; font-weight: bold; color: var(--gray); }
+        .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
         .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 12px; }
-        .property-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid #e4e6eb; transition: 0.3s; }
-        
-        /* মডাল */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); overflow-y: auto; backdrop-filter: blur(3px); }
-        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 92%; max-width: 440px; border-radius: 12px; position: relative; box-shadow: 0 12px 28px rgba(0,0,0,0.2); box-sizing: border-box; }
-        .close-modal { position: absolute; right: 16px; top: 12px; font-size: 24px; cursor: pointer; color: var(--gray); }
-
-        .input-group { margin-bottom: 12px; text-align: left; }
-        .input-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; color: var(--dark); }
-        .input-group input, .input-group textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 14px; font-family: inherit; }
-        .input-group textarea { resize: none; height: 60px; }
-        
-        .submit-button { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; margin-top: 8px; }
-        .submit-button:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); overflow-y: auto; }
+        .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 440px; border-radius: 12px; position: relative; }
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; }
+        .input-group input, .input-group textarea { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
+        .submit-button { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <main class="main-content container">
-        
-        <!-- হেডার অংশ -->
-<header class="main-header">
-    <div class="header-top">
-        <div class="header-left">
-            <!-- থ্রি লাইন মেনু আইকন -->
-            <i class="material-icons menu-icon" id="menuButton">menu</i>
-            
-            <a href="index.html" class="logo-title">
-                <i class="material-icons logo-icon">home</i>  
-                <span>আমার বাড়ি.কম</span>
-            </a>
-        </div>
-        
-        <div class="header-actions">
-            <!-- নোটিফিকেশন বাটন -->
-            <div class="icon-wrapper" id="notificationButton"> 
-                <i class="material-icons notification-icon">notifications</i>
-                <span class="notification-count" id="notification-count"></span>
+    <!-- 📱 হেডার -->
+    <header class="main-header">
+        <div class="header-top">
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                <a href="index.html" class="logo-title">
+                    <i class="material-icons" style="margin-right: 5px;">home</i> <span>আমার বাড়ি.কম</span>
+                </a>
             </div>
-            
-            <!-- পোস্ট করার বাটন -->
-            <div class="icon-wrapper" id="headerPostButton">
-                <i class="material-icons post-icon-header">add_circle_outline</i>
-            </div>
-            
-            <!-- মেসেজ বাটন -->
-            <div class="icon-wrapper" id="messageButton">
-                <i class="material-icons message-icon">message</i>
-                <span class="notification-count" id="message-count"></span>
-            </div>
-
-            <!-- প্রোফাইল ইমেজ -->
-            <div class="profile-image-wrapper" id="profileImageWrapper">
-                <img src="placeholder.jpg" alt="Profile" id="profileImage">
+            <div class="header-actions">
+                <div class="icon-wrapper" id="notificationButton"><i class="material-icons">notifications</i></div>
+                <div class="icon-wrapper" id="messageButton"><i class="material-icons">message</i></div>
+                <div class="profile-image-wrapper" id="profileImageWrapper">
+                    <img src="https://www.w3schools.com/howto/img_avatar.png" alt="Profile" id="headerProfileImage">
+                </div>
             </div>
         </div>
-    </div>
-</header>
+    </header>
 
-<!-- সাইডবার (মেনু) অংশ -->
-<div class="sidebar" id="sidebar">
-    <nav>
-        <a href="index.html" class="sidebar-logo">
-            <i class="material-icons">home</i> 
-            <span>আমার বাড়ি.কম</span>
-        </a>
+    <!-- ☰ সাইডবার -->
+    <div class="sidebar" id="sidebar">
         <a href="index.html"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
         <a href="post.html"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-        <a href="auth.html"><i class="material-icons">lock_open</i> লগইন</a>
-    </nav>
-</div>
+        <a href="profile.html"><i class="material-icons">person</i> প্রোফাইল</a>
+        <a href="notifications.html"><i class="material-icons">notifications</i> নোটিফিকেশন</a>
+        <a href="messages.html"><i class="material-icons">chat</i> মেসেজ</a>
+        <a href="#" id="logout-btn"><i class="material-icons">logout</i> লগআউট</a>
+    </div>
+    <div class="overlay" id="overlay"></div>
 
-<!-- সাইডবার ওপেন হলে ব্যাকগ্রাউন্ড অন্ধকার করার জন্য ওভারলে -->
-<div class="overlay" id="overlay"></div>
-        
-        
-        <!-- 👑 সেলার প্রোফাইল কার্ড -->
+    <main class="container">
+        <!-- সেলার প্রোফাইল কার্ড -->
         <div class="profile-premium-card">
             <div class="profile-cover-photo"></div>
-            
             <div class="profile-content-box">
                 <div class="avatar-container">
                     <img src="https://www.w3schools.com/howto/img_avatar.png" id="user-avatar" class="profile-avatar-big" alt="User Avatar">
                 </div>
-                
                 <div class="user-info">
                     <h2 id="display-name">আমার প্রোফাইল</h2>
-                    
-                    <!-- 💬 ডাইনামিক বায়ো টেক্সট -->
                     <p id="user-bio" class="user-bio-text">আপনার সম্পর্কে কিছু লিখুন...</p>
-
                     <div class="action-buttons-div">
-                        <div class="edit-badge" id="edit-profile-show-btn">
-                            <i class="material-icons" style="font-size: 18px;">edit</i> প্রোফাইল সাজান
-                        </div>
-                        <button class="add-property-btn" id="direct-post-btn">
-                            <i class="material-icons" style="font-size: 18px;">add_circle</i> প্রোপার্টি যুক্ত করুন
-                        </button>
+                        <div class="edit-badge" id="edit-profile-show-btn"><i class="material-icons">edit</i> প্রোফাইল সাজান</div>
+                        <button class="add-property-btn" id="direct-post-btn"><i class="material-icons">add_circle</i> প্রোপার্টি যুক্ত করুন</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 📋 ফেসবুক স্টাইল ইন্ট্রো পরিচিতি বক্স (সাজানো গোছানো) -->
+        <!-- পরিচিতি বক্স -->
         <div class="facebook-intro-card">
-            <h3>পরিচিতি (Intro)</h3>
+            <h3 style="margin:0 0 12px 0;">পরিচিতি (Intro)</h3>
             <ul class="intro-list">
-                <li class="intro-item">
-                    <i class="material-icons">work</i>
-                    <span>পেশা: <strong id="user-profession">যুক্ত করা নেই</strong></span>
-                </li>
-                <li class="intro-item">
-                    <i class="material-icons">location_on</i>
-                    <span>বসবাস করেন: <strong id="user-location">যুক্ত করা নেই</strong></span>
-                </li>
-                <li class="intro-item" id="intro-office-item" style="display: none;">
-                    <i class="material-icons">business</i>
-                    <span>অফিস: <strong id="user-office">...</strong></span>
-                </li>
-                <li class="intro-item">
-                    <i class="material-icons">phone</i>
-                    <span>মোবাইল: <strong id="user-phone">ফোন সেট করা নেই</strong></span>
-                </li>
-                <li class="intro-item">
-                    <i class="material-icons">email</i>
-                    <span>ইমেইল: <strong id="user-email">...</strong></span>
-                </li>
+                <li class="intro-item"><i class="material-icons" style="color:#8c939d;">work</i> পেশা: <strong id="user-profession">যুক্ত করা নেই</strong></li>
+                <li class="intro-item"><i class="material-icons" style="color:#8c939d;">location_on</i> বসবাস করেন: <strong id="user-location">যুক্ত করা নেই</strong></li>
+                <li class="intro-item" id="intro-office-item" style="display: none;"><i class="material-icons" style="color:#8c939d;">business</i> অফিস: <strong id="user-office">...</strong></li>
+                <li class="intro-item"><i class="material-icons" style="color:#8c939d;">phone</i> মোবাইল: <strong id="user-phone">ফোন সেট করা নেই</strong></li>
+                <li class="intro-item"><i class="material-icons" style="color:#8c939d;">email</i> ইমেইল: <strong id="user-email">...</strong></li>
             </ul>
         </div>
 
-        <!-- 📊 স্ট্যাটাস কাউন্টার্স -->
+        <!-- স্ট্যাটাস কাউন্টার্স -->
         <div class="stats-container">
-            <div class="stat-card">
-                <h4>আমার লিস্টিং</h4>
-                <p id="total-posts-count">০</p>
-            </div>
-            <div class="stat-card">
-                <h4>পছন্দের তালিকা</h4>
-                <p id="saved-posts-count">০</p>
-            </div>
-            <div class="stat-card">
-                <h4>পাবলিক রেটিং</h4>
-                <p id="my-rating-score">⭐ ০.০</p>
-            </div>
+            <div class="stat-card"><h4>আমার লিস্টিং</h4><p id="total-posts-count">০</p></div>
+            <div class="stat-card"><h4>পছন্দের তালিকা</h4><p id="saved-posts-count">০</p></div>
+            <div class="stat-card"><h4>পাবলিক রেটিং</h4><p id="my-rating-score">⭐ ০.০</p></div>
         </div>
 
-        <!-- ট্যাব সুইচিং -->
         <div class="profile-tabs">
             <button class="tab-btn active" onclick="openTab(event, 'my-posts')">আমার পোস্ট সমূহ</button>
             <button class="tab-btn" onclick="openTab(event, 'saved-posts')">বুকমার্ক প্রপার্টি</button>
         </div>
 
-        <!-- ট্যাব লিস্টিং কন্টেন্ট -->
         <div id="my-posts" class="tab-content active">
             <div id="my-properties-list" class="property-grid"></div>
-            <p id="empty-posts-message" style="display:none; text-align:center; padding: 30px; color: var(--gray);">আপনি এখনও কোনো প্রপার্টি বিজ্ঞাপন দেননি।</p>
+            <p id="empty-posts-message" style="display:none; text-align:center; padding: 30px; color: var(--gray);">কোনো প্রপার্টি বিজ্ঞাপন দেননি।</p>
         </div>
 
         <div id="saved-posts" class="tab-content">
@@ -327,62 +177,36 @@
         </div>
     </main>
 
-    <!-- 🛠️ প্রোফাইল এডিট পপ-আপ মডাল -->
+    <!-- এডিট মডাল -->
     <div id="editProfileModal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" id="edit-profile-close-btn">&times;</span>
-            <h3 style="margin: 0 0 15px 0; text-align: center; color: var(--dark);">তথ্য আপডেট করুন</h3>
-            
-            <div style="text-align: center; margin-bottom: 12px; position: relative; display: inline-block; width: 100%;">
-                <img src="https://www.w3schools.com/howto/img_avatar.png" id="edit-avatar-preview" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary);">
-                <label for="edit-profile-picture" style="position: absolute; bottom: 0; right: calc(50% - 45px); background: #1c1e21; color: white; padding: 5px; border-radius: 50%; cursor: pointer;">
-                    <i class="material-icons" style="font-size: 16px;">photo_camera</i>
-                </label>
-            </div>
-
+            <span style="position:absolute; right:15px; cursor:pointer;" id="edit-profile-close-btn">&times;</span>
+            <h3 style="text-align:center;">তথ্য আপডেট করুন</h3>
             <form id="edit-profile-form">
-                <input type="file" id="edit-profile-picture" accept="image/png, image/jpeg" style="display: none;">
-                
-                <div class="input-group">
-                    <label>আপনার পুরো নাম:</label>
-                    <input type="text" id="edit-full-name" required placeholder="নাম লিখুন">
+                <div style="text-align:center; margin-bottom:15px;">
+                    <img src="https://www.w3schools.com/howto/img_avatar.png" id="edit-avatar-preview" style="width:80px; height:80px; border-radius:50%; object-fit:cover;">
+                    <input type="file" id="edit-profile-picture" style="display:none;">
+                    <br><button type="button" onclick="document.getElementById('edit-profile-picture').click()" style="font-size:12px;">ছবি পাল্টান</button>
                 </div>
-                <div class="input-group">
-                    <label>বায়ো (Bio):</label>
-                    <textarea id="edit-bio" maxlength="120" placeholder="যেমন: বিশ্বস্ত রিয়েল এস্টেট কনসালটেন্ট। সঠিক মূল্যে প্রপার্টি কেনা-বেচার জন্য যোগাযোগ করুন।"></textarea>
-                </div>
-                <div class="input-group">
-                    <label>পেশা:</label>
-                    <input type="text" id="edit-profession" placeholder="যেমন: ব্যবসায়ী / রিয়েল এস্টেট এজেন্ট">
-                </div>
-                <div class="input-group">
-                    <label>ফোন নম্বর:</label>
-                    <input type="tel" id="edit-phone-number" placeholder="যেমন: ০১৭XXXXXXXX">
-                </div>
-                <div class="input-group">
-                    <label>বর্তমান অবস্থান:</label>
-                    <input type="text" id="edit-location" placeholder="যেমন: ঢাকা, বাংলাদেশ">
-                </div>
-                <div class="input-group">
-                    <label>অফিসের ঠিকানা (ঐচ্ছিক):</label>
-                    <input type="text" id="edit-office" placeholder="যেমন: রোড-১০, উত্তরা, ঢাকা">
-                </div>
-                
-                <div>
-                    <button type="submit" class="submit-button" id="update-profile-btn">পরিবর্তন সেভ করুন</button>
-                </div>
+                <div class="input-group"><label>পুরো নাম:</label><input type="text" id="edit-full-name" required></div>
+                <div class="input-group"><label>বায়ো:</label><textarea id="edit-bio"></textarea></div>
+                <div class="input-group"><label>পেশা:</label><input type="text" id="edit-profession"></div>
+                <div class="input-group"><label>ফোন নম্বর:</label><input type="tel" id="edit-phone-number"></div>
+                <div class="input-group"><label>বর্তমান অবস্থান:</label><input type="text" id="edit-location"></div>
+                <div class="input-group"><label>অফিসের ঠিকানা:</label><input type="text" id="edit-office"></div>
+                <button type="submit" class="submit-button" id="update-profile-btn">সেভ করুন</button>
             </form>
         </div>
     </div>
 
-    <!-- রিভিউ মডাল -->
+    <!-- ডিটেইলস মডাল -->
     <div id="propertyModal" class="modal">
-        <div class="modal-content" style="max-width: 500px;">
-            <span class="close-modal" onclick="closePropertyModal()">&times;</span>
+        <div class="modal-content" style="max-width:500px;">
+            <span style="position:absolute; right:15px; cursor:pointer;" onclick="closePropertyModal()">&times;</span>
             <div id="modal-content-inner"></div>
-            <div style="display:flex; gap:10px; margin-top:15px; border-top:1px solid #eee; padding-top:12px;">
-                <button id="modal-delete-btn" style="background:#e74c3c; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; flex:1; font-weight:bold;">মুছে ফেলুন</button>
-                <button id="modal-upgrade-btn" style="background:var(--primary); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; flex:1; font-weight:bold;">আপগ্রেড</button>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button id="modal-delete-btn" style="background:#e74c3c; color:white; flex:1; border:none; padding:10px; border-radius:6px; cursor:pointer;">মুছে ফেলুন</button>
+                <button style="background:var(--primary); color:white; flex:1; border:none; padding:10px; border-radius:6px; cursor:pointer;">আপগ্রেড</button>
             </div>
         </div>
     </div>
@@ -400,4 +224,4 @@
         }
     </script>
 </body>
-        </html>
+    </html>
