@@ -37,36 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const avatarPreview = document.getElementById('edit-avatar-preview');
     const fileInput = document.getElementById('edit-profile-picture');
 
-    // --- হেডার আইকন কার্যকারিতা ---
-
-    // নোটিফিকেশন আইকন রিডাইরেক্ট
-    if (notificationButton) {
-        notificationButton.addEventListener('click', () => {
-             window.location.href = 'notifications.html'; 
-        });
-    }
-
-    // পোস্ট আইকন রিডাইরেক্ট
-    if (headerPostButton) {
-        headerPostButton.addEventListener('click', () => {
-            window.location.href = 'post.html'; 
-        });
-    }
-
-    // ম্যাসেজ আইকন রিডাইরেক্ট
-    if (messageButton) {
-        messageButton.addEventListener('click', () => {
-             window.location.href = 'messages.html';
-        });
-    }
     
-    // প্রোফাইল ইমেজ রিডাইরেক্ট
-    if (profileImageWrapper) {
-        profileImageWrapper.addEventListener('click', () => {
-             window.location.href = 'profile.html'; 
-        });
-    }
-});
     
     
     // ১. ফায়ারবেস অথেনটিকেশন চেক
