@@ -617,7 +617,18 @@
     <script src="profile.js"></script> 
 
         <script>
-      function openTab(evt, tabName) {
+      
+  // ফায়ারবেস ইনিশিয়ালাইজ করার জন্য এই কোডটি অত্যাবশ্যক
+  if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+  const storage = firebase.storage();
+
+            
+            
+            function openTab(evt, tabName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tab-content");
             for (i = 0; i < tabcontent.length; i++) { tabcontent[i].classList.remove("active"); }
