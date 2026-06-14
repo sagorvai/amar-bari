@@ -3,111 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>প্রোফাইল- আমার বাড়ি.কম</title>
+    <title>প্রোফাইল - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <style>
-        :root { --primary: #007bff; --success: #28a745; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f4f7f6;
-        --primary-gradient: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
+        :root { 
+            --primary: #007bff; 
+            --primary-color: #007bff;
             --success: #2ecc71; 
             --dark: #1c1e21; /* Facebook Dark Neutral */
             --gray: #65676b; /* Facebook Secondary Text */
             --bg: #f0f2f5;   /* Facebook Background */
             --border: #ced0d4;
-          
+            --primary-gradient: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
         }
-        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-bottom: 50px; }
-        .container { max-width: 800px; margin: auto; padding: 15px; }
         
-        .top-bar { display: flex; align-items: center; gap: 10px; padding: 10px 0; margin-bottom: 15px; }
-        .btn-back { background: none; border: none; color: var(--dark); cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 16px; }
-
-        .content-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .post-title { font-size: 22px; color: var(--dark); margin: 0 0 8px 0; }
-        .post-price { font-size: 20px; color: var(--success); font-weight: bold; margin-bottom: 12px; display: block; }
-        .post-desc { color: #444; line-height: 1.7; border-top: 1px solid #eee; padding-top: 15px; white-space: pre-line; }
-
-        .gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 20px 0; }
-        .gal-item { border-radius: 8px; overflow: hidden; cursor: pointer; background: #eee; height: 100px; }
-        .gal-item:first-child { grid-column: span 4; height: 350px; }
-        .gal-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-/* পোস্টদাতা ইনফো সেকশন এবং রেটিং */
-        .publisher-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
-        .pub-left { display: flex; align-items: center; gap: 12px; }
-        
-        /* 🆕 ক্লিকের জন্য কার্সর পয়েন্টার ও ইফেক্ট যুক্ত করা হলো */
-        .clickable-author { cursor: pointer; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s; }
-        .clickable-author:hover { opacity: 0.8; }
-
-        .pub-avatar-box { width: 45px; height: 45px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); background: #eee; display: flex; align-items: center; justify-content: center; }
-        .pub-avatar { width: 100%; height: 100%; object-fit: cover; }
-        .pub-details h3 { font-size: 16px; margin: 0 0 4px 0; color: var(--dark); }
-        .pub-time-meta { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--gray); }
-        .pub-time-meta i { font-size: 14px; }
-        .rating-box { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-        .stars { display: flex; gap: 2px; }
-        .stars i { font-size: 24px; color: #ccc; cursor: pointer; transition: color 0.2s; }
-        .stars i.active { color: #f1c40f; }
-        .rating-text { font-size: 11px; color: var(--gray); font-weight: bold; }
-
-        @media (max-width: 600px) {
-            body { padding-top: 46px; }
-            .logo-title { font-size: 1.5em; }
-            .header-actions { gap: 8px; }
-            .profile-image-wrapper { width: 30px; height: 30px; }
-        }
-
-        .action-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
-        .btn-act { padding: 10px; border: 1px solid #ddd; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; text-decoration: none; font-size: 12px; font-weight: bold; background: white; color: var(--dark); }
-        .btn-call { color: var(--success); border-color: var(--success); }
-
-        .section-header { background: #fff; padding: 12px 15px; border-radius: 8px 8px 0 0; margin-top: 25px; border-bottom: 2px solid var(--primary); font-weight: bold; display: flex; align-items: center; gap: 10px; }
-        .info-table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 10px; }
-        .info-table td { padding: 12px 15px; border-bottom: 1px solid #f8f9fa; font-size: 14px; }
-        .info-table td:last-child { text-align: right; font-weight: 600; }
-
-        .btn-map { background: #e74c3c; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; }
-
-        /* Related Posts */
-        .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 15px; }
-        .rel-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; }
-        .rel-card img { width: 100%; height: 110px; object-fit: cover; }
-        .rel-info { padding: 8px; }
-        .rel-title { font-size: 13px; font-weight: bold; margin: 0; height: 36px; overflow: hidden; }
-        .rel-price { color: var(--success); font-size: 12px; font-weight: bold; margin: 4px 0; }
-        .rel-loc { font-size: 11px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        .see-more-container { text-align: center; margin-top: 20px; }
-        .btn-see-more { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
-
-        #lightbox { display: none; position: fixed; z-index: 999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
-        #lb-img { max-width: 90%; max-height: 80%; }
-
-        /* CSS ভেরিয়েবল */
-        :root {
-            --primary-color: #007bff;
-        }
-
-        /* গ্লোবাল ফিক্স */
-        body {
+        body { 
+            background-color: var(--bg); 
+            font-family: 'Segoe UI', Arial, sans-serif; 
             margin: 0; 
-            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
-            font-family: Arial, sans-serif; 
-            
-          background-color: var(--bg); font-family: 'Segoe UI', Helvetica, Arial, sans-serif; margin: 0; padding-top: 15px; color: var(--dark); }
-        .container { max-width: 650px; margin: auto; padding: 10px; box-sizing: border-box;  
-            
+            padding-top: 70px; /* ফিক্সড হেডারের জন্য উপযুক্ত প্যাডিং */
+            padding-bottom: 50px; 
+            color: var(--dark);
         }
- 
+        
+        .container { max-width: 650px; margin: auto; padding: 10px; box-sizing: border-box; }
+        
         /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
         .main-header {
              position: fixed; 
@@ -117,72 +47,8 @@
              background-color: white; 
              box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
              z-index: 1000; 
-             padding-bottom: 0;
+             padding: 4px 0;
         }
-        
-        /* --- ⭐ FIX 2: সাইডবার পজিশনিং, ট্রানজিশন ও রঙ যোগ করা হলো ⭐ --- */
-        .sidebar {
-            position: fixed; 
-            top: 0;
-            left: -250px; 
-            width: 250px; 
-            height: 100%;
-            background-color: #34495e; /* গাঢ় নীল/ধূসর রঙ */
-            transition: left 0.3s ease; 
-            box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
-            z-index: 1050; 
-            overflow-y: auto;
-            padding-top: 50px; 
-        }
-        
-        .sidebar.active {
-            left: 0; 
-        }
-        
-        .overlay {
-            position: fixed; 
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5); 
-            z-index: 1040; 
-            display: none; 
-        }
-        
-        .overlay.active {
-            display: block; 
-        }
-        
-        /* সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা */
-        .sidebar a {
-            color: #ffffff; 
-            padding: 12px 15px; 
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .sidebar a i.material-icons {
-            color: #ffffff; 
-            margin-right: 10px;
-        }
-
-        .sidebar a:hover {
-            background-color: #3e5369; 
-        }
-        
-        /* সাইডবারের লোগো লিঙ্ক */
-        .sidebar-logo {
-            padding: 15px;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: white !important; 
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 5px;
-        }
-        /* --- [সাইডবার ফিক্স শেষ] --- */
 
         .header-top {
             display: flex;
@@ -194,30 +60,25 @@
         .header-left {
             display: flex;
             align-items: center;
-            flex-shrink: 0; 
+            gap: 10px;
         }
 
         .menu-icon {
-             margin-right: 0; 
              cursor: pointer;
+             font-size: 24px;
         }
         
         .logo-title {
             display: flex;
             align-items: center;
-            font-size: 1.8em; 
+            font-size: 1.6em; 
             font-weight: bold;
             color: var(--primary-color);
-            margin-left: 0px; 
             text-decoration: none; 
             white-space: nowrap; 
         }
-        .logo-title:visited {
-             color: var(--primary-color);
-        }
-        .logo-icon {
-            margin-right: 5px;
-        }
+        
+        .logo-icon { margin-right: 5px; }
 
         /* ডানের ব্লক (আইকন) ফিক্স */
         .header-actions {
@@ -225,10 +86,8 @@
              align-items: center;
              gap: 12px; 
              position: relative; 
-             flex-shrink: 0; 
         }
         
-        /* কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
         .icon-wrapper {
              position: relative;
              display: inline-flex;
@@ -239,7 +98,6 @@
              width: 30px; 
         }
         
-        /* কমন নোটিফিকেশন কাউন্ট স্টাইল */
         .notification-count {
             position: absolute;
             top: -5px; 
@@ -252,233 +110,190 @@
             font-weight: bold;
             min-width: 10px;
             text-align: center;
-            line-height: 1; 
             display: none; 
         }
         
-        /* আইকন কালার */
-        .notification-icon { color: var(--primary-color); }
-        .message-icon { color: var(--primary-color); }
+        .notification-icon, .message-icon { color: var(--primary-color); }
         .post-icon-header { color: #28a745; }
 
-        /* প্রোফাইল ইমেজের বাইরের গোল বক্স */
-.profile-image-wrapper {
-    cursor: pointer;
-    width: 35px;          /* আপনার পছন্দমতো সাইজ */
-    height: 35px;         /* উইডথ ও হাইট একদম সমান রাখবেন */
-    border-radius: 50%;   /* গোল করার জন্য */
-    overflow: hidden;     /* বক্সের বাইরের অংশ কেটে ফেলার জন্য */
-    border: 2px solid var(--primary); /* বর্ডার */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+        /* প্রোফাইল ইমেজের গোল বক্স */
+        .profile-image-wrapper {
+            cursor: pointer;
+            width: 35px;          
+            height: 35px;         
+            border-radius: 50%;   
+            overflow: hidden;     
+            border: 2px solid var(--primary); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-/* 🎯 ইমেজের একাংশ কেটে যাওয়া রোধ করার ফিক্স */
-.profile-image-wrapper img {
-    width: 100%;          /* বক্সের পুরো উইডথ নিবে */
-    height: 100%;         /* বক্সের পুরো হাইট নিবে */
-    object-fit: cover;    /* 👈 এটি ছবিটিকে চ্যাপ্টা বা বিকৃত না করে গোল বক্সের মাঝে সুন্দরভাবে ফিট করবে */
-    object-position: center; /* ছবির মাঝখানের অংশ ফোকাস করবে */
-    display: block;
-}
-        
-        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
-        @media (max-width: 600px) {
-            body {
-                padding-top: 46px; 
-            }
-            .logo-title {
-                 font-size: 1.5em; 
-                 margin-left: 0px;
-            }
-            .header-actions {
-                 gap: 8px; 
-            }
-            .profile-image-wrapper {
-                 width: 30px; 
-                 height: 30px;
-            }
+        .profile-image-wrapper img {
+            width: 100%;          
+            height: 100%;         
+            object-fit: cover;    
+            object-position: center; 
+            display: block;
         }
         
+        /* --- সাইডবার স্টাইল --- */
+        .sidebar {
+            position: fixed; 
+            top: 0;
+            left: -250px; 
+            width: 250px; 
+            height: 100%;
+            background-color: #34495e; 
+            transition: left 0.3s ease; 
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
+            z-index: 1050; 
+            overflow-y: auto;
+            padding-top: 50px; 
+        }
+        
+        .sidebar.active { left: 0; }
+        
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); z-index: 1040; display: none; 
+        }
+        
+        .overlay.active { display: block; }
+        
+        .sidebar a {
+            color: #ffffff; padding: 12px 15px; display: flex;
+            align-items: center; text-decoration: none; font-weight: 500;
+        }
+
+        .sidebar a i.material-icons { color: #ffffff; margin-right: 10px; }
+        .sidebar a:hover { background-color: #3e5369; }
+        
+        .sidebar-logo {
+            padding: 15px; font-size: 1.5em; font-weight: bold;
+            color: white !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px; display: flex; align-items: center;
+        }
+
+        /* 👑 সেলার প্রোফাইল কার্ড সিএসএস */
         .profile-premium-card { 
-            background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
-            text-align: center; 
-            margin-bottom: 16px; 
-            position: relative;
-            overflow: hidden;
-            border: 1px solid #e4e6eb;
+            background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+            text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; border: 1px solid #e4e6eb;
         }
 
         .profile-cover-photo {
-            height: 140px;
-            /* সেলার থিম জলছাপ গ্রাফিক্স প্যাটার্ন (CSS Blueprint & City Grid Lines) */
-            background-color: #1e3c72;
-            background-image: 
-                linear-gradient(rgba(30, 60, 114, 0.85), rgba(42, 82, 152, 0.95)),
-                radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1) 0%, transparent 60%),
-                linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%),
-                linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%);
-            background-size: auto, auto, 40px 40px, 40px 40px;
+            height: 140px; background-color: #1e3c72;
+            background-image: linear-gradient(rgba(30, 60, 114, 0.85), rgba(42, 82, 152, 0.95));
             position: relative;
         }
 
-        .profile-content-box {
-            padding: 0px 16px 20px 16px;
-            position: relative;
-            margin-top: -60px;
-            z-index: 5;
-        }
-
+        .profile-content-box { padding: 0px 16px 20px 16px; position: relative; margin-top: -60px; z-index: 5; }
         .avatar-container { position: relative; width: 120px; height: 120px; margin: 0 auto 10px auto; }
         .profile-avatar-big { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background: #eee; }
-        
         .user-info h2 { margin: 0 0 4px 0; font-size: 24px; color: var(--dark); font-weight: bold; }
-        
-        /* 💬 ফেসবুক স্টাইল বায়ো (Bio) */
-        .user-bio-text {
-            font-size: 14px;
-            color: var(--gray);
-            max-width: 85%;
-            margin: 8px auto 14px auto;
-            line-height: 1.4;
-            font-style: italic;
-        }
+        .user-bio-text { font-size: 14px; color: var(--gray); max-width: 85%; margin: 8px auto 14px auto; line-height: 1.4; font-style: italic; }
 
-        /* 📋 ফেসবুক স্টাইল সাজানো গোছানো পরিচিতি কার্ড (Intro Box) */
+        /* 📋 পরিচিতি কার্ড */
         .facebook-intro-card {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e4e6eb;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            padding: 16px;
-            margin-bottom: 16px;
-            text-align: left;
+            background: white; border-radius: 12px; border: 1px solid #e4e6eb;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); padding: 16px; margin-bottom: 16px; text-align: left;
         }
         .facebook-intro-card h3 { margin: 0 0 12px 0; font-size: 17px; font-weight: bold; color: var(--dark); }
-        
         .intro-list { list-style: none; padding: 0; margin: 0; }
         .intro-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; color: var(--dark); }
         .intro-item i { color: #8c939d; font-size: 20px; }
-        .intro-item strong { font-weight: 600; }
 
         .action-buttons-div { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 5px; border-top: 1px solid #e4e6eb; padding-top: 15px; }
-        
-        .edit-badge { background: #e4e6eb; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: var(--dark); display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; font-weight: 600; }
-        .edit-badge:hover { background: #d8dadf; }
+        .edit-badge { background: #e4e6eb; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: var(--dark); display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+        .add-property-btn { background: var(--primary); padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 6px; border: none; font-weight: 600; }
 
-        .add-property-btn { background: var(--primary); padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 6px; border: none; transition: 0.2s; font-weight: 600; }
-        .add-property-btn:hover { background: #0069d9; }
-
-        /* 📊 স্ট্যাটাস কন্টেইনার */
+        /* 📊 স্ট্যাটাস ও ট্যাব */
         .stats-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
-        .stat-card { background: white; padding: 12px 5px; border-radius: 8px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid #e4e6eb; }
-        .stat-card h4 { margin: 0 0 4px 0; color: var(--gray); font-size: 12px; font-weight: 600; }
-        .stat-card p { font-size: 16px; font-weight: bold; margin: 0; color: var(--dark); }
+        .stat-card { background: white; padding: 12px 5px; border-radius: 8px; text-align: center; border: 1px solid #e4e6eb; }
+        .stat-card h4 { margin: 0 0 4px 0; color: var(--gray); font-size: 12px; }
+        .stat-card p { font-size: 16px; font-weight: bold; margin: 0; }
 
-        /* ট্যাব ডিজাইন */
         .profile-tabs { display: flex; gap: 8px; border-bottom: 1px solid #ced0d4; margin-bottom: 16px; }
-        .tab-btn { padding: 10px 12px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gray); transition: 0.3s; position: relative; }
+        .tab-btn { padding: 10px 12px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gray); position: relative; }
         .tab-btn.active { color: var(--primary); }
-        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: var(--primary); }
         
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
         .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 12px; }
-        .property-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid #e4e6eb; transition: 0.3s; }
-        
-        /* মডাল */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); overflow-y: auto; backdrop-filter: blur(3px); }
-        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 92%; max-width: 440px; border-radius: 12px; position: relative; box-shadow: 0 12px 28px rgba(0,0,0,0.2); box-sizing: border-box; }
-        .close-modal { position: absolute; right: 16px; top: 12px; font-size: 24px; cursor: pointer; color: var(--gray); }
 
+        /* মডাল পপআপ */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); overflow-y: auto; backdrop-filter: blur(3px); }
+        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 92%; max-width: 440px; border-radius: 12px; position: relative; box-sizing: border-box; }
+        .close-modal { position: absolute; right: 16px; top: 12px; font-size: 24px; cursor: pointer; color: var(--gray); }
         .input-group { margin-bottom: 12px; text-align: left; }
-        .input-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; color: var(--dark); }
-        .input-group input, .input-group textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 14px; font-family: inherit; }
-        .input-group textarea { resize: none; height: 60px; }
-        
-        .submit-button { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; margin-top: 8px; }
-        .submit-button:disabled { background: #cbd5e1; cursor: not-allowed; }
-        
+        .input-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; }
+        .input-group input, .input-group textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
+        .submit-button { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+
+        @media (max-width: 600px) {
+            .logo-title { font-size: 1.3em; }
+            .header-actions { gap: 8px; }
+        }
     </style>
 </head>
 <body>
 
     <header class="main-header">
         <div class="header-top">
-            
             <div class="header-left">
                 <i class="material-icons menu-icon" id="menuButton">menu</i>
-                
                 <a href="index.html" class="logo-title">
-                   <i class="material-icons logo-icon">home</i>  
-                    <span>আমার বাড়ি.কম</span>
+                   <i class="material-icons logo-icon">home</i><span>আমার বাড়ি.কম</span>
                 </a>
             </div>
             
             <div class="header-actions">
-                
                 <div class="icon-wrapper" id="notificationButton"> 
                     <i class="material-icons notification-icon">notifications</i>
                     <span class="notification-count" id="notification-count"></span>
                 </div>
-                
                 <div class="icon-wrapper" id="headerPostButton">
                     <i class="material-icons post-icon-header">add_circle_outline</i>
                     <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
                 </div>
-                
                 <div class="icon-wrapper" id="messageButton">
                     <i class="material-icons message-icon">message</i>
                     <span class="notification-count" id="message-count"></span>
                 </div>
                 <div class="profile-image-wrapper" id="profileImageWrapper">
-    <img src="placeholder.jpg" alt="Profile" id="profileImage">
-</div>
-
-<div class="notification-dropdown" id="notification-dropdown"></div>
+                    <img src="placeholder.jpg" alt="Profile" id="profileImage">
+                </div>
+            </div>
         </div>
-        
     </header>
     
     <div class="sidebar" id="sidebar">
         <nav>
-            <a href="index.html" class="sidebar-logo">
-                <i class="material-icons">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
-            
+            <div class="sidebar-logo">
+                <i class="material-icons" style="margin-right:10px;">home</i><span>আমার বাড়ি.কম</span>
+            </div>
             <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
             <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            
             <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
-            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
+            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেסי পলিসি</a>
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
             <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            
             <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
         </nav>
     </div>
-
     <div class="overlay" id="overlay"></div>
-    
-    <!-- 👑 সেলার প্রোফাইল কার্ড -->
+
+    <main class="container">
+        
         <div class="profile-premium-card">
             <div class="profile-cover-photo"></div>
-            
             <div class="profile-content-box">
                 <div class="avatar-container">
                     <img src="https://www.w3schools.com/howto/img_avatar.png" id="user-avatar" class="profile-avatar-big" alt="User Avatar">
                 </div>
-                
                 <div class="user-info">
                     <h2 id="display-name">আমার প্রোফাইল</h2>
-                    
-                    <!-- 💬 ডাইনামিক বায়ো টেক্সট -->
                     <p id="user-bio" class="user-bio-text">আপনার সম্পর্কে কিছু লিখুন...</p>
 
                     <div class="action-buttons-div">
@@ -493,7 +308,6 @@
             </div>
         </div>
 
-        <!-- 📋 ফেসবুক স্টাইল ইন্ট্রো পরিচিতি বক্স (সাজানো গোছানো) -->
         <div class="facebook-intro-card">
             <h3>পরিচিতি (Intro)</h3>
             <ul class="intro-list">
@@ -520,7 +334,6 @@
             </ul>
         </div>
 
-        <!-- 📊 স্ট্যাটাস কাউন্টার্স -->
         <div class="stats-container">
             <div class="stat-card">
                 <h4>আমার লিস্টিং</h4>
@@ -536,13 +349,11 @@
             </div>
         </div>
 
-        <!-- ট্যাব সুইচিং -->
         <div class="profile-tabs">
             <button class="tab-btn active" onclick="openTab(event, 'my-posts')">আমার পোস্ট সমূহ</button>
             <button class="tab-btn" onclick="openTab(event, 'saved-posts')">বুকমার্ক প্রপার্টি</button>
         </div>
 
-        <!-- ট্যাব লিস্টিং কন্টেন্ট -->
         <div id="my-posts" class="tab-content active">
             <div id="my-properties-list" class="property-grid"></div>
             <p id="empty-posts-message" style="display:none; text-align:center; padding: 30px; color: var(--gray);">আপনি এখনও কোনো প্রপার্টি বিজ্ঞাপন দেননি।</p>
@@ -552,9 +363,9 @@
             <div id="saved-properties-list" class="property-grid"></div>
             <p style="text-align:center; padding: 30px; color: var(--gray);">বুকমার্ক তালিকায় কোনো আইটেম নেই।</p>
         </div>
+        
     </main>
 
-    <!-- 🛠️ প্রোফাইল এডিট পপ-আপ মডাল -->
     <div id="editProfileModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" id="edit-profile-close-btn">&times;</span>
@@ -576,11 +387,11 @@
                 </div>
                 <div class="input-group">
                     <label>বায়ো (Bio):</label>
-                    <textarea id="edit-bio" maxlength="120" placeholder="যেমন: বিশ্বস্ত রিয়েল এস্টেট কনসালটেন্ট। সঠিক মূল্যে প্রপার্টি কেনা-বেচার জন্য যোগাযোগ করুন।"></textarea>
+                    <textarea id="edit-bio" maxlength="120" placeholder="যেমন: রিয়েল এস্টেট কনসালটেন্ট।"></textarea>
                 </div>
                 <div class="input-group">
                     <label>পেশা:</label>
-                    <input type="text" id="edit-profession" placeholder="যেমন: ব্যবসায়ী / রিয়েল এস্টেট এজেন্ট">
+                    <input type="text" id="edit-profession" placeholder="যেমন: এজেন্ট">
                 </div>
                 <div class="input-group">
                     <label>ফোন নম্বর:</label>
@@ -592,7 +403,7 @@
                 </div>
                 <div class="input-group">
                     <label>অফিসের ঠিকানা (ঐচ্ছিক):</label>
-                    <input type="text" id="edit-office" placeholder="যেমন: রোড-১০, উত্তরা, ঢাকা">
+                    <input type="text" id="edit-office" placeholder="যেমন: উত্তরা, ঢাকা">
                 </div>
                 
                 <div>
@@ -602,7 +413,6 @@
         </div>
     </div>
 
-    <!-- রিভিউ মডাল -->
     <div id="propertyModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <span class="close-modal" onclick="closePropertyModal()">&times;</span>
@@ -614,21 +424,28 @@
         </div>
     </div>
 
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+        authDomain: "amar-bari-website.firebaseapp.com",
+        projectId: "amar-bari-website",
+        storageBucket: "amar-bari-website.firebasestorage.app",
+        messagingSenderId: "719084789035",
+        appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+      };
+
+      // গ্লোবাল ভেরিয়েবল যা profile.js ফাইল সরাসরি রিড করবে
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      const auth = firebase.auth();
+      const storage = firebase.storage();
+    </script>
+
     <script src="profile.js"></script> 
 
-        <script>
-      
-  // ফায়ারবেস ইনিশিয়ালাইজ করার জন্য এই কোডটি অত্যাবশ্যক
-  if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-  }
-  const db = firebase.firestore();
-  const auth = firebase.auth();
-  const storage = firebase.storage();
-
-            
-            
-            function openTab(evt, tabName) {
+    <script>
+      // ট্যাব অ্যাক্টিভেশন লজিক
+      function openTab(evt, tabName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tab-content");
             for (i = 0; i < tabcontent.length; i++) { tabcontent[i].classList.remove("active"); }
@@ -636,6 +453,11 @@
             for (i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
             document.getElementById(tabName).classList.add("active");
             evt.currentTarget.classList.add("active");
+      }
+      
+      // মডাল ক্লোজ ফাংশন
+      function closePropertyModal() {
+          document.getElementById('propertyModal').style.display = 'none';
       }
     </script>
 </body>
