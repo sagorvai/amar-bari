@@ -240,84 +240,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function showPropertyDetails(id, data) {
-    const modal = document.getElementById('propertyModal');
-    const contentInner = document.getElementById('modal-content-inner');
-    
-    let imageUrl = 'https://via.placeholder.com/150?text=No+Image';
-    if (data.images && data.images.length > 0) {
-        imageUrl = data.images[0].url || data.images[0];
-    }
-    
-    contentInner.innerHTML = `
-        <img src="${imageUrl}" style="width:100%; border-radius:8px; margin-bottom:12px; height:160px; object-fit:cover;">
-        <h2 style="font-size:16px; margin:0 0 8px 0; color:var(--dark); font-weight:bold;">${data.title || 'শিরোনামহীন'}</h2>
-        <p style="font-size:13px; color:#555; margin:0 0 6px 0;"><strong>বিবরণ:</strong> ${data.description || 'নেই'}</p>
-        <p style="font-size:14px; color:var(--success); font-weight:bold; margin:0;"><strong>মূল্য/ভাড়া:</strong> ৳ ${data.price || data.rent || data.monthlyRent || 'আলোচনা সাপেক্ষ'}</p>
-    `;
-
-    document.getElementById('modal-delete-btn').onclick = (e) => {
-        e.stopPropagation();
-        deletePost(id);
-    };
-    modal.style.display = 'block';
-}
-
-function closePropertyModal() {
-    document.getElementById('propertyModal').style.display = 'none';
-}
-
-async function deletePost(id) {
-    if(confirm('বিজ্ঞাপনটি চিরতরে মুছে ফেলতে চান?')) {
-        await db.collection('properties').doc(id).delete();
-        location.reload();
-    }
-                                         }
-
-  // FIXED: Header UI update - use Firestore profile image if available
-                    if (headerProfileImage && defaultProfileIcon) {
-                        const profileURL = userData?.profileImageURL || user.photoURL;
-                        if (profileURL) {
-                            headerProfileImage.src = profileURL; 
-                            headerProfileImage.style.display = 'block';
-                            defaultProfileIcon.style.display = 'none';
-                        } else {
-                            headerProfileImage.style.display = 'none';
-                            defaultProfileIcon.style.display = 'block';
-                        }
-                    }
-                    if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
-                    
-                    // NEW: Load staged data on successful auth
-                    loadStagedData(); 
-
-                }).catch(error => {
-                    console.error("Failed to fetch user data for profile image:", error);
-                    // Default to showing profile wrapper if fetch fails
-                    if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
-                    loadStagedData(); 
-                });
-                
-            } else {
-                if (propertyFormDisplay) propertyFormDisplay.style.display = 'none';
-                if (authWarningMessage) authWarningMessage.style.display = 'block';
-                if (postLinkSidebar) postLinkSidebar.style.display = 'none';
-                
-                if (loginLinkSidebar) {
-                    loginLinkSidebar.textContent = 'লগইন';
-                    loginLinkSidebar.href = 'auth.html';
-                    loginLinkSidebar.onclick = null;
-                }
-                
-                // Reset/Hide Header UI
-                if (headerProfileImage && defaultProfileIcon) {
-                    headerProfileImage.style.display = 'none';
-                    defaultProfileIcon.style.display = 'block';
-                }
-                if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
-            }
-        });
-    }
 
     // --- হেডার আইকন কার্যকারিতা ---
 
@@ -350,26 +272,4 @@ async function deletePost(id) {
     }
 });
 
-// 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
-firebase.auth().onAuthStateChanged(async (user) => {
-    const headerProfileImg = document.querySelector('#profileImageWrapper img');
-    
-    if (user && headerProfileImg) {
-        try {
-            // ফায়ারবেস 'users' কালেকশন থেকে ইউজারের ডাটা আনা হচ্ছে
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().profilePic) {
-                // ডাটাবেজে প্রোফাইল পিকচার থাকলে সেটি হেডারে সেট হবে
-                headerProfileImg.src = userDoc.data().profilePic;
-            } else if (user.photoURL) {
-                // গুগল লগইন করা থাকলে গুগল প্রোফাইল পিকচার সেট হবে
-                headerProfileImg.src = user.photoURL;
-            } else {
-                // কোনো ছবি না থাকলে একটি ডিফল্ট অ্যাভাটার সেট হবে
-                headerProfileImg.src = 'assets/images/default-avatar.png'; // আপনার প্রজেক্টের ডিফল্ট ছবির পাথ দিন
-            }
-        } catch (error) {
-            console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
-        }
-    }
-});
+
