@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const propertiesList = document.getElementById('my-properties-list');
     const totalPostsEl = document.getElementById('total-posts-count');
     const myRatingScoreEl = document.getElementById('my-rating-score');
+    const headerProfileImg = document.querySelector('#profileImageWrapper img');
     
     // Edit Modal Elements
     const editModal = document.getElementById('editProfileModal');
@@ -37,14 +38,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const avatarPreview = document.getElementById('edit-avatar-preview');
     const fileInput = document.getElementById('edit-profile-picture');
 
-    
-    
-    
-    // ১. ফায়ারবেস অথেনটিকেশন চেক
+    // ১. ফায়ারবেস অথেনটিকেশন চেক ও হেডার ইমেজ লোড (একীভূত করা হয়েছে)
     auth.onAuthStateChanged(async (user) => {
         if (user) {
-            userEmailEl.textContent = user.email;
+            if(userEmailEl) userEmailEl.textContent = user.email;
             
+            // হেডার পিকচার লোড লজিক
+            if (headerProfileImg) {
+                if (user.photoURL) headerProfileImg.src = user.photoURL;
+                else headerProfileImg.src = 'https://www.w3schools.com/howto/img_avatar.png';
+            }
+
             // প্রোফাইল ডেটা লোড
             try {
                 await loadUserProfile(user);
@@ -64,50 +68,44 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ২. ফায়ারস্টোর থেকে ফেসবুক স্টাইল ডাটা রিড ও রেন্ডারিং
+    // ২. ফায়ারস্টোর থেকে ডাটা রিড ও রেন্ডারিং
     async function loadUserProfile(user) {
         try {
             const doc = await db.collection('users').doc(user.uid).get();
             if (doc.exists) {
                 const data = doc.data();
                 
-                // নাম ও বায়ো সেটআপ
-                displayNameEl.textContent = data.fullName || data.name || "ইউজার প্রোফাইল";
-                userBioEl.textContent = data.bio || "আপনার সম্পর্কে কিছু বলুন...";
+                if(displayNameEl) displayNameEl.textContent = data.fullName || data.name || "ইউজার প্রোফাইল";
+                if(userBioEl) userBioEl.textContent = data.bio || "আপনার সম্পর্কে কিছু বলুন...";
+                if(userProfessionEl) userProfessionEl.textContent = data.profession || "যুক্ত করা নেই";
+                if(userPhoneEl) userPhoneEl.textContent = data.phoneNumber || data.phone || "ফোন সেট করা নেই";
+                if(userLocationEl) userLocationEl.textContent = data.location || "যুক্ত করা নেই";
                 
-                // ফেসবুক স্টাইল পরিচিতি লিস্ট রেন্ডারিং
-                userProfessionEl.textContent = data.profession || "যুক্ত করা নেই";
-                userPhoneEl.textContent = data.phoneNumber || data.phone || "ফোন সেট করা নেই";
-                userLocationEl.textContent = data.location || "যুক্ত করা নেই";
-                
-                // ঐচ্ছিক অফিস অ্যাড্রেস চেক
                 if (data.officeAddress && data.officeAddress.trim() !== "") {
-                    userOfficeEl.textContent = data.officeAddress;
-                    introOfficeItem.style.display = "flex";
+                    if(userOfficeEl) userOfficeEl.textContent = data.officeAddress;
+                    if(introOfficeItem) introOfficeItem.style.display = "flex";
                 } else {
-                    introOfficeItem.style.display = "none";
+                    if(introOfficeItem) introOfficeItem.style.display = "none";
                 }
                 
-                // প্রোফাইল পিকচার ফিক্স
                 if(data.profilePic || data.avatarUrl) {
                     let pPic = data.profilePic || data.avatarUrl;
-                    userAvatar.src = pPic;
-                    avatarPreview.src = pPic;
+                    if(userAvatar) userAvatar.src = pPic;
+                    if(avatarPreview) avatarPreview.src = pPic;
+                    if(headerProfileImg) headerProfileImg.src = pPic; // ডাটাবেজের ছবি হেডারে সেট
                 }
 
-                // রেটিং স্কোর
-                if (data.ratingCount && data.ratingCount > 0) {
+                if (data.ratingCount && data.ratingCount > 0 && myRatingScoreEl) {
                     let avg = ((data.ratingSum || 0) / data.ratingCount).toFixed(1);
                     myRatingScoreEl.textContent = `⭐ ${avg}`;
                 }
                 
-                // মডাল এডিট ফিল্ড ভ্যালু প্রিপপ্যুলেশন
-                document.getElementById('edit-full-name').value = data.fullName || data.name || "";
-                document.getElementById('edit-bio').value = data.bio || "";
-                document.getElementById('edit-profession').value = data.profession || "";
-                document.getElementById('edit-phone-number').value = data.phoneNumber || data.phone || "";
-                document.getElementById('edit-location').value = data.location || "";
-                document.getElementById('edit-office').value = data.officeAddress || "";
+                if(document.getElementById('edit-full-name')) document.getElementById('edit-full-name').value = data.fullName || data.name || "";
+                if(document.getElementById('edit-bio')) document.getElementById('edit-bio').value = data.bio || "";
+                if(document.getElementById('edit-profession')) document.getElementById('edit-profession').value = data.profession || "";
+                if(document.getElementById('edit-phone-number')) document.getElementById('edit-phone-number').value = data.phoneNumber || data.phone || "";
+                if(document.getElementById('edit-location')) document.getElementById('edit-location').value = data.location || "";
+                if(document.getElementById('edit-office')) document.getElementById('edit-office').value = data.officeAddress || "";
             }
         } catch (e) { 
             console.error("Firestore fetch error:", e);
@@ -121,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ৩. ইউজারের নিজস্ব প্রপার্টি কুয়েরি ফাংশন
     async function loadUserProperties(userId) {
+        if(!propertiesList) return;
         propertiesList.innerHTML = '<p style="text-align:center; width:100%;">খোঁজা হচ্ছে...</p>';
         try {
             let snapshot = await db.collection('properties').where('userId', '==', userId).get();
@@ -129,10 +128,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             propertiesList.innerHTML = '';
-            totalPostsEl.textContent = snapshot.size;
+            if(totalPostsEl) totalPostsEl.textContent = snapshot.size;
 
             if (snapshot.empty) {
-                document.getElementById('empty-posts-message').style.display = 'block';
+                if(document.getElementById('empty-posts-message')) document.getElementById('empty-posts-message').style.display = 'block';
                 return;
             }
 
@@ -166,14 +165,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // মডাল কন্ট্রোল
-    if (showEditBtn) showEditBtn.onclick = () => editModal.style.display = 'block';
-    if (closeEditBtn) closeEditBtn.onclick = () => editModal.style.display = 'none';
+    // মিসিং ফাংশনটি ডিফাইন করা হলো
+    window.showPropertyDetails = function(docId, propertyData) {
+        const modalInner = document.getElementById('modal-content-inner');
+        if(modalInner) {
+            modalInner.innerHTML = `
+                <h3 style="margin-top:0;">${propertyData.title || 'শিরোনামহীন'}</h3>
+                <p><b>মূল্য:</b> ৳ ${propertyData.price || propertyData.rent || '০'}</p>
+                <p><b>অবস্থান:</b> ${propertyData.location || 'দেওয়া নেই'}</p>
+            `;
+        }
+        const pModal = document.getElementById('propertyModal');
+        if(pModal) pModal.style.display = 'block';
+    }
+
+    if (showEditBtn && editModal) showEditBtn.onclick = () => editModal.style.display = 'block';
+    if (closeEditBtn && editModal) closeEditBtn.onclick = () => editModal.style.display = 'none';
     
     if (fileInput) {
         fileInput.addEventListener('change', function() {
             const file = this.files[0];
-            if (file) {
+            if (file && avatarPreview) {
                 const reader = new FileReader();
                 reader.onload = (e) => avatarPreview.src = e.target.result;
                 reader.readAsDataURL(file);
@@ -181,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ৪. প্রোফাইল এডিট সাবমিট ও বায়ো সেভ লজিক
+    // ৪. প্রোফাইল এডিট সাবমিট লজিক
     if (editForm) {
         editForm.onsubmit = async (e) => {
             e.preventDefault();
@@ -196,8 +208,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const newOffice = document.getElementById('edit-office').value;
             const file = fileInput.files[0];
             
-            btn.disabled = true;
-            btn.textContent = "আপডেট হচ্ছে...";
+            if(btn) {
+                btn.disabled = true;
+                btn.textContent = "আপডেট হচ্ছে...";
+            }
             
             try {
                 let updateData = { 
@@ -220,40 +234,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 await db.collection('users').doc(user.uid).set(updateData, { merge: true });
                 alert('আপনার তথ্য সফলভাবে আপডেট হয়েছে!');
-                editModal.style.display = 'none';
+                if(editModal) editModal.style.display = 'none';
                 location.reload();
                 
             } catch (error) {
                 console.error("Update profile error:", error);
                 alert('সমস্যা হয়েছে: ' + error.message);
-                btn.disabled = false;
-                btn.textContent = "আবার চেষ্টা করুন";
+                if(btn) {
+                    btn.disabled = false;
+                    btn.textContent = "আবার চেষ্টা করুন";
+                }
             }
         };
-    }
-});
-
-
-    // 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
-firebase.auth().onAuthStateChanged(async (user) => {
-    const headerProfileImg = document.querySelector('#profileImageWrapper img');
-    
-    if (user && headerProfileImg) {
-        try {
-            // ফায়ারবেস 'users' কালেকশন থেকে ইউজারের ডাটা আনা হচ্ছে
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().profilePic) {
-                // ডাটাবেজে প্রোফাইল পিকচার থাকলে সেটি হেডারে সেট হবে
-                headerProfileImg.src = userDoc.data().profilePic;
-            } else if (user.photoURL) {
-                // গুগল লগইন করা থাকলে গুগল প্রোফাইল পিকচার সেট হবে
-                headerProfileImg.src = user.photoURL;
-            } else {
-                // কোনো ছবি না থাকলে একটি ডিফল্ট অ্যাভাটার সেট হবে
-                headerProfileImg.src = 'assets/images/default-avatar.png'; // আপনার প্রজেক্টের ডিফল্ট ছবির পাথ দিন
-            }
-        } catch (error) {
-            console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
-        }
     }
 });
