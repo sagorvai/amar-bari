@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const myRatingScoreEl = document.getElementById('my-rating-score');
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
     
-    // Edit Modal Elements
+    // Edit Profile Modal Elements
     const editModal = document.getElementById('editProfileModal');
     const showEditBtn = document.getElementById('edit-profile-show-btn');
     const closeEditBtn = document.getElementById('edit-profile-close-btn');
@@ -38,25 +38,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const avatarPreview = document.getElementById('edit-avatar-preview');
     const fileInput = document.getElementById('edit-profile-picture');
 
-    // ১. ফায়ারবেস অথেনটিকেশন চেক ও হেডার ইমেজ লোড (একীভূত করা হয়েছে)
+    // ১. অথেনটিকেশন চেক ও ডাটা লোড
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             if(userEmailEl) userEmailEl.textContent = user.email;
             
-            // হেডার পিকচার লোড লজিক
             if (headerProfileImg) {
                 if (user.photoURL) headerProfileImg.src = user.photoURL;
                 else headerProfileImg.src = 'https://www.w3schools.com/howto/img_avatar.png';
             }
 
-            // প্রোফাইল ডেটা লোড
             try {
                 await loadUserProfile(user);
             } catch (err) {
                 console.error("Profile load error:", err);
             }
             
-            // লিস্টিং লোড
             try {
                 await loadUserProperties(user.uid);
             } catch (err) {
@@ -68,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ২. ফায়ারস্টোর থেকে ডাটা রিড ও রেন্ডারিং
+    // ২. প্রোফাইল ডাটাবেজ থেকে রিড করা
     async function loadUserProfile(user) {
         try {
             const doc = await db.collection('users').doc(user.uid).get();
@@ -92,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     let pPic = data.profilePic || data.avatarUrl;
                     if(userAvatar) userAvatar.src = pPic;
                     if(avatarPreview) avatarPreview.src = pPic;
-                    if(headerProfileImg) headerProfileImg.src = pPic; // ডাটাবেজের ছবি হেডারে সেট
+                    if(headerProfileImg) headerProfileImg.src = pPic;
                 }
 
                 if (data.ratingCount && data.ratingCount > 0 && myRatingScoreEl) {
@@ -117,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
         directPostBtn.onclick = () => { window.location.href = 'post.html'; };
     }
     
-    // ৩. ইউজারের নিজস্ব প্রপার্টি কুয়েরি ফাংশন
+    // ৩. ইউজারের নিজস্ব প্রপার্টি কুয়েরি করা
     async function loadUserProperties(userId) {
         if(!propertiesList) return;
         propertiesList.innerHTML = '<p style="text-align:center; width:100%;">খোঁজা হচ্ছে...</p>';
@@ -165,16 +162,52 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // মিসিং ফাংশনটি ডিফাইন করা হলো
+    // 🛠️ ৪. প্রপার্টি ডিটেইলস মডাল রেন্ডার, এডিট এবং ডিলিট লজিক
     window.showPropertyDetails = function(docId, propertyData) {
         const modalInner = document.getElementById('modal-content-inner');
         if(modalInner) {
+            let imageUrl = 'https://via.placeholder.com/150?text=No+Image';
+            if (propertyData.images && propertyData.images.length > 0) {
+                imageUrl = propertyData.images[0].url || propertyData.images[0];
+            } else if (propertyData.image) {
+                imageUrl = propertyData.image;
+            }
+
             modalInner.innerHTML = `
-                <h3 style="margin-top:0;">${propertyData.title || 'শিরোনামহীন'}</h3>
-                <p><b>মূল্য:</b> ৳ ${propertyData.price || propertyData.rent || '০'}</p>
-                <p><b>অবস্থান:</b> ${propertyData.location || 'দেওয়া নেই'}</p>
+                <div style="text-align:center;">
+                    <img src="${imageUrl}" style="width:100%; max-height:200px; object-fit:cover; border-radius:8px;">
+                    <h3 style="margin: 12px 0 6px 0; color:var(--dark);">${propertyData.title || 'শিরোনামহীন'}</h3>
+                    <p style="color:var(--success); font-weight:bold; margin: 0 0 8px 0; font-size: 16px;">মূল্য: ৳ ${propertyData.price || propertyData.rent || '০'}</p>
+                    <p style="color:var(--gray); font-size:13px; margin:0;"><b>অবস্থান:</b> ${propertyData.location || 'দেওয়া নেই'}</p>
+                </div>
             `;
         }
+
+        // ডিলিট বাটন ট্রিপল চেক লজিক
+        const deleteBtn = document.getElementById('modal-delete-btn');
+        if (deleteBtn) {
+            deleteBtn.onclick = async () => {
+                if (confirm("আপনি কি নিশ্চিতভাবে এই বিজ্ঞাপনটি ডিলিট করতে চান?")) {
+                    try {
+                        await db.collection('properties').doc(docId).delete();
+                        alert("বিজ্ঞাপনটি সফলভাবে মুছে ফেলা হয়েছে!");
+                        document.getElementById('propertyModal').style.display = 'none';
+                        location.reload(); 
+                    } catch (err) {
+                        alert("ডিলিট করতে সমস্যা হয়েছে: " + err.message);
+                    }
+                }
+            };
+        }
+
+        // আপডেট/এডিট বাটন লজিক (URL এ আইডি সহ post.html এ রিডাইরেক্ট করবে)
+        const editBtn = document.getElementById('modal-edit-btn');
+        if (editBtn) {
+            editBtn.onclick = () => {
+                window.location.href = `post.html?editId=${docId}`;
+            };
+        }
+
         const pModal = document.getElementById('propertyModal');
         if(pModal) pModal.style.display = 'block';
     }
@@ -193,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ৪. প্রোফাইল এডিট সাবমিট লজিক
+    // ৫. প্রোফাইল এডিট সাবমিট লজিক
     if (editForm) {
         editForm.onsubmit = async (e) => {
             e.preventDefault();
