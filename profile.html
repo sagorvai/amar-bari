@@ -506,6 +506,37 @@
 
     <script src="profile.js"></script>
     <script>
+       
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const profileButton = document.getElementById('profileButton');
+
+            // প্রোফাইল বাটন ক্লিক লজিক (শুধুমাত্র 'profile.html' এ যাবে)
+            if (profileButton) {
+                profileButton.addEventListener('click', () => {
+                    window.location.href = 'profile.html';
+                });
+            }
+            
+            // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
+            if (menuButton) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+            }
+
+            // ওভারলেতে ক্লিক করলে সাইড মেনু বন্ধ হবে
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+        
         function openTab(evt, tabName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tab-content");
