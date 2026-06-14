@@ -18,6 +18,7 @@
             --primary-gradient: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
             --cover-gradient: linear-gradient(135deg, rgba(24, 43, 73, 0.9) 0%, rgba(0, 123, 255, 0.85) 100%);
             --success: #2ecc71; 
+            --danger: #e74c3c;
             --dark: #1c1e21; 
             --gray: #65676b; 
             --bg: #f0f2f5;   
@@ -57,12 +58,11 @@
         .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
         
         @media (max-width: 600px) {
-            body { padding-top: 46px; }
+            body { padding-top: 55px; }
             .logo-title { font-size: 1.2em; }
             .header-actions { gap: 8px; }
         }
         
-        /* 👑 প্রিমিয়াম প্রোফাইল কার্ড (ফিক্সড ক্লাস নেম) */
         .profile-premium-card { 
             background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; border: 1px solid var(--border);
         }
@@ -105,6 +105,11 @@
         .input-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; color: var(--dark); }
         .input-group input, .input-group textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         .submit-button { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; }
+        
+        /* ডিলিট ও এডিট বাটনের বাড়তি সিএসএস */
+        .modal-action-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-modal-edit { flex: 1; background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-modal-delete { flex: 1; background: var(--danger); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
     </style>
 </head>
 <body>
@@ -204,7 +209,7 @@
     <div id="editProfileModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" id="edit-profile-close-btn">&times;</span>
-            <h3 style="margin: 0 0 15px 0; text-align: center;">정보 업데이트</h3>
+            <h3 style="margin: 0 0 15px 0; text-align: center;">তথ্য আপডেট করুন</h3>
             <form id="edit-profile-form">
                 <div style="text-align: center; margin-bottom: 12px; position: relative;">
                     <img src="https://www.w3schools.com/howto/img_avatar.png" id="edit-avatar-preview" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover;">
@@ -228,6 +233,15 @@
         <div class="modal-content" style="max-width: 500px;">
             <span class="close-modal" onclick="closePropertyModal()">&times;</span>
             <div id="modal-content-inner"></div>
+            
+            <div class="modal-action-buttons">
+                <button id="modal-edit-btn" class="btn-modal-edit">
+                    <i class="material-icons" style="font-size:18px;">edit</i> এডিট করুন
+                </button>
+                <button id="modal-delete-btn" class="btn-modal-delete">
+                    <i class="material-icons" style="font-size:18px;">delete</i> মুছে ফেলুন
+                </button>
+            </div>
         </div>
     </div>
 
@@ -274,4 +288,4 @@
         }
     </script>
 </body>
-    </html>
+                        </html>
