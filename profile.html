@@ -7,12 +7,14 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <style>
+        /* CSS ভেরিয়েবল */
         :root { 
             --primary: #007bff; 
             --primary-gradient: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
@@ -24,52 +26,245 @@
             --bg: #f0f2f5;   
             --border: #ced0d4;
         }
-        body { background-color: var(--bg); font-family: 'Segoe UI', Helvetica, Arial, sans-serif; margin: 0; padding-top: 60px; color: var(--dark); }
+
+        /* গ্লোবাল ফিক্স */
+        body { 
+            background-color: var(--bg); 
+            font-family: 'Segoe UI', Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            padding-top: 65px; /* হেডারের উচ্চতা অনুযায়ী পারফেক্ট স্পেসিং */
+            color: var(--dark); 
+        }
         .container { max-width: 650px; margin: auto; padding:10px; box-sizing: border-box; }
 
+        /* --- হেডার স্টাইল: সবার উপরে ফিক্সড এবং শ্যাডো --- */
         .main-header {
              position: fixed; 
              top: 0; left: 0; right: 0;
              background-color: white; 
-             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
              z-index: 1000; 
+             height: 56px;
+             display: flex;
+             align-items: center;
         }
         
-        .sidebar {
-            z-index: 1050; 
-        }
-        .overlay {
-            z-index: 1040; 
+        .header-top { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 0 15px; 
+            width: 100%;
+            box-sizing: border-box;
         }
         
-        .header-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; }
-        .header-left { display: flex; align-items: center; flex-shrink: 0; }
-        .menu-icon { cursor: pointer; color: var(--primary); font-size: 28px; }
+        .header-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         
-        .logo-title { display: flex; align-items: center; font-size: 1.5em; font-weight: bold; color: var(--primary); text-decoration: none; white-space: nowrap; margin-left: 10px; }
-        .logo-icon { margin-right: 5px; }
+        .menu-icon { 
+            cursor: pointer; 
+            color: var(--primary); 
+            font-size: 26px; 
+            padding: 4px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        .menu-icon:hover {
+            background: #f0f2f5;
+        }
+        
+        .logo-title { 
+            display: flex; 
+            align-items: center; 
+            font-size: 1.4em; 
+            font-weight: bold; 
+            color: var(--primary); 
+            text-decoration: none; 
+            white-space: nowrap; 
+        }
+        .logo-icon { margin-right: 4px; font-size: 28px; }
 
-        .header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-        .icon-wrapper { position: relative; display: inline-flex; cursor: pointer; align-items: center; justify-content: center; height: 30px; width: 30px; }
+        /* ডানের অ্যাকশন বাটন সেকশন */
+        .header-actions { 
+            display: flex; 
+            align-items: center; 
+            gap: 14px; 
+            position: relative; 
+            flex-shrink: 0; 
+        }
         
-        .notification-count { position: absolute; top: -5px; right: -8px; background-color: red; color: white; border-radius: 50%; padding: 2px 5px; font-size: 0.7em; font-weight: bold; min-width: 10px; text-align: center; line-height: 1; display: none; }
-        .notification-icon, .message-icon { color: var(--primary); }
+        /* কমন আইকন র‍্যাপার স্টাইল */
+        .icon-wrapper { 
+            position: relative; 
+            display: inline-flex; 
+            cursor: pointer; 
+            align-items: center; 
+            justify-content: center; 
+            height: 36px; 
+            width: 36px; 
+            background: #f0f2f5;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+        .icon-wrapper:hover {
+            background: #e4e6eb;
+        }
+        .icon-wrapper i { font-size: 22px; }
+        
+        /* নোটিফিকেশন রেড ডট/কাউন্ট */
+        .notification-count { 
+            position: absolute; 
+            top: -2px; 
+            right: -4px; 
+            background-color: var(--danger); 
+            color: white; 
+            border-radius: 10px; 
+            padding: 1px 5px; 
+            font-size: 0.7em; 
+            font-weight: bold; 
+            min-width: 12px; 
+            text-align: center; 
+            line-height: 1.2; 
+            border: 2px solid white;
+        }
+        
+        /* আইকন কালার */
+        .notification-icon { color: var(--dark); }
+        .message-icon { color: var(--dark); }
         .post-icon-header { color: #28a745; }
 
-        .profile-image-wrapper { cursor: pointer; width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; }
-        .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
-        
-        @media (max-width: 600px) {
-            body { padding-top: 55px; }
-            .logo-title { font-size: 1.2em; }
-            .header-actions { gap: 8px; }
+        /* প্রোফাইল ইমেজ স্টাইল */
+        .profile-image-wrapper { 
+            cursor: pointer; 
+            width: 36px; 
+            height: 36px; 
+            border-radius: 50%; 
+            overflow: hidden; 
+            border: 2px solid var(--primary); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: transform 0.2s;
+        }
+        .profile-image-wrapper:hover {
+            transform: scale(1.05);
+        }
+        .profile-image-wrapper img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            object-position: center; 
+            display: block; 
+        }
+
+        /* নোটিফিকেশন ড্রপডাউন বক্স ডিজাইন */
+        .notification-dropdown {
+            display: none;
+            position: absolute;
+            top: 45px;
+            right: 0;
+            width: 300px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid var(--border);
+            z-index: 2000;
+            overflow: hidden;
+        }
+        .notification-dropdown.active {
+            display: block;
+        }
+        .dropdown-header {
+            padding: 12px;
+            font-weight: bold;
+            background: #f0f2f5;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .dropdown-body {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .dropdown-body .empty-text {
+            text-align: center;
+            color: var(--gray);
+            padding: 20px;
+            margin: 0;
+            font-size: 13px;
         }
         
+        /* --- সাইডবার ও ওভারলে ফিক্স --- */
+        .sidebar { z-index: 1050; position: fixed; left: -250px; top: 0; height: 100%; width: 250px; background: white; transition: 0.3s; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
+        .sidebar.active { left: 0; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040; }
+        .overlay.active { display: block; }
+
+        /* নতুন সাইডবার সিএসএস */
+        .sidebar nav {
+            padding: 0 !important;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 20px 15px;
+            background: var(--primary-gradient);
+            color: white !important;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .sidebar nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: var(--dark);
+            font-size: 15px;
+            font-weight: 500;
+            transition: 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar nav a i {
+            color: var(--gray);
+            font-size: 22px;
+        }
+
+        .sidebar nav a:hover {
+            background: #f0f2f5;
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        .sidebar nav a:hover i {
+            color: var(--primary);
+        }
+
+        .login-link {
+            margin-top: auto; /* মেনু বড় হলে এটি নিচে পুশ হবে */
+            border-top: 1px solid var(--border);
+            color: var(--success) !important;
+        }
+
+        .login-link i { color: var(--success) !important; }
+
+        .sidebar-post-link {
+            color: var(--primary) !important;
+            font-weight: bold !important;
+        }
+        
+        /* --- প্রোফাইল কার্ড এবং অন্যান্য এলিমেন্ট --- */
         .profile-premium-card { 
             background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; border: 1px solid var(--border);
         }
         .profile-cover-photo::before {
-            
             content: "corporate_fare";
             font-family: 'Material Icons';
             position: absolute;
@@ -79,8 +274,7 @@
             color: rgba(255, 255, 255, 0.08);
             pointer-events: none;
         }
-
-            .profile-cover-photo::after {
+        .profile-cover-photo::after {
             content: "home";
             font-family: 'Material Icons';
             position: absolute;
@@ -89,7 +283,7 @@
             font-size: 70px;
             color: rgba(255, 255, 255, 0.05);
             pointer-events: none;
-            }
+        }
         
         .profile-cover-photo { height: 140px; background: var(--cover-gradient); position: relative; }
         .profile-content-box { padding: 0px 16px 20px 16px; position: relative; margin-top: -60px; z-index: 5; }
@@ -131,15 +325,28 @@
         .input-group input, .input-group textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         .submit-button { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; }
         
-        /* ডিলিট ও এডিট বাটনের বাড়তি সিএসএস */
         .modal-action-buttons { display: flex; gap: 10px; margin-top: 15px; }
         .btn-modal-edit { flex: 1; background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
         .btn-modal-delete { flex: 1; background: var(--danger); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+
+        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট রেসপন্সিভ ফিক্স --- */
+        @media (max-width: 600px) {
+            body { padding-top: 60px; }
+            .main-header { height: 50px; }
+            .logo-title { font-size: 1.15em; }
+            .logo-icon { font-size: 22px; }
+            .header-actions { gap: 8px; }
+            .icon-wrapper { height: 32px; width: 32px; }
+            .icon-wrapper i { font-size: 19px; }
+            .profile-image-wrapper { width: 32px; height: 32px; }
+            .notification-dropdown { width: 280px; position: fixed; right: 10px; top: 48px; }
+        }
     </style>
 </head>
 <body>
     <div id="overlay" class="overlay"></div>
 
+    <!-- হেডার সেকশন -->
     <header class="main-header">
         <div class="header-top">
             <div class="header-left">
@@ -152,24 +359,34 @@
             <div class="header-actions">
                 <div class="icon-wrapper" id="notificationButton"> 
                     <i class="material-icons notification-icon">notifications</i>
-                    <span class="notification-count" id="notification-count"></span>
+                    <span class="notification-count" id="notification-count">০</span>
                 </div>
                 <div class="icon-wrapper" id="headerPostButton">
                     <i class="material-icons post-icon-header">add_circle_outline</i>
+                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
                 </div>
                 <div class="icon-wrapper" id="messageButton">
                     <i class="material-icons message-icon">message</i>
-                    <span class="notification-count" id="message-count"></span>
+                    <span class="notification-count" id="message-count">০</span>
                 </div>
                 <div class="profile-image-wrapper" id="profileImageWrapper">
                     <img src="https://www.w3schools.com/howto/img_avatar.png" alt="Profile" id="profileImage">
+                </div>
+
+                <!-- নোটিফিকেশন ড্রপডাউন বক্স -->
+                <div class="notification-dropdown" id="notification-dropdown">
+                    <div class="dropdown-header">নতুন নোটিফিকেশন সমূহ</div>
+                    <div class="dropdown-body" id="notification-items">
+                        <p class="empty-text">কোনো নতুন নোটিফিকেশন নেই</p>
+                    </div>
                 </div>
             </div>
         </div>
     </header>
     
+    <!-- সম্পূর্ণ সাইডবার সেকশন -->
     <div class="sidebar" id="sidebar">
-        <nav style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+        <nav>
             <a href="index.html" class="sidebar-logo">
                 <i class="material-icons">home</i> 
                 <span>আমার বাড়ি.কম</span>
@@ -184,10 +401,10 @@
             <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
             
             <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
         </nav>
     </div>
 
+    <!-- মেইন কন্টেন্ট -->
     <main class="main-content container">
         <div class="profile-premium-card">
             <div class="profile-cover-photo"></div>
@@ -242,6 +459,7 @@
         </div>
     </main>
 
+    <!-- প্রোফাইল এডিট মডাল -->
     <div id="editProfileModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" id="edit-profile-close-btn">&times;</span>
@@ -265,6 +483,7 @@
         </div>
     </div>
 
+    <!-- প্রপার্টি ডিটেইলস মডাল (ডিলিট ও আপডেট বাটন সহ) -->
     <div id="propertyModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <span class="close-modal" onclick="closePropertyModal()">&times;</span>
@@ -288,6 +507,7 @@
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
             const notificationButton = document.getElementById('notificationButton');
+            const dropdown = document.getElementById('notification-dropdown');
             const headerPostButton = document.getElementById('headerPostButton');
             const messageButton = document.getElementById('messageButton');
             const profileImageWrapper = document.getElementById('profileImageWrapper');
@@ -303,7 +523,17 @@
                 });
             }
 
-            if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
+            // নোটিফিকেশন ড্রপডাউন টগল করার জন্য
+            if (notificationButton && dropdown) {
+                notificationButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('active');
+                });
+                document.addEventListener('click', () => {
+                    dropdown.classList.remove('active');
+                });
+            }
+
             if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
             if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
             if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
@@ -324,4 +554,4 @@
         }
     </script>
 </body>
-                        </html>
+    </html>
