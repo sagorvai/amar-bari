@@ -36,7 +36,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const editForm = document.getElementById('edit-profile-form');
     const avatarPreview = document.getElementById('edit-avatar-preview');
     const fileInput = document.getElementById('edit-profile-picture');
-
+........
+    const notificationButton = document.getElementById('notificationButton');
+    const headerPostButton = document.getElementById('headerPostButton');
+    const messageButton = document.getElementById('messageButton');
+    const profileImageWrapper = document.getElementById('profileImageWrapper');
+    const headerProfileImage = document.getElementById('profileImage'); // Assuming this is the image tag ID
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon'); // Assuming this is the icon ID
+    const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
+    const loginLinkSidebar = document.getElementById('login-link-sidebar');
+    
+    
     // ১. ফায়ারবেস অথেনটিকেশন চেক
     auth.onAuthStateChanged(async (user) => {
         if (user) {
