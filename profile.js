@@ -264,7 +264,52 @@ async function deletePost(id) {
     }
                                          }
 
-   // --- হেডার আইকন কার্যকারিতা ---
+  // FIXED: Header UI update - use Firestore profile image if available
+                    if (headerProfileImage && defaultProfileIcon) {
+                        const profileURL = userData?.profileImageURL || user.photoURL;
+                        if (profileURL) {
+                            headerProfileImage.src = profileURL; 
+                            headerProfileImage.style.display = 'block';
+                            defaultProfileIcon.style.display = 'none';
+                        } else {
+                            headerProfileImage.style.display = 'none';
+                            defaultProfileIcon.style.display = 'block';
+                        }
+                    }
+                    if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
+                    
+                    // NEW: Load staged data on successful auth
+                    loadStagedData(); 
+
+                }).catch(error => {
+                    console.error("Failed to fetch user data for profile image:", error);
+                    // Default to showing profile wrapper if fetch fails
+                    if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
+                    loadStagedData(); 
+                });
+                
+            } else {
+                if (propertyFormDisplay) propertyFormDisplay.style.display = 'none';
+                if (authWarningMessage) authWarningMessage.style.display = 'block';
+                if (postLinkSidebar) postLinkSidebar.style.display = 'none';
+                
+                if (loginLinkSidebar) {
+                    loginLinkSidebar.textContent = 'লগইন';
+                    loginLinkSidebar.href = 'auth.html';
+                    loginLinkSidebar.onclick = null;
+                }
+                
+                // Reset/Hide Header UI
+                if (headerProfileImage && defaultProfileIcon) {
+                    headerProfileImage.style.display = 'none';
+                    defaultProfileIcon.style.display = 'block';
+                }
+                if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+            }
+        });
+    }
+
+    // --- হেডার আইকন কার্যকারিতা ---
 
     // নোটিফিকেশন আইকন রিডাইরেক্ট
     if (notificationButton) {
@@ -318,4 +363,3 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
     }
 });
-
