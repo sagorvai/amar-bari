@@ -19,264 +19,242 @@
             --success: #28a745; 
             --dark: #1c1e21; /* Facebook style dark */
             --gray: #65676b; /* Facebook secondary text */
-            --bg: #f0f2f5;   /* Facebook body bg */
-            --gold: #f1c40f;
-            --border: #e4e6eb;
+            --bg: #f0f2f5;   
+            --border: #ced0d4;
         }
-        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-top: 70px; color: var(--dark); }
-       
+
+        body { 
+            background-color: var(--bg); 
+            font-family: 'Segoe UI', Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            padding-top: 66px; 
+            color: var(--dark); 
+        }
+        .container { max-width: 650px; margin: auto; padding: 10px; box-sizing: border-box; }
+
+        /* হেডার সেকশন */
         .main-header {
              position: fixed; 
              top: 0; left: 0; right: 0;
              background-color: white; 
-             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             box-shadow: 0 2px 8px rgba(0,0,0,0.06); 
              z-index: 1000; 
+             height: 56px;
+             display: flex;
+             align-items: center;
         }
         
-        /* --- ⭐ FIX 2: সাইডবার পজিশনিং, ট্রানজিশন ও রঙ যোগ করা হলো ⭐ --- */
-        .sidebar {
-            position: fixed; 
-            top: 0;
-            left: -250px; 
-            width: 250px; 
-            height: 100%;
-            background-color: #34495e; /* গাঢ় নীল/ধূসর রঙ */
-            transition: left 0.3s ease; 
-            box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
-            z-index: 1050; 
-            overflow-y: auto;
-            padding-top: 50px; 
-        }
-        
-        .sidebar.active {
-            left: 0; 
-        }
-        
-        .overlay {
-            position: fixed; 
-            top: 0;
-            left: 0;
+        .header-top { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 0 16px; 
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5); 
-            z-index: 1040; 
-            display: none; 
+            box-sizing: border-box;
         }
         
-        .overlay.active {
-            display: block; 
-            }
+        .header-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         
-        
-        
-        /* সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা */
-        .sidebar a {
-            color: white; 
-            padding: 12px 15px; 
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            font-weight: 500;
+        .menu-icon { 
+            cursor: pointer; 
+            color: var(--primary); 
+            font-size: 26px; 
+            padding: 6px;
+            border-radius: 50%;
+            transition: background 0.2s;
         }
-
-        .sidebar a i.material-icons {
-            color: white; 
-            margin-right: 10px;
-        }
-
-        .sidebar a:hover {
-            background-color: #3e5369; 
-        }
+        .menu-icon:hover { background: #e4e6eb; }
         
-        /* সাইডবারের লোগো লিঙ্ক */
-        .sidebar-logo {
-            padding: 15px;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: white !important; 
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 5px;
-        }
-        
-        .header-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; }
-        .header-left { display: flex; align-items: center; flex-shrink: 0; }
-        .menu-icon { cursor: pointer; color: dark; font-size: 28px; }
-        
-        .logo-title { display: flex; align-items: center; font-size: 1.5em; font-weight: bold; color: var(--primary); text-decoration: none; white-space: nowrap; margin-left: 10px; }
-        .logo-icon { margin-right: 5px; }
-
-        .header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-        .icon-wrapper { position: relative; display: inline-flex; cursor: pointer; align-items: center; justify-content: center; height: 30px; width: 30px; }
-        
-        .notification-count { position: absolute; top: -5px; right: -8px; background-color: red; color: white; border-radius: 50%; padding: 2px 5px; font-size: 0.7em; font-weight: bold; min-width: 10px; text-align: center; line-height: 1; display: none; }
-        .notification-icon, .message-icon { color: var(--primary); }
-        .post-icon-header { color: #28a745; }
-
-        .profile-image-wrapper { cursor: pointer; width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; }
-        .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
-        
-        @media (max-width: 600px) {
-            body { padding-top: 55px; }
-            .logo-title { font-size: 1.2em; }
-            .header-actions { gap: 8px; }
-        }
-        
-        .profile-premium-card { 
-            background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; border: 1px solid var(--border);
-        }
-        .profile-cover-photo::before {
-            
-            content: "corporate_fare";
-            font-family: 'Material Icons';
-            position: absolute;
-            right: 15px;
-            bottom: -15px;
-            font-size: 120px;
-            color: rgba(255, 255, 255, 0.08);
-            pointer-events: none;
-        }
-
-            .profile-cover-photo::after {
-            content: "home";
-            font-family: 'Material Icons';
-            position: absolute;
-            left: 20px;
-            top: 20px;
-            font-size: 70px;
-            color: rgba(255, 255, 255, 0.05);
-            pointer-events: none;
-                }
-        
-        
-        .container { max-width: 600px; margin: auto; padding: 10px; box-sizing: border-box; }
-        
-        .btn-back { background: white; border: 1px solid #ddd; color: var(--dark); padding: 8px 16px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 14px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: fit-content; transition: 0.2s; }
-        .btn-back:hover { background: var(--primary); color: white; border-color: var(--primary); }
-
-        /* 👑 প্রিমিয়াম প্রোফাইল কার্ড */
-        .seller-premium-card { 
-            background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
-            text-align: center; 
-            margin-bottom: 16px; 
-            position: relative;
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-
-        /* 🏙️ কভার ফটো গ্রাফিক্স */
-        .profile-cover-photo {
-            height: 140px;
-            background: var(--cover-gradient);
-            position: relative;
-        }
-        .profile-cover-photo::before {
-            
-            content: "corporate_fare";
-            font-family: 'Material Icons';
-            position: absolute;
-            right: 15px;
-            bottom: -15px;
-            font-size: 120px;
-            color: rgba(255, 255, 255, 0.08);
-            pointer-events: none;
-        }
-
-            .profile-cover-photo::after {
-            content: "home";
-            font-family: 'Material Icons';
-            position: absolute;
-            left: 20px;
-            top: 20px;
-            font-size: 70px;
-            color: rgba(255, 255, 255, 0.05);
-            pointer-events: none;
-            }
-        
-
-        .profile-content-box {
-            padding: 0px 16px 20px 16px;
-            position: relative;
-            margin-top: -60px;
-            z-index: 5;
-        }
-
-        .viral-badge-box {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            display: flex;
-            gap: 8px;
-            z-index: 10;
-        }
-        .badge-item {
-            display: flex;
-            align-items: center;
+        .logo-title { 
+            display: flex; 
+            align-items: center; 
+            font-size: 1.35em; 
+            font-weight: bold; 
+            color: var(--primary); 
+            text-decoration: none; 
+            white-space: nowrap; 
             gap: 4px;
-            font-size: 11px;
+        }
+        .logo-icon { font-size: 28px; }
+
+        .header-actions { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            position: relative; 
+            flex-shrink: 0; 
+        }
+        
+        .icon-wrapper { 
+            position: relative; 
+            display: inline-flex; 
+            cursor: pointer; 
+            align-items: center; 
+            justify-content: center; 
+            height: 38px; 
+            width: 38px; 
+            background: #f0f2f5;
+            border-radius: 50%;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .icon-wrapper:hover { background: #e4e6eb; }
+        .icon-wrapper:active { transform: scale(0.95); }
+        .icon-wrapper i { font-size: 22px; color: var(--dark); }
+        .icon-wrapper #post-icon-img { color: #28a745; }
+        
+        .notification-count { 
+            position: absolute; 
+            top: -2px; 
+            right: -3px; 
+            background-color: #e74c3c; 
+            color: white; 
+            border-radius: 10px; 
+            padding: 1px 5px; 
+            font-size: 0.7em; 
+            font-weight: bold; 
+            min-width: 12px; 
+            text-align: center; 
+            line-height: 1.2; 
+            border: 2px solid white;
+        }
+        
+        .profile-image-wrapper { 
+            cursor: pointer; 
+            width: 36px; 
+            height: 36px; 
+            border-radius: 50%; 
+            overflow: hidden; 
+            border: 2px solid var(--primary); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: transform 0.2s;
+        }
+        .profile-image-wrapper:hover { transform: scale(1.05); }
+        .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        /* 🛠️ সাইডবার ও ওভারলে জেন-ইনডেক্স লেয়ার ফিক্স */
+        .overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.4); 
+            z-index: 1040; /* সাইডবার থেকে নিচে থাকবে */
+            backdrop-filter: blur(1px); 
+        }
+        .overlay.active { display: block; }
+
+        .sidebar { 
+            z-index: 1050; /* ওভারলে থেকে উপরে থাকবে যাতে লিংকে ক্লিক কাজ করে */
+            position: fixed; 
+            left: -260px; 
+            top: 0; 
+            height: 100%; 
+            width: 260px; 
+            background: white; 
+            transition: left 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); 
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1); 
+        }
+        .sidebar.active { left: 0; }
+
+        .sidebar nav { padding: 0; display: flex; flex-direction: column; height: 100%; }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 24px 16px;
+            background: var(--primary-gradient);
+            color: white !important;
+            text-decoration: none;
             font-weight: bold;
-            padding: 6px 12px;
-            border-radius: 20px;
-            color: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            font-size: 1.25em;
+            letter-spacing: 0.5px;
         }
-        .badge-verified { background: #00b894; }
-        .badge-top-seller { background: #6c5ce7; }
+        .sidebar-logo i { font-size: 30px; }
 
-        .avatar-container { position: relative; width: 110px; height: 110px; margin: 0 auto 10px auto; }
-        .seller-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.15); background: #fff; }
-        .status-dot { position: absolute; bottom: 6px; right: 6px; width: 14px; height: 14px; background: #2ecc71; border: 2px solid white; border-radius: 50%; }
+        .sidebar nav a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 20px;
+            text-decoration: none;
+            color: var(--dark);
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+        .sidebar nav a i { color: var(--gray); font-size: 22px; transition: color 0.2s; }
 
-        .seller-name { font-size: 24px; font-weight: bold; color: var(--dark); margin: 0 0 4px 0; }
+        .sidebar nav a:hover {
+            background: #f0f2f5;
+            color: var(--primary);
+            border-left-color: var(--primary);
+            font-weight: 600;
+        }
+        .sidebar nav a:hover i { color: var(--primary); }
+
+        .login-link { margin-top: auto; border-top: 1px solid var(--border); color: var(--success) !important; padding: 16px 20px !important; }
+        .login-link i { color: var(--success) !important; }
+        .sidebar-post-link { color: #28a745 !important; }
+        .sidebar-post-link i { color: #28a745 !important; }
+
+        /* প্রোফাইল কার্ড এলিমেন্ট */
+        .profile-premium-card { background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; border: 1px solid var(--border); }
+        .profile-cover-photo { height: 140px; background: var(--cover-gradient); position: relative; }
+        .profile-content-box { padding: 0px 16px 20px 16px; position: relative; margin-top: -60px; z-index: 5; }
+        .avatar-container { position: relative; width: 120px; height: 120px; margin: 0 auto 10px auto; }
+        .profile-avatar-big { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background: #eee; }
         
-        /* 💬 বায়ো টেক্সট (এখন একদম নামের নিচে) */
-        .seller-bio { font-size: 14px; color: var(--gray); line-height: 1.4; margin: 6px auto 12px auto; max-width: 85%; font-style: italic; }
+        .user-info h2 { margin: 0 0 4px 0; font-size: 24px; color: var(--dark); font-weight: bold; }
+        .user-bio-text { font-size: 14px; color: var(--gray); max-width: 85%; margin: 8px auto 14px auto; line-height: 1.4; font-style: italic; }
 
-        /* 📋 ফেসবুক অরিজিনাল স্টাইল ইন্ট্রো পরিচিতি বক্স (সুবিন্যস্ত বামে এলাইন করা) */
-        .facebook-intro-card {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            padding: 16px;
-            margin-bottom: 16px;
-            text-align: left;
-        }
+        .facebook-intro-card { background: white; border-radius: 12px; border: 1px solid #e4e6eb; box-shadow: 0 1px 2px rgba(0,0,0,0.1); padding: 16px; margin-bottom: 16px; text-align: left; }
         .facebook-intro-card h3 { margin: 0 0 12px 0; font-size: 17px; font-weight: bold; color: var(--dark); }
-        
         .intro-list { list-style: none; padding: 0; margin: 0; }
         .intro-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; color: var(--dark); }
         .intro-item i { color: #8c939d; font-size: 20px; }
-        .intro-item strong { font-weight: 600; }
-
-        /* ⭐ পাবলিক রেটিং এবং রিভিউ সেকশন */
-        .profile-rating-section { background: #fffdf3; border: 1px solid #fbf1c9; padding: 15px; border-radius: 12px; margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .rating-title { font-size: 13px; font-weight: bold; color: #b78a00; text-transform: uppercase; }
-        .stars-display { display: flex; gap: 4px; }
-        .stars-display i { font-size: 26px; color: #ddd; cursor: pointer; transition: 0.1s; }
-        .stars-display i.active { color: var(--gold); }
-        .rating-stats-text { font-size: 12px; color: var(--dark); font-weight: 600; background: #fef6d3; padding: 4px 10px; border-radius: 10px; }
-
-        /* প্রপার্টি লিস্টিং কার্ড ডিজাইন */
-        .list-title { font-size: 16px; font-weight: bold; color: var(--dark); margin: 25px 0 12px 0; display: flex; align-items: center; gap: 6px; border-left: 4px solid var(--primary); padding-left: 8px; }
-        .seller-posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-        .post-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid var(--border); position: relative; }
-        .post-card img { width: 100%; height: 110px; object-fit: cover; background: #eee; }
         
-        .card-tag { position: absolute; top: 6px; left: 6px; background: rgba(0, 0, 0, 0.75); color: white; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; }
-        .post-info { padding: 8px; }
-        .post-title-text { font-size: 12px; font-weight: bold; margin: 0; height: 32px; overflow: hidden; color: var(--dark); line-height: 1.3; }
-        .post-meta-loc { font-size: 11px; color: var(--gray); display: flex; align-items: center; gap: 2px; margin: 4px 0; }
-        .post-meta-loc i { font-size: 12px; }
-        .post-price-box { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; border-top: 1px solid #f5f5f5; padding-top: 6px; }
-        .post-price-text { color: var(--success); font-size: 12px; font-weight: bold; margin: 0; }
+        .action-buttons-div { display: flex; justify-content: center; gap: 10px; margin-top: 5px; border-top: 1px solid #e4e6eb; padding-top: 15px; }
+        .direct-chat-btn { background: var(--primary); padding: 10px 24px; border-radius: 6px; font-size: 14px; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 8px; border: none; font-weight: 600; text-decoration: none; transition: background 0.2s; }
+        .direct-chat-btn:hover { background: #0069d9; }
+
+        .stats-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+        .stat-card { background: white; padding: 12px 5px; border-radius: 8px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid #e4e6eb; }
+        .stat-card h4 { margin: 0 0 4px 0; color: var(--gray); font-size: 12px; font-weight: 600; }
+
+        /* রেটিং সেকশন */
+        .interactive-rating-card { background: white; padding: 16px; border-radius: 12px; border: 1px solid #e4e6eb; box-shadow: 0 1px 2px rgba(0,0,0,0.1); text-align: center; margin-bottom: 16px; }
+        .interactive-rating-card h3 { margin: 0 0 5px 0; font-size: 16px; font-weight: bold; color: var(--dark); }
+        .stars-row { display: flex; justify-content: center; gap: 6px; margin: 10px 0; }
+        .stars-row i { font-size: 30px; color: #ced0d4; cursor: pointer; transition: color 0.1s; }
+        .stars-row i.selected { color: #ffca28; }
+        .rating-status-label { font-size: 13px; color: var(--gray); font-weight: 500; }
+
+        .profile-tabs { display: flex; gap: 8px; border-bottom: 1px solid #ced0d4; margin-bottom: 16px; }
+        .tab-btn { padding: 10px 12px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gray); position: relative; }
+        .tab-btn.active { color: var(--primary); }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px; }
         
-        .no-post { text-align: center; color: var(--gray); padding: 30px; font-weight: 500; width: 100%; background: white; border-radius: 8px; border: 1px solid var(--border); box-sizing: border-box; }
+        .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 12px; }
+        
+        @media (max-width: 600px) {
+            body { padding-top: 60px; }
+            .main-header { height: 50px; }
+            .logo-title { font-size: 1.15em; }
+            .logo-icon { font-size: 24px; }
+            .header-actions { gap: 8px; }
+            .icon-wrapper { height: 34px; width: 34px; }
+            .icon-wrapper i { font-size: 19px; }
+            .profile-image-wrapper { width: 32px; height: 32px; }
+            .sidebar { width: 250px; left: -250px; }
+        }
     </style>
 </head>
 <body>
-    <div class="overlay" id="overlay"></div> <!-- এই লাইনটি যোগ করুন -->
+    <div id="overlay" class="overlay"></div>
 
     <header class="main-header">
         <div class="header-top">
@@ -289,139 +267,105 @@
             </div>
             <div class="header-actions">
                 <div class="icon-wrapper" id="notificationButton"> 
-                    <i class="material-icons notification-icon">notifications</i>
-                    <span class="notification-count" id="notification-count"></span>
+                    <i class="material-icons">notifications</i>
+                    <span class="notification-count" id="notification-count">০</span>
                 </div>
                 <div class="icon-wrapper" id="headerPostButton">
-                    <i class="material-icons post-icon-header">add_circle_outline</i>
+                    <i class="material-icons" id="post-icon-img">add_circle_outline</i>
                 </div>
                 <div class="icon-wrapper" id="messageButton">
-                    <i class="material-icons message-icon">message</i>
-                    <span class="notification-count" id="message-count"></span>
+                    <i class="material-icons">message</i>
+                    <span class="notification-count" id="message-count">০</span>
                 </div>
                 <div class="profile-image-wrapper" id="profileImageWrapper">
                     <img src="https://www.w3schools.com/howto/img_avatar.png" alt="Profile" id="profileImage">
                 </div>
             </div>
         </div>
-    
+    </header>
     
     <div class="sidebar" id="sidebar">
-        <nav style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+        <nav>
             <a href="index.html" class="sidebar-logo">
                 <i class="material-icons">home</i> 
                 <span>আমার বাড়ি.কম</span>
             </a>
-            
             <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
             <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            
             <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
             <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
             <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            
-            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন / সাইনআপ</a>
         </nav>
-                    </div>
-    </header>
+    </div>
 
-    <div class="container">
-        <button class="btn-back" onclick="window.history.back()"><i class="material-icons">arrow_back</i> ফিরে যান</button>
-
-        <!-- 👑 মূল কার্ড প্রোফাইল -->
-        <div class="seller-premium-card">
-            <div class="profile-cover-photo">
-                <div class="viral-badge-box">
-                    <div class="badge-item badge-verified" id="badgeVerified" style="display: none;">
-                        <i class="material-icons" style="font-size:14px">verified</i> ভেরিফাইড
-                    </div>
-                    <div class="badge-item badge-top-seller" id="badgeTopSeller" style="display: none;">
-                        <i class="material-icons" style="font-size:14px">trending_up</i> টপ সেলার
-                    </div>
-                </div>
-            </div>
-
+    <main class="main-content container">
+        <div class="profile-premium-card">
+            <div class="profile-cover-photo"></div>
             <div class="profile-content-box">
                 <div class="avatar-container">
-                    <img id="s-avatar" class="seller-avatar" src="https://via.placeholder.com/110/007bff/ffffff?text=🏠" alt="Seller Avatar">
-                    <div class="status-dot"></div>
+                    <img src="https://www.w3schools.com/howto/img_avatar.png" id="s-avatar" class="profile-avatar-big" alt="Seller Avatar">
                 </div>
-
-                <!-- 🎯 নাম -->
-                <h1 id="s-name" class="seller-name">লোড হচ্ছে...</h1>
-                
-                <!-- 🎯 বায়ো (এখন পারফেক্টলি নামের নিচে) -->
-                <p id="s-bio" class="seller-bio">এই ইউজারের কোনো বিবরণ বা বায়ো পাওয়া যায়নি।</p>
+                <div class="user-info">
+                    <h2 id="s-name">লোডিং...</h2>
+                    <p id="s-bio" class="user-bio-text">...</p>
+                    <div class="action-buttons-div">
+                        <a href="#" class="direct-chat-btn" id="s-chat-direct-btn">
+                            <i class="material-icons">chat</i> সরাসরি মেসেজ করুন
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- 📋 ফেসবুক অরিজিনাল স্টাইল ইন্ট্রো পরিচিতি বক্স (একত্রিত ও সুবিন্যস্ত) -->
+        <div class="interactive-rating-card">
+            <h3>এই বিক্রেতাকে রেটিং দিন</h3>
+            <div class="stars-row" id="interactiveStarsRow">
+                <i class="material-icons" data-value="1">star_border</i>
+                <i class="material-icons" data-value="2">star_border</i>
+                <i class="material-icons" data-value="3">star_border</i>
+                <i class="material-icons" data-value="4">star_border</i>
+                <i class="material-icons" data-value="5">star_border</i>
+            </div>
+            <div class="rating-status-label" id="ratingStatsLabel">লোডিং রেটিং তথ্য...</div>
+        </div>
+
         <div class="facebook-intro-card">
             <h3>পরিচিতি (Intro)</h3>
             <ul class="intro-list">
-                <li class="intro-item">
-                    <i class="material-icons">work</i>
-                    <span>পেশা: <strong id="s-profession">যুক্ত করা নেই</strong></span>
-                </li>
-                <li class="intro-item">
-                    <i class="material-icons">location_on</i>
-                    <span>বসবাস করেন: <strong id="s-location">যুক্ত করা নেই</strong></span>
-                </li>
-                <li class="intro-item" id="s-office-item" style="display: none;">
-                    <i class="material-icons">business</i>
-                    <span>অফিস: <strong id="s-office">...</strong></span>
-                </li>
-                <li class="intro-item">
-                    <i class="material-icons">phone</i>
-                    <span>মোবাইল: <strong id="s-phone">গোপন রাখা হয়েছে</strong></span>
-                </li>
-                <li class="intro-item">
-                    <i class="material-icons">mail</i>
-                    <span>ইমেইল: <strong id="s-email">ইমেইল সরবরাহ করা হয়নি</strong></span>
-                </li>
-                <li class="intro-item">
-                    <i class="material-icons">assignment_ind</i>
-                    <span>মেম্বার আইডি: <strong id="s-uid-text">...</strong></span>
-                </li>
+                <li class="intro-item"><i class="material-icons">work</i><span>পেশা: <strong id="s-profession">...</strong></span></li>
+                <li class="intro-item"><i class="material-icons">location_on</i><span>বর্তমান শহর: <strong id="s-location">...</strong></span></li>
+                <li class="intro-item" id="s-office-item" style="display: none;"><i class="material-icons">business</i><span>অফিস: <strong id="s-office">...</strong></span></li>
+                <li class="intro-item"><i class="material-icons">phone</i><span>মোবাইল: <strong id="s-phone">...</strong></span></li>
+                <li class="intro-item"><i class="material-icons">email</i><span>ইমেইল: <strong id="s-email">...</strong></span></li>
             </ul>
-
-            <!-- পাবলিক রেটিং জোন ইন্ট্রো বক্সের ভেতরেই বিল্ট-ইন -->
-            <div class="profile-rating-section">
-                <span class="rating-title" id="ratingHeader">এই পোস্টদাতাকে রেটিং দিন</span>
-                <div class="stars-display" id="profileStarsZone">
-                    <i class="material-icons" data-star="1">star_border</i>
-                    <i class="material-icons" data-star="2">star_border</i>
-                    <i class="material-icons" data-star="3">star_border</i>
-                    <i class="material-icons" data-star="4">star_border</i>
-                    <i class="material-icons" data-star="5">star_border</i>
-                </div>
-                <span class="rating-stats-text" id="ratingStatsLabel">গড় রেটিং: ০.০ (০টি ভোট)</span>
-            </div>
         </div>
 
-        <!-- প্রপার্টি লিস্টিং -->
-        <div class="list-title">
-            <i class="material-icons" style="color:var(--primary)">maps_home_work</i> 
-            <span>এই বিজ্ঞাপনদাতার একটিভ প্রপার্টি সমূহ:</span>
+        <div class="stats-container">
+            <div class="stat-card"><h4>মোট বিজ্ঞাপন</h4><p id="s-total-posts">০</p></div>
+            <div class="stat-card"><h4>গড় রেটিং স্কোর</h4><p id="s-rating-score">⭐ ০.০</p></div>
         </div>
-        
-        <div class="seller-posts-grid" id="seller-listings"></div>
-    </div>
+
+        <div class="profile-tabs">
+            <button class="tab-btn active">এই বিক্রেতার প্রপার্টি সমূহ</button>
+        </div>
+
+        <div class="property-grid" id="seller-properties-list"></div>
+        <p id="s-empty-message" style="display:none; text-align:center; padding: 30px; color: var(--gray);">এই ব্যবহারকারী এখনও কোনো বিজ্ঞাপন দেননি।</p>
+    </main>
 
     <script src="seller-profile.js"></script>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
-            const notificationButton = document.getElementById('notificationButton');
             const headerPostButton = document.getElementById('headerPostButton');
             const messageButton = document.getElementById('messageButton');
             const profileImageWrapper = document.getElementById('profileImageWrapper');
 
+            // 🛠️ নিখুঁত সাইডবার টগল স্ক্রিপ্ট
             if (menuButton && sidebar && overlay) {
                 menuButton.addEventListener('click', () => {
                     sidebar.classList.toggle('active');
@@ -433,12 +377,10 @@
                 });
             }
 
-            if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
             if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
             if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
             if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
         });
-
-</script>
+    </script>
 </body>
     </html>
