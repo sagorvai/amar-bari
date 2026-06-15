@@ -24,6 +24,128 @@
             --border: #e4e6eb;
         }
         body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding-top: 70px; color: var(--dark); }
+       
+        .main-header {
+             position: fixed; 
+             top: 0; left: 0; right: 0;
+             background-color: white; 
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             z-index: 1000; 
+        }
+        
+        /* --- ⭐ FIX 2: সাইডবার পজিশনিং, ট্রানজিশন ও রঙ যোগ করা হলো ⭐ --- */
+        .sidebar {
+            position: fixed; 
+            top: 0;
+            left: -250px; 
+            width: 250px; 
+            height: 100%;
+            background-color: #34495e; /* গাঢ় নীল/ধূসর রঙ */
+            transition: left 0.3s ease; 
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
+            z-index: 1050; 
+            overflow-y: auto;
+            padding-top: 50px; 
+        }
+        
+        .sidebar.active {
+            left: 0; 
+        }
+        
+        .overlay {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); 
+            z-index: 1040; 
+            display: none; 
+        }
+        
+        .overlay.active {
+            display: block; 
+        }
+        
+        /* সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা */
+        .sidebar a {
+            color: #ffffff; 
+            padding: 12px 15px; 
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .sidebar a i.material-icons {
+            color: #ffffff; 
+            margin-right: 10px;
+        }
+
+        .sidebar a:hover {
+            background-color: #3e5369; 
+        }
+        
+        /* সাইডবারের লোগো লিঙ্ক */
+        .sidebar-logo {
+            padding: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white !important; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+        }
+        
+        .header-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; }
+        .header-left { display: flex; align-items: center; flex-shrink: 0; }
+        .menu-icon { cursor: pointer; color: dark; font-size: 28px; }
+        
+        .logo-title { display: flex; align-items: center; font-size: 1.5em; font-weight: bold; color: var(--primary); text-decoration: none; white-space: nowrap; margin-left: 10px; }
+        .logo-icon { margin-right: 5px; }
+
+        .header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        .icon-wrapper { position: relative; display: inline-flex; cursor: pointer; align-items: center; justify-content: center; height: 30px; width: 30px; }
+        
+        .notification-count { position: absolute; top: -5px; right: -8px; background-color: red; color: white; border-radius: 50%; padding: 2px 5px; font-size: 0.7em; font-weight: bold; min-width: 10px; text-align: center; line-height: 1; display: none; }
+        .notification-icon, .message-icon { color: var(--primary); }
+        .post-icon-header { color: #28a745; }
+
+        .profile-image-wrapper { cursor: pointer; width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; }
+        .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+        
+        @media (max-width: 600px) {
+            body { padding-top: 55px; }
+            .logo-title { font-size: 1.2em; }
+            .header-actions { gap: 8px; }
+        }
+        
+        .profile-premium-card { 
+            background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; border: 1px solid var(--border);
+        }
+        .profile-cover-photo::before {
+            
+            content: "corporate_fare";
+            font-family: 'Material Icons';
+            position: absolute;
+            right: 15px;
+            bottom: -15px;
+            font-size: 120px;
+            color: rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+        }
+
+            .profile-cover-photo::after {
+            content: "home";
+            font-family: 'Material Icons';
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            font-size: 70px;
+            color: rgba(255, 255, 255, 0.05);
+            pointer-events: none;
+                }
+        
+        
         .container { max-width: 600px; margin: auto; padding: 10px; box-sizing: border-box; }
         
         .btn-back { background: white; border: 1px solid #ddd; color: var(--dark); padding: 8px 16px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 14px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: fit-content; transition: 0.2s; }
@@ -153,12 +275,53 @@
 </head>
 <body>
 
-    <header class="main-header" style="position: fixed; top: 0; left: 0; right: 0; background-color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.08); z-index: 1000; padding: 12px 15px;">
-        <div style="display: flex; align-items: center; max-width: 600px; margin: auto;">
-            <a href="index.html" style="display: flex; align-items: center; font-size: 1.4em; font-weight: bold; color: #007bff; text-decoration: none;">
-               <i class="material-icons" style="margin-right: 5px;">home</i> <span>আমার বাড়ি.কম</span>
-            </a>
+    <header class="main-header">
+        <div class="header-top">
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                <a href="index.html" class="logo-title">
+                   <i class="material-icons logo-icon">home</i>  
+                   <span>আমার বাড়ি.কম</span>
+                </a>
+            </div>
+            <div class="header-actions">
+                <div class="icon-wrapper" id="notificationButton"> 
+                    <i class="material-icons notification-icon">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
+                </div>
+                <div class="icon-wrapper" id="headerPostButton">
+                    <i class="material-icons post-icon-header">add_circle_outline</i>
+                </div>
+                <div class="icon-wrapper" id="messageButton">
+                    <i class="material-icons message-icon">message</i>
+                    <span class="notification-count" id="message-count"></span>
+                </div>
+                <div class="profile-image-wrapper" id="profileImageWrapper">
+                    <img src="https://www.w3schools.com/howto/img_avatar.png" alt="Profile" id="profileImage">
+                </div>
+            </div>
         </div>
+    </header>
+    
+    <div class="sidebar" id="sidebar">
+        <nav style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <a href="index.html" class="sidebar-logo">
+                <i class="material-icons">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
+            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            
+            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
+            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            
+        </nav>
+                    </div>
     </header>
 
     <div class="container">
@@ -245,5 +408,34 @@
     </div>
 
     <script src="seller-profile.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const notificationButton = document.getElementById('notificationButton');
+            const headerPostButton = document.getElementById('headerPostButton');
+            const messageButton = document.getElementById('messageButton');
+            const profileImageWrapper = document.getElementById('profileImageWrapper');
+
+            if (menuButton && sidebar && overlay) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
+            if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
+            if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
+            if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
+        });
+
+</script>
 </body>
     </html>
