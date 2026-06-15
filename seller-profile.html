@@ -33,6 +33,22 @@
              z-index: 1000; 
         }
         
+        .overlay {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); 
+            z-index: 1040; 
+            display: none; 
+        }
+        
+        .overlay.active {
+            display: block; 
+        }
+        
+        
         /* --- ⭐ FIX 2: সাইডবার পজিশনিং, ট্রানজিশন ও রঙ যোগ করা হলো ⭐ --- */
         .sidebar {
             position: fixed; 
@@ -52,20 +68,7 @@
             left: 0; 
         }
         
-        .overlay {
-            position: fixed; 
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5); 
-            z-index: 1040; 
-            display: none; 
-        }
         
-        .overlay.active {
-            display: block; 
-        }
         
         /* সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা */
         .sidebar a {
