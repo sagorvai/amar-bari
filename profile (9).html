@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>প্রোফাইল ড্যাশবোর্ড - আমার বাড়ি.কম</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <style>
+        :root { 
+            --primary: #007bff; 
+            --primary-gradient: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
+            --cover-gradient: linear-gradient(135deg, rgba(24, 43, 73, 0.9) 0%, rgba(0, 123, 255, 0.85) 100%);
+            --success: #2ecc71; 
+            --danger: #e74c3c;
+            --dark: #1c1e21; 
+            --gray: #65676b; 
+            --bg: #f0f2f5;   
+            --border: #ced0d4;
+        }
+        body { background-color: var(--bg); font-family: 'Segoe UI', Helvetica, Arial, sans-serif; margin: 0; padding-top: 60px; color: var(--dark); }
+        .container { max-width: 650px; margin: auto; padding:10px; box-sizing: border-box; }
+
+        .main-header {
+             position: fixed; 
+             top: 0; left: 0; right: 0;
+             background-color: white; 
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             z-index: 1000; 
+        }
+        
+        .sidebar { z-index: 1050; position: fixed; left: -250px; top: 0; height: 100%; width: 250px; background: white; transition: 0.3s; }
+        .sidebar.active { left: 0; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040; }
+        .overlay.active { display: block; }
+        
+        .header-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; }
+        .header-left { display: flex; align-items: center; flex-shrink: 0; }
+        .menu-icon { cursor: pointer; color: var(--primary); font-size: 28px; }
+        
+        .logo-title { display: flex; align-items: center; font-size: 1.5em; font-weight: bold; color: var(--primary); text-decoration: none; white-space: nowrap; margin-left: 10px; }
+        .logo-icon { margin-right: 5px; }
+
+        .header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        .icon-wrapper { position: relative; display: inline-flex; cursor: pointer; align-items: center; justify-content: center; height: 30px; width: 30px; }
+        
+        .notification-count { position: absolute; top: -5px; right: -8px; background-color: red; color: white; border-radius: 50%; padding: 2px 5px; font-size: 0.7em; font-weight: bold; min-width: 10px; text-align: center; line-height: 1; display: none; }
+        .notification-icon, .message-icon { color: var(--primary); }
+        .post-icon-header { color: #28a745; }
+
+        .profile-image-wrapper { cursor: pointer; width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; }
+        .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+        
+        @media (max-width: 600px) {
+            body { padding-top: 55px; }
+            .logo-title { font-size: 1.2em; }
+            .header-actions { gap: 8px; }
+        }
+        
+        .profile-premium-card { 
+            background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; border: 1px solid var(--border);
+        }
+        .profile-cover-photo::before {
+            
+            content: "corporate_fare";
+            font-family: 'Material Icons';
+            position: absolute;
+            right: 15px;
+            bottom: -15px;
+            font-size: 120px;
+            color: rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+        }
+
+            .profile-cover-photo::after {
+            content: "home";
+            font-family: 'Material Icons';
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            font-size: 70px;
+            color: rgba(255, 255, 255, 0.05);
+            pointer-events: none;
+            }
+        
+        .profile-cover-photo { height: 140px; background: var(--cover-gradient); position: relative; }
+        .profile-content-box { padding: 0px 16px 20px 16px; position: relative; margin-top: -60px; z-index: 5; }
+        .avatar-container { position: relative; width: 120px; height: 120px; margin: 0 auto 10px auto; }
+        .profile-avatar-big { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background: #eee; }
+        
+        .user-info h2 { margin: 0 0 4px 0; font-size: 24px; color: var(--dark); font-weight: bold; }
+        .user-bio-text { font-size: 14px; color: var(--gray); max-width: 85%; margin: 8px auto 14px auto; line-height: 1.4; font-style: italic; }
+
+        .facebook-intro-card { background: white; border-radius: 12px; border: 1px solid #e4e6eb; box-shadow: 0 1px 2px rgba(0,0,0,0.1); padding: 16px; margin-bottom: 16px; text-align: left; }
+        .facebook-intro-card h3 { margin: 0 0 12px 0; font-size: 17px; font-weight: bold; color: var(--dark); }
+        .intro-list { list-style: none; padding: 0; margin: 0; }
+        .intro-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; color: var(--dark); }
+        .intro-item i { color: #8c939d; font-size: 20px; }
+        
+        .action-buttons-div { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 5px; border-top: 1px solid #e4e6eb; padding-top: 15px; }
+        .edit-badge { background: #e4e6eb; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: var(--dark); display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+        .add-property-btn { background: var(--primary); padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 6px; border: none; font-weight: 600; }
+
+        .stats-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+        .stat-card { background: white; padding: 12px 5px; border-radius: 8px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid #e4e6eb; }
+        .stat-card h4 { margin: 0 0 4px 0; color: var(--gray); font-size: 12px; font-weight: 600; }
+
+        .profile-tabs { display: flex; gap: 8px; border-bottom: 1px solid #ced0d4; margin-bottom: 16px; }
+        .tab-btn { padding: 10px 12px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gray); position: relative; }
+        .tab-btn.active { color: var(--primary); }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 12px; }
+        .property-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid #e4e6eb; }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); overflow-y: auto; backdrop-filter: blur(3px); }
+        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 92%; max-width: 440px; border-radius: 12px; position: relative; box-sizing: border-box; }
+        .close-modal { position: absolute; right: 16px; top: 12px; font-size: 24px; cursor: pointer; color: var(--gray); }
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; color: var(--dark); }
+        .input-group input, .input-group textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        .submit-button { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; }
+        
+        /* ডিলিট ও এডিট বাটনের বাড়তি সিএসএস */
+        .modal-action-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-modal-edit { flex: 1; background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-modal-delete { flex: 1; background: var(--danger); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+    </style>
+</head>
+<body>
+    <div id="overlay" class="overlay"></div>
+
+    <header class="main-header">
+        <div class="header-top">
+            <div class="header-left">
+                <i class="material-icons menu-icon" id="menuButton">menu</i>
+                <a href="index.html" class="logo-title">
+                   <i class="material-icons logo-icon">home</i>  
+                   <span>আমার বাড়ি.কম</span>
+                </a>
+            </div>
+            <div class="header-actions">
+                <div class="icon-wrapper" id="notificationButton"> 
+                    <i class="material-icons notification-icon">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
+                </div>
+                <div class="icon-wrapper" id="headerPostButton">
+                    <i class="material-icons post-icon-header">add_circle_outline</i>
+                </div>
+                <div class="icon-wrapper" id="messageButton">
+                    <i class="material-icons message-icon">message</i>
+                    <span class="notification-count" id="message-count"></span>
+                </div>
+                <div class="profile-image-wrapper" id="profileImageWrapper">
+                    <img src="https://www.w3schools.com/howto/img_avatar.png" alt="Profile" id="profileImage">
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="sidebar" id="sidebar">
+        <nav style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <a href="index.html" class="sidebar-logo">
+                <i class="material-icons">home</i> 
+                <span>আমার বাড়ি.কম</span>
+            </a>
+            
+            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            
+            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
+            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
+            
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            
+        </nav>
+    </div>
+
+    <main class="main-content container">
+        <div class="profile-premium-card">
+            <div class="profile-cover-photo"></div>
+            <div class="profile-content-box">
+                <div class="avatar-container">
+                    <img src="https://www.w3schools.com/howto/img_avatar.png" id="user-avatar" class="profile-avatar-big" alt="User Avatar">
+                </div>
+                <div class="user-info">
+                    <h2 id="display-name">আমার প্রোফাইল</h2>
+                    <p id="user-bio" class="user-bio-text">আপনার সম্পর্কে কিছু লিখুন...</p>
+                    <div class="action-buttons-div">
+                        <div class="edit-badge" id="edit-profile-show-btn">
+                            <i class="material-icons" style="font-size: 18px;">edit</i> প্রোফাইল সাজান
+                        </div>
+                        <button class="add-property-btn" id="direct-post-btn">
+                            <i class="material-icons" style="font-size: 18px;">add_circle</i> প্রোপার্টি যুক্ত করুন
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="facebook-intro-card">
+            <h3>পরিচিতি (Intro)</h3>
+            <ul class="intro-list">
+                <li class="intro-item"><i class="material-icons">work</i><span>পেশা: <strong id="user-profession">যুক্ত করা নেই</strong></span></li>
+                <li class="intro-item"><i class="material-icons">location_on</i><span>বসবাস করেন: <strong id="user-location">যুক্ত করা নেই</strong></span></li>
+                <li class="intro-item" id="intro-office-item" style="display: none;"><i class="material-icons">business</i><span>অফিস: <strong id="user-office">...</strong></span></li>
+                <li class="intro-item"><i class="material-icons">phone</i><span>মোবাইল: <strong id="user-phone">ফোন সেট করা নেই</strong></span></li>
+                <li class="intro-item"><i class="material-icons">email</i><span>ইমেইল: <strong id="user-email">...</strong></span></li>
+            </ul>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card"><h4>আমার লিস্টিং</h4><p id="total-posts-count">০</p></div>
+            <div class="stat-card"><h4>পছন্দের তালিকা</h4><p id="saved-posts-count">০</p></div>
+            <div class="stat-card"><h4>পাবলিক রেটিং</h4><p id="my-rating-score">⭐ ০.০</p></div>
+        </div>
+
+        <div class="profile-tabs">
+            <button class="tab-btn active" onclick="openTab(event, 'my-posts')">আমার পোস্ট সমূহ</button>
+            <button class="tab-btn" onclick="openTab(event, 'saved-posts')">বুকমার্ক প্রপার্টি</button>
+        </div>
+
+        <div id="my-posts" class="tab-content active">
+            <div id="my-properties-list" class="property-grid"></div>
+            <p id="empty-posts-message" style="display:none; text-align:center; padding: 30px; color: var(--gray);">আপনি এখনও কোনো প্রপার্টি বিজ্ঞাপন দেননি।</p>
+        </div>
+
+        <div id="saved-posts" class="tab-content">
+            <p style="text-align:center; padding: 30px; color: var(--gray);">বুকমার্ক তালিকায় কোনো আইটেম নেই।</p>
+        </div>
+    </main>
+
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="edit-profile-close-btn">&times;</span>
+            <h3 style="margin: 0 0 15px 0; text-align: center;">তথ্য আপডেট করুন</h3>
+            <form id="edit-profile-form">
+                <div style="text-align: center; margin-bottom: 12px; position: relative;">
+                    <img src="https://www.w3schools.com/howto/img_avatar.png" id="edit-avatar-preview" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover;">
+                    <label for="edit-profile-picture" style="position: absolute; bottom: 0; right: calc(50% - 45px); background: #1c1e21; color: white; padding: 5px; border-radius: 50%; cursor: pointer;">
+                        <i class="material-icons" style="font-size: 16px;">photo_camera</i>
+                    </label>
+                    <input type="file" id="edit-profile-picture" accept="image/png, image/jpeg" style="display: none;">
+                </div>
+                <div class="input-group"><label>আপনার পুরো নাম:</label><input type="text" id="edit-full-name" required></div>
+                <div class="input-group"><label>বায়ো (Bio):</label><textarea id="edit-bio" maxlength="120"></textarea></div>
+                <div class="input-group"><label>পেশা:</label><input type="text" id="edit-profession"></div>
+                <div class="input-group"><label>ফোন নম্বর:</label><input type="tel" id="edit-phone-number"></div>
+                <div class="input-group"><label>বর্তমান অবস্থান:</label><input type="text" id="edit-location"></div>
+                <div class="input-group"><label>অফিসের ঠিকানা (ঐচ্ছিক):</label><input type="text" id="edit-office"></div>
+                <button type="submit" class="submit-button" id="update-profile-btn">পরিবর্তন সেভ করুন</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="propertyModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close-modal" onclick="closePropertyModal()">&times;</span>
+            <div id="modal-content-inner"></div>
+            
+            <div class="modal-action-buttons">
+                <button id="modal-edit-btn" class="btn-modal-edit">
+                    <i class="material-icons" style="font-size:18px;">edit</i> এডিট করুন
+                </button>
+                <button id="modal-delete-btn" class="btn-modal-delete">
+                    <i class="material-icons" style="font-size:18px;">delete</i> মুছে ফেলুন
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="profile.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const notificationButton = document.getElementById('notificationButton');
+            const headerPostButton = document.getElementById('headerPostButton');
+            const messageButton = document.getElementById('messageButton');
+            const profileImageWrapper = document.getElementById('profileImageWrapper');
+
+            if (menuButton && sidebar && overlay) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
+            if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
+            if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
+            if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
+        });
+
+        function openTab(evt, tabName) {
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) { tabcontent[i].classList.remove("active"); }
+            tablinks = document.getElementsByClassName("tab-btn");
+            for (i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        function closePropertyModal() {
+            document.getElementById('propertyModal').style.display = 'none';
+        }
+    </script>
+</body>
+                        </html>
