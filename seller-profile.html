@@ -270,6 +270,119 @@
         .post-price-text { color: var(--success); font-size: 12px; font-weight: bold; margin: 0; }
         
         .no-post { text-align: center; color: var(--gray); padding: 30px; font-weight: 500; width: 100%; background: white; border-radius: 8px; border: 1px solid var(--border); box-sizing: border-box; }
+    
+    /* ==========================
+   RESPONSIVE SELLER PROFILE
+========================== */
+
+.profile-layout{
+    display:grid;
+    gap:20px;
+}
+
+/* Contact Buttons */
+.contact-actions{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-top:15px;
+}
+
+.contact-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    text-decoration:none;
+    border:none;
+    border-radius:10px;
+    padding:12px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.contact-btn:hover{
+    transform:translateY(-2px);
+}
+
+.call-btn{
+    background:#28a745;
+    color:#fff;
+}
+
+.message-btn{
+    background:#007bff;
+    color:#fff;
+}
+
+.whatsapp-btn{
+    background:#25D366;
+    color:#fff;
+}
+
+/* Tablet */
+@media (min-width:768px){
+
+    .container{
+        max-width:950px;
+    }
+
+    .profile-layout{
+        grid-template-columns:1fr 1fr;
+        align-items:start;
+    }
+
+    .profile-cover-photo{
+        height:180px;
+    }
+
+    .seller-posts-grid{
+        grid-template-columns:repeat(3,1fr);
+    }
+
+    .seller-name{
+        font-size:28px;
+    }
+}
+
+/* Desktop */
+@media (min-width:1024px){
+
+    .container{
+        max-width:1200px;
+    }
+
+    .profile-layout{
+        grid-template-columns:380px 1fr;
+        align-items:start;
+    }
+
+    .profile-cover-photo{
+        height:220px;
+    }
+
+    .avatar-container{
+        width:130px;
+        height:130px;
+    }
+
+    .seller-name{
+        font-size:30px;
+    }
+
+    .seller-posts-grid{
+        grid-template-columns:repeat(4,1fr);
+    }
+
+    .facebook-intro-card,
+    .seller-premium-card{
+        margin-bottom:0;
+    }
+                            }
+    
+    
     </style>
 </head>
 <body>
