@@ -414,30 +414,27 @@
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
-            const profileButton = document.getElementById('profileButton');
+            const notificationButton = document.getElementById('notificationButton');
+            const headerPostButton = document.getElementById('headerPostButton');
+            const messageButton = document.getElementById('messageButton');
+            const profileImageWrapper = document.getElementById('profileImageWrapper');
 
-            // প্রোফাইল বাটন ক্লিক লজিক (শুধুমাত্র 'profile.html' এ যাবে)
-            if (profileButton) {
-                profileButton.addEventListener('click', () => {
-                    window.location.href = 'profile.html';
-                });
-            }
-            
-            // সাইড মেনু খোলার/বন্ধ করার কার্যকারিতা
-            if (menuButton) {
+            // 🛠️ নিখুঁত সাইডবার টগল স্ক্রিপ্ট
+            if (menuButton && sidebar && overlay) {
                 menuButton.addEventListener('click', () => {
                     sidebar.classList.toggle('active');
                     overlay.classList.toggle('active');
                 });
-            }
-
-            // ওভারলেতে ক্লিক করলে সাইড মেনু বন্ধ হবে
-            if (overlay) {
                 overlay.addEventListener('click', () => {
                     sidebar.classList.remove('active');
                     overlay.classList.remove('active');
                 });
             }
+
+            if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
+            if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
+            if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
+            if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
         });
 
 </script>
