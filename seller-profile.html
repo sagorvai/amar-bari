@@ -33,40 +33,37 @@
              z-index: 1000; 
         }
         
-        .overlay {
-            position: fixed; 
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5); 
-            z-index: 1040; 
-            display: none; 
-        }
-        
-        .overlay.active {
-            display: block; 
-        }
-        
-        
-        /* --- ⭐ FIX 2: সাইডবার পজিশনিং, ট্রানজিশন ও রঙ যোগ করা হলো ⭐ --- */
-        .sidebar {
-            position: fixed; 
-            top: 0;
-            left: -250px; 
-            width: 250px; 
-            height: 100%;
-            background-color: #34495e; /* গাঢ় নীল/ধূসর রঙ */
-            transition: left 0.3s ease; 
-            box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
-            z-index: 1050; 
-            overflow-y: auto;
-            padding-top: 50px; 
-        }
-        
-        .sidebar.active {
-            left: 0; 
-        }
+        /* --- সাইডবার ও ওভারলে নিখুঁত লেয়ার ফিক্স --- */
+
+.overlay { 
+    display: none; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: rgba(0,0,0,0.4); 
+    z-index: 1040; /* 👈 এটি সাইডবার থেকে কম লেয়ারে থাকবে */
+    backdrop-filter: blur(1px);
+}
+.overlay.active { 
+    display: block; 
+}
+
+.sidebar { 
+    z-index: 1050; /* 👈 এটি ওভারলে (1040) থেকে বেশি, তাই এটি সবার উপরে থাকবে এবং লিংকে ক্লিক করা যাবে */
+    position: fixed; 
+    left: -260px; 
+    top: 0; 
+    height: 100%; 
+    width: 260px; 
+    background: white; 
+    transition: left 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); 
+    box-shadow: 4px 0 10px rgba(0,0,0,0.1); 
+}
+.sidebar.active { 
+    left: 0; 
+}
         
         
         
