@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     imageUrl = p.image;
                 }
 
-                let locationText = `${post.location?.village || ''}, ${post.location?.thana || ''}`;
+                
                 let displayPrice = p.price || p.rent || p.monthlyRent || p.amount || '০';
 
                 card.innerHTML = `
