@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = doc.data();
             renderDetails(data);
             loadRelatedPosts(data);
-            setupStarRatingSystem(); // ⭐ FIX: রেটিং সিস্টেম এখানে চালু করা হলো
+            setupLikeSystem(); // ✅ ফিক্সড: এখানে সরাসরি লাইক সিস্টেম চালু করা হলো
         }
     } catch (e) {
         console.error("ডেটা লোড করতে সমস্যা:", e);
@@ -54,12 +54,12 @@ function renderDetails(data) {
         });
     }
 
-    // 🆕 পোস্টদাতার ডাটা লোড ও প্রোফাইল পেইজ রিডাইরেক্ট লজিক
+    // পোস্টদাতার ডাটা লোড ও প্রোফাইল পেইজ রিডাইরেক্ট লজিক
     if (data.userId) {
         db.collection('users').doc(data.userId).get().then(userDoc => {
             if (userDoc.exists) {
                 const userData = userDoc.data();
-                document.getElementById('pub-name').textContent = userData.fullName || userData.name || "সম্মանিত বিক্রেতা";
+                document.getElementById('pub-name').textContent = userData.fullName || userData.name || "সম্মানিত বিক্রেতা";
                 if (userData.profilePic) {
                     document.getElementById('pub-avatar').src = userData.profilePic;
                 }
@@ -70,7 +70,6 @@ function renderDetails(data) {
             document.getElementById('pub-name').textContent = "আমার বাড়ি ইউজার";
         });
 
-        // ছবি ও নামের বক্সের ওপর ক্লিক করলে সেলার প্রোফাইলে নিয়ে যাবে userId সহ
         const authorTrigger = document.getElementById('authorProfileTrigger');
         if (authorTrigger) {
             authorTrigger.onclick = () => {
@@ -88,7 +87,6 @@ function renderDetails(data) {
         document.getElementById('pub-time').textContent = "কিছুক্ষণ আগে";
     }
 
-    // ⭐ FIX 1: ডুপ্লিকেট addRow ফাংশন ডিক্লেয়ারেশন রিমুভ করে একটি রাখা হলো
     const addRow = (tableId, label, value) => {
         if (!value || value === "" || value === "undefined") return;
         const table = document.getElementById(tableId);
@@ -179,7 +177,6 @@ function renderDetails(data) {
         document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
     }
 
-    // 💬 FIX 3: মেসেজ সিস্টেম বাটন অ্যাকশন হ্যান্ডলার যুক্ত করা হলো
     const msgBtn = document.getElementById('p-message');
     if (msgBtn) {
         msgBtn.onclick = () => {
@@ -231,11 +228,7 @@ function initSinglePropertyMap(data) {
     }
 }
 
-function setupStarRatingSystem() {
-// ১. DOMContentLoaded এর ভেতরে setupStarRatingSystem() এর বদলে এটি লিখুন:
-setupLikeSystem();
-
-// ২. ফাইলের নিচে নতুন এই ফাংশনটি যুক্ত করুন:
+// ✅ ফিক্সড: লাইক সিস্টেমের জন্য সম্পূর্ণ আলাদা ও পরিষ্কার ফাংশন
 async function setupLikeSystem() {
     const likeBtn = document.getElementById('likeBtn');
     const likeIcon = document.getElementById('likeIcon');
@@ -245,39 +238,47 @@ async function setupLikeSystem() {
     const storageKey = `liked_post_${postId}`;
     let isLiked = localStorage.getItem(storageKey) === 'true';
 
-    // Firestore থেকে লাইক সংখ্যা আনার জন্য (প্রথমে ডাটাবেজে 'likes' ফিল্ড থাকতে হবে)
+    // UI আপডেট করার লজিক
     const updateLikeUI = (status) => {
         if (status) {
-            likeIcon.textContent = 'thumb_up'; // ভরা আইকন
+            likeIcon.textContent = 'thumb_up'; // ভরা নীল লাইক আইকন
             likeIcon.style.color = '#007bff';
         } else {
-            likeIcon.textContent = 'thumb_up_off_alt'; // বর্ডার আইকন
+            likeIcon.textContent = 'thumb_up_off_alt'; // খালি বর্ডার আইকন
             likeIcon.style.color = '#7f8c8d';
         }
     };
 
+    // প্রাথমিকভাবে লোকাল স্টোরেজ অনুযায়ী চেক করা
     updateLikeUI(isLiked);
 
+    // ফায়ারবেস থেকে লাইভের রিয়েল-টাইম লাইক কাউন্ট সংখ্যা দেখা ও আপডেট করা
+    try {
+        db.collection('properties').doc(postId).onSnapshot((doc) => {
+            if (doc.exists) {
+                const postData = doc.data();
+                const totalLikes = postData.likes || 0;
+                document.getElementById('likeCountText').textContent = `${totalLikes} লাইক`;
+            }
+        });
+    } catch (err) {
+        console.log("লাইক সংখ্যা রিড করতে সমস্যা:", err);
+    }
+
+    // ক্লিক ইভেন্ট হ্যান্ডলার
     likeBtn.addEventListener('click', async () => {
         isLiked = !isLiked;
         localStorage.setItem(storageKey, isLiked);
         updateLikeUI(isLiked);
 
-        // ঐচ্ছিক: ফায়ারবেস ডাটাবেজে লাইক সংখ্যা আপডেট করার লজিক এখানে দিতে পারেন
+        // ফায়ারবেস ডাটাবেজে কাউন্ট ১ বাড়ানো বা কমানো
         try {
             const postRef = db.collection('properties').doc(postId);
             await postRef.update({
                 likes: firebase.firestore.FieldValue.increment(isLiked ? 1 : -1)
             });
         } catch (e) {
-            console.log("লাইক আপডেট করতে সমস্যা (হয়তো ফিল্ডটি নেই):", e);
-        }
-    });
-}
-            star.classList.add('active');
-        } else {
-            star.textContent = 'star_border';
-            star.classList.remove('active');
+            console.log("ফায়ারবেসে লাইক ডেটা আপডেট করতে সমস্যা:", e);
         }
     });
 }
@@ -303,7 +304,7 @@ function formatPostTime(date) {
         month: 'long',
         year: 'numeric'
     });
-                }
+}
 
 async function loadRelatedPosts(currentData) {
     const list = document.getElementById('related-list');
@@ -377,27 +378,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
 
-// 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
 firebase.auth().onAuthStateChanged(async (user) => {
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
     
     if (user && headerProfileImg) {
         try {
-            // ফায়ারবেস 'users' কালেকশন থেকে ইউজারের ডাটা আনা হচ্ছে
             const userDoc = await db.collection('users').doc(user.uid).get();
             if (userDoc.exists && userDoc.data().profilePic) {
-                // ডাটাবেজে প্রোফাইল পিকচার থাকলে সেটি হেডারে সেট হবে
                 headerProfileImg.src = userDoc.data().profilePic;
             } else if (user.photoURL) {
-                // গুগল লগইন করা থাকলে গুগল প্রোফাইল পিকচার সেট হবে
                 headerProfileImg.src = user.photoURL;
             } else {
-                // কোনো ছবি না থাকলে একটি ডিফল্ট অ্যাভাটার সেট হবে
-                headerProfileImg.src = 'assets/images/default-avatar.png'; // আপনার প্রজেক্টের ডিফল্ট ছবির পাথ দিন
+                headerProfileImg.src = 'assets/images/default-avatar.png';
             }
         } catch (error) {
             console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
         }
     }
 });
-
