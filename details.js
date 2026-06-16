@@ -194,6 +194,20 @@ function renderDetails(data) {
             window.location.href = `messages.html?chatId=${chatId}&postId=${postId}`;
         };
     }
+
+    // ফেইসবুক শেয়ারের জন্য মেটা ট্যাগ ডাইনামিক করা
+const currentUrl = window.location.href;
+document.getElementById('og-url')?.setAttribute('content', currentUrl);
+document.getElementById('og-title')?.setAttribute('content', data.title || "আমার বাড়ি.কম");
+document.getElementById('og-desc')?.setAttribute('content', data.description ? data.description.substring(0, 150) + '...' : "");
+
+if (data.images && data.images.length > 0) {
+    const firstImg = data.images[0].url || data.images[0];
+    document.getElementById('og-image')?.setAttribute('content', firstImg);
+}
+
+// সেভ এবং শেয়ার বাটন সচল করা
+setupSaveAndShareSystem(data);
 }
     
 function initSinglePropertyMap(data) {
@@ -282,6 +296,69 @@ async function setupLikeSystem() {
         }
     });
 }
+// ✅ সেভ এবং শেয়ার সিস্টেমের সম্পূর্ণ ফাংশন
+function setupSaveAndShareSystem(data) {
+    const saveBtn = document.getElementById('p-save');
+    const shareBtn = document.getElementById('p-share');
+    const currentUrl = window.location.href;
+
+    // --- ১. সেভ বাটন মেকানিজম (Local Storage ভিত্তিক) ---
+    if (saveBtn) {
+        const saveStorageKey = `saved_post_${postId}`;
+        let isSaved = localStorage.getItem(saveStorageKey) === 'true';
+
+        // সেভ UI আপডেট করার লজিক
+        const updateSaveUI = (status) => {
+            const icon = saveBtn.querySelector('i');
+            if (status) {
+                icon.textContent = 'bookmark'; // ভরা বুকমার্ক আইকন
+                saveBtn.style.color = '#27ae60'; // সবুজ কালার
+                saveBtn.querySelector('span') ? saveBtn.querySelector('span').textContent = 'সেভড' : null;
+            } else {
+                icon.textContent = 'bookmark_border'; // খালি বুকমার্ক আইকন
+                saveBtn.style.color = '#2c3e50'; // ডিফল্ট কালার
+            }
+        };
+
+        // শুরুতে চেক করা
+        updateSaveUI(isSaved);
+
+        saveBtn.onclick = () => {
+            isSaved = !isSaved;
+            localStorage.setItem(saveStorageKey, isSaved);
+            updateSaveUI(isSaved);
+            
+            if (isSaved) {
+                alert("পোস্টটি আপনার ব্রাউজারে সেভ করা হয়েছে!");
+            } else {
+                alert("পোস্টটি সেভ তালিকা থেকে বাদ দেওয়া হয়েছে।");
+            }
+        };
+    }
+
+    // --- ২. শেয়ার বাটন মেকানিজম (Web Share API) ---
+    if (shareBtn) {
+        shareBtn.onclick = async () => {
+            // মোবাইল বা মডার্ন ব্রাউজারের নেটিভ শেয়ার অপশন (সব প্ল্যাটফর্মে শেয়ার হবে)
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: data.title || "আমার বাড়ি.কম প্রপার্টি",
+                        text: `আমার বাড়ি.কম-এ এই চমৎকার প্রপার্টিটি দেখুন: ${data.title}`,
+                        url: currentUrl
+                    });
+                    console.log("সফলভাবে শেয়ার হয়েছে!");
+                } catch (err) {
+                    console.log("শেয়ার বাতিল বা ব্যর্থ হয়েছে:", err);
+                }
+            } else {
+                // ব্রাউজারে নেটিভ শেয়ার সাপোর্ট না করলে ফেইসবুক শেয়ার ডিরেক্ট লিঙ্ক ওপেন হবে
+                const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
+                window.open(fbShareUrl, '_blank', 'width=600,height=400');
+            }
+        };
+    }
+                    }
 
 function formatPostTime(date) {
     const now = new Date();
