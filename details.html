@@ -51,6 +51,32 @@
         .stars i.active { color: #f1c40f; }
         .rating-text { font-size: 11px; color: var(--gray); font-weight: bold; }
 
+        /* লাইক বাটন কাস্টমাইজেশন */
+        .like-btn-box {
+            background: none;
+            border: none;
+            cursor: pointer;
+            outline: none;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .like-btn-box:active {
+            transform: scale(0.9);
+        }
+
+        .like-btn-box i {
+            font-size: 38px;
+            color: #bdc3c7; /* ডিফল্ট গ্রে */
+            transition: color 0.2s;
+        }
+
+        .like-btn-box.liked i {
+            color: #2196F3; /* ফেসবুক ব্লু লাইক কালার */
+        }
+        
         @media (max-width: 600px) {
             body { padding-top: 46px; }
             .logo-title { font-size: 1.5em; }
@@ -381,17 +407,12 @@
                     </div>
                 </div>
             </div>
-            <div class="rating-box">
-                <div class="stars" id="starRatingZone">
-                    <i class="material-icons" data-value="1">star_border</i>
-                    <i class="material-icons" data-value="2">star_border</i>
-                    <i class="material-icons" data-value="3">star_border</i>
-                    <i class="material-icons" data-value="4">star_border</i>
-                    <i class="material-icons" data-value="5">star_border</i>
-                </div>
-                <span class="rating-text" id="ratingStatusText">রেটিং দিন</span>
-            </div>
-        </div>
+            <!-- লাইক মেকানিজম বাটন -->
+            <button class="like-btn-box" id="likeButton">
+                <i class="material-icons">thumb_up</i>
+            </button>
+</div>
+        
 
         <div class="action-bar">
             <a href="#" id="p-call" class="btn-act btn-call"><i class="material-icons">call</i> কল</a>
