@@ -33,24 +33,91 @@
         .gal-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 /* পোস্টদাতা ইনফো সেকশন এবং রেটিং */
-        .publisher-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
-        .pub-left { display: flex; align-items: center; gap: 12px; }
+        /* 🆕 নতুন সংযোজন: পোস্টদাতা ইনফো সেকশন (20260603_213532.jpg নমুনা অনুযায়ী) */
+        .publisher-card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .pub-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .pub-avatar-box {
+            position: relative;
+            width: 55px;
+            height: 55px;
+        }
+
+        .pub-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary-color);
+            background: #eee;
+        }
+
+        .pub-details h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 2px;
+            line-height: 1.2;
+        }
+
+        .pub-time-meta {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .pub-time-meta i {
+            font-size: 16px;
+            color: #2ecc71;
+        }
+
+        /* লাইক বাটন কাস্টমাইজেশন */
+        .like-btn-box {
+            background: none;
+            border: none;
+            cursor: pointer;
+            outline: none;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .like-btn-box:active {
+            transform: scale(0.9);
+        }
+
+        .like-btn-box i {
+            font-size: 38px;
+            color: #bdc3c7; /* ডিফল্ট গ্রে */
+            transition: color 0.2s;
+        }
+
+        .like-btn-box.liked i {
+            color: #2196F3; /* ফেসবুক ব্লু লাইক কালার */
+                   }
         
         /* 🆕 ক্লিকের জন্য কার্সর পয়েন্টার ও ইফেক্ট যুক্ত করা হলো */
         .clickable-author { cursor: pointer; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s; }
         .clickable-author:hover { opacity: 0.8; }
 
-        .pub-avatar-box { width: 45px; height: 45px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); background: #eee; display: flex; align-items: center; justify-content: center; }
-        .pub-avatar { width: 100%; height: 100%; object-fit: cover; }
-        .pub-details h3 { font-size: 16px; margin: 0 0 4px 0; color: var(--dark); }
-        .pub-time-meta { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--gray); }
-        .pub-time-meta i { font-size: 14px; }
-        .rating-box { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-        .stars { display: flex; gap: 2px; }
-        .stars i { font-size: 24px; color: #ccc; cursor: pointer; transition: color 0.2s; }
-        .stars i.active { color: #f1c40f; }
-        .rating-text { font-size: 11px; color: var(--gray); font-weight: bold; }
-
+        
         @media (max-width: 600px) {
             body { padding-top: 46px; }
             .logo-title { font-size: 1.5em; }
@@ -366,31 +433,24 @@
 
         <div class="gallery-grid" id="p-gallery"></div>
 
-<div class="publisher-card">
+      <!-- 🆕 নতুন সংযোজন: নমুনা চিত্র 20260603_213532.jpg অনুযায়ী পোস্টদাতার বিস্তারিত কার্ড -->
+        <div class="publisher-card">
             <div class="pub-left">
-                <div class="clickable-author" id="authorProfileTrigger">
-                    <div class="pub-avatar-box">
-                        <img id="pub-avatar" class="pub-avatar" src="https://via.placeholder.com/45/007bff/ffffff?text=U" alt="User Avatar">
-                    </div>
-                    <div class="pub-details">
-                        <h3 id="pub-name">লোড হচ্ছে...</h3>
-                        <div class="pub-time-meta">
-                            <i class="material-icons">schedule</i>
-                            <span id="pub-time">পোস্ট টাইম</span>
-                        </div>
+                <div class="pub-avatar-box">
+                    <img id="pub-avatar" class="pub-avatar" src="placeholder-user.png" alt="User Avatar">
+                </div>
+                <div class="pub-details">
+                    <h3 id="pub-name">লোড হচ্ছে...</h3>
+                    <div class="pub-time-meta">
+                        <i class="material-icons">public</i>
+                        <span id="pub-time">পোস্ট টাইম</span>
                     </div>
                 </div>
             </div>
-            <div class="rating-box">
-                <div class="stars" id="starRatingZone">
-                    <i class="material-icons" data-value="1">star_border</i>
-                    <i class="material-icons" data-value="2">star_border</i>
-                    <i class="material-icons" data-value="3">star_border</i>
-                    <i class="material-icons" data-value="4">star_border</i>
-                    <i class="material-icons" data-value="5">star_border</i>
-                </div>
-                <span class="rating-text" id="ratingStatusText">রেটিং দিন</span>
-            </div>
+            <!-- লাইক মেকানিজম বাটন -->
+            <button class="like-btn-box" id="likeButton">
+                <i class="material-icons">thumb_up</i>
+            </button>
         </div>
 
         <div class="action-bar">
