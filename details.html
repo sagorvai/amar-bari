@@ -408,11 +408,13 @@
                 </div>
             </div>
             <!-- লাইক মেকানিজম বাটন -->
-            <button class="like-btn-box" id="likeBtn">
-                <i class="material-icons">thumb_up</i>
-            </button>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+    <button class="like-btn-box" id="likeBtn">
+        <i class="material-icons" id="likeIcon">thumb_up_off_alt</i>
+    </button>
+    <span id="likeCountText" style="font-size: 11px; color: var(--gray); font-weight: bold;">0 লাইক</span>
 </div>
-        
+</div>
 
         <div class="action-bar">
             <a href="#" id="p-call" class="btn-act btn-call"><i class="material-icons">call</i> কল</a>
