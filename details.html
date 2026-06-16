@@ -381,18 +381,13 @@
                     </div>
                 </div>
             </div>
-            <div class="rating-box">
-                <div class="stars" id="starRatingZone">
-                    <i class="material-icons" data-value="1">star_border</i>
-                    <i class="material-icons" data-value="2">star_border</i>
-                    <i class="material-icons" data-value="3">star_border</i>
-                    <i class="material-icons" data-value="4">star_border</i>
-                    <i class="material-icons" data-value="5">star_border</i>
-                </div>
-                <span class="rating-text" id="ratingStatusText">রেটিং দিন</span>
-            </div>
-        </div>
-
+            <div class="like-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+    <button id="likeBtn" style="background: none; border: none; cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;">
+        <!-- ডিফল্ট অবস্থায় বর্ডার বাটন দেখাবে, লাইক করলে ভরাট বা নীল হবে -->
+        <i class="material-icons" id="likeIcon" style="font-size: 32px; color: #7f8c8d;">thumb_up_off_alt</i>
+    </button>
+    <span id="likeCountText" style="font-size: 12px; color: #7f8c8d; font-weight: bold;">০ টি লাইক</span>
+</div>
         <div class="action-bar">
             <a href="#" id="p-call" class="btn-act btn-call"><i class="material-icons">call</i> কল</a>
             <button class="btn-act" id="p-message"><i class="material-icons">chat</i> মেসেজ</button>
