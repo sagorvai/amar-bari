@@ -51,6 +51,37 @@
         .stars i.active { color: #f1c40f; }
         .rating-text { font-size: 11px; color: var(--gray); font-weight: bold; }
 
+
+        .like-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.like-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.2s ease;
+}
+
+.like-btn:active {
+    transform: scale(1.2);
+}
+
+.like-btn i {
+    font-size: 45px; /* নমুনা ছবির মতো বড় সাইজ */
+    color: #007bff; /* ফেসবুকের মতো নীল রঙ */
+}
+
+.like-count {
+    font-size: 12px;
+    color: var(--gray);
+    font-weight: bold;
+                  }
+        
         @media (max-width: 600px) {
             body { padding-top: 46px; }
             .logo-title { font-size: 1.5em; }
@@ -381,17 +412,13 @@
                     </div>
                 </div>
             </div>
-            <div class="rating-box">
-                <div class="stars" id="starRatingZone">
-                    <i class="material-icons" data-value="1">star_border</i>
-                    <i class="material-icons" data-value="2">star_border</i>
-                    <i class="material-icons" data-value="3">star_border</i>
-                    <i class="material-icons" data-value="4">star_border</i>
-                    <i class="material-icons" data-value="5">star_border</i>
-                </div>
-                <span class="rating-text" id="ratingStatusText">রেটিং দিন</span>
-            </div>
-        </div>
+            <!-- রেটিং বক্সটি সরিয়ে এই কোডটি দিন -->
+<div class="like-container">
+    <button id="likeBtn" class="like-btn">
+        <i class="material-icons" id="likeIcon">thumb_up_off_alt</i>
+    </button>
+    <span id="likeCountText" class="like-count">০ লাইক</span>
+</div>
 
         <div class="action-bar">
             <a href="#" id="p-call" class="btn-act btn-call"><i class="material-icons">call</i> কল</a>
