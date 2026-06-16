@@ -232,34 +232,48 @@ function initSinglePropertyMap(data) {
 }
 
 function setupStarRatingSystem() {
-    const starZone = document.getElementById('starRatingZone');
-    const statusText = document.getElementById('ratingStatusText');
-    if (!starZone) return;
+// ১. DOMContentLoaded এর ভেতরে setupStarRatingSystem() এর বদলে এটি লিখুন:
+setupLikeSystem();
 
-    const stars = starZone.querySelectorAll('i');
-    const storageKey = `rated_stars_${postId}`;
-    let savedRating = localStorage.getItem(storageKey);
-    
-    if (savedRating) {
-        updateStarDisplay(stars, parseInt(savedRating));
-        statusText.textContent = `আপনার রেটিং: ${savedRating} স্টার`;
-    }
+// ২. ফাইলের নিচে নতুন এই ফাংশনটি যুক্ত করুন:
+async function setupLikeSystem() {
+    const likeBtn = document.getElementById('likeBtn');
+    const likeIcon = document.getElementById('likeIcon');
+    const likeCountText = document.getElementById('likeCountText');
+    if (!likeBtn) return;
 
-    stars.forEach(star => {
-        star.addEventListener('click', () => {
-            const ratingValue = parseInt(star.getAttribute('data-value'));
-            localStorage.setItem(storageKey, ratingValue);
-            updateStarDisplay(stars, ratingValue);
-            statusText.textContent = `আপনার রেটিং: ${ratingValue} স্টার`;
-        });
+    const storageKey = `liked_post_${postId}`;
+    let isLiked = localStorage.getItem(storageKey) === 'true';
+
+    // Firestore থেকে লাইক সংখ্যা আনার জন্য (প্রথমে ডাটাবেজে 'likes' ফিল্ড থাকতে হবে)
+    const updateLikeUI = (status) => {
+        if (status) {
+            likeIcon.textContent = 'thumb_up'; // ভরা আইকন
+            likeIcon.style.color = '#007bff';
+        } else {
+            likeIcon.textContent = 'thumb_up_off_alt'; // বর্ডার আইকন
+            likeIcon.style.color = '#7f8c8d';
+        }
+    };
+
+    updateLikeUI(isLiked);
+
+    likeBtn.addEventListener('click', async () => {
+        isLiked = !isLiked;
+        localStorage.setItem(storageKey, isLiked);
+        updateLikeUI(isLiked);
+
+        // ঐচ্ছিক: ফায়ারবেস ডাটাবেজে লাইক সংখ্যা আপডেট করার লজিক এখানে দিতে পারেন
+        try {
+            const postRef = db.collection('properties').doc(postId);
+            await postRef.update({
+                likes: firebase.firestore.FieldValue.increment(isLiked ? 1 : -1)
+            });
+        } catch (e) {
+            console.log("লাইক আপডেট করতে সমস্যা (হয়তো ফিল্ডটি নেই):", e);
+        }
     });
 }
-
-function updateStarDisplay(stars, value) {
-    stars.forEach(star => {
-        const starVal = parseInt(star.getAttribute('data-value'));
-        if (starVal <= value) {
-            star.textContent = 'star';
             star.classList.add('active');
         } else {
             star.textContent = 'star_border';
