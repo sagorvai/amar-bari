@@ -277,4 +277,230 @@ if (data.images && data.images.length > 0) {
         schemaTag.text = JSON.stringify(schemaData);
     }
 
-    
+    // সেভ এবং শেয়ার বাটন সচল করা
+    setupSaveAndShareSystem(data);
+} // <--- এটি renderDetails(data) ফাংশনের শেষ ব্র্যাকেট
+
+function initSinglePropertyMap(data) {
+    const mapContainer = document.getElementById('map-container');
+    if (!mapContainer) return;
+    try {
+        const map = L.map('map-container').setView([data.location.lat, data.location.lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        const propertyType = data.type || data.propertyType || 'প্রপার্টি';
+        const redPinIcon = L.divIcon({
+            html: `
+                <div style="position: relative; width: 60px; height: 35px; display: flex; flex-direction: column; align-items: center;">
+                    <div style="background-color: #e74c3c; color: white; padding: 4px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; white-space: nowrap; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-align: center; min-width: 50px;">
+                        ${propertyType}
+                    </div>
+                    <div style="width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 10px solid #e74c3c; margin-top: -2px;"></div>
+                </div>`,
+            className: 'custom-pin',
+            iconSize: [60, 45],
+            iconAnchor: [30, 45]
+        });
+
+        L.marker([data.location.lat, data.location.lng], { icon: redPinIcon })
+         .addTo(map)
+         .bindPopup(`<b>${data.title}</b><br>লোকেশন এখানে`)
+         .openPopup();
+    } catch (e) {
+        console.error("ম্যাপ লোড এরর:", e);
+    }
+}
+
+// লাইক সিস্টেম
+async function setupLikeSystem() {
+    const likeBtn = document.getElementById('likeBtn');
+    const likeIcon = document.getElementById('likeIcon');
+    if (!likeBtn) return;
+
+    const storageKey = `liked_post_${postId}`;
+    let isLiked = localStorage.getItem(storageKey) === 'true';
+
+    const updateLikeUI = (status) => {
+        if (status) {
+            if (likeIcon) { likeIcon.textContent = 'thumb_up'; likeIcon.style.color = '#007bff'; }
+        } else {
+            if (likeIcon) { likeIcon.textContent = 'thumb_up_off_alt'; likeIcon.style.color = '#7f8c8d'; }
+        }
+    };
+
+    updateLikeUI(isLiked);
+
+    try {
+        db.collection('properties').doc(postId).onSnapshot((doc) => {
+            if (doc.exists) {
+                const postData = doc.data();
+                const totalLikes = postData.likes || 0;
+                const likeCountText = document.getElementById('likeCountText');
+                if (likeCountText) likeCountText.textContent = `${totalLikes} লাইক`;
+            }
+        });
+    } catch (err) {
+        console.log("লাইক সংখ্যা রিড করতে সমস্যা:", err);
+    }
+
+    likeBtn.addEventListener('click', async () => {
+        isLiked = !isLiked;
+        localStorage.setItem(storageKey, isLiked);
+        updateLikeUI(isLiked);
+
+        try {
+            const postRef = db.collection('properties').doc(postId);
+            await postRef.update({
+                likes: firebase.firestore.FieldValue.increment(isLiked ? 1 : -1)
+            });
+        } catch (e) {
+            console.log("লাইক আপডেট ব্যর্থ:", e);
+        }
+    });
+}
+
+// সেভ এবং শেয়ার সিস্টেম
+function setupSaveAndShareSystem(data) {
+    const saveBtn = document.getElementById('p-save');
+    const shareBtn = document.getElementById('p-share');
+    const currentUrl = window.location.href;
+
+    if (saveBtn) {
+        const saveStorageKey = `saved_post_${postId}`;
+        let isSaved = localStorage.getItem(saveStorageKey) === 'true';
+
+        const updateSaveUI = (status) => {
+            const icon = saveBtn.querySelector('i');
+            if (icon) {
+                if (status) {
+                    icon.textContent = 'bookmark';
+                    saveBtn.style.color = '#27ae60';
+                    const span = saveBtn.querySelector('span');
+                    if (span) span.textContent = 'সেভড';
+                } else {
+                    icon.textContent = 'bookmark_border';
+                    saveBtn.style.color = '#2c3e50';
+                    const span = saveBtn.querySelector('span');
+                    if (span) span.textContent = 'সেভ';
+                }
+            }
+        };
+
+        updateSaveUI(isSaved);
+
+        saveBtn.onclick = () => {
+            isSaved = !isSaved;
+            localStorage.setItem(saveStorageKey, isSaved);
+            updateSaveUI(isSaved);
+            alert(isSaved ? "পোস্টটি সেভ করা হয়েছে!" : "সেভ তালিকা থেকে বাদ দেওয়া হয়েছে।");
+        };
+    }
+
+    if (shareBtn) {
+        shareBtn.onclick = async () => {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: data.title || "আমার বাড়ি.কম প্রپر্টি",
+                        text: `আমার বাড়ি.কম-এ দেখুন: ${data.title}`,
+                        url: currentUrl
+                    });
+                } catch (err) {
+                    console.log("শেয়ার ব্যর্থ:", err);
+                }
+            } else {
+                const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
+                window.open(fbShareUrl, '_blank', 'width=600,height=400');
+            }
+        };
+    }
+}
+
+function formatPostTime(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHour = Math.floor(diffMins / 60);
+    const diffDay = Math.floor(diffHour / 24);
+
+    if (diffMins < 1) return "এইমাত্র";
+    if (diffMins < 60) return `${diffMins} মিনিট আগে`;
+    if (diffHour < 24) return `${diffHour} ঘণ্টা আগে`;
+    return `${diffDay} দিন আগে`;
+}
+
+async function loadRelatedPosts(currentData) {
+    const list = document.getElementById('related-list');
+    if (!list) return;
+    try {
+        const snapshot = await db.collection('properties')
+            .where('category', '==', currentData.category)
+            .limit(15)
+            .get();
+
+        let allPosts = [];
+        snapshot.forEach(doc => {
+            if (doc.id !== postId) allPosts.push({ id: doc.id, ...doc.data() });
+        });
+
+        list.innerHTML = "";
+        allPosts.slice(0, 4).forEach(post => {
+            let pAmt = post.category === 'বিক্রয়' ? post.price : post.monthlyRent;
+            list.innerHTML += `
+                <div class="rel-card" onclick="location.href='details.html?id=${post.id}'">
+                    <img src="${post.images?.[0]?.url || post.images?.[0] || 'placeholder.jpg'}">
+                    <div class="rel-info">
+                        <h4 class="rel-title">${post.title}</h4>
+                        <p class="rel-price">৳ ${pAmt}</p>
+                    </div>
+                </div>`;
+        });
+    } catch (e) { console.error(e); }
+}
+
+function openLightbox(url) {
+    const lbImg = document.getElementById('lb-img');
+    const lb = document.getElementById('lightbox');
+    if(lbImg && lb) {
+        lbImg.src = url;
+        lb.style.display = 'flex';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const menuButton = document.getElementById('menuButton');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+
+    if (menuButton && sidebar && overlay) {
+        menuButton.addEventListener('click', () => {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+        });
+    }
+
+    const closeSidebar = () => {
+        if(sidebar && overlay) {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+    };
+
+    if (overlay) overlay.addEventListener('click', closeSidebar);
+});
+
+firebase.auth().onAuthStateChanged(async (user) => {
+    const headerProfileImg = document.querySelector('#profileImageWrapper img');
+    if (user && headerProfileImg) {
+        try {
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists && userDoc.data().profilePic) {
+                headerProfileImg.src = userDoc.data().profilePic;
+            }
+        } catch (error) {
+            console.error("প্রোফাইল পিকচার লোড এরর:", error);
+        }
+    }
+});
