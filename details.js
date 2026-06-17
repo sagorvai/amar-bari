@@ -528,6 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
 
+// আপনার জেএস ফাইলের একদম নিচের অংশের সংশোধিত ও পরিষ্কার রূপ
 firebase.auth().onAuthStateChanged(async (user) => {
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
     
@@ -545,4 +546,4 @@ firebase.auth().onAuthStateChanged(async (user) => {
             console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
         }
     }
-});
+}); // এটি অন-অথ-স্টেট-চেঞ্জের ক্লোজিং, এর নিচে আর কোনো ব্র্যাকেট থাকবে না।
