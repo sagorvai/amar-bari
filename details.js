@@ -228,11 +228,13 @@ if (data.images && data.images.length > 0) {
         firstImg = data.images[0].url || data.images[0];
     }
 
-    // ৪. ব্রাউজার এবং গুগল বটের মূল মেটা ট্যাগগুলো আপডেট করা (ফিক্সড)
-    document.title = seoTitle; // ব্রাউজার ট্যাব টাইটেল
+    // ৪. ব্রাউজার এবং গুগল বটের মূল মেটা ট্যাগগুলো আপডেট করা (১০০% নিখুঁত ও ক্লিন রূপ)
+    document.title = seoTitle; // ব্রাউজার ট্যাব টাইটেল সরাসরি আপডেট
     
     const seoTitleTag = document.getElementById('seo-title');
-    if (seoTitleTag) seoTitleTag.innerText = seoTitle;
+    if (seoTitleTag) {
+        seoTitleTag.innerText = seoTitle;
+    }
     
     document.getElementById('seo-desc')?.setAttribute('content', seoDescription);
     document.getElementById('seo-canonical')?.setAttribute('href', currentUrl);
