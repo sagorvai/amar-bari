@@ -208,7 +208,7 @@ if (data.images && data.images.length > 0) {
 
 
 // =======================================================
-    // 🎯 আমার বাড়ি.কম - এক্সপার্ট ডাইনামিক এসইও ইঞ্জিন (গুগল স্পেশাল)
+    // 🎯 আমার বাড়ি.কম - এক্সপার্ট ডাইনামিক এসইও ইঞ্জিন (সংশোধিত)
     // =======================================================
     const currentUrl = window.location.href;
 
@@ -220,22 +220,24 @@ if (data.images && data.images.length > 0) {
 
     // ২. গুগল সার্চের জন্য ১০০% নিখুঁত কিওয়ার্ড সমৃদ্ধ টাইটেল ও বিবরণী তৈরি
     const seoTitle = `${data.title || "আমার বাড়ি.কম প্রপার্টি"} - ${thana}, ${district} | আমার বাড়ি.কম`;
-    const seoDescription = `${fullLocation}-এ আকর্ষনীয় মূল্যে প্রপার্টি। মূল্য: ৳${data.category === 'বিক্রয়' ? data.price : data.monthlyRent} টাকা। বিস্তারিত তথ্য ও ছবির জন্য ভিজিট করুন আমার বাড়ি ডট কম।`;
+    const seoDescription = `${fullLocation}-এ আকর্ষনীয় মূল্যে প্রপার্টি। মূল্য: ৳${data.category === 'বিক্রয়' ? (data.price || "আলোচনা সাপেক্ষ") : (data.monthlyRent || "আলোচনা সাপেক্ষ")} টাকা। বিস্তারিত তথ্য ও ছবির জন্য ভিজিট করুন আমার বাড়ি ডট কম।`;
     
     // ৩. প্রথম ইমেজটি ট্র্যাকিং (স্কিমা ও ফেসবুক শেয়ারের জন্য)
-    let firstImg = "https://yourdomain.com/default-share-image.jpg"; // একটি ডিফল্ট ছবি দিয়ে রাখতে পারেন
+    let firstImg = "https://i.postimg.cc/YSbRvftN/FB-IMG-1781692297303.jpg"; // আপনার ডিফল্ট মেটা ইমেজ ব্যাকআপ হিসেবে
     if (data.images && data.images.length > 0) {
         firstImg = data.images[0].url || data.images[0];
     }
 
-    // ৪. ব্রাউজার এবং গুগল বটের মূল মেটা ট্যাগগুলো আপডেট করা
+    // ৪. ব্রাউজার এবং গুগল বটের মূল মেটা ট্যাগগুলো আপডেট করা (ফিক্সড)
     document.title = seoTitle; // ব্রাউজার ট্যাব টাইটেল
-    document.getElementById('seo-title')?.setAttribute('textContent', seoTitle); // যদি আইডিতে টেক্সট থাকে
-    if(document.getElementById('seo-title')) document.getElementById('seo-title').innerText = seoTitle;
+    
+    const seoTitleTag = document.getElementById('seo-title');
+    if (seoTitleTag) seoTitleTag.innerText = seoTitle;
+    
     document.getElementById('seo-desc')?.setAttribute('content', seoDescription);
     document.getElementById('seo-canonical')?.setAttribute('href', currentUrl);
 
-    // ৫. ফেসবুক ও অন্যান্য সোশ্যাল মিডিয়ার জন্য মেটা ট্যাগ ডাইনামিক করা (আপনার আগের ট্যাগগুলোর ফিক্সড রূপ)
+    // ৫. ফেসবুক ও অন্যান্য সোশ্যাল মিডিয়ার জন্য মেটা ট্যাগ ডাইনামিক করা
     document.getElementById('og-url')?.setAttribute('content', currentUrl);
     document.getElementById('og-title')?.setAttribute('content', seoTitle);
     document.getElementById('og-desc')?.setAttribute('content', seoDescription);
@@ -245,13 +247,13 @@ if (data.images && data.images.length > 0) {
     const schemaData = {
         "@context": "https://schema.org",
         "@type": "RealEstateListing",
-        "name": data.title || "আমার বাড়ি.কম প্রপার্টি", // গুগলের রিচ স্নাইপেটের মূল শিরোনাম
+        "name": data.title || "আমার বাড়ি.কম প্রপার্টি", 
         "description": data.description ? data.description.substring(0, 200) : seoDescription,
         "url": currentUrl,
-        "image": firstImg, // সরাসরি সার্চ রেজাল্টে যে ছবি দেখাবে
+        "image": firstImg, 
         "offers": {
             "@type": "Offer",
-            "price": data.category === 'বিক্রয়' ? data.price : data.monthlyRent, // ডাইনামিক দাম
+            "price": data.category === 'বিক্রয়' ? (data.price || 0) : (data.monthlyRent || 0), 
             "priceCurrency": "BDT",
             "availability": "https://schema.org/InStock"
         },
@@ -260,15 +262,14 @@ if (data.images && data.images.length > 0) {
             "name": fullLocation,
             "address": {
                 "@type": "PostalAddress",
-                "streetAddress": village,       // গ্রাম/এলাকা
-                "addressLocality": thana,      // থানা
-                "addressRegion": district,     // জেলা
+                "streetAddress": village,       
+                "addressLocality": thana,      
+                "addressRegion": district,     
                 "addressCountry": "BD"
             }
         }
     };
     
-    // তৈরি হওয়া অবজেক্টটি ডাইনামিকালি এইচটিএমএল-এর স্ক্রিপ্ট ট্যাগে পুশ করা
     const schemaTag = document.getElementById('seo-schema');
     if (schemaTag) {
         schemaTag.text = JSON.stringify(schemaData);
@@ -276,7 +277,7 @@ if (data.images && data.images.length > 0) {
 
     // সেভ এবং শেয়ার বাটন সচল করা
     setupSaveAndShareSystem(data);
-} // এখানে renderDetails ফাংশনটি শেষ হচ্ছে
+}                                      // এখানে renderDetails ফাংশনটি শেষ হচ্ছে
 
 
     
