@@ -206,9 +206,79 @@ if (data.images && data.images.length > 0) {
     document.getElementById('og-image')?.setAttribute('content', firstImg);
 }
 
-// সেভ এবং শেয়ার বাটন সচল করা
-setupSaveAndShareSystem(data);
-}
+
+// =======================================================
+    // 🎯 আমার বাড়ি.কম - এক্সপার্ট ডাইনামিক এসইও ইঞ্জিন (গুগল স্পেশাল)
+    // =======================================================
+    const currentUrl = window.location.href;
+
+    // ১. ডাটাবেজ থেকে গ্রাম, থানা ও জেলা সুনির্দিষ্টভাবে তুলে আনা
+    const village = data.location?.village || "তথ্য নেই";
+    const thana = data.location?.thana || "তথ্য নেই";
+    const district = data.location?.district || "তথ্য নেই";
+    const fullLocation = `${village}, ${thana}, ${district}`;
+
+    // ২. গুগল সার্চের জন্য ১০০% নিখুঁত কিওয়ার্ড সমৃদ্ধ টাইটেল ও বিবরণী তৈরি
+    const seoTitle = `${data.title || "আমার বাড়ি.কম প্রপার্টি"} - ${thana}, ${district} | আমার বাড়ি.কম`;
+    const seoDescription = `${fullLocation}-এ আকর্ষনীয় মূল্যে প্রপার্টি। মূল্য: ৳${data.category === 'বিক্রয়' ? data.price : data.monthlyRent} টাকা। বিস্তারিত তথ্য ও ছবির জন্য ভিজিট করুন আমার বাড়ি ডট কম।`;
+    
+    // ৩. প্রথম ইমেজটি ট্র্যাকিং (স্কিমা ও ফেসবুক শেয়ারের জন্য)
+    let firstImg = "https://yourdomain.com/default-share-image.jpg"; // একটি ডিফল্ট ছবি দিয়ে রাখতে পারেন
+    if (data.images && data.images.length > 0) {
+        firstImg = data.images[0].url || data.images[0];
+    }
+
+    // ৪. ব্রাউজার এবং গুগল বটের মূল মেটা ট্যাগগুলো আপডেট করা
+    document.title = seoTitle; // ব্রাউজার ট্যাব টাইটেল
+    document.getElementById('seo-title')?.setAttribute('textContent', seoTitle); // যদি আইডিতে টেক্সট থাকে
+    if(document.getElementById('seo-title')) document.getElementById('seo-title').innerText = seoTitle;
+    document.getElementById('seo-desc')?.setAttribute('content', seoDescription);
+    document.getElementById('seo-canonical')?.setAttribute('href', currentUrl);
+
+    // ৫. ফেসবুক ও অন্যান্য সোশ্যাল মিডিয়ার জন্য মেটা ট্যাগ ডাইনামিক করা (আপনার আগের ট্যাগগুলোর ফিক্সড রূপ)
+    document.getElementById('og-url')?.setAttribute('content', currentUrl);
+    document.getElementById('og-title')?.setAttribute('content', seoTitle);
+    document.getElementById('og-desc')?.setAttribute('content', seoDescription);
+    document.getElementById('og-image')?.setAttribute('content', firstImg);
+
+    // ৬. গুগলে ছবি, দাম, শিরোনাম ও পূর্ণাঙ্গ লোকেশন সরাসরি দেখানোর জন্য এডভান্সড Schema Markup (JSON-LD)
+    const schemaData = {
+        "@context": "https://schema.org",
+        "@type": "RealEstateListing",
+        "name": data.title || "আমার বাড়ি.কম প্রপার্টি", // গুগলের রিচ স্নাইপেটের মূল শিরোনাম
+        "description": data.description ? data.description.substring(0, 200) : seoDescription,
+        "url": currentUrl,
+        "image": firstImg, // সরাসরি সার্চ রেজাল্টে যে ছবি দেখাবে
+        "offers": {
+            "@type": "Offer",
+            "price": data.category === 'বিক্রয়' ? data.price : data.monthlyRent, // ডাইনামিক দাম
+            "priceCurrency": "BDT",
+            "availability": "https://schema.org/InStock"
+        },
+        "location": {
+            "@type": "Place",
+            "name": fullLocation,
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": village,       // গ্রাম/এলাকা
+                "addressLocality": thana,      // থানা
+                "addressRegion": district,     // জেলা
+                "addressCountry": "BD"
+            }
+        }
+    };
+    
+    // তৈরি হওয়া অবজেক্টটি ডাইনামিকালি এইচটিএমএল-এর স্ক্রিপ্ট ট্যাগে পুশ করা
+    const schemaTag = document.getElementById('seo-schema');
+    if (schemaTag) {
+        schemaTag.text = JSON.stringify(schemaData);
+    }
+
+    // সেভ এবং শেয়ার বাটন সচল করা
+    setupSaveAndShareSystem(data);
+} // এখানে renderDetails ফাংশনটি শেষ হচ্ছে
+
+
     
 function initSinglePropertyMap(data) {
     const mapContainer = document.getElementById('map-container');
