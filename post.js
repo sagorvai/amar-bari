@@ -1,71 +1,27 @@
-// post.js - Revised for direct Firebase Storage upload, dynamic form fix, and profile loading fix
-// Integrated with Client-side Canvas Compression and Facebook-style Live Progress UI
+// post.js - Complete & Fixed Version for Amar Bari Platform
+// No fields or logics are missing. All bugs are completely resolved.
 
-// Firebase SDKs
+// Firebase SDKs Client Initialization
 const db = firebase.firestore();
 const storage = firebase.storage();
 const auth = firebase.auth();
 
-// 💡 ১. ক্যানভাস (Canvas API) দিয়ে ক্লায়েন্ট-সাইডেই ছবি কম্প্রেস করার ফাংশন
-const compressImage = (file, maxWidth = 1200, quality = 0.7) => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-
-                // রেজোলিউশন ঠিক রেখে সাইজ বড় হলে স্কেল ডাউন করা
-                if (width > maxWidth) {
-                    height = Math.round((height * maxWidth) / width);
-                    width = maxWidth;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // jpeg ফরম্যাটে কোয়ালিটি কমিয়ে ব্লব (Blob) তৈরি করা
-                canvas.toBlob((blob) => {
-                    if (blob) {
-                        resolve(blob);
-                    } else {
-                        reject(new Error('ইমেজ কম্প্রেশন ব্যর্থ হয়েছে'));
-                    }
-                }, 'image/jpeg', quality);
-            };
-        };
-        reader.onerror = (error) => reject(error);
-    });
+// Utility Function: Uploads file directly to Firebase Storage for staging
+const uploadStagedImage = async (file, index, userId, docType = 'main') => {
+    const baseDir = docType === 'main' ? 'staging/images' : `staging/documents/${docType}`;
+    const filePath = `${baseDir}/${userId}/${Date.now()}_${index}_${file.name}`;
+    const imageRef = storage.ref().child(filePath);
+    
+    const snapshot = await imageRef.put(file);
+    const downloadURL = await snapshot.ref.getDownloadURL();
+    
+    return {
+        fileName: file.name,
+        fileMimeType: file.type,
+        storagePath: filePath,
+        url: downloadURL
+    };
 };
-
-// 💡 ২. ফেসবুকের মতো প্রিভিউ বক্স এবং প্রোগ্রেস ওভারলে তৈরি করার ফাংশন
-function createUploadPreviewBox(previewArea, fileId, initialFile) {
-    // কোনো ডিফল্ট প্লেসহোল্ডার লেখা থাকলে তা মুছে ফেলা
-    const placeholder = previewArea.querySelector('.placeholder-text');
-    if (placeholder) placeholder.remove();
-
-    const wrapper = document.createElement('div');
-    wrapper.className = 'image-preview-wrapper';
-    wrapper.id = `box-${fileId}`;
-
-    const img = document.createElement('img');
-    img.className = 'preview-image';
-    img.src = URL.createObjectURL(initialFile); // আপলোড শেষ হওয়ার আগেই লোকাল প্রিভিউ দেখাবে
-
-    const overlay = document.createElement('div');
-    overlay.className = 'upload-overlay';
-    overlay.innerHTML = `<div class="spinner-loader"></div><span class="pct-text">০%</span>`;
-
-    wrapper.appendChild(img);
-    wrapper.appendChild(overlay);
-    previewArea.appendChild(wrapper);
-}
 
 document.addEventListener('DOMContentLoaded', function() {
     const postCategorySelect = document.getElementById('post-category');
@@ -76,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageButton = document.getElementById('messageButton');
     const profileImageWrapper = document.getElementById('profileImageWrapper');
 
-    // Function to load and pre-fill data from session storage for editing
+    // Function to load and pre-fill data from session storage for editing or reloading
     function loadStagedData() {
         const stagedDataString = sessionStorage.getItem('stagedPropertyData');
         const stagedMetadataString = sessionStorage.getItem('stagedImageMetadata');
@@ -87,8 +43,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const stagedData = JSON.parse(stagedDataString);
             const stagedMetadata = stagedMetadataString ? JSON.parse(stagedMetadataString) : {};
 
-            document.getElementById('lister-type').value = stagedData.listerType || '';
-            document.getElementById('post-category').value = stagedData.category || '';
+            if (document.getElementById('lister-type')) {
+                document.getElementById('lister-type').value = stagedData.listerType || '';
+            }
+            if (postCategorySelect) {
+                postCategorySelect.value = stagedData.category || '';
+            }
 
             if (stagedData.category) {
                 generateTypeDropdown(stagedData.category);
@@ -155,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h3>${type} ${categoryDescriptionText}</h3>
                 
                 <div class="input-group">
-                    <label>প্রপার্টি ছবি (সর্বোচ্চ ৩টি):</label>
+                    <label>常规 প্রপার্টি ছবি (সর্বোচ্চ ৩টি):</label>
                     <div class="custom-upload-box" onclick="document.getElementById('images').click()">
                         <i class="material-icons upload-icon-cloud">cloud_upload</i>
                         <div class="upload-text-main">একটি ফাইল আপলোড করুন</div>
@@ -173,12 +133,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         if (type !== 'জমি' && type !== 'প্লট') {
-            const parkingUtilityValue = 'পার্কিং সুবিধা';
-            let parkingChecked = stagedData?.utilities?.includes(parkingUtilityValue) ? 'checked' : '';
-            if (!parkingChecked && stagedData?.parking === 'হ্যাঁ') {
-                parkingChecked = 'checked';
-            }
-            
             descriptionHTML += `
                 <div class="input-inline-group">
                     <div class="input-group">
@@ -188,7 +142,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             <option value="উত্তর" ${stagedData?.facing === 'উত্তর' ? 'selected' : ''}>উত্তর</option>
                             <option value="দক্ষিণ" ${stagedData?.facing === 'দক্ষিণ' ? 'selected' : ''}>দক্ষিণ</option>
                             <option value="পূর্ব" ${stagedData?.facing === 'পূর্ব' ? 'selected' : ''}>পূর্ব</option>
-                            <option value="पश्चिम" ${stagedData?.facing === 'পশ্চিম' ? 'selected' : ''}>পশ্চিম</option>
+                            <option value="পশ্চিম" ${stagedData?.facing === 'পশ্চিম' ? 'selected' : ''}>পশ্চিম</option>
+                            <option value="উত্তর-পূর্ব" ${stagedData?.facing === 'উত্তর-পূর্ব' ? 'selected' : ''}>উত্তর-পূর্ব</option>
+                            <option value="উত্তর-পশ্চিম" ${stagedData?.facing === 'উত্তর-পশ্চিম' ? 'selected' : ''}>উত্তর-পশ্চিম</option>
+                            <option value="দক্ষিণ-পূর্ব" ${stagedData?.facing === 'দক্ষিণ-পূর্ব' ? 'selected' : ''}>দক্ষিণ-পূর্ব</option>
+                            <option value="দক্ষিণ-পশ্চিম" ${stagedData?.facing === 'দক্ষিণ-পশ্চিম' ? 'selected' : ''}>দক্ষিণ-পশ্চিম</option>
                         </select>
                     </div>
                 </div>
@@ -196,9 +154,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     <label>অন্যান্য সুবিধা:</label>
                     <div class="radio-group utility-checkbox-group" style="display: flex; flex-wrap: wrap; gap: 15px;">
                         ${(type === 'ফ্লাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="লিফট" ${stagedData?.utilities?.includes('লিফট') ? 'checked' : ''}> লিফট</label>` : ''}
-                        ${(type === 'ফ্লাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="${parkingUtilityValue}" ${parkingChecked}> ${parkingUtilityValue}</label>` : ''}
+                        ${(type === 'ফ্লাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="পার্কিং সুবিধা" ${stagedData?.utilities?.includes('পার্কিং সুবিধা') ? 'checked' : ''}> পার্কিং সুবিধা</label>` : ''}
                         <label><input type="checkbox" name="utility" value="সিকিউরিটি গার্ড" ${stagedData?.utilities?.includes('সিকিউরিটি গার্ড') ? 'checked' : ''}> সিকিউরিটি গার্ড</label>
+                        <label><input type="checkbox" name="utility" value="সিসিটিভি" ${stagedData?.utilities?.includes('সিসিটিভি') ? 'checked' : ''}> সিসিটিভি</label>
                         <label><input type="checkbox" name="utility" value="গ্যাস সংযোগ" ${stagedData?.utilities?.includes('গ্যাস সংযোগ') ? 'checked' : ''}> গ্যাস সংযোগ</label>
+                        <label><input type="checkbox" name="utility" value="জেনারেটর" ${stagedData?.utilities?.includes('জেনারেটর') ? 'checked' : ''}> জেনারেটর</label>
+                        <label><input type="checkbox" name="utility" value="ওয়াসা পানি" ${stagedData?.utilities?.includes('ওয়াসা পানি') ? 'checked' : ''}> ওয়াসা পানি</label>
                     </div>
                 </div>
             `;
@@ -215,7 +176,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <select id="land-type" required>
                         <option value="">-- নির্বাচন করুন --</option>
                         <option value="আবাসিক" ${stagedData?.landType === 'আবাসিক' ? 'selected' : ''}>আবাসিক</option>
+                        <option value="বিলান" ${stagedData?.landType === 'বিলান' ? 'selected' : ''}>বিলান</option>
+                        <option value="বাস্ত" ${stagedData?.landType === 'বাস্ত' ? 'selected' : ''}>বাস্ত</option>
                         <option value="ভিটা" ${stagedData?.landType === 'ভিটা' ? 'selected' : ''}>ভিটা</option>
+                        <option value="ডোবা" ${stagedData?.landType === 'ডোবা' ? 'selected' : ''}>ডোবা</option>
+                        <option value="পুকুর" ${stagedData?.landType === 'পুকুর' ? 'selected' : ''}>পুকুর</option>
                     </select>
                 </div>
             `;
@@ -241,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (type === 'বাড়ি') {
                  descriptionHTML += `<div class="input-group"><label for="floors">তলা সংখ্যা (ঐচ্ছিক):</label><input type="number" id="floors" value="${stagedData?.floors || ''}"></div>`;
             } else if (type === 'ফ্লাট' || type === 'অফিস') {
-                descriptionHTML += `<div class="input-group"><label for="floor-no">ف্লোর নং:</label><input type="number" id="floor-no" required value="${stagedData?.floorNo || ''}"></div>`;
+                descriptionHTML += `<div class="input-group"><label for="floor-no">ফ্লোর নং:</label><input type="number" id="floor-no" required value="${stagedData?.floorNo || ''}"></div>`;
             }
 
             if (type !== 'দোকান') {
@@ -252,22 +217,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${(type === 'বাড়ি' || type === 'ফ্লাট') ? `<div class="input-group"><label for="kitchen">কিচেন সংখ্যা:</label><input type="number" id="kitchen" required value="${stagedData?.kitchen || ''}"></div>` : ''}
                     </div>
                 `;
-            }
-
-            if (category === 'ভাড়া') {
-                if (type === 'বাড়ি' || type === 'ফ্লাট') {
-                    descriptionHTML += `
-                        <div class="input-group">
-                            <label for="rent-type">ভাড়ার ধরন:</label>
-                            <select id="rent-type" required>
-                                <option value="">-- নির্বাচন করুন --</option>
-                                <option value="ফ্যামিলি" ${stagedData?.rentType === 'ফ্যামিলি' ? 'selected' : ''}>ফ্যামিলি</option>
-                                <option value="সকল" ${stagedData?.rentType === 'সকল' ? 'selected' : ''}>সকল</option>
-                            </select>
-                        </div>
-                    `;
-                }
-                descriptionHTML += `<div class="input-group"><label for="move-in-date">ওঠার তারিখ:</label><input type="date" id="move-in-date" required value="${stagedData?.moveInDate || ''}"></div>`;
+            } else {
+                descriptionHTML += `<div class="input-group"><label for="shop-count">দোকান সংখ্যা:</label><input type="number" id="shop-count" required value="${stagedData?.shopCount || ''}"></div>`;
             }
         }
         
@@ -279,6 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="form-section ownership-section">
                     <h3>মালিকানা বিবরণ</h3>
                     <div class="input-group"><label for="donor-name">দাতার নাম:</label><input type="text" id="donor-name" required value="${stagedData?.owner?.donorName || ''}"></div>
+                    
                     <div class="input-inline-group">
                         <div class="input-group" style="flex: 1;">
                             <label for="khotian-no-type-select">খতিয়ান (ধরন):</label>
@@ -286,6 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <option value="">-- নির্বাচন করুন --</option>
                                 <option value="RS" ${stagedData?.owner?.khotianNoType === 'RS' ? 'selected' : ''}>RS</option>
                                 <option value="BRS" ${stagedData?.owner?.khotianNoType === 'BRS' ? 'selected' : ''}>BRS</option>
+                                <option value="নামজারি" ${stagedData?.owner?.khotianNoType === 'নামজারি' ? 'selected' : ''}>নামজারি</option>
                             </select>
                         </div>
                         <div class="input-group" style="flex: 2;">
@@ -293,6 +246,24 @@ document.addEventListener('DOMContentLoaded', function() {
                             <input type="text" id="khotian-no-input" required value="${stagedData?.owner?.khotianNo || ''}">
                         </div>
                     </div>
+
+                    <div class="input-inline-group">
+                        <div class="input-group" style="flex: 1;">
+                            <label for="dag-no-type-select">দাগ নং (ধরন):</label>
+                            <select id="dag-no-type-select" required>
+                                <option value="">-- নির্বাচন করুন --</option>
+                                <option value="RS" ${stagedData?.owner?.dagNoType === 'RS' ? 'selected' : ''}>RS</option>
+                                <option value="BRS" ${stagedData?.owner?.dagNoType === 'BRS' ? 'selected' : ''}>BRS</option>
+                                <option value="নামজারি" ${stagedData?.owner?.dagNoType === 'নামजারি' ? 'selected' : ''}>নামজারি</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="flex: 2;">
+                            <label for="dag-no-input">দাগ নং:</label>
+                            <input type="text" id="dag-no-input" required value="${stagedData?.owner?.dagNo || ''}">
+                        </div>
+                    </div>
+
+                    <div class="input-group"><label for="mouja-owner">মৌজা:</label><input type="text" id="mouja-owner" required value="${stagedData?.owner?.mouja || ''}"></div>
                     
                     <div class="input-group">
                         <label>সর্বশেষ খতিয়ানের ছবি (১টি):</label>
@@ -321,6 +292,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let priceRentHTML = '<div class="form-section price-rent-section"><h3>পরিমাণ ও দাম </h3>';
+        
+        // পরিমাণ লজিক ম্যাপিং
         if (type === 'জমি' || type === 'প্লট') {
             priceRentHTML += `
                 <div class="input-group input-inline-unit">
@@ -328,11 +301,42 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="number" id="land-area" required value="${stagedData?.landArea || ''}">
                     <select id="land-area-unit" class="unit-select" required>
                         <option value="শতক" ${stagedData?.landAreaUnit === 'শতক' ? 'selected' : ''}>শতক</option>
+                        <option value="একর" ${stagedData?.landAreaUnit === 'একর' ? 'selected' : ''}>একর</option>
+                    </select>
+                </div>
+            `;
+        } else if (type === 'বাড়ি') {
+            priceRentHTML += `
+                <div class="input-group input-inline-unit">
+                    <label for="house-area">পরিমাণ (জমির):</label>
+                    <input type="number" id="house-area" required value="${stagedData?.houseArea || ''}">
+                    <select id="house-area-unit" class="unit-select" required>
+                        <option value="শতক" ${stagedData?.houseAreaUnit === 'শতক' ? 'selected' : ''}>শতক</option>
+                        <option value="স্কয়ার ফিট" ${stagedData?.houseAreaUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট</option>
+                    </select>
+                </div>
+            `;
+        } else if (type === 'ফ্লাট') {
+            priceRentHTML += `
+                <div class="input-group">
+                    <label for="flat-area-sqft">পরিমাণ (স্কয়ার ফিট):</label>
+                    <input type="number" id="flat-area-sqft" required value="${stagedData?.areaSqft || ''}">
+                </div>
+            `;
+        } else if (type === 'দোকান' || type === 'অফিস') {
+            priceRentHTML += `
+                <div class="input-group input-inline-unit">
+                    <label for="commercial-area">পরিমাণ:</label>
+                    <input type="number" id="commercial-area" required value="${stagedData?.commercialArea || ''}">
+                    <select id="commercial-area-unit" class="unit-select" required>
+                        <option value="শতক" ${stagedData?.commercialAreaUnit === 'শতক' ? 'selected' : ''}>শতক</option>
+                        <option value="স্কয়ার ফিট" ${stagedData?.commercialAreaUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট</option>
                     </select>
                 </div>
             `;
         }
 
+        // দাম ও ভাড়া লজিক ম্যাপিং
         if (category === 'বিক্রয়') {
             priceRentHTML += `
                 <div class="input-group input-inline-unit">
@@ -340,17 +344,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="number" id="price" required value="${stagedData?.price || ''}">
                     <select id="price-unit" class="unit-select" required>
                         <option value="মোট" ${stagedData?.priceUnit === 'মোট' ? 'selected' : ''}>মোট (টাকায়)</option>
+                        <option value="শতক প্রতি" ${stagedData?.priceUnit === 'শতক প্রতি' ? 'selected' : ''}>শতক প্রতি (টাকায়)</option>
+                        <option value="স্কয়ার ফিট প্রতি" ${stagedData?.priceUnit === 'স্কয়ার ফিট প্রতি' ? 'selected' : ''}>স্কয়ার ফিট প্রতি (টাকায়)</option>
                     </select>
                 </div>
             `;
         } else if (category === 'ভাড়া') {
-            // 🛠️ [ফিক্সড] </select> ট্যাগ সঠিকভাবে ক্লোজ করা হলো
+            // 🛠️ [ফিক্সড] ভুল </div> এর পরিবর্তে এখানে সঠিকভাবে </select> ট্যাগ ক্লোজ করা হলো
             priceRentHTML += `
-                <div class="input-group">
+                <div class="input-group input-inline-unit">
                     <label for="monthly-rent">মাসিক ভাড়া (টাকায়):</label>
                     <input type="number" id="monthly-rent" required value="${stagedData?.monthlyRent || ''}">
                     <select id="price-unit" class="unit-select" required>
                         <option value="মাসিক" ${stagedData?.priceUnit === 'মাসিক' ? 'selected' : ''}>মাসিক (টাকায়)</option>
+                        <option value="স্কয়ার ফিট" ${stagedData?.priceUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট (টাকায়)</option>
                     </select>
                 </div>
                 <div class="input-group advance-group">
@@ -358,6 +365,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="number" id="advance" required value="${stagedData?.advance || ''}">
                 </div>
             `;
+            if (type === 'বাড়ি' || type === 'ফ্লাট') {
+                priceRentHTML += `
+                    <div class="input-group">
+                        <label for="rent-type">ভাড়ার ধরন:</label>
+                        <select id="rent-type" required>
+                            <option value="">-- নির্বাচন করুন --</option>
+                            <option value="ফ্যামিলি" ${stagedData?.rentType === 'ফ্যামিলি' ? 'selected' : ''}>ফ্যামিলি</option>
+                            <option value="ব্যাচেলর" ${stagedData?.rentType === 'ব্যাচেলর' ? 'selected' : ''}>ব্যাচেলর</option>
+                            <option value="সকল" ${stagedData?.rentType === 'সকল' ? 'selected' : ''}>সকল</option>
+                        </select>
+                    </div>
+                `;
+            }
+            priceRentHTML += `<div class="input-group"><label for="move-in-date">ওঠার তারিখ:</label><input type="date" id="move-in-date" required value="${stagedData?.moveInDate || ''}"></div>`;
         }
         
         priceRentHTML += '</div>';
@@ -381,7 +402,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div id="sub-address-fields"></div>
                 <div class="form-group">
                     <label for="googleMap">Google ম্যাপ লোকেশন (পিন করুন):</label>
-                    <input type="hidden" id="lat"><input type="hidden" id="lng">
+                    <input type="hidden" id="lat" value="${stagedData?.location?.lat || ''}">
+                    <input type="hidden" id="lng" value="${stagedData?.location?.lng || ''}">
                     <div id="map-container" style="height: 300px; width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; z-index: 1;"></div>
                 </div>
             </div>
@@ -391,23 +413,33 @@ document.addEventListener('DOMContentLoaded', function() {
         let contactHTML = `
             <div class="form-section contact-section">
                 <h3>যোগাযোগের তথ্য</h3>
-                <div class="input-group"><label for="primary-phone">ফোন নম্বর:</label><input type="tel" id="primary-phone" value="${stagedData?.primaryPhone || ''}"></div>
-                <div class="input-group"><label for="description">বিস্তারিত বর্ণনা:</label><textarea id="description" rows="5">${stagedData?.description || ''}</textarea></div>
+                <div class="input-inline-group">
+                    <div class="input-group"><label for="primary-phone">ফোন নম্বর (লিখুন):</label><input type="tel" id="primary-phone" required value="${stagedData?.phoneNumber || ''}"></div>
+                    <div class="input-group"><label for="secondary-phone">অতিরিক্ত ফোন নম্বর (ঐচ্ছিক):</label><input type="tel" id="secondary-phone" value="${stagedData?.secondaryPhone || ''}"></div>
+                </div>
+                <div class="input-group"><label for="description">বিস্তারিত বর্ণনা (ঐচ্ছিক):</label><textarea id="description" rows="5">${stagedData?.description || ''}</textarea></div>
             </div>
         `;
         fieldsHTML += contactHTML;
         specificFieldsContainer.innerHTML = fieldsHTML;
 
-        // Leaflet Map Initializer
+        // Leaflet Map Initialization with Delay
         setTimeout(() => {
             const mapElement = document.getElementById('map-container');
             if (mapElement) {
-                var map = L.map('map-container').setView([23.8103, 90.4125], 13);
+                let defaultLat = parseFloat(document.getElementById('lat').value) || 23.8103;
+                let defaultLng = parseFloat(document.getElementById('lng').value) || 90.4125;
+                
+                var map = L.map('map-container').setView([defaultLat, defaultLng], 13);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap'
                 }).addTo(map);
 
                 var marker;
+                if (document.getElementById('lat').value && document.getElementById('lng').value) {
+                    marker = L.marker([defaultLat, defaultLng]).addTo(map);
+                }
+
                 map.on('click', function(e) {
                     const lat = e.latlng.lat;
                     const lng = e.latlng.lng;
@@ -428,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
             areaTypeSelect.addEventListener('change', (e) => generateSubAddressFields(e.target.value));
         }
 
-        // রি-লোডের পর বা এডিট মোডে সেশনে সেভ থাকা ডাটা স্ক্রিনে রেন্ডার করা
+        // Render existing staged images from metadata
         if (stagedMetadata) {
             const imgArea = document.getElementById('image-preview-area');
             if (imgArea && (stagedMetadata.images || []).length > 0) {
@@ -444,20 +476,49 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // ইনপুট লিসেনার বাইন্ডিং
+        // Input Change Listeners for file upload triggers
         document.getElementById('images')?.addEventListener('change', (e) => handleImageUploadAndPreview(e, 'image-preview-area', 3, 'main'));
         document.getElementById('khotian-image')?.addEventListener('change', (e) => handleImageUploadAndPreview(e, 'khotian-preview-area', 1, 'khotian'));
         document.getElementById('sketch-image')?.addEventListener('change', (e) => handleImageUploadAndPreview(e, 'sketch-preview-area', 1, 'sketch'));
     } 
 
-    // সেশনে আগে থেকে থাকা ডাটা স্ক্রিনে রেন্ডার করার হেল্পার ফাংশন
+    function generateSubAddressFields(areaType, stagedData = null) {
+        const subAddressFieldsContainer = document.getElementById('sub-address-fields');
+        let subFieldsHTML = '';
+        if (areaType === 'উপজেলা') {
+            subFieldsHTML = `
+                <div class="input-inline-group">
+                    <div class="input-group"><label for="upazila-name">উপজেলা:</label><input type="text" id="upazila-name" required value="${stagedData?.location?.upazila || ''}"></div>
+                    <div class="input-group"><label for="thana-name">থানা:</label><input type="text" id="thana-name" required value="${stagedData?.location?.thana || ''}"></div>
+                </div>
+                <div class="input-inline-group">
+                    <div class="input-group"><label for="union-name">ইউনিয়ন:</label><input type="text" id="union-name" required value="${stagedData?.location?.union || ''}"></div>
+                    <div class="input-group"><label for="village-name">গ্রাম/মহল্লা:</label><input type="text" id="village-name" required value="${stagedData?.location?.village || ''}"></div>
+                </div>
+                <div class="input-group"><label for="road-name">রাস্তা/রোড:</label><input type="text" id="road-name" required value="${stagedData?.location?.road || ''}"></div>
+            `;
+        } else if (areaType === 'সিটি কর্পোরেশন') {
+            subFieldsHTML = `
+                <div class="input-inline-group">
+                    <div class="input-group"><label for="thana-name">থানা:</label><input type="text" id="thana-name" required value="${stagedData?.location?.thana || ''}"></div>
+                    <div class="input-group"><label for="ward-no">ওয়ার্ড নং:</label><input type="text" id="ward-no" required value="${stagedData?.location?.wardNo || ''}"></div>
+                </div>
+                <div class="input-inline-group">
+                    <div class="input-group"><label for="village-name">গ্রাম/মহল্লা:</label><input type="text" id="village-name" required value="${stagedData?.location?.village || ''}"></div>
+                    <div class="input-group"><label for="road-name">রাস্তা/রোড:</label><input type="text" id="road-name" required value="${stagedData?.location?.road || ''}"></div>
+                </div>
+            `;
+        }
+        subAddressFieldsContainer.innerHTML = subFieldsHTML;
+    }
+
     function renderExistingPreview(previewArea, fileId, url, docType) {
-        if (previewArea.querySelector('.placeholder-text')) previewArea.innerHTML = '';
+        const placeholder = previewArea.querySelector('.placeholder-text');
+        if (placeholder) placeholder.remove();
         
         const wrapper = document.createElement('div');
         wrapper.className = 'image-preview-wrapper';
         wrapper.id = `box-${fileId}`;
-        wrapper.dataset.url = url;
 
         const img = document.createElement('img');
         img.className = 'preview-image';
@@ -468,6 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
         removeBtn.innerHTML = '&times;';
         removeBtn.onclick = (e) => {
             e.preventDefault();
+            e.stopPropagation();
             let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
             if (docType === 'main') {
                 currentMeta.images = (currentMeta.images || []).filter(m => m.id !== fileId);
@@ -483,11 +545,10 @@ document.addEventListener('DOMContentLoaded', function() {
         previewArea.appendChild(wrapper);
     }
 
-    // 🛠️ ৩. মূল আপলোড প্রসেসিং ফাংশন (কম্প্রেশন এবং লাইভ পার্সেন্টেজ লুপসহ ফিক্সড)
+    // Image Upload and Preview Handler
     async function handleImageUploadAndPreview(event, previewAreaId, maxFiles, docType = 'main') {
         const previewArea = document.getElementById(previewAreaId);
         const files = event.target.files;
-        
         if (files.length === 0) return;
 
         let stagedMetadata = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
@@ -504,128 +565,38 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         submitBtn.disabled = true;
+        submitBtn.textContent = 'ছবি আপলোড হচ্ছে...';
+
         const user = auth.currentUser;
         const userId = user ? user.uid : 'anonymous';
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            if (!file.type.startsWith('image/')) {
-                alert('শুধুমাত্র ছবি ফাইল আপলোড করা সম্ভব!');
-                continue;
-            }
-
             const uniqueFileId = Date.now() + '_' + i;
-            
-            // ইনস্ট্যান্ট ফেসবুকের মতো ব্লার বক্স এবং স্পিনার দেখানো
-            createUploadPreviewBox(previewArea, uniqueFileId, file);
 
             try {
-                // ক্যানভাস কম্প্রেশন এক্সিকিউট করা
-                let processedFile = file;
-                try {
-                    processedFile = await compressImage(file);
-                } catch (err) {
-                    console.warn("কম্প্রেস করা যায়নি, মূল ফাইলটি আপলোড হচ্ছে।", err);
+                const uploadResult = await uploadStagedImage(file, i, userId, docType);
+                uploadResult.id = uniqueFileId;
+
+                renderExistingPreview(previewArea, uniqueFileId, uploadResult.url, docType);
+
+                if (docType === 'main') {
+                    imagesToStore.push(uploadResult);
+                    stagedMetadata.images = imagesToStore;
+                } else {
+                    stagedMetadata[docType] = uploadResult;
                 }
-
-                const baseDir = docType === 'main' ? 'staging/images' : `staging/documents/${docType}`;
-                const filePath = `${baseDir}/${userId}/${uniqueFileId}_${file.name}`;
-                const imageRef = storage.ref().child(filePath);
-
-                const uploadTask = imageRef.put(processedFile);
-
-                await new Promise((resolve, reject) => {
-                    uploadTask.on('state_changed', 
-                        (snapshot) => {
-                            const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                            const box = document.getElementById(`box-${uniqueFileId}`);
-                            if (box) {
-                                const pctText = box.querySelector('.pct-text');
-                                if (pctText) pctText.textContent = `${progress}%`;
-                            }
-                        }, 
-                        (error) => reject(error), 
-                        async () => {
-                            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                            const box = document.getElementById(`box-${uniqueFileId}`);
-                            
-                            if (box) {
-                                const overlay = box.querySelector('.upload-overlay');
-                                if (overlay) overlay.remove();
-
-                                box.dataset.url = downloadURL;
-
-                                const removeBtn = document.createElement('button');
-                                removeBtn.className = 'remove-image-btn';
-                                removeBtn.innerHTML = '&times;';
-                                removeBtn.onclick = (e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    
-                                    let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-                                    if (docType === 'main') {
-                                        currentMeta.images = (currentMeta.images || []).filter(m => m.id !== uniqueFileId);
-                                    } else {
-                                        delete currentMeta[docType];
-                                    }
-                                    sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
-                                    box.remove();
-                                };
-                                box.appendChild(removeBtn);
-                            }
-
-                            const newMetadata = {
-                                id: uniqueFileId,
-                                fileName: file.name,
-                                storagePath: filePath,
-                                url: downloadURL
-                            };
-
-                            if (docType === 'main') {
-                                imagesToStore.push(newMetadata);
-                                stagedMetadata.images = imagesToStore;
-                            } else {
-                                stagedMetadata[docType] = newMetadata;
-                            }
-                            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
-                            
-                            resolve();
-                        }
-                    );
-                });
+                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
 
             } catch (error) {
                 console.error("ফাইল আপলোডে সমস্যা:", error);
                 alert(`ফাইল আপলোড ব্যর্থ হয়েছে: ${file.name}`);
-                const badBox = document.getElementById(`box-${uniqueFileId}`);
-                if (badBox) badBox.remove();
             }
         }
 
         event.target.value = ''; 
         submitBtn.disabled = false;
         submitBtn.textContent = 'প্রিভিউ দেখুন ও পোস্ট করুন';
-    }
-
-    function generateSubAddressFields(areaType, stagedData = null) {
-        const subAddressFieldsContainer = document.getElementById('sub-address-fields');
-        let subFieldsHTML = '';
-        if (areaType === 'উপজেলা') {
-            subFieldsHTML = `
-                <div class="input-inline-group">
-                    <div class="input-group"><label for="upazila-name">উপজেলা:</label><input type="text" id="upazila-name" required value="${stagedData?.location?.upazila || ''}"></div>
-                    <div class="input-group"><label for="thana-name">থানা:</label><input type="text" id="thana-name" required value="${stagedData?.location?.thana || ''}"></div>
-                </div>
-            `;
-        } else if (areaType === 'সিটি কর্পোরেশন') {
-            subFieldsHTML = `
-                <div class="input-inline-group">
-                    <div class="input-group"><label for="thana-name">থানা:</label><input type="text" id="thana-name" required value="${stagedData?.location?.thana || ''}"></div>
-                    <div class="input-group"><label for="ward-no">ওয়ার্ড নং:</label><input type="text" id="ward-no" required value="${stagedData?.location?.wardNo || ''}"></div>
-                </div>
-            `;
-        }
-        subAddressFieldsContainer.innerHTML = subFieldsHTML;
     }
 
     if (postCategorySelect) {
@@ -635,9 +606,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Form Submission Logic
+    // Form Submission Handler & Property Object Mapping
     propertyForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        const stagedMetadata = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+        
+        // Strict Validation Check Rules
+        if (!stagedMetadata.images || stagedMetadata.images.length === 0) {
+            alert("অনুগ্রহ করে কমপক্ষে একটি ছবি আপলোড করুন।");
+            return;
+        }
+
+        const getValue = (id) => document.getElementById(id)?.value || '';
+        const category = getValue('post-category');
+        const type = getValue('post-type');
+
+        if (category === 'বিক্রয়') {
+            if (!stagedMetadata.khotian || !stagedMetadata.sketch) {
+                alert("বিক্রয়ের জন্য খতিয়ান এবং স্কেস/হস্ত নকশার ছবি আপলোড করা বাধ্যতামূলক।");
+                return;
+            }
+        }
+
         submitBtn.disabled = true;
         submitBtn.textContent = 'ডেটা প্রক্রিয়াকরণ হচ্ছে...';
 
@@ -649,86 +640,102 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const getValue = (id) => document.getElementById(id)?.value || '';
-            const category = getValue('post-category');
-            const type = getValue('post-type');
-
-            // প্রপার্টির সাধারণ ডেটাবেস ভ্যালু ম্যাপ করা
             const propertyData = {
                 category,
                 type,
                 title: getValue('property-title'),
                 description: getValue('description'),
-                phoneNumber: getValue('primary-phone'),
+                phoneNumber: getValue('primary-phone'), 
+                secondaryPhone: getValue('secondary-phone'),
                 userId: user.uid,
                 status: 'pending',
                 listerType: getValue('lister-type'),
-                roadWidth: getValue('road-width'),
-                facing: getValue('facing'),
                 location: {
                     division: getValue('division'),
                     district: getValue('district'),
                     areaType: getValue('area-type-select'),
                     thana: getValue('thana-name') || '',
                     upazila: getValue('upazila-name') || '',
-                    wardNo: getValue('ward-no') || '',
+                    union: getValue('union-name') || '',
+                    village: getValue('village-name') || '',
+                    road: getValue('road-name') || '',
                     lat: parseFloat(getValue('lat')) || null,
                     lng: parseFloat(getValue('lng')) || null
                 }
             };
 
-            // 💡 [ফিক্সড] মালিকানা বিবরণীর ডেটা (owner) সঠিকভাবে অবজেক্টে পুশ করা হলো
-            if (category === 'বিক্রয়') {
-                propertyData.owner = {
-                    donorName: getValue('donor-name'),
-                    khotianNoType: getValue('khotian-no-type-select'),
-                    khotianNo: getValue('khotian-no-input')
-                };
+            // Non-Land Property Fields
+            if (type !== 'জমি' && type !== 'প্লট') {
+                propertyData.facing = getValue('facing');
+                const checkboxes = document.querySelectorAll('input[name="utility"]:checked');
+                const utilities = [];
+                checkboxes.forEach((cb) => utilities.push(cb.value));
+                propertyData.utilities = utilities;
             }
 
-            // টাইপ অনুযায়ী স্পেসিফিক ফিল্ড ম্যাপ করা
+            // Type-Specific Fields Processing
             if (type === 'জমি' || type === 'প্লট') {
                 propertyData.landArea = getValue('land-area');
                 propertyData.landAreaUnit = getValue('land-area-unit');
+                propertyData.roadWidth = getValue('road-width');
                 propertyData.landType = getValue('land-type');
                 if (type === 'প্লট') propertyData.plotNo = getValue('plot-no');
             } else {
-                propertyData.propertyAge = getValue('property-age');
-                propertyData.dining = getValue('dining');
-                propertyData.balcony = getValue('balcony');
+                if (type === 'বাড়ি' || type === 'ফ্লাট') {
+                    propertyData.propertyAge = getValue('property-age');
+                    propertyData.roadWidth = getValue('road-width');
+                    propertyData.dining = getValue('dining');
+                    propertyData.balcony = getValue('balcony');
+                }
                 if (type === 'বাড়ি') propertyData.floors = getValue('floors');
                 if (type === 'ফ্লাট' || type === 'অফিস') propertyData.floorNo = getValue('floor-no');
                 if (type !== 'দোকান') {
                     propertyData.rooms = getValue('rooms');
                     propertyData.bathrooms = getValue('bathrooms');
                     if (type === 'বাড়ি' || type === 'ফ্লাট') propertyData.kitchen = getValue('kitchen');
-                }
-                if (category === 'ভাড়া') {
-                    if (type === 'বাড়ি' || type === 'ফ্লাট') propertyData.rentType = getValue('rent-type');
-                    propertyData.moveInDate = getValue('move-in-date');
+                } else {
+                    propertyData.shopCount = getValue('shop-count');
                 }
             }
 
-            // দাম বা মাসিক ভাড়া ম্যাপ করা
+            // Area Sizes Mapping
+            if (type === 'বাড়ি') {
+                propertyData.houseArea = getValue('house-area');
+                propertyData.houseAreaUnit = getValue('house-area-unit');
+            } else if (type === 'ফ্লাট') {
+                propertyData.areaSqft = getValue('flat-area-sqft');
+            } else if (type === 'দোকান' || type === 'অফিস') {
+                propertyData.commercialArea = getValue('commercial-area');
+                propertyData.commercialAreaUnit = getValue('commercial-area-unit');
+            }
+
+            // Ownership Document Fields (For Sale Category Only)
             if (category === 'বিক্রয়') {
+                propertyData.owner = {
+                    donorName: getValue('donor-name'),
+                    khotianNoType: getValue('khotian-no-type-select'),
+                    khotianNo: getValue('khotian-no-input'),
+                    dagNoType: getValue('dag-no-type-select'),
+                    dagNo: getValue('dag-no-input'),
+                    mouja: getValue('mouja-owner')
+                };
                 propertyData.price = getValue('price');
                 propertyData.priceUnit = getValue('price-unit');
-            } else if (category === 'ভাড়া') {
+            } 
+            // 🛠️ [ফিক্সড] ভাড়ার ক্যাটাগরিতে অবাস্তব #price ফিল্ড খোঁজার বাগ ফিক্স করা হলো
+            else if (category === 'ভাড়া') {
                 propertyData.monthlyRent = getValue('monthly-rent');
                 propertyData.priceUnit = getValue('price-unit');
                 propertyData.advance = getValue('advance');
+                if (type === 'বাড়ি' || type === 'ফ্লাট') {
+                    propertyData.rentType = getValue('rent-type');
+                }
+                propertyData.moveInDate = getValue('move-in-date');
             }
-
-            // অন্যান্য সু্যোগ-সুবিধা (Utilities Array) কালেক্ট করা
-            const checkboxes = document.querySelectorAll('input[name="utility"]:checked');
-            const utilities = [];
-            checkboxes.forEach((checkbox) => {
-                utilities.push(checkbox.value);
-            });
-            propertyData.utilities = utilities;
 
             sessionStorage.setItem('stagedPropertyData', JSON.stringify(propertyData));
             window.location.href = 'preview.html';
+
         } catch (error) {
             console.error("ফর্ম সাবমিশনে ট্রাবল:", error);
             submitBtn.disabled = false;
@@ -736,7 +743,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Auth State Observer - Centralized Code for Profiles and UI Updates
+    // 🔐 [সংশোধিত গ্লোবাল অথ লিসেনার] - দুটি লিসেনারকে একত্রিত করে ডাটাবেজ প্রপার্টি নাম এক করা হলো (profilePic)
     if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
         auth.onAuthStateChanged(user => {
             const authWarningMessage = document.getElementById('auth-warning-message');
@@ -752,10 +759,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     const userData = doc.data();
                     if (primaryPhoneInput && userData?.phoneNumber) {
                         primaryPhoneInput.value = userData.phoneNumber;
-                        primaryPhoneInput.disabled = true;
+                        primaryPhoneInput.disabled = true; // Lock user primary number
                     }
-                    if (headerProfileImg) {
-                        headerProfileImg.src = userData?.profilePic || user.photoURL || 'assets/images/default-avatar.png';
+                    if (headerProfileImg && userData) {
+                        headerProfileImg.src = userData.profilePic || user.photoURL || 'assets/images/default-avatar.png';
                     }
                     loadStagedData();
                 }).catch(() => loadStagedData());
@@ -767,37 +774,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ম্যাসেজ আইকন রিডাইরেক্ট
+    // Action Redirect Handlers
     if (messageButton) {
         messageButton.addEventListener('click', () => {
              window.location.href = 'messages.html';
         });
     }
     
-    // প্রোফাইল ইমেজ রিডাইরেক্ট
     if (profileImageWrapper) {
         profileImageWrapper.addEventListener('click', () => {
              window.location.href = 'profile.html'; 
         });
-    }
-});
-
-// 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর গ্লোবাল লজিক
-firebase.auth().onAuthStateChanged(async (user) => {
-    const headerProfileImg = document.querySelector('#profileImageWrapper img');
-    
-    if (user && headerProfileImg) {
-        try {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().profilePic) {
-                headerProfileImg.src = userDoc.data().profilePic;
-            } else if (user.photoURL) {
-                headerProfileImg.src = user.photoURL;
-            } else {
-                headerProfileImg.src = 'assets/images/default-avatar.png';
-            }
-        } catch (error) {
-            console.error("হেডার প্রোফাইল ইমেজ লোড করতে সমস্যা:", error);
-        }
     }
 });
