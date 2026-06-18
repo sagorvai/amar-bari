@@ -187,6 +187,122 @@
             }
         }
         
+    /* প্রফেশনাল ফাইল আপলোড ড্রপ বক্স (ইউজারের স্ক্রিনশট অনুযায়ী) */
+.custom-upload-box {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 30px 20px;
+    text-align: center;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+.custom-upload-box:hover {
+    border-color: var(--primary-color);
+    background: #f8fafc;
+}
+.upload-icon-cloud {
+    font-size: 48px;
+    color: #6366f1;
+    margin-bottom: 10px;
+}
+.upload-text-main {
+    font-size: 16px;
+    font-weight: bold;
+    color: #1e293b;
+    margin: 5px 0;
+}
+.upload-text-sub {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 15px;
+}
+.upload-btn-fake {
+    background-color: #6366f1;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* ফেসবুক স্টাইল ফটো বক্স গ্রিড লেআউট */
+.image-preview-area {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 10px;
+    width: 100%;
+}
+.image-preview-wrapper {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+}
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* লাইভ আপলোডিং ওভারলে ও প্রোগ্রেস পার্সেন্টেজ */
+.upload-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.75);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    z-index: 5;
+}
+.spinner-loader {
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    border-top: 3px solid #ffffff;
+    width: 24px;
+    height: 24px;
+    animation: spinRound 1s linear infinite;
+    margin-bottom: 6px;
+}
+@keyframes spinRound {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* টপ-রাইট কর্নারে ডিলিট বাটন */
+.remove-image-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    }
+    
     </style>
 </head>
 <body>
