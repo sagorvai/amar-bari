@@ -29,6 +29,64 @@ const uploadStagedImage = async (file, index, userId, docType = 'main') => {
     };
 };
 
+
+// ক্যানভাস (Canvas API) দিয়ে ক্লায়েন্ট-সাইডেই ছবি কম্প্রেস করার ম্যাজিক ফাংশন
+const compressImage = (file, maxWidth = 1200, quality = 0.7) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    if (blob) resolve(blob);
+                    else reject(new Error('ইমেজ কম্প্রেশন ব্যর্থ'));
+                }, 'image/jpeg', quality);
+            };
+        };
+        reader.onerror = (error) => reject(error);
+    });
+};
+
+// ফেসবুকের মতো প্রিভিউ বক্স এবং প্রোগ্রেস ওভারলে তৈরি করার ফাংশন
+function createUploadPreviewBox(previewArea, fileId, initialFile) {
+    // কোনো ডিফল্ট লেখা থাকলে তা মুছে ফেলা
+    const placeholder = previewArea.querySelector('.placeholder-text');
+    if (placeholder) placeholder.remove();
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'image-preview-wrapper';
+    wrapper.id = `box-${fileId}`;
+
+    const img = document.createElement('img');
+    img.className = 'preview-image';
+    img.src = URL.createObjectURL(initialFile); // আপলোড শেষ হওয়ার আগেই লোকাল প্রিভিউ দেখাবে
+
+    const overlay = document.createElement('div');
+    overlay.className = 'upload-overlay';
+    overlay.innerHTML = `<div class="spinner-loader"></div><span class="pct-text">০%</span>`;
+
+    wrapper.appendChild(img);
+    wrapper.appendChild(overlay);
+    previewArea.appendChild(wrapper);
+            }
+
+//----------//
+
 document.addEventListener('DOMContentLoaded', function() {
     const postCategorySelect = document.getElementById('post-category');
     const dynamicFieldsContainer = document.getElementById('dynamic-fields-container');
@@ -122,22 +180,54 @@ document.addEventListener('DOMContentLoaded', function() {
         let categoryDescriptionText = category === 'ভাড়া' ? 'ভাড়ার বিবরণ' : `${category}ের বিবরণ`;
 
         // --- সেকশন ১: প্রপার্টির বিবরণ (ছবি, শিরোনাম, রুম ইত্যাদি) ---
-        let descriptionHTML = `
-            <div class="form-section property-details-section">
-                <h3>${type} ${categoryDescriptionText}</h3>
+        
+let descriptionHTML = `
+    <div class="form-section property-details-section">
+        <h3>${type} ${categoryDescriptionText}</h3>
 
-                <div class="input-group image-upload-group">
-                    <label for="images">প্রপার্টি ছবি (সর্বোচ্চ ৩টি):</label>
-                    <input type="file" id="images" accept="image/*" multiple required class="file-input-custom">
-                    <div class="image-preview-area" id="image-preview-area">
-                        <p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="property-title">শিরোনাম:</label>
-                    <input type="text" id="property-title" required value="${stagedData?.title || ''}">
-                </div>
-        `;
+        <div class="input-group">
+            <label>প্রপার্টি ছবি (সর্বোচ্চ ৩টি):</label>
+            <div class="custom-upload-box" onclick="document.getElementById('images').click()">
+                <i class="material-icons upload-icon-cloud">cloud_upload</i>
+                <div class="upload-text-main">একটি ফাইল আপলোড করুন</div>
+                <div class="upload-text-sub">এখানে ফাইল ড্রাগ করুন অথবা নিচের বাটনে চাপুন</div>
+                <div class="upload-btn-fake">Choose File</div>
+            </div>
+            <input type="file" id="images" accept="image/*" multiple required style="display: none;">
+            <div class="image-preview-area" id="image-preview-area"></div>
+        </div>
+        <div class="input-group">
+            <label for="property-title">শিরোনাম:</label>
+            <input type="text" id="property-title" required value="${stagedData?.title || ''}">
+        </div>
+`;
+
+
+if (category === 'বিক্রয়') {
+    let ownershipHTML = `
+        <div class="input-group">
+            <label>সর্বশেষ খতিয়ানের ছবি (১টি):</label>
+            <div class="custom-upload-box" onclick="document.getElementById('khotian-image').click()">
+                <i class="material-icons upload-icon-cloud">description</i>
+                <div class="upload-text-main">খতিয়ানের ফাইল সিলেক্ট করুন</div>
+                <div class="upload-btn-fake">Choose File</div>
+            </div>
+            <input type="file" id="khotian-image" accept="image/*" required style="display: none;">
+            <div class="image-preview-area" id="khotian-preview-area"></div>
+        </div>
+
+        <div class="input-group">
+            <label>প্রপার্টি স্কেস বা হস্ত নকশা ছবি (১টি):</label>
+            <div class="custom-upload-box" onclick="document.getElementById('sketch-image').click()">
+                <i class="material-icons upload-icon-cloud">map</i>
+                <div class="upload-text-main">স্কেস/নকশার ফাইল সিলেক্ট করুন</div>
+                <div class="upload-btn-fake">Choose File</div>
+            </div>
+            <input type="file" id="sketch-image" accept="image/*" required style="display: none;">
+            <div class="image-preview-area" id="sketch-preview-area"></div>
+        </div>
+    `;
+        }
         
         // NEW ADDITION: Property Age, Facing and Utilities for built properties
         if (type !== 'জমি' && type !== 'প্লট') {
@@ -580,67 +670,145 @@ setTimeout(() => {
             areaTypeSelect.addEventListener('change', (e) => generateSubAddressFields(e.target.value));
         }
 
-        // --- NEW Image Preview and Upload Handler Logic ---
+        //..... handleImageUploadAndPreview........
 
-        // NEW: Function to display image from URL (Firebase Staging URL)
-        function handleImagePreviewDisplayFromURL(url, fileName, previewArea, isStaged = false) {
-            const previewWrapper = document.createElement('div');
-            previewWrapper.className = 'image-preview-wrapper';
-            previewWrapper.dataset.filename = fileName;
-            previewWrapper.dataset.url = url; // Store URL for removal/validation
 
-            const img = document.createElement('img');
-            img.src = url;
-            img.className = 'preview-image';
+        async function handleImageUploadAndPreview(event, previewAreaId, maxFiles, docType = 'main') {
+    const previewArea = document.getElementById(previewAreaId);
+    const files = event.target.files;
+    
+    if (files.length === 0) return;
 
-            const removeButton = document.createElement('button');
-            removeButton.className = 'remove-image-btn';
-            removeButton.innerHTML = '&times;';
-            removeButton.style.backgroundColor = 'red';
-            removeButton.style.color = 'white';
+    // সেশন স্টোরেজ থেকে অলরেডি কতটি আপলোড করা আছে তা চেক করা
+    let stagedMetadata = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+    let imagesToStore = stagedMetadata.images || [];
 
-            removeButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                // Find index to remove from session data
-                const targetInput = previewArea.closest('.input-group').querySelector('input[type="file"]');
-                const fileType = targetInput.id === 'images' ? 'images' : targetInput.id.replace('-image', '');
+    if (docType === 'main' && (imagesToStore.length + files.length) > maxFiles) {
+        alert(`আপনি সর্বোচ্চ ${maxFiles}টি ছবি আপলোড করতে পারবেন।`);
+        event.target.value = '';
+        return;
+    }
 
-                let stagedMetadata = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-                
-                if (fileType === 'images') {
-                    // Filter out the image by URL/filename
-                    stagedMetadata.images = (stagedMetadata.images || []).filter(meta => meta.url !== url);
-                } else {
-                    // For single-image documents, just remove the metadata
-                    delete stagedMetadata[fileType];
-                    // Also clear the file input (optional but good practice)
-                    targetInput.value = ''; 
-                }
-                
-                // Update session storage
-                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
-                
-                // Remove the visual element
-                previewWrapper.remove();
+    // খতিয়ান বা স্কেচ (যা সিঙ্গেল ফাইল) হলে আগের প্রিভিউ ক্লিয়ার হবে
+    if (maxFiles === 1) {
+        previewArea.innerHTML = '';
+    }
 
-                // If it's the main image area and becomes empty, show placeholder
-                if (fileType === 'images' && previewArea.children.length === 0) {
-                    previewArea.innerHTML = '<p class="placeholder-text">এখানে আপলোড করা ছবিগুলো দেখা যাবে।</p>';
-                } else if (fileType !== 'images') {
-                    // For single images, restore placeholder text
-                    previewArea.innerHTML = '<p class="placeholder-text">এখানে ছবি দেখা যাবে।</p>';
-                }
-            });
+    submitBtn.disabled = true;
+    const user = auth.currentUser;
+    const userId = user ? user.uid : 'anonymous';
 
-            previewWrapper.appendChild(img);
-            previewWrapper.appendChild(removeButton);
-
-            if (previewArea.querySelector('.placeholder-text')) {
-                 previewArea.innerHTML = ''; // Remove placeholder if present
-            }
-            previewArea.appendChild(previewWrapper);
+    // প্রতিটি ফাইলের জন্য আলাদা লুপ সচল করা
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) {
+            alert('শুধুমাত্র ছবি ফাইল আপলোড করা সম্ভব!');
+            continue;
         }
 
+        const uniqueFileId = Date.now() + '_' + i;
+        
+        // ১. স্ক্রিনে ফেসবুকের মতো ৪-কোণা বক্স তৈরি এবং লোকাল ছবি লোড করা
+        createUploadPreviewBox(previewArea, uniqueFileId, file);
+
+        try {
+            // ২. ব্যাকগ্রাউন্ডে ক্যানভাস দিয়ে ছবিটিকে নিমিষেই কম্প্রেস করে ফেলা
+            let processedFile = file;
+            try {
+                processedFile = await compressImage(file);
+            } catch (err) {
+                console.warn("কম্প্রেস করা যায়নি, মূল ফাইলটি আপলোড হচ্ছে।", err);
+            }
+
+            // ৩. ফায়ারবেস পাথ রেডি করা
+            const baseDir = docType === 'main' ? 'staging/images' : `staging/documents/${docType}`;
+            const filePath = `${baseDir}/${userId}/${uniqueFileId}_${file.name}`;
+            const imageRef = storage.ref().child(filePath);
+
+            // ৪. ফায়ারবেস আপলোড টাস্ক শুরু এবং প্রোগ্রেস লিসেনার এড করা
+            const uploadTask = imageRef.put(processedFile);
+
+            await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        // লাইভ আপলোড পার্সেন্টেজ হিসাব (০% - ৫০% - ১০০%)
+                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        const box = document.getElementById(`box-${uniqueFileId}`);
+                        if (box) {
+                            const pctText = box.querySelector('.pct-text');
+                            if (pctText) pctText.textContent = `${progress}%`;
+                        }
+                    }, 
+                    (error) => reject(error), 
+                    async () => {
+                        // আপলোড সফলভাবে সম্পূর্ণ হলে
+                        const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                        const box = document.getElementById(`box-${uniqueFileId}`);
+                        
+                        if (box) {
+                            // ওভারলে ডিলিট করে দেওয়া
+                            const overlay = box.querySelector('.upload-overlay');
+                            if (overlay) overlay.remove();
+
+                            // মেটাডাটা এট্রিবিউটে ফায়ারবেস ইউআরএল সেভ করা
+                            box.dataset.url = downloadURL;
+
+                            // রিমুভ বাটন এড করা
+                            const removeBtn = document.createElement('button');
+                            removeBtn.className = 'remove-image-btn';
+                            removeBtn.innerHTML = '&times;';
+                            removeBtn.onclick = (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                // সেশন থেকে ডাটা রিমুভ লজিক
+                                let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+                                if (docType === 'main') {
+                                    currentMeta.images = (currentMeta.images || []).filter(m => m.id !== uniqueFileId);
+                                } else {
+                                    delete currentMeta[docType];
+                                    event.target.value = '';
+                                }
+                                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+                                box.remove();
+                            };
+                            box.appendChild(removeBtn);
+                        }
+
+                        // সেশনে মেটাডাটা পুশ করা
+                        const newMetadata = {
+                            id: uniqueFileId,
+                            order: docType === 'main' ? imagesToStore.length : 0,
+                            fileName: file.name,
+                            storagePath: filePath,
+                            url: downloadURL
+                        };
+
+                        if (docType === 'main') {
+                            imagesToStore.push(newMetadata);
+                            stagedMetadata.images = imagesToStore;
+                        } else {
+                            stagedMetadata[docType] = newMetadata;
+                        }
+                        sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
+                        
+                        resolve();
+                    }
+                );
+            });
+
+        } catch (error) {
+            console.error("ফাইল আপলোডে বড় সমস্যা:", error);
+            alert(`ফাইল আপলোড ব্যর্থ হয়েছে: ${file.name}`);
+            const badBox = document.getElementById(`box-${uniqueFileId}`);
+            if (badBox) badBox.remove();
+        }
+    }
+
+    event.target.value = ''; // ইনপুট রিসেট করা যাতে একই ছবি পুনরায় সিলেক্ট করা যায়
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'প্রিভিউ দেখুন ও পোস্ট করুন';
+        }
 
         // Reusable function to handle file input change and upload
         async function handleImageUploadAndPreview(event, previewAreaId, maxFiles, docType = 'main') {
