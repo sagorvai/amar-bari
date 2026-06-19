@@ -1,10 +1,55 @@
-// post.js - Complete & Fixed Version for Amar Bari Platform
-// No fields or logics are missing. All bugs are completely resolved.
-
-// Firebase SDKs Client Initialization
+// post.js - Fixed with Client-Side Image Compression (KB size) & Fast Parallel Uploads
 const db = firebase.firestore();
 const storage = firebase.storage();
 const auth = firebase.auth();
+
+// ⚡ ম্যাজিক ফাংশন: ক্যানভাস (Canvas API) দিয়ে ক্লায়েন্ট-সাইডেই ছবি কম্প্রেস করে KB সাইজে আনা
+const compressImage = (file, maxWidth = 1200, quality = 0.7) => {
+    return new Promise((resolve, reject) => {
+        // যদি ফাইলটি ইমেজ না হয়, তবে কম্প্রেস ছাড়া সরাসরি রিটার্ন করবে
+        if (!file.type.startsWith('image/')) {
+            return resolve(file);
+        }
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                // ইমেজ রেশিও ঠিক রেখে সাইজ কমানো
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // ক্যানভাস থেকে ছবিকে ব্লোব (Blob) বা বাইনারি ফাইলে রূপান্তর (KB সাইজে করার মূল লজিক)
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        return reject(new Error('ইমেজ কম্প্রেস করতে সমস্যা হয়েছে।'));
+                    }
+                    // ব্লোব ফাইলটিকে পুনরায় ফাইল অবজেক্টে রূপান্তর
+                    const compressedFile = new File([blob], file.name, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+                    resolve(compressedFile);
+                }, 'image/jpeg', quality);
+            };
+        };
+        reader.onerror = (error) => reject(error);
+    });
+};
 
 // Utility Function: Uploads file directly to Firebase Storage for staging
 const uploadStagedImage = async (file, index, userId, docType = 'main') => {
@@ -32,7 +77,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageButton = document.getElementById('messageButton');
     const profileImageWrapper = document.getElementById('profileImageWrapper');
 
-    // Function to load and pre-fill data from session storage for editing or reloading
     function loadStagedData() {
         const stagedDataString = sessionStorage.getItem('stagedPropertyData');
         const stagedMetadataString = sessionStorage.getItem('stagedImageMetadata');
@@ -68,7 +112,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Function to generate and display the main property type dropdown
     function generateTypeDropdown(category) {
         let options = [];
         if (category === 'বিক্রয়') {
@@ -98,7 +141,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Function to generate specific input fields based on type
     function generateSpecificFields(category, type, stagedData = null, stagedMetadata = null) {
         const specificFieldsContainer = document.getElementById('specific-fields-container');
         let fieldsHTML = '';
@@ -109,17 +151,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let categoryDescriptionText = category === 'ভাড়া' ? 'ভাড়ার বিবরণ' : `${category}ের বিবরণ`;
+        
+        let maxMainImages = category === 'বিক্রয়' ? 3 : 5;
+        let imageLabelText = category === 'বিক্রয়' ? `প্রপার্টি ছবি (সর্বোচ্চ ৩টি):` : `প্রপার্টি ছবি (সর্বোচ্চ ৫টি):`;
 
         let descriptionHTML = `
             <div class="form-section property-details-section">
                 <h3>${type} ${categoryDescriptionText}</h3>
                 
                 <div class="input-group">
-                    <label>常规 প্রপার্টি ছবি (সর্বোচ্চ ৩টি):</label>
+                    <label>${imageLabelText}</label>
                     <div class="custom-upload-box" onclick="document.getElementById('images').click()">
                         <i class="material-icons upload-icon-cloud">cloud_upload</i>
-                        <div class="upload-text-main">একটি ফাইল আপলোড করুন</div>
-                        <div class="upload-text-sub">এখানে ফাইল ড্রাগ করুন অথবা নিচের বাটনে চাপুন</div>
+                        <div class="upload-text-main">ছবি আপলোড করুন</div>
+                        <div class="upload-text-sub">এখানে ফাইল ড্রাগ করুন অথবা চাপুন</div>
                         <div class="upload-btn-fake">Choose File</div>
                     </div>
                     <input type="file" id="images" accept="image/*" multiple required style="display: none;">
@@ -143,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <option value="দক্ষিণ" ${stagedData?.facing === 'দক্ষিণ' ? 'selected' : ''}>দক্ষিণ</option>
                             <option value="পূর্ব" ${stagedData?.facing === 'পূর্ব' ? 'selected' : ''}>পূর্ব</option>
                             <option value="পশ্চিম" ${stagedData?.facing === 'পশ্চিম' ? 'selected' : ''}>পশ্চিম</option>
-                            <option value="উত্তর-পূর্ব" ${stagedData?.facing === 'উত্তর-পূর্ব' ? 'selected' : ''}>উত্তর-পূর্ব</option>
+                            <option value="উত্তর-পূর্ব" ${stagedData?.facing === 'উত্তর-পূর্ব' ? 'selected' : ''}>उत्तर-পূর্ব</option>
                             <option value="উত্তর-পশ্চিম" ${stagedData?.facing === 'উত্তর-পশ্চিম' ? 'selected' : ''}>উত্তর-পশ্চিম</option>
                             <option value="দক্ষিণ-পূর্ব" ${stagedData?.facing === 'দক্ষিণ-পূর্ব' ? 'selected' : ''}>দক্ষিণ-পূর্ব</option>
                             <option value="দক্ষিণ-পশ্চিম" ${stagedData?.facing === 'দক্ষিণ-পশ্চিম' ? 'selected' : ''}>দক্ষিণ-পশ্চিম</option>
@@ -155,9 +200,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="radio-group utility-checkbox-group" style="display: flex; flex-wrap: wrap; gap: 15px;">
                         ${(type === 'ফ্লাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="লিফট" ${stagedData?.utilities?.includes('লিফট') ? 'checked' : ''}> লিফট</label>` : ''}
                         ${(type === 'ফ্লাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="পার্কিং সুবিধা" ${stagedData?.utilities?.includes('পার্কিং সুবিধা') ? 'checked' : ''}> পার্কিং সুবিধা</label>` : ''}
-                        <label><input type="checkbox" name="utility" value="সিকিউরিটি গার্ড" ${stagedData?.utilities?.includes('সিকিউরিটি গার্ড') ? 'checked' : ''}> সিকিউরিটি গার্ড</label>
+                        <label><input type="checkbox" name="utility" value="সিকিউরিটিガード" ${stagedData?.utilities?.includes('সিকিউরিটি গার্ড') ? 'checked' : ''}> সিকিউরিটি গার্ড</label>
                         <label><input type="checkbox" name="utility" value="সিসিটিভি" ${stagedData?.utilities?.includes('সিসিটিভি') ? 'checked' : ''}> সিসিটিভি</label>
-                        <label><input type="checkbox" name="utility" value="গ্যাস সংযোগ" ${stagedData?.utilities?.includes('গ্যাস সংযোগ') ? 'checked' : ''}> গ্যাস সংযোগ</label>
+                        <label><input type="checkbox" name="utility" value="গ্যাস সংযোগ" ${stagedData?.utilities?.includes('গ্যাস সংযোগ') ? 'checked' : ''}>ガス সংযোগ</label>
                         <label><input type="checkbox" name="utility" value="জেনারেটর" ${stagedData?.utilities?.includes('জেনারেটর') ? 'checked' : ''}> জেনারেটর</label>
                         <label><input type="checkbox" name="utility" value="ওয়াসা পানি" ${stagedData?.utilities?.includes('ওয়াসা পানি') ? 'checked' : ''}> ওয়াসা পানি</label>
                     </div>
@@ -254,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <option value="">-- নির্বাচন করুন --</option>
                                 <option value="RS" ${stagedData?.owner?.dagNoType === 'RS' ? 'selected' : ''}>RS</option>
                                 <option value="BRS" ${stagedData?.owner?.dagNoType === 'BRS' ? 'selected' : ''}>BRS</option>
-                                <option value="নামজারি" ${stagedData?.owner?.dagNoType === 'নামजারি' ? 'selected' : ''}>নামজারি</option>
+                                <option value="নামজারি" ${stagedData?.owner?.dagNoType === 'নামজারি' ? 'selected' : ''}>নামজারি</option>
                             </select>
                         </div>
                         <div class="input-group" style="flex: 2;">
@@ -293,7 +338,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let priceRentHTML = '<div class="form-section price-rent-section"><h3>পরিমাণ ও দাম </h3>';
         
-        // পরিমাণ লজিক ম্যাপিং
         if (type === 'জমি' || type === 'প্লট') {
             priceRentHTML += `
                 <div class="input-group input-inline-unit">
@@ -336,7 +380,6 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
 
-        // দাম ও ভাড়া লজিক ম্যাপিং
         if (category === 'বিক্রয়') {
             priceRentHTML += `
                 <div class="input-group input-inline-unit">
@@ -350,7 +393,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         } else if (category === 'ভাড়া') {
-            // 🛠️ [ফিক্সড] ভুল </div> এর পরিবর্তে এখানে সঠিকভাবে </select> ট্যাগ ক্লোজ করা হলো
             priceRentHTML += `
                 <div class="input-group input-inline-unit">
                     <label for="monthly-rent">মাসিক ভাড়া (টাকায়):</label>
@@ -423,7 +465,6 @@ document.addEventListener('DOMContentLoaded', function() {
         fieldsHTML += contactHTML;
         specificFieldsContainer.innerHTML = fieldsHTML;
 
-        // Leaflet Map Initialization with Delay
         setTimeout(() => {
             const mapElement = document.getElementById('map-container');
             if (mapElement) {
@@ -460,7 +501,6 @@ document.addEventListener('DOMContentLoaded', function() {
             areaTypeSelect.addEventListener('change', (e) => generateSubAddressFields(e.target.value));
         }
 
-        // Render existing staged images from metadata
         if (stagedMetadata) {
             const imgArea = document.getElementById('image-preview-area');
             if (imgArea && (stagedMetadata.images || []).length > 0) {
@@ -476,8 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Input Change Listeners for file upload triggers
-        document.getElementById('images')?.addEventListener('change', (e) => handleImageUploadAndPreview(e, 'image-preview-area', 3, 'main'));
+        document.getElementById('images')?.addEventListener('change', (e) => handleImageUploadAndPreview(e, 'image-preview-area', maxMainImages, 'main'));
         document.getElementById('khotian-image')?.addEventListener('change', (e) => handleImageUploadAndPreview(e, 'khotian-preview-area', 1, 'khotian'));
         document.getElementById('sketch-image')?.addEventListener('change', (e) => handleImageUploadAndPreview(e, 'sketch-preview-area', 1, 'sketch'));
     } 
@@ -545,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
         previewArea.appendChild(wrapper);
     }
 
-    // Image Upload and Preview Handler
+    // 🚀 [সংশোধিত] ক্লায়েন্ট-সাইড কম্প্রেশন ও আল্ট্রা-ফাস্ট প্যারালাল ইমেজ আপলোড লজিক
     async function handleImageUploadAndPreview(event, previewAreaId, maxFiles, docType = 'main') {
         const previewArea = document.getElementById(previewAreaId);
         const files = event.target.files;
@@ -555,7 +594,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let imagesToStore = stagedMetadata.images || [];
 
         if (docType === 'main' && (imagesToStore.length + files.length) > maxFiles) {
-            alert(`আপনি সর্বোচ্চ ${maxFiles}টি ছবি আপলোড করতে পারবেন।`);
+            alert(`আপনি প্রপার্টির জন্য সর্বোচ্চ ${maxFiles}টি ছবি আপলোড করতে পারবেন।`);
             event.target.value = '';
             return;
         }
@@ -565,35 +604,46 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         submitBtn.disabled = true;
-        submitBtn.textContent = 'ছবি আপলোড হচ্ছে...';
+        submitBtn.textContent = 'ছবি সাইজ অপ্টিমাইজ ও আপলোড হচ্ছে...';
 
         const user = auth.currentUser;
         const userId = user ? user.uid : 'anonymous';
 
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+        // প্রতিটা ফাইল একসাথে লুপে কম্প্রেস হয়ে প্যারালাল আপলোড শুরু করবে
+        const uploadPromises = Array.from(files).map(async (file, i) => {
             const uniqueFileId = Date.now() + '_' + i;
-
             try {
-                const uploadResult = await uploadStagedImage(file, i, userId, docType);
+                // ফাইল সাইজ কিলোবাইটে (KB) নামানোর জন্য প্রথমে কম্প্রেশন কল হচ্ছে
+                const compressedFile = await compressImage(file);
+                const uploadResult = await uploadStagedImage(compressedFile, i, userId, docType);
                 uploadResult.id = uniqueFileId;
-
-                renderExistingPreview(previewArea, uniqueFileId, uploadResult.url, docType);
-
-                if (docType === 'main') {
-                    imagesToStore.push(uploadResult);
-                    stagedMetadata.images = imagesToStore;
-                } else {
-                    stagedMetadata[docType] = uploadResult;
-                }
-                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
-
+                return { success: true, result: uploadResult, fileId: uniqueFileId };
             } catch (error) {
-                console.error("ফাইল আপলোডে সমস্যা:", error);
-                alert(`ফাইল আপলোড ব্যর্থ হয়েছে: ${file.name}`);
+                console.error("ফাইল প্রোসেস বা আপলোডে সমস্যা:", error);
+                return { success: false, fileName: file.name };
             }
+        });
+
+        const uploadedResults = await Promise.all(uploadPromises);
+
+        uploadedResults.forEach(res => {
+            if (res.success) {
+                renderExistingPreview(previewArea, res.fileId, res.result.url, docType);
+                if (docType === 'main') {
+                    imagesToStore.push(res.result);
+                } else {
+                    stagedMetadata[docType] = res.result;
+                }
+            } else {
+                alert(`ফাইল আপলোড ব্যর্থ হয়েছে: ${res.fileName}`);
+            }
+        });
+
+        if (docType === 'main') {
+            stagedMetadata.images = imagesToStore;
         }
 
+        sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
         event.target.value = ''; 
         submitBtn.disabled = false;
         submitBtn.textContent = 'প্রিভিউ দেখুন ও পোস্ট করুন';
@@ -606,13 +656,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Form Submission Handler & Property Object Mapping
     propertyForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const stagedMetadata = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
         
-        // Strict Validation Check Rules
         if (!stagedMetadata.images || stagedMetadata.images.length === 0) {
             alert("অনুগ্রহ করে কমপক্ষে একটি ছবি আপলোড করুন।");
             return;
@@ -664,7 +712,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             };
 
-            // Non-Land Property Fields
             if (type !== 'জমি' && type !== 'প্লট') {
                 propertyData.facing = getValue('facing');
                 const checkboxes = document.querySelectorAll('input[name="utility"]:checked');
@@ -673,7 +720,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.utilities = utilities;
             }
 
-            // Type-Specific Fields Processing
             if (type === 'জমি' || type === 'প্লট') {
                 propertyData.landArea = getValue('land-area');
                 propertyData.landAreaUnit = getValue('land-area-unit');
@@ -698,7 +744,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // Area Sizes Mapping
             if (type === 'বাড়ি') {
                 propertyData.houseArea = getValue('house-area');
                 propertyData.houseAreaUnit = getValue('house-area-unit');
@@ -709,7 +754,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.commercialAreaUnit = getValue('commercial-area-unit');
             }
 
-            // Ownership Document Fields (For Sale Category Only)
             if (category === 'বিক্রয়') {
                 propertyData.owner = {
                     donorName: getValue('donor-name'),
@@ -722,7 +766,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.price = getValue('price');
                 propertyData.priceUnit = getValue('price-unit');
             } 
-            // 🛠️ [ফিক্সড] ভাড়ার ক্যাটাগরিতে অবাস্তব #price ফিল্ড খোঁজার বাগ ফিক্স করা হলো
             else if (category === 'ভাড়া') {
                 propertyData.monthlyRent = getValue('monthly-rent');
                 propertyData.priceUnit = getValue('price-unit');
@@ -743,7 +786,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 🔐 [সংশোধিত গ্লোবাল অথ লিসেনার] - দুটি লিসেনারকে একত্রিত করে ডাটাবেজ প্রপার্টি নাম এক করা হলো (profilePic)
     if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
         auth.onAuthStateChanged(user => {
             const authWarningMessage = document.getElementById('auth-warning-message');
@@ -759,7 +801,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const userData = doc.data();
                     if (primaryPhoneInput && userData?.phoneNumber) {
                         primaryPhoneInput.value = userData.phoneNumber;
-                        primaryPhoneInput.disabled = true; // Lock user primary number
+                        primaryPhoneInput.disabled = true; 
                     }
                     if (headerProfileImg && userData) {
                         headerProfileImg.src = userData.profilePic || user.photoURL || 'assets/images/default-avatar.png';
@@ -774,7 +816,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Action Redirect Handlers
     if (messageButton) {
         messageButton.addEventListener('click', () => {
              window.location.href = 'messages.html';
