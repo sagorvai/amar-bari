@@ -13,6 +13,54 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 const auth = firebase.auth();
 
+// ⚡ ম্যাজিক ফাংশন: ক্যানভাস (Canvas API) দিয়ে প্রোফাইল ছবি কম্প্রেস করে KB সাইজে আনা
+const compressImage = (file, maxWidth = 500, quality = 0.7) => {
+    return new Promise((resolve, reject) => {
+        // যদি ফাইলটি ইমেজ না হয়, তবে কম্প্রেস ছাড়া সরাসরি রিটার্ন করবে
+        if (!file.type.startsWith('image/')) {
+            return resolve(file);
+        }
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                // প্রোফাইল ছবির জন্য স্কয়ার বা রেশিও ঠিক রেখে সাইজ কমানো (সর্বোচ্চ ৫০০ পিক্সেল উইডথ)
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // ক্যানভাস থেকে ছবিকে ব্লোব (Blob) বা বাইনারি ফাইলে রূপান্তর
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        return reject(new Error('ইমেজ কম্প্রেস করতে সমস্যা হয়েছে।'));
+                    }
+                    // ব্লোব ফাইলটিকে পুনরায় ফাইল অবজেক্টে রূপান্তর
+                    const compressedFile = new File([blob], file.name, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+                    resolve(compressedFile);
+                }, 'image/jpeg', quality);
+            };
+        };
+        reader.onerror = (error) => reject(error);
+    });
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     
     // UI Elements
@@ -146,7 +194,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     imageUrl = p.image;
                 }
 
-                
                 let displayPrice = p.price || p.rent || p.monthlyRent || p.amount || '০';
 
                 card.innerHTML = `
@@ -163,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🛠️ ৪. প্রপার্টি ডিটেইলস মডাল রেন্ডার, এডিট এবং ডিলিট লজিক
+    // ৪. প্রপার্টি ডিটেইলস মডাল রেন্ডার, এডিট এবং ডিলিট লজিক
     window.showPropertyDetails = function(docId, propertyData) {
         const modalInner = document.getElementById('modal-content-inner');
         if(modalInner) {
@@ -184,7 +231,6 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
 
-        // ডিলিট বাটন ট্রিপল চেক লজিক
         const deleteBtn = document.getElementById('modal-delete-btn');
         if (deleteBtn) {
             deleteBtn.onclick = async () => {
@@ -201,7 +247,6 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         }
 
-        // আপডেট/এডিট বাটন লজিক (URL এ আইডি সহ post.html এ রিডাইরেক্ট করবে)
         const editBtn = document.getElementById('modal-edit-btn');
         if (editBtn) {
             editBtn.onclick = () => {
@@ -227,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ৫. প্রোফাইল এডিট সাবমিট লজিক
+    // 🛠️ ৫. প্রোফাইল এডিট সাবমিট লজিক (কম্প্রেশন যুক্ত করা হয়েছে)
     if (editForm) {
         editForm.onsubmit = async (e) => {
             e.preventDefault();
@@ -244,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if(btn) {
                 btn.disabled = true;
-                btn.textContent = "আপডেট হচ্ছে...";
+                btn.textContent = "ছবি সাইজ অপ্টিমাইজ ও আপডেট হচ্ছে...";
             }
             
             try {
@@ -259,9 +304,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
 
                 if (file) {
+                    // ⚡ সাবমিটের ঠিক আগে ছবিটিকে কম্প্রেস করা হচ্ছে
+                    const compressedFile = await compressImage(file, 500, 0.7);
+                    
                     const fileName = `avatar_${user.uid}_${Date.now()}`;
                     const storageRef = storage.ref(`profile_pics/${user.uid}/${fileName}`);
-                    const snapshot = await storageRef.put(file);
+                    const snapshot = await storageRef.put(compressedFile);
                     const downloadURL = await snapshot.ref.getDownloadURL();
                     updateData.profilePic = downloadURL;
                 }
