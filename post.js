@@ -1,11 +1,12 @@
-// post.js - Fixed Validation, ID Mismatch, and Silent Errors resolved
+// post.js - Fixed with Client-Side Image Compression (KB size) & Fast Parallel Uploads
 const db = firebase.firestore();
 const storage = firebase.storage();
 const auth = firebase.auth();
 
-// ⚡ ক্যানভাস (Canvas API) দিয়ে ক্লায়েন্ট-সাইডেই ছবি কম্প্রেস করে KB সাইজে আনা
+// ⚡ ম্যাজিক ফাংশন: ক্যানভাস (Canvas API) দিয়ে ক্লায়েন্ট-সাইডেই ছবি কম্প্রেস করে KB সাইজে আনা
 const compressImage = (file, maxWidth = 1200, quality = 0.7) => {
     return new Promise((resolve, reject) => {
+        // যদি ফাইলটি ইমেজ না হয়, তবে কম্প্রেস ছাড়া সরাসরি রিটার্ন করবে
         if (!file.type.startsWith('image/')) {
             return resolve(file);
         }
@@ -20,6 +21,7 @@ const compressImage = (file, maxWidth = 1200, quality = 0.7) => {
                 let width = img.width;
                 let height = img.height;
 
+                // ইমেজ রেশিও ঠিক রেখে সাইজ কমানো
                 if (width > maxWidth) {
                     height = Math.round((height * maxWidth) / width);
                     width = maxWidth;
@@ -31,10 +33,12 @@ const compressImage = (file, maxWidth = 1200, quality = 0.7) => {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
 
+                // ক্যানভাস থেকে ছবিকে ব্লোব (Blob) বা বাইনারি ফাইলে রূপান্তর (KB সাইজে করার মূল লজিক)
                 canvas.toBlob((blob) => {
                     if (!blob) {
                         return reject(new Error('ইমেজ কম্প্রেস করতে সমস্যা হয়েছে।'));
                     }
+                    // ব্লোব ফাইলটিকে পুনরায় ফাইল অবজেক্টে রূপান্তর
                     const compressedFile = new File([blob], file.name, {
                         type: 'image/jpeg',
                         lastModified: Date.now()
@@ -47,7 +51,7 @@ const compressImage = (file, maxWidth = 1200, quality = 0.7) => {
     });
 };
 
-// Firebase Storage-এ ফাইল আপলোড করার ফাংশন
+// Utility Function: Uploads file directly to Firebase Storage for staging
 const uploadStagedImage = async (file, index, userId, docType = 'main') => {
     const baseDir = docType === 'main' ? 'staging/images' : `staging/documents/${docType}`;
     const filePath = `${baseDir}/${userId}/${Date.now()}_${index}_${file.name}`;
@@ -68,16 +72,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const postCategorySelect = document.getElementById('post-category');
     const dynamicFieldsContainer = document.getElementById('dynamic-fields-container');
     const propertyForm = document.getElementById('property-form');
-    const submitBtn = document.getElementById('submitBtn') || document.querySelector('#property-form button[type="submit"]');
+    const submitBtn = document.querySelector('#property-form button[type="submit"]');
     
     const messageButton = document.getElementById('messageButton');
     const profileImageWrapper = document.getElementById('profileImageWrapper');
-
-    // 🔒 নিরাপদ ডেটা রিট্রিভাল ফাংশন (কোড ক্র্যাশ রোধ করবে)
-    const getValue = (id) => {
-        const element = document.getElementById(id);
-        return element ? element.value.trim() : '';
-    };
 
     function loadStagedData() {
         const stagedDataString = sessionStorage.getItem('stagedPropertyData');
@@ -89,10 +87,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const stagedData = JSON.parse(stagedDataString);
             const stagedMetadata = stagedMetadataString ? JSON.parse(stagedMetadataString) : {};
 
-            // HTML ID মিলিয়ে চেক করা হচ্ছে (listerType ফিক্স)
-            const listerElement = document.getElementById('listerType') || document.getElementById('lister-type');
-            if (listerElement) {
-                listerElement.value = stagedData.listerType || '';
+            if (document.getElementById('lister-type')) {
+                document.getElementById('lister-type').value = stagedData.listerType || '';
             }
             if (postCategorySelect) {
                 postCategorySelect.value = stagedData.category || '';
@@ -155,9 +151,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let categoryDescriptionText = category === 'ভাড়া' ? 'ভাড়ার বিবরণ' : `${category}ের বিবরণ`;
+        
         let maxMainImages = category === 'বিক্রয়' ? 3 : 5;
         let imageLabelText = category === 'বিক্রয়' ? `প্রপার্টি ছবি (সর্বোচ্চ ৩টি):` : `প্রপার্টি ছবি (সর্বোচ্চ ৫টি):`;
 
+        // 💡 ফিক্স: input type="file" থেকে required ফেলে দেওয়া হয়েছে ব্রাউজার ব্লকিং এড়াতে
         let descriptionHTML = `
             <div class="form-section property-details-section">
                 <h3>${type} ${categoryDescriptionText}</h3>
@@ -170,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="upload-text-sub">এখানে ফাইল ড্রাগ করুন অথবা চাপুন</div>
                         <div class="upload-btn-fake">Choose File</div>
                     </div>
-                    <input type="file" id="images" accept="image/*" multiple required style="display: none;">
+                    <input type="file" id="images" accept="image/*" multiple style="display: none;">
                     <div class="image-preview-area" id="image-preview-area"></div>
                 </div>
 
@@ -190,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <option value="উত্তর" ${stagedData?.facing === 'উত্তর' ? 'selected' : ''}>উত্তর</option>
                             <option value="দক্ষিণ" ${stagedData?.facing === 'দক্ষিণ' ? 'selected' : ''}>দক্ষিণ</option>
                             <option value="পূর্ব" ${stagedData?.facing === 'পূর্ব' ? 'selected' : ''}>পূর্ব</option>
-                            <option value="পশ্চিম" ${stagedData?.facing === 'পশ্চিম' ? 'selected' : ''}>পশ্চিম</option>
+                            <option value="पश्चिम" ${stagedData?.facing === 'পশ্চিম' ? 'selected' : ''}>পশ্চিম</option>
                             <option value="উত্তর-পূর্ব" ${stagedData?.facing === 'উত্তর-পূর্ব' ? 'selected' : ''}>উত্তর-পূর্ব</option>
                             <option value="উত্তর-পশ্চিম" ${stagedData?.facing === 'উত্তর-পশ্চিম' ? 'selected' : ''}>উত্তর-পশ্চিম</option>
                             <option value="দক্ষিণ-পূর্ব" ${stagedData?.facing === 'দক্ষিণ-পূর্ব' ? 'selected' : ''}>দক্ষিণ-পূর্ব</option>
@@ -228,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="বাস্ত" ${stagedData?.landType === 'বাস্ত' ? 'selected' : ''}>বাস্ত</option>
                         <option value="ভিটা" ${stagedData?.landType === 'ভিটা' ? 'selected' : ''}>ভিটা</option>
                         <option value="ডোবা" ${stagedData?.landType === 'ডোবা' ? 'selected' : ''}>ডোবা</option>
-                        <option value="পুকুর" ${stagedData?.landType === 'পুকুর' ? 'selected' : ''}>পুকুর</option>
+                        <option value="পुकुर" ${stagedData?.landType === 'পুকুর' ? 'selected' : ''}>পুকুর</option>
                     </select>
                 </div>
             `;
@@ -274,6 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fieldsHTML += descriptionHTML;
         
         if (category === 'বিক্রয়') {
+            // 💡 ফিক্স: খতিয়ান এবং স্কেচ ফাইল ইনপুট থেকেও required ফেলে দেওয়া হয়েছে
             let ownershipHTML = `
                 <div class="form-section ownership-section">
                     <h3>মালিকানা বিবরণ</h3>
@@ -320,18 +319,18 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="upload-text-main">খতিয়ানের ফাইল সিলেক্ট করুন</div>
                             <div class="upload-btn-fake">Choose File</div>
                         </div>
-                        <input type="file" id="khotian-image" accept="image/*" required style="display: none;">
+                        <input type="file" id="khotian-image" accept="image/*" style="display: none;">
                         <div class="image-preview-area" id="khotian-preview-area"></div>
                     </div>
 
                     <div class="input-group">
-                        <label>প্রপার্টি স্কেস বা হস্ত নকশা ছবি (১টি):</label>
+                        <label>প্রপার্টি স্কেস বা হস্তান্তর নকশা ছবি (১টি):</label>
                         <div class="custom-upload-box" onclick="document.getElementById('sketch-image').click()">
                             <i class="material-icons upload-icon-cloud">map</i>
                             <div class="upload-text-main">স্কেস/নকশার ফাইল সিলেক্ট করুন</div>
                             <div class="upload-btn-fake">Choose File</div>
                         </div>
-                        <input type="file" id="sketch-image" accept="image/*" required style="display: none;">
+                        <input type="file" id="sketch-image" accept="image/*" style="display: none;">
                         <div class="image-preview-area" id="sketch-preview-area"></div>
                     </div>
                 </div>
@@ -468,10 +467,9 @@ document.addEventListener('DOMContentLoaded', function() {
         fieldsHTML += contactHTML;
         specificFieldsContainer.innerHTML = fieldsHTML;
 
-        // ম্যাপ ইনিশিয়েশন সেফলি হ্যান্ডেল করা হয়েছে
         setTimeout(() => {
             const mapElement = document.getElementById('map-container');
-            if (mapElement && typeof L !== 'undefined') {
+            if (mapElement) {
                 let defaultLat = parseFloat(document.getElementById('lat').value) || 23.8103;
                 let defaultLng = parseFloat(document.getElementById('lng').value) || 90.4125;
                 
@@ -494,7 +492,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('lng').value = lng;
                 });
             }
-        }, 150);
+        }, 100);
         
         if (stagedData?.location?.areaType) {
             generateSubAddressFields(stagedData.location.areaType, stagedData);
@@ -556,7 +554,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderExistingPreview(previewArea, fileId, url, docType) {
-        if (!previewArea) return;
         const placeholder = previewArea.querySelector('.placeholder-text');
         if (placeholder) placeholder.remove();
         
@@ -592,7 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function handleImageUploadAndPreview(event, previewAreaId, maxFiles, docType = 'main') {
         const previewArea = document.getElementById(previewAreaId);
         const files = event.target.files;
-        if (!files || files.length === 0) return;
+        if (files.length === 0) return;
 
         let stagedMetadata = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
         let imagesToStore = stagedMetadata.images || [];
@@ -604,13 +601,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (maxFiles === 1) {
-            if (previewArea) previewArea.innerHTML = '';
+            previewArea.innerHTML = '';
         }
 
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'ছবি অপ্টিমাইজ ও আপলোড হচ্ছে...';
-        }
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'ছবি সাইজ অপ্টিমাইজ ও আপলোড হচ্ছে...';
 
         const user = auth.currentUser;
         const userId = user ? user.uid : 'anonymous';
@@ -649,11 +644,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
         event.target.value = ''; 
-        
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'প্রিভিউ দেখুন ও পোস্ট করুন';
-        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'প্রিভিউ দেখুন ও পোস্ট করুন';
     }
 
     if (postCategorySelect) {
@@ -663,7 +655,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 🚀 মূল ফর্ম সাবমিশন লজিক (নিরাপদ ভ্যালিডেশন সহ)
     propertyForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -674,6 +665,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        const getValue = (id) => document.getElementById(id)?.value || '';
         const category = getValue('post-category');
         const type = getValue('post-type');
 
@@ -684,21 +676,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'ডেটা প্রক্রিয়াকরণ হচ্ছে...';
-        }
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'ডেটা প্রক্রিয়াকরণ হচ্ছে...';
 
         try {
             const user = auth.currentUser;
             if (!user) {
                 alert("পোস্ট করার আগে লগইন করুন!");
-                if (submitBtn) submitBtn.disabled = false;
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'প্রিভিউ দেখুন ও পোস্ট করুন';
                 return;
             }
-
-            // HTML ID মিলিয়ে ডাটা নেওয়া হচ্ছে 
-            const listerVal = document.getElementById('listerType') ? getValue('listerType') : getValue('lister-type');
 
             const propertyData = {
                 category,
@@ -709,16 +697,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 secondaryPhone: getValue('secondary-phone'),
                 userId: user.uid,
                 status: 'pending',
-                listerType: listerVal,
+                listerType: getValue('lister-type'),
                 location: {
                     division: getValue('division'),
                     district: getValue('district'),
                     areaType: getValue('area-type-select'),
-                    thana: getValue('thana-name'),
-                    upazila: getValue('upazila-name'),
-                    union: getValue('union-name'),
-                    village: getValue('village-name'),
-                    road: getValue('road-name'),
+                    thana: getValue('thana-name') || '',
+                    upazila: getValue('upazila-name') || '',
+                    union: getValue('union-name') || '',
+                    village: getValue('village-name') || '',
+                    road: getValue('road-name') || '',
                     lat: parseFloat(getValue('lat')) || null,
                     lng: parseFloat(getValue('lng')) || null
                 }
@@ -788,16 +776,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.moveInDate = getValue('move-in-date');
             }
 
-            // সেশন স্টোরেজে সেভ করে পেজ রিডাইরেক্ট
+            // সফলভাবে ডেটা স্টেজড হলে রিডাইরেক্ট করবে
             sessionStorage.setItem('stagedPropertyData', JSON.stringify(propertyData));
             window.location.href = 'preview.html';
 
         } catch (error) {
             console.error("ফর্ম সাবমিশনে ট্রাবল:", error);
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'প্রিভিউ দেখুন ও পোস্ট করুন';
-            }
+            // 💡 ফিক্স: কোনো এরর হলে সাবমিট বাটন আবার আগের টেক্সটে ফিরে আসবে
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'প্রিভিউ দেখুন ও পোস্ট করুন';
         }
     });
 
@@ -832,9 +819,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (messageButton) {
-        messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
+        messageButton.addEventListener('click', () => {
+             window.location.href = 'messages.html';
+        });
     }
+    
     if (profileImageWrapper) {
-        profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
+        profileImageWrapper.addEventListener('click', () => {
+             window.location.href = 'profile.html'; 
+        });
     }
 });
