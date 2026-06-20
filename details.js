@@ -122,7 +122,7 @@ function renderDetails(data) {
         }
 
         let area = data.landArea || data.houseArea || data.areaSqft || data.commercialArea;
-        let areaUnit = data.landAreaUnit || data.houseAreaUnit || data.commercialAreaUnit || "";
+        let areaUnit = data.landAreaUnit || data.houseAreaUnit || data.areaSqftUnit || data.commercialAreaUnit || "";
         addRow(basicT, "পরিমাণ", area ? `${area} (${areaUnit})` : "");
     }
 
