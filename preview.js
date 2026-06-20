@@ -16,65 +16,100 @@ function section(title) {
   const s = document.createElement('div');
   s.className = 'preview-section';
   s.innerHTML = `<h3>${title}</h3>`;
+  
+  const grid = document.createElement('div');
+  grid.className = 'section-grid';
+  s.appendChild(grid);
+  
   preview.appendChild(s);
-  return s;
+  return grid; 
 }
 
 function row(parent, label, value) {
   if (value === undefined || value === null || value === '') return;
   const div = document.createElement('div');
   div.className = 'preview-row';
-  div.innerHTML = `<strong>${label}:</strong> ${value}`;
+  
+  const isPrice = label.includes('দাম') || label.includes('ভাড়া') || label.includes('এডভান্স');
+  const valueClass = isPrice ? 'class="price-tag"' : '';
+
+  div.innerHTML = `<strong>${label}</strong> <span ${valueClass}>: ${value}</span>`;
   parent.appendChild(div);
 }
 
-/* ---------------- Images ---------------- */
+/* ---------------- 🖼️ সকল ছবি লোড করার লজিক ---------------- */
+
+// ১. সাধারণ প্রোপার্টি ছবি গ্যালারি
 const imgBox = document.getElementById('previewImages');
 if (imgBox) {
-  imgBox.innerHTML = ''; // আগের কোনো ইমেজ থাকলে ক্লিয়ার করার জন্য
-  (imageData.images || []).forEach(img => {
-    const i = document.createElement('img');
-    i.src = img.url;
-    imgBox.appendChild(i);
-  });
+  imgBox.innerHTML = ''; 
+  const propertyImages = imageData.images || [];
+  if (propertyImages.length > 0) {
+    propertyImages.forEach(img => {
+      const i = document.createElement('img');
+      i.src = img.url || img;
+      imgBox.appendChild(i);
+    });
+  } else {
+    imgBox.innerHTML = '<p style="color:#94a3b8; padding:10px; margin:0; font-size:13px;">কোনো ছবি আপলোড করা হয়নি</p>';
+  }
 }
+
+// ২. খতিয়ান ছবি প্রিভিউ
+const khotianContainer = document.getElementById('khotianBoxContainer');
+const khotianBox = document.getElementById('previewKhotian');
+if (khotianBox && imageData.khotian) {
+  khotianBox.innerHTML = '';
+  khotianContainer.style.display = 'block'; // বক্সটি সচল করা হলো
+  const i = document.createElement('img');
+  i.src = imageData.khotian.url || imageData.khotian;
+  khotianBox.appendChild(i);
+}
+
+// ৩. স্কেচ বা নকশা ছবি প্রিভিউ
+const sketchContainer = document.getElementById('sketchBoxContainer');
+const sketchBox = document.getElementById('previewSketch');
+if (sketchBox && imageData.sketch) {
+  sketchBox.innerHTML = '';
+  sketchContainer.style.display = 'block'; // বক্সটি সচল করা হলো
+  const i = document.createElement('img');
+  i.src = imageData.sketch.url || imageData.sketch;
+  sketchBox.appendChild(i);
+}
+
 
 /* ---------------- ১. প্রপার্টির সাধারণ তথ্য ---------------- */
 const basic = section('🏠 প্রপার্টির তথ্য');
 row(basic, 'ক্যাটাগরি', postData.category);
 row(basic, 'টাইপ', postData.type);
 row(basic, 'শিরোনাম', postData.title);
-row(basic, 'वर्णना', postData.description);
+row(basic, 'বর্ণনা', postData.description);
 
-/* ---------------- ২. ডাইনামিক প্রপার্টি ফিল্ডস (ক্যাটাগরি ভিত্তিক) ---------------- */
-// ফ্ল্যাট, বাড়ি বা বাণিজ্যিক প্রপার্টির রুম ও অন্যান্য বিবরণ
-row(basic, 'রুম', postData.rooms);
+/* ---------------- ২. ডাইনামিক প্রপার্টি ফিল্ডস ---------------- */
+row(basic, 'রুম সংখ্যা', postData.rooms);
 row(basic, 'বেডরুম', postData.bedRooms || postData.bedrooms);
 row(basic, 'ড্রয়িং রুম', postData.drawingRoom);
 row(basic, 'ডাইনিং', postData.dining);
 row(basic, 'কিচেন', postData.kitchen);
 row(basic, 'বাথরুম', postData.bathrooms);
 row(basic, 'বেলকনি', postData.balcony);
-row(basic, 'ফ্লোর নং', postData.floorNo);
+row(basic, 'ফ্লোর নম্বর', postData.floorNo);
 row(basic, 'প্রপার্টির বয়স', postData.propertyAge);
 row(basic, 'ফেসিং', postData.facing);
 row(basic, 'রাস্তার প্রস্থ (ফিট)', postData.roadWidth);
 row(basic, 'গ্যারেজ/পার্কিং', postData.parking || postData.garage);
 row(basic, 'প্রপার্টির অবস্থা', postData.propertyStatus || postData.statusCondition);
 
-// ইউটিলিটি বা সুবিধাসমূহ (যদি এরে আকারে থাকে)
 if (Array.isArray(postData.utilities) && postData.utilities.length > 0) {
   row(basic, 'সুবিধাসমূহ', postData.utilities.join(', '));
 }
 
-// শুধুমাত্র জমি বা প্লটের তথ্য
 row(basic, 'জমির ধরন', postData.landType);
-row(basic, 'প্লট নং', postData.plotNo);
+row(basic, 'প্লট নম্বর', postData.plotNo);
 
 /* ---------------- ৩. পরিমাণ ও মূল্য সংক্রান্ত ---------------- */
 const price = section('💰 পরিমাণ ও মূল্য সংক্রান্ত');
 
-// পরিমাণের ডাইনামিক ফিল্ড ও ইউনিট (গ্রাহক যা ইনপুট দিবে শুধু সেটাই দেখাবে)
 row(price, 'ফ্ল্যাটের সাইজ (স্কয়ার ফিট)', postData.areaSqft);
 row(price, 'জমির পরিমাণ', postData.landArea);
 row(price, 'জমির ইউনিট', postData.landAreaUnit);
@@ -83,7 +118,6 @@ row(price, 'বাড়ির ইউনিট', postData.houseAreaUnit);
 row(price, 'বাণিজ্যিক স্পেসের পরিমাণ', postData.commercialArea);
 row(price, 'বাণিজ্যিক স্পেসের ইউনিট', postData.commercialAreaUnit);
 
-// বিক্রয় বা ভাড়ার ওপর ভিত্তি করে মূল্য
 if (postData.category === 'বিক্রয়') {
   let priceTypeString = postData.isNegotiable || postData.priceType === 'Negotiable' ? ' (আলোচনা সাপেক্ষে)' : ' (ফিক্সড)';
   row(price, 'দাম', postData.price + ' টাকা' + priceTypeString);
@@ -95,7 +129,7 @@ if (postData.category === 'বিক্রয়') {
 }
 
 /* ---------------- ৪. ঠিকানা ও অবস্থান ---------------- */
-const loc = section('📍 ঠিকানা');
+const loc = section('📍 ঠিকানা ও অবস্থান');
 if (postData.location) {
   row(loc, 'বিভাগ', postData.location.division);
   row(loc, 'জেলা', postData.location.district);
@@ -107,21 +141,21 @@ if (postData.location) {
   row(loc, 'রাস্তা/ব্লক/সেক্টর', postData.location.road);
 }
 
-/* ---------------- ৫. মালিকানা তথ্য (শুধুমাত্র বিক্রয়ের জন্য) ---------------- */
+/* ---------------- ৫. মালিকানা তথ্য (বিক্রয়ের জন্য) ---------------- */
 if (postData.category === 'বিক্রয়' && postData.owner) {
-  const own = section('📑 মালিকানা তথ্য');
+  const own = section('📑 আইনগত ও মালিকানা তথ্য');
   row(own, 'দাতার নাম', postData.owner.donorName);
-  row(own, 'দাগ নং', postData.owner.dagNo);
-  row(own, 'দাগ ধরন', postData.owner.dagNoType);
+  row(own, 'দাগ নম্বর', postData.owner.dagNo);
+  row(own, 'দাগের ধরন', postData.owner.dagNoType);
   row(own, 'মৌজা', postData.owner.mouja);
 }
 
 /* ---------------- ৬. যোগাযোগ ---------------- */
-const contact = section('📞 যোগাযোগ');
-row(contact, 'ফোন নম্বর', postData.phoneNumber);
+const contact = section('📞 যোগাযোগ মাধ্যম');
+row(contact, 'প্রাথমিক ফোন নম্বর', postData.phoneNumber);
 row(contact, 'অতিরিক্ত ফোন নম্বর', postData.secondaryPhone);
 
-/* ---------------- Actions Button লজিক ---------------- */
+/* ---------------- Actions Button Logic ---------------- */
 function goBack() {
   location.href = 'post.html';
 }
@@ -129,7 +163,7 @@ function goBack() {
 async function publishPost() {
   const user = auth.currentUser;
   if (!user) {
-    alert('লগইন আবশ্যক');
+    alert('লগইন আবশ্যক! দয়া করে লগইন করুন।');
     return;
   }
 
@@ -147,11 +181,11 @@ async function publishPost() {
     });
 
     sessionStorage.clear();
-    alert('🎉 পোস্ট সফলভাবে লাইভ হয়েছে');
+    alert('🎉 অভিনন্দন বন্ধু! আপনার পোস্টটি সফলভাবে লাইভ হয়েছে।');
     location.href = 'index.html';
 
   } catch (e) {
     console.error(e);
-    alert('পোস্ট প্রকাশে সমস্যা হয়েছে');
+    alert('পোস্ট প্রকাশ করতে সমস্যা হয়েছে, আবার চেষ্টা করুন।');
   }
-}
+    }
