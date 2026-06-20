@@ -367,6 +367,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="input-group">
                     <label for="flat-area-sqft">পরিমাণ (স্কয়ার ফিট):</label>
                     <input type="number" id="flat-area-sqft" required value="${stagedData?.areaSqft || ''}">
+                    <select id="house-area-unit" class="unit-select" required>
+                        
+                        <option value="স্কয়ার ফিট" ${stagedData?.houseAreaUnit === 'স্কয়ার ফিট' ? 'selected' : ''}>স্কয়ার ফিট</option>
+                    </select>
                 </div>
             `;
         } else if (type === 'দোকান' || type === 'অফিস') {
