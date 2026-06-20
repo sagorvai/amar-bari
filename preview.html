@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>পোস্ট প্রিভিউ | আমার বাড়ি.কম</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -25,41 +26,190 @@
   </script>
 
   <style>
-    .preview-wrapper { max-width: 900px; margin: auto; padding: 16px; }
-    .preview-section { border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-bottom: 16px; }
-    .preview-section h3 { margin-top: 0; }
-    .preview-row { margin-bottom: 6px; }
-    .preview-row strong { display: inline-block; min-width: 140px; }
-    .preview-images img { width: 100%; max-width: 220px; margin: 6px; border-radius: 4px; }
-    .preview-actions { display: flex; gap: 10px; }
+    :root {
+      --primary: #1e3a8a;
+      --secondary: #0284c7;
+      --success: #16a34a;
+      --dark: #1f2937;
+      --gray-bg: #f8fafc;
+      --card-border: #e2e8f0;
+    }
+
+    body {
+      font-family: 'Hind Siliguri', sans-serif;
+      background-color: #f1f5f9;
+      color: var(--dark);
+      margin: 0;
+      padding: 0;
+    }
+
+    .preview-wrapper {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 24px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    }
+
+    .page-title {
+      color: var(--primary);
+      font-size: 24px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    /* 🖼️ প্রোপার্টি ইমেজ গ্যালারি ও ফ্রেম স্টাইল */
+    .gallery-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--primary);
+      margin: 10px 0 6px 0;
+    }
+    
+    .preview-images {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: var(--gray-bg);
+      border-radius: 12px;
+      border: 1px dashed #cbd5e1;
+    }
+
+    .preview-images img {
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 3px solid #ffffff;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s;
+    }
+
+    .preview-images img:hover {
+      transform: scale(1.04);
+    }
+
+    /* 📑 খতিয়ান ও নকশার জন্য বিশেষ ডকুমেন্ট সেকশন */
+    .document-section {
+      background: #fffbeb;
+      border: 1px dashed #f59e0b;
+    }
+
+    /* 📂 কার্ড এবং সেকশন ডিজাইন */
+    .preview-section {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .preview-section h3 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      color: var(--primary);
+      font-size: 16px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 8px;
+    }
+
+    /* 📊 গ্রিড লেআউট (দুই কলামে তথ্য সাজানো) */
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .preview-row {
+      display: flex;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+    }
+
+    .preview-row strong {
+      color: #64748b;
+      min-width: 130px;
+      display: inline-block;
+    }
+
+    .preview-row span {
+      color: var(--dark);
+      font-weight: 500;
+    }
+
+    /* 💰 দামের জন্য স্পেশাল হাইলাইট */
+    .price-tag {
+      color: var(--success) !important;
+      font-weight: 700 !important;
+      font-size: 16px;
+    }
+
+    /* 🔘 বোতামের আকর্ষণীয় ডিজাইন */
+    .preview-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .preview-actions button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-edit {
+      background-color: #e2e8f0;
+      color: #475569;
+    }
+
+    .btn-edit:hover { background-color: #cbd5e1; }
+
+    .btn-publish {
+      background-color: var(--secondary);
+      color: white;
+    }
+
+    .btn-publish:hover { background-color: #026ca3; }
   </style>
 </head>
-
 <body>
 
-<header>
-  <!-- post.html এর হেডার 그대로 -->
-</header>
+  <div class="preview-wrapper">
+    <div class="page-title">✨ আপনার বিজ্ঞাপনের প্রিভিউ</div>
+    
+    <div class="gallery-title">📸 প্রোপার্টির ছবিসমূহ:</div>
+    <div id="previewImages" class="preview-images"></div>
 
-<main class="preview-wrapper">
+    <div id="khotianBoxContainer" style="display: none;">
+      <div class="gallery-title">📄 আপলোডকৃত খতিয়ান:</div>
+      <div id="previewKhotian" class="preview-images document-section"></div>
+    </div>
 
-  <h2>📋 পোস্ট প্রিভিউ</h2>
-  <p>চূড়ান্ত করার আগে নিচের সব তথ্য ভালোভাবে যাচাই করুন</p>
+    <div id="sketchBoxContainer" style="display: none;">
+      <div class="gallery-title">📐 আপলোডকৃত স্কেচ/নকশা:</div>
+      <div id="previewSketch" class="preview-images document-section"></div>
+    </div>
 
-  <div id="previewImages" class="preview-images"></div>
-  <div id="previewContent"></div>
+    <div id="previewContent"></div>
 
-  <div class="preview-actions">
-    <button onclick="goBack()">✏️ এডিট করুন</button>
-    <button onclick="publishPost()">✅ চূড়ান্ত পোস্ট করুন</button>
+    <div class="preview-actions">
+      <button class="btn-edit" onclick="goBack()">✏️ এডিট করুন</button>
+      <button class="btn-publish" onclick="publishPost()">✅ চূড়ান্ত পোস্ট করুন</button>
+    </div>
   </div>
 
-</main>
-
-<footer>
-  <!-- post.html এর ফুটার 그대로 -->
-</footer>
-
-<script src="preview.js"></script>
+  <script src="preview.js"></script>
 </body>
-</html>
+  </html>
