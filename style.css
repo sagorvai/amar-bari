@@ -1144,13 +1144,13 @@ h2 {
             align-items: center;
             font-size: 1.8em; 
             font-weight: bold;
-            color: var(--primary-color);
+            color: #007bff;
             margin-left: 0px; 
             text-decoration: none; 
             white-space: nowrap; 
         }
         .logo-title:visited {
-             color: var(--primary-color);
+             color: #007bff;
         }
         .logo-icon {
             margin-right: 5px;
@@ -1195,7 +1195,7 @@ h2 {
         
         /* আইকন কালার */
         .notification-icon { color: #007bff; }
-        .message-icon { color: var(--primary-color); }
+        .message-icon { color: #007bff; }
         .post-icon-header { color: #28a745; }
 
         /* প্রোফাইল ইমেজের বাইরের গোল বক্স */
