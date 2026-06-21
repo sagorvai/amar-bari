@@ -50,7 +50,50 @@
              z-index: 1000; 
         }
         
-        /* --- ⭐ FIX 2: সাইডবার পজিশনিং, ট্রানজিশন ও রঙ যোগ করা হলো ⭐ --- */
+      /* --- হেডার ফিক্স ও রেসপন্সিভ লেআউট --- */
+.header-top { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    padding: 8px 12px; 
+    gap: 8px; /* এলিমেন্টগুলোর মাঝে গ্যাপ রাখার জন্য */
+}
+
+.header-left { 
+    display: flex; 
+    align-items: center; 
+    flex-shrink: 1; 
+    min-width: 0; /* ওভারফ্লো রোধ করতে */
+}
+
+.logo-title { 
+    display: flex; 
+    align-items: center; 
+    font-size: 1.2em; /* মোবাইলের জন্য ফন্ট সাইজ একটু কমানো হলো */
+    font-weight: bold; 
+    color: var(--primary); 
+    text-decoration: none; 
+    white-space: nowrap; 
+    margin-left: 6px; 
+    overflow: hidden;
+    text-overflow: ellipsis; /* লেখা বেশি বড় হলে কেটে যেন ৩টি ডট দেখায় */
+}
+
+.header-actions { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; /* আইকনগুলোর ভেতরের দূরত্ব সামান্য কমানো হলো */
+    flex-shrink: 0; 
+}
+
+/* আইকন ফন্টের এলাইনমেন্ট ঠিক করার জন্য */
+.material-icons {
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+    
+    /* --- ⭐ FIX 2: সাইডবার পজিশনিং, ট্রানজিশন ও রঙ যোগ করা হলো ⭐ --- */
         .sidebar {
             position: fixed; 
             top: 0;
