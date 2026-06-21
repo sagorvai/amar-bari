@@ -140,7 +140,7 @@ function renderDetails(data) {
                 addRow(ownT, "খতিয়ান নং", khotian ? `${khotian} (${khotianType})` : "");
                 let dag = data.owner.dagNo;
                 let dagType = data.owner.dagNoType || "";
-                addRow(ownT, "খতিয়ান নং", dag ? `${dag} (${dagType})` : "");
+                addRow(ownT, "দাগ নং", dag ? `${dag}` : "");
                 addRow(ownT, "মৌজা", data.owner.mouja);
             }
         } else {
