@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <option value="উত্তর" ${stagedData?.facing === 'উত্তর' ? 'selected' : ''}>উত্তর</option>
                             <option value="দক্ষিণ" ${stagedData?.facing === 'দক্ষিণ' ? 'selected' : ''}>দক্ষিণ</option>
                             <option value="পূর্ব" ${stagedData?.facing === 'পূর্ব' ? 'selected' : ''}>পূর্ব</option>
-                            <option value="पश्चिम" ${stagedData?.facing === 'পশ্চিম' ? 'selected' : ''}>পশ্চিম</option>
+                            <option value="পশ্চিম" ${stagedData?.facing === 'পশ্চিম' ? 'selected' : ''}>পশ্চিম</option>
                             <option value="উত্তর-পূর্ব" ${stagedData?.facing === 'উত্তর-পূর্ব' ? 'selected' : ''}>উত্তর-পূর্ব</option>
                             <option value="উত্তর-পশ্চিম" ${stagedData?.facing === 'উত্তর-পশ্চিম' ? 'selected' : ''}>উত্তর-পশ্চিম</option>
                             <option value="দক্ষিণ-পূর্ব" ${stagedData?.facing === 'দক্ষিণ-পূর্ব' ? 'selected' : ''}>দক্ষিণ-পূর্ব</option>
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="বাস্ত" ${stagedData?.landType === 'বাস্ত' ? 'selected' : ''}>বাস্ত</option>
                         <option value="ভিটা" ${stagedData?.landType === 'ভিটা' ? 'selected' : ''}>ভিটা</option>
                         <option value="ডোবা" ${stagedData?.landType === 'ডোবা' ? 'selected' : ''}>ডোবা</option>
-                        <option value="পुकुर" ${stagedData?.landType === 'পুকুর' ? 'selected' : ''}>পুকুর</option>
+                        <option value="পুকুর" ${stagedData?.landType === 'পুকুর' ? 'selected' : ''}>পুকুর</option>
                     </select>
                 </div>
             `;
@@ -294,17 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
 
-                    <div class="input-inline-group">
-                        <div class="input-group" style="flex: 1;">
-                            <label for="dag-no-type-select">দাগ নং (ধরন):</label>
-                            <select id="dag-no-type-select" required>
-                                <option value="">-- নির্বাচন করুন --</option>
-                                <option value="RS" ${stagedData?.owner?.dagNoType === 'RS' ? 'selected' : ''}>RS</option>
-                                <option value="BRS" ${stagedData?.owner?.dagNoType === 'BRS' ? 'selected' : ''}>BRS</option>
-                                <option value="নামজারি" ${stagedData?.owner?.dagNoType === 'নামজারি' ? 'selected' : ''}>নামজারি</option>
-                            </select>
-                        </div>
-                        <div class="input-group" style="flex: 2;">
+                        <div class="input-group" style="flex: 3;">
                             <label for="dag-no-input">দাগ নং:</label>
                             <input type="text" id="dag-no-input" required value="${stagedData?.owner?.dagNo || ''}">
                         </div>
