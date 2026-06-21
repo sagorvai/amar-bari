@@ -97,7 +97,7 @@ function renderDetails(data) {
     const basicT = 'table-basic';
     if (document.getElementById(basicT)) {
         document.getElementById(basicT).innerHTML = ""; 
-        addRow(basicT, "क্যাটাগরি", data.category);
+        addRow(basicT, "ক্যাটাগরি", data.category);
         addRow(basicT, "টাইপ", data.type);
         addRow(basicT, "জমির ধরন", data.landType);
         addRow(basicT, "প্রপার্টির বয়স", data.propertyAge? `${data.propertyAge} বছর` : "");
