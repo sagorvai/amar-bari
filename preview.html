@@ -182,6 +182,201 @@
     }
 
     .btn-publish:hover { background-color: #026ca3; }
+  
+   /* ========================================
+   📱 MOBILE IMPROVEMENT
+======================================== */
+body{
+    background:#eef3f8;
+}
+
+.preview-wrapper{
+    width:calc(100% - 20px);
+    max-width:900px;
+    margin:15px auto;
+    padding:16px;
+}
+
+.page-title{
+    font-size:22px;
+}
+
+.preview-row{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:4px;
+}
+
+.preview-row strong{
+    min-width:auto;
+    font-size:13px;
+}
+
+.preview-row span{
+    font-size:14px;
+}
+
+.preview-actions{
+    position:sticky;
+    bottom:0;
+    background:#fff;
+    padding:12px;
+    border-top:1px solid #e5e7eb;
+    z-index:50;
+}
+
+/* ========================================
+   📱 TABLET MODE
+======================================== */
+@media (min-width:768px){
+
+    .preview-wrapper{
+        max-width:1100px;
+        padding:24px;
+        margin:25px auto;
+    }
+
+    .page-title{
+        font-size:30px;
+        margin-bottom:25px;
+    }
+
+    .preview-images{
+        grid-template-columns:
+        repeat(auto-fill,minmax(220px,1fr));
+    }
+
+    .preview-images img{
+        height:180px;
+    }
+
+    .section-grid{
+        grid-template-columns:1fr 1fr;
+        gap:18px;
+    }
+
+    .preview-row{
+        flex-direction:row;
+        align-items:center;
+    }
+
+    .preview-row strong{
+        min-width:160px;
+        font-size:14px;
+    }
+
+    .preview-row span{
+        font-size:15px;
+    }
+
+    .preview-section{
+        padding:22px;
+    }
+
+    .preview-section h3{
+        font-size:18px;
+    }
+
+    .preview-actions{
+        position:static;
+        padding:0;
+        border:none;
+    }
+
+    .preview-actions button{
+        height:54px;
+        font-size:16px;
+    }
+}
+
+/* ========================================
+   💻 DESKTOP MODE
+======================================== */
+@media (min-width:1200px){
+
+    .preview-wrapper{
+        max-width:1400px;
+        padding:35px;
+    }
+
+    .page-title{
+        font-size:36px;
+    }
+
+    .preview-images{
+        grid-template-columns:
+        repeat(auto-fill,minmax(250px,1fr));
+        gap:18px;
+    }
+
+    .preview-images img{
+        height:220px;
+    }
+
+    .preview-section{
+        padding:25px;
+        border-radius:16px;
+    }
+
+    .preview-section h3{
+        font-size:20px;
+    }
+
+    .section-grid{
+        grid-template-columns:
+        repeat(2,minmax(0,1fr));
+        gap:20px 40px;
+    }
+
+    .preview-row{
+        padding:10px 0;
+        font-size:15px;
+    }
+
+    .preview-row strong{
+        min-width:180px;
+        font-size:15px;
+    }
+
+    .preview-row span{
+        font-size:15px;
+    }
+
+    .preview-actions{
+        justify-content:center;
+        gap:20px;
+        margin-top:35px;
+    }
+
+    .preview-actions button{
+        flex:none;
+        min-width:260px;
+        height:58px;
+        border-radius:12px;
+        font-size:17px;
+    }
+}
+
+/* ========================================
+   🖼️ HOVER EFFECTS
+======================================== */
+@media (hover:hover){
+
+    .preview-section:hover{
+        transform:translateY(-2px);
+        transition:.3s;
+        box-shadow:0 12px 30px rgba(0,0,0,.08);
+    }
+
+    .preview-images img:hover{
+        transform:scale(1.05);
+    }
+
+    .preview-actions button:hover{
+        transform:translateY(-2px);
+    }
+    }
+    
   </style>
 </head>
 <body>
