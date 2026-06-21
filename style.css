@@ -14,7 +14,6 @@ body {
     background-color: #f4f7f6; /* হালকা ধূসর ব্যাকগ্রাউন্ড */
     color: #333;
 
-   :root { 
             --primary: #007bff; 
             --primary-gradient: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
             --cover-gradient: linear-gradient(135deg, rgba(24, 43, 73, 0.9) 0%, rgba(0, 123, 255, 0.85) 100%);
@@ -23,7 +22,7 @@ body {
             --gray: #65676b; /* Facebook Secondary Text */
             --bg: #f0f2f5;   /* Facebook Background */
             --border: #ced0d4;
-   }
+   
    
    /* ✅ ডেস্কটপ ফিক্স: হেডার (100px) + ফিল্টার বার (~50px) = 150px */
     padding-top: 150px; 
