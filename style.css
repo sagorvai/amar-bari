@@ -1194,7 +1194,7 @@ h2 {
         }
         
         /* আইকন কালার */
-        .notification-icon { color: var(--primary-color); }
+        .notification-icon { color: #007bff; }
         .message-icon { color: var(--primary-color); }
         .post-icon-header { color: #28a745; }
 
