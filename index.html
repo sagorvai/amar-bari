@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>আমার বাড়ি.কম</title>
-    <link rel="stylesheet" href="style.css">
+    <title>আমার বাড়ি.কম | দালালমুক্ত সরাসরি প্রপার্টি পোর্টাল</title>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -24,392 +27,453 @@
         messagingSenderId: "719084789035",
         appId: "1:719084789035:web:f4da765290b3519d0e82fe"
       };
-      
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     </script>
-    
+
     <style>
-        /* CSS ভেরিয়েবল (style.css এ না থাকলে এখানে রাখা হলো) */
         :root {
-            --primary-color: #007bff; /* লোগো ও অন্যান্য প্রধান রঙের জন্য */
+            --primary: #1e3a8a;
+            --secondary: #0284c7;
+            --success: #16a34a;
+            --dark: #1f2937;
+            --light-bg: #f8fafc;
+            --border-color: #e2e8f0;
         }
 
-        /* গ্লোবাল ফিক্স */
         body {
-            margin: 0; 
+            font-family: 'Hind Siliguri', sans-serif;
+            background-color: #f1f5f9;
+            color: var(--dark);
+            margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif; 
+            padding-top: 60px; /* ফিক্সড হেডারের জন্য */
         }
 
-        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        /* 📱 মেইন হেডার স্টাইল (রেসপন্সিভ ফিক্স) */
         .main-header {
-             position: fixed; 
-             top: 0;
-             left: 0;
-             right: 0;
-             background-color: white; 
-             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-             z-index: 1000; 
+            background: #ffffff;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
         }
-        
-        /* --- সাইডবার ফিক্স: হেডারের উপরে নিয়ে আসা --- */
-        .sidebar {
-            z-index: 1050; 
-        }
-        .overlay {
-            z-index: 1040; 
-        }
-        
-        /* এই padding-top টি এখন শুধু .nav-filters এর উচ্চতার জন্য, main-content এ ব্যবহৃত হবে না */
-        .main-content {
-             /* এটি style.css ফাইলে সরানো হয়েছে */
-        }
-        
+
         .header-top {
             display: flex;
             align-items: center;
-            justify-content: space-between; 
-            padding: 8px 15px; 
+            justify-content: space-between;
+            width: 100%;
+            height: 100%;
         }
 
         .header-left {
             display: flex;
             align-items: center;
-            flex-shrink: 0; 
         }
 
-        .menu-icon {
-             margin-right: 0; 
-             cursor: pointer;
+        .header-left button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary);
         }
-        
+
         .logo-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            margin-left: 8px;
+            white-space: nowrap;
+        }
+
+        .header-actions {
             display: flex;
             align-items: center;
-            font-size: 1.8em; 
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-left: 0px; 
-            text-decoration: none; 
-            white-space: nowrap; 
-        }
-        .logo-title:visited {
-             color: var(--primary-color);
-        }
-        .logo-icon {
-            margin-right: 5px;
+            gap: 12px;
         }
 
-        /* ডানের ব্লক (আইকন) ফিক্স */
-        .header-actions {
-             display: flex;
-             align-items: center;
-             gap: 12px; 
-             position: relative; 
-             flex-shrink: 0; 
-        }
-        
-        /* ✅ কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
-        .icon-wrapper {
-             position: relative;
-             display: inline-flex;
-             cursor: pointer;
-             align-items: center; 
-             justify-content: center;
-             height: 30px; 
-             width: 30px; 
-        }
-        
-        /* ✅ কমন নোটিফিকেশন কাউন্ট স্টাইল */
-        .notification-count {
-            position: absolute;
-            top: -5px; 
-            right: -8px; 
-            background-color: red;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 5px; 
-            font-size: 0.7em;
-            font-weight: bold;
-            min-width: 10px;
-            text-align: center;
-            line-height: 1; 
-            display: none; /* ডিফল্টভাবে লুকানো */
-        }
-        
-        /* আইকন কালার */
-        .notification-icon { color: var(--primary-color); }
-        .message-icon { color: var(--primary-color); }
-        .post-icon-header { color: #28a745; }
-
-        /* প্রোফাইল ইমেজ স্টাইল */
-        .profile-image-wrapper {
+        .action-btn-wrapper {
+            position: relative;
             cursor: pointer;
-            width: 35px; /* আইকন থেকে সামান্য বড় */
-            height: 35px;
+            color: #64748b;
+        }
+
+        .badge-count {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        #profileImageWrapper img {
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            overflow: hidden;
-            border: 2px solid var(--primary-color); /* রঙের বর্ডার */
+            object-fit: cover;
+            border: 2px solid var(--secondary);
+        }
+
+        /* 🧭 সাইডবার ও ওভারলে */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background: #ffffff;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            transition: left 0.3s ease;
+            z-index: 1001;
+            padding: 20px 0;
+        }
+
+        .sidebar.active { left: 0; }
+
+        .sidebar nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .sidebar nav a:hover {
+            background: var(--light-bg);
+            color: var(--secondary);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            z-index: 1000;
+        }
+
+        .overlay.active { display: block; }
+
+        /* 🚀 প্রিমিয়াম হিরো ব্যানার ও সার্চ ফিল্টার */
+        .hero-section {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0369a1 100%);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
+        }
+
+        .hero-section h1 {
+            font-size: 28px;
+            margin: 0 0 8px 0;
+            font-weight: 700;
+        }
+
+        .hero-section p {
+            font-size: 15px;
+            margin: 0 0 24px 0;
+            color: #e0f2fe;
+        }
+
+        .advanced-search-box {
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .search-field {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .search-field label {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .search-field select, .search-field input {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--dark);
+            outline: none;
+        }
+
+        .btn-search {
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-        #profileImage {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            gap: 6px;
+            margin-top: 18px;
+            height: 42px;
         }
 
-
-        /* সার্চ বার এবং নেভিগেশন ফিল্টারগুলির প্যাডিং ফিক্স */
-        .search-bar { 
-            padding: 0 15px 8px; 
+        /* 🧭 নেভিগেশন ক্যাটাগরি ফিল্টার */
+        .nav-filters {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 24px 0;
         }
-        
-        
-        /* --- ✅ নতুন: প্রপার্টি গ্রিড ও কার্ডের স্টাইল --- */
+
+        .nav-button {
+            padding: 10px 20px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* 💎 "কেন আমরা সেরা" সেکশন */
+        .features-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .feature-card .material-icons {
+            font-size: 36px;
+            color: var(--secondary);
+            margin-bottom: 8px;
+        }
+
+        .feature-card h4 { margin: 0 0 6px 0; font-size: 16px; color: var(--primary); }
+        .feature-card p { margin: 0; font-size: 13px; color: #64748b; }
+
+        /* 📋 প্রোপার্টি গ্রিড এবং কার্ড ডিজাইন */
         .property-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* responsive grid */
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
-            padding: 20px 0; 
+            margin-bottom: 40px;
         }
 
         .property-card {
-            text-decoration: none; 
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            border-radius: 8px;
+            background: white;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-            background-color: white;
-            min-height: 350px; 
-        }
-
-        .property-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-        }
-
-        .property-image-container {
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
             position: relative;
-            height: 200px;
-            overflow: hidden;
         }
 
-        .property-image-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .property-category {
+        .verified-badge {
             position: absolute;
             top: 10px;
-            right: 10px;
-            background-color: var(--primary-color);
+            left: 10px;
+            background: var(--success);
             color: white;
+            font-size: 11px;
             padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
+            border-radius: 6px;
             font-weight: bold;
-        }
-
-        .property-details {
-            padding: 15px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .property-title {
-            font-size: 1.2em;
-            margin: 0 0 10px 0;
-            color: #333;
-            /* Truncate long titles */
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .property-location {
+            z-index: 10;
             display: flex;
             align-items: center;
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 10px;
+            gap: 3px;
         }
 
-        .property-location .location-icon {
-            font-size: 18px;
-            margin-right: 4px;
-            color: var(--primary-color);
-        }
-
-        .property-specs {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 10px;
-            color: #555;
-            font-size: 0.9em;
-        }
-
-        .property-specs span {
-            display: flex;
-            align-items: center;
-        }
-
-        .property-specs .material-icons {
-            font-size: 18px;
-            margin-right: 3px;
-            color: #007bff;
-        }
-
-        .property-price {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #28a745; 
-            margin-top: auto; /* মূল্যকে নিচে ঠেলে দেয় */
-            padding-top: 10px; 
-            border-top: 1px solid #eee;
-        }
-        
-        /* লোডিং এবং ত্রুটি বার্তা */
-        .loading-message, .no-results-message, .error-message {
-            grid-column: 1 / -1; 
+        /* 💳 ফুটার স্টাইল */
+        .footer {
+            background: var(--primary);
+            color: #e2e8f0;
+            padding: 20px 0;
             text-align: center;
-            padding: 50px 20px;
-            color: #6c757d;
-            font-size: 1.1em;
+            margin-top: 40px;
+            font-size: 14px;
         }
-
-
-        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স (সর্বাধিক 600px) --- */
-        @media (max-width: 600px) {
-            .main-content {
-                 /* ✅ padding-top এখন style.css দ্বারা নিয়ন্ত্রিত হবে */
-            }
-            .logo-title {
-                 font-size: 1.5em; 
-                 margin-left: 0px;
-            }
-            .header-actions {
-                 gap: 8px; 
-            }
-            .profile-image-wrapper {
-                 width: 30px; 
-                 height: 30px;
-            }
-            .property-grid {
-                grid-template-columns: 1fr; /* মোবাইল এ একক কলাম */
-                padding: 10px 0;
-            }
-        }
-        
     </style>
-    </head>
+</head>
 <body>
-    
-    <header class="main-header">
-        <div class="header-top">
-            
-            <div class="header-left">
-                <i class="material-icons menu-icon" id="menuButton">menu</i>
-                
-                <a href="index.html" class="logo-title">
-                   <i class="material-icons logo-icon">home</i>  
-                    <span>আমার বাড়ি.কম</span>
-                </a>
-            </div>
-            
-            <div class="header-actions">
-                
-                <div class="icon-wrapper" id="notificationButton">
-                    <i class="material-icons notification-icon">notifications</i>
-                    <span class="notification-count" id="notification-count"></span>
-                </div>
-                
-                <div class="icon-wrapper" id="headerPostButton">
-                    <i class="material-icons post-icon-header">add_circle_outline</i>
-                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
-                </div>
-                
-                <div class="icon-wrapper" id="messageButton">
-                    <i class="material-icons message-icon">message</i>
-                    <span class="notification-count" id="message-count"></span>
-                </div>
-                
-                <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <img id="profileImage" src="https://via.placeholder.com/35/007bff/ffffff?text=U" alt="Profile" style="display: none;">
-                    <i class="material-icons profile-icon" id="defaultProfileIcon">person</i> </div>
-                
-                <div class="notification-dropdown" id="notification-dropdown">
-                    </div>
-            </div>
-        </div>
 
-        <div class="search-bar">
-            <input type="text" id="globalSearchInput" placeholder="শহর, এলাকা বা প্রপার্টির নাম লিখে খুঁজুন...">
-            <button><i class="material-icons">search</i></button>
+    <header class="main-header">
+        <div class="container header-top">
+            <div class="header-left">
+                <button id="menuButton"><i class="material-icons">menu</i></button>
+                <a href="index.html" class="logo-title">আমার বাড়ি.কম</a>
+            </div>
+            <div class="header-actions">
+                <div class="action-btn-wrapper" id="headerPostButton">
+                    <i class="material-icons">add_circle_outline</i>
+                </div>
+                <div class="action-btn-wrapper" id="messageButton">
+                    <i class="material-icons">chat_bubble_outline</i>
+                    <span class="badge-count" id="message-count" style="display:none;">0</span>
+                </div>
+                <div class="action-btn-wrapper" id="notificationButton">
+                    <i class="material-icons">notifications_none</i>
+                    <span class="badge-count" id="notification-count" style="display:none;">0</span>
+                </div>
+                <div class="action-btn-wrapper" id="profileImageWrapper">
+                    <img id="profileImage" src="" alt="Profile" style="display:none;">
+                    <i id="defaultProfileIcon" class="material-icons" style="font-size:30px; color:#64748b;">account_circle</i>
+                </div>
+            </div>
         </div>
-        
-        </header>
-    
-    <div class="nav-filters">
-        <button class="nav-button active" data-category="বিক্রয়" id="sellButton">বিক্রয়</button>
-        <button class="nav-button" data-category="ভাড়া" id="rentButton">ভাড়া</button>
-        <button class="nav-button" data-category="map" id="mapButton">
-             <i class="material-icons">map</i> ম্যাপ
-        </button>
-    </div>
+    </header>
+
     <div class="sidebar" id="sidebar">
         <nav>
-            <a href="index.html" class="sidebar-logo">
-                <i class="material-icons">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
-            
-            <a href="index.html" class="active" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
-            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            
-            
-            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
-            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a> <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            
+            <a href="index.html"><i class="material-icons">home</i> হোম পেজ</a>
+            <a href="profile.html"><i class="material-icons">person</i> আমার প্রোফাইল</a>
+            <a href="post.html" id="direct-post-btn"><i class="material-icons">post_add</i> বিজ্ঞাপন দিন</a>
+            <a href="tips.html"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="privacy.html"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a> 
+            <a href="about.html"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html"><i class="material-icons">mail</i> যোগাযোগ</a>
             <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
         </nav>
     </div>
-
     <div class="overlay" id="overlay"></div>
 
-    <main class="main-content container">
-
-        <section id="property-grid-container" style="display: block;">
-            <div class="property-grid">
+    <section class="hero-section">
+        <div class="container">
+            <h1>দালালমুক্ত সরাসরি প্রপার্টি পোর্টাল</h1>
+            <p>নিরাপদে ও আইনি নথিপত্র যাচাই করে সরাসরি মালিকের সাথে যোগাযোগ করুন</p>
+            
+            <div class="advanced-search-box">
+                <div class="search-field">
+                    <label>কি খুঁজছেন?</label>
+                    <select id="filterType">
+                        <option value="">সব ধরনের প্রপার্টি</option>
+                        <option value="ফ্ল্যাট">ফ্ল্যাট / অ্যাপার্টমেন্ট</option>
+                        <option value="জমি">জমি / প্লট</option>
+                        <option value="বাড়ি">স্বাধীন বাড়ি</option>
+                        <option value="বাণিজ্যিক">দোকান / অফিস</option>
+                    </select>
                 </div>
-        </section>
+                <div class="search-field">
+                    <label>বিভাগ</label>
+                    <select id="filterDivision">
+                        <option value="">সব বিভাগ</option>
+                        <option value="খুলনা">খুলনা</option>
+                        <option value="ঢাকা">ঢাকা</option>
+                        <option value="চট্টগ্রাম">চট্টগ্রাম</option>
+                    </select>
+                </div>
+                <div class="search-field">
+                    <label>অনুসন্ধান কী-ওয়ার্ড</label>
+                    <input type="text" id="globalSearchInput" placeholder="শহর বা এলাকার নাম...">
+                </div>
+                <button class="btn-search" id="btnAdvancedSearch">
+                    <i class="material-icons">search</i> খুঁজুন
+                </button>
+            </div>
+        </div>
+    </section>
 
-        <section id="map-section" style="display: none;">
-            <h2>📍 প্রপার্টি ম্যাপ ভিউ</h2>
-            <div id="map-container" style="height: 600px; width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
-                <p style="text-align: center; padding-top: 280px; color: #555;">ম্যাপ লোড হচ্ছে...</p>
+    <div class="container">
+        <div class="nav-filters">
+            <button class="nav-button active" data-category="বিক্রয়">
+                <i class="material-icons">sell</i> বিক্রয়
+            </button>
+            <button class="nav-button" data-category="ভাড়া">
+                <i class="material-icons">vpn_key</i> ভাড়া
+            </button>
+            <button class="nav-button" id="toggleMapButton">
+                <i class="material-icons">map</i> ম্যাপ ভিউ
+            </button>
+        </div>
+
+        <section class="features-section">
+            <div class="feature-card">
+                <i class="material-icons">gavel</i>
+                <h4>১০০% দালালমুক্ত</h4>
+                <p>কোনো মধ্যস্বত্বভোগী বা হিডেন কমিশন নেই, সরাসরি মালিকের সাথে ডিল।</p>
+            </div>
+            <div class="feature-card">
+                <i class="material-icons">verified_user</i>
+                <h4>আইনি নথিপত্র যাচাইকৃত</h4>
+                <p>বিজ্ঞাপনের ভেতরেই খতিয়ান ও ভূমির আসল নকশা দেখার অনন্য সুবিধা।</p>
+            </div>
+            <div class="feature-card">
+                <i class="material-icons">near_me</i>
+                <h4>স্মার্ট ম্যাপ ট্র্যাকিং</h4>
+                <p>আপনার পছন্দের নির্দিষ্ট লোকেশনে পিনপয়েন্ট করে বাসা বা জমি খুঁজুন।</p>
             </div>
         </section>
 
-    </main>
+        <main class="main-content">
+            <section id="property-grid-container" style="display: block;">
+                <div class="property-grid"></div>
+            </section>
+
+            <section id="map-section" style="display: none;">
+                <h2>📍 প্রপার্টি ম্যাপ ভিউ</h2>
+                <div id="map-container" style="height: 500px; width: 100%; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <p style="text-align: center; padding-top: 230px; color: #64748b;">ম্যাপ লোড হচ্ছে...</p>
+                </div>
+            </section>
+        </main>
+    </div>
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+            <p>&copy; 2026 আমার বাড়ি.কম। আইনি স্বচ্ছতায় দালালমুক্ত আবাসন। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
-    
-    <script src="index.js"></script> 
+
+    <script src="index.js"></script>
 </body>
     </html>
