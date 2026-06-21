@@ -435,7 +435,7 @@
 </head>
 <body>
 
-  <div id="overlay" class="overlay"></div>
+  <div class="overlay" id="overlay"></div> 
 
     <header class="main-header">
         <div class="header-top">
@@ -463,10 +463,11 @@
                 </div>
             </div>
         </div>
+    
     </header>
     
     <div class="sidebar" id="sidebar">
-        <nav style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+        <nav style="padding: 20px; display: flex; flex-direction: column; gap: 10px;">
             <a href="index.html" class="sidebar-logo">
                 <i class="material-icons">home</i> 
                 <span>আমার বাড়ি.কম</span>
@@ -483,7 +484,7 @@
             <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
             
         </nav>
-  </div>
+    </div>
   
   <div class="preview-wrapper">
     <div class="page-title">✨ আপনার বিজ্ঞাপনের প্রিভিউ</div>
@@ -512,7 +513,7 @@
   <script src="preview.js"></script>
 
   <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
@@ -521,6 +522,7 @@
             const messageButton = document.getElementById('messageButton');
             const profileImageWrapper = document.getElementById('profileImageWrapper');
 
+            // 🛠️ নিখুঁত সাইডবার টগল স্ক্রিপ্ট
             if (menuButton && sidebar && overlay) {
                 menuButton.addEventListener('click', () => {
                     sidebar.classList.toggle('active');
@@ -538,26 +540,12 @@
             if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
         });
 
-        function openTab(evt, tabName) {
-            let i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) { tabcontent[i].classList.remove("active"); }
-            tablinks = document.getElementsByClassName("tab-btn");
-            for (i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
-        }
-
-        function closePropertyModal() {
-            document.getElementById('propertyModal').style.display = 'none';
-        }
-    </script>
-
+</script>
+    
     <footer class="footer">
         <div class="container">
             <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
-  
 </body>
   </html>
