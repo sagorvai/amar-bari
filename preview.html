@@ -49,45 +49,43 @@
              box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
              z-index: 1000; 
         }
-        
-      /* --- হেডার ফিক্স ও রেসপন্সিভ লেআউট --- */
-.header-top { 
+
+    .header-top { 
     display: flex; 
     align-items: center; 
     justify-content: space-between; 
-    padding: 8px 12px; 
-    gap: 8px; /* এলিমেন্টগুলোর মাঝে গ্যাপ রাখার জন্য */
+    padding: 8px 10px; /* প্যাডিং সামান্য কমানো হলো */
+    gap: 4px; /* উপাদানগুলোর ভেতরের ফাঁকা জায়গা নিয়ন্ত্রণ করবে */
 }
 
 .header-left { 
     display: flex; 
     align-items: center; 
     flex-shrink: 1; 
-    min-width: 0; /* ওভারফ্লো রোধ করতে */
+    min-width: 0; 
 }
 
 .logo-title { 
     display: flex; 
     align-items: center; 
-    font-size: 1.2em; /* মোবাইলের জন্য ফন্ট সাইজ একটু কমানো হলো */
+    font-size: 1.1em; /* লোগোর সাইজ মোবাইলে সামান্য ছোট করা হলো */
     font-weight: bold; 
     color: var(--primary); 
     text-decoration: none; 
     white-space: nowrap; 
-    margin-left: 6px; 
-    overflow: hidden;
-    text-overflow: ellipsis; /* লেখা বেশি বড় হলে কেটে যেন ৩টি ডট দেখায় */
+    margin-left: 4px; 
 }
 
 .header-actions { 
     display: flex; 
     align-items: center; 
-    gap: 10px; /* আইকনগুলোর ভেতরের দূরত্ব সামান্য কমানো হলো */
+    gap: 8px; /* বাটনগুলোর ভেতরের দূরত্ব কমিয়ে ৮ পিক্সেল করা হলো যেন সব ফিট হয় */
     flex-shrink: 0; 
 }
 
-/* আইকন ফন্টের এলাইনমেন্ট ঠিক করার জন্য */
+/* আইকনগুলোর সাইজ মোবাইলের জন্য একটু স্ট্যান্ডার্ড করা হলো */
 .material-icons {
+    font-size: 24px; 
     display: inline-flex;
     vertical-align: middle;
 }
