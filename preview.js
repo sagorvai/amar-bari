@@ -213,3 +213,29 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
     }
 });
+
+  // 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
+firebase.auth().onAuthStateChanged(async (user) => {
+    const headerProfileImg = document.querySelector('#profileImageWrapper img');
+    
+    if (user && headerProfileImg) {
+        try {
+            // ফায়ারবেস 'users' কালেকশন থেকে ইউজারের ডাটা আনা হচ্ছে
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists && userDoc.data().profilePic) {
+                // ডাটাবেজে প্রোফাইল পিকচার থাকলে সেটি হেডারে সেট হবে
+                headerProfileImg.src = userDoc.data().profilePic;
+            } else if (user.photoURL) {
+                // গুগল লগইন করা থাকলে গুগল প্রোফাইল পিকচার সেট হবে
+                headerProfileImg.src = user.photoURL;
+            } else {
+                // কোনো ছবি না থাকলে একটি ডিফল্ট অ্যাভাটার সেট হবে
+                headerProfileImg.src = 'assets/images/default-avatar.png'; // আপনার প্রজেক্টের ডিফল্ট ছবির পাথ দিন
+            }
+        } catch (error) {
+            console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
+        }
+    }
+});
+
+
