@@ -138,9 +138,8 @@ function renderDetails(data) {
                 let khotian = data.owner.khotianNo;
                 let khotianType = data.owner.khotianNoType || "";
                 addRow(ownT, "খতিয়ান নং", khotian ? `${khotian} (${khotianType})` : "");
-                let dag = data.owner.dagNo;
-                let dagType = data.owner.dagNoType || "";
-                addRow(ownT, "দাগ নং", dag ? `${dag} (${dagType})` : "");
+                
+                addRow(ownT, "দাগ নং", data.dagNo);
                 addRow(ownT, "মৌজা", data.owner.mouja);
             }
         } else {
