@@ -20,7 +20,8 @@ const notificationCount = document.getElementById('notification-count');
 const messageCount = document.getElementById('message-count');
 const postCount = document.getElementById('post-count'); 
 
-const navButtons = document.querySelectorAll('.nav-filters .nav-button'); 
+// 🎯 সংশোধন: নতুন HTML স্ট্রাকচার অনুযায়ী .fb-tab-btn সিলেক্ট করা হয়েছে
+const navButtons = document.querySelectorAll('.fb-tab-btn'); 
 const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
 const globalSearchInput = document.getElementById('globalSearchInput');
@@ -213,19 +214,19 @@ function setupSliderAndLikeLogic() {
 function createFbPostHTML(docId, data) {
     const title = data.title || 'শিরোনামহীন প্রোপার্টি';
     
-    // details.js অনুযায়ী ডাইনামিক লোকেশন ফিল্ডস (village, thana, district)
+    // ডাইনামিক লোকেশন ফিল্ডস (village, thana, district)
     const village = data.location?.village || "তথ্য নেই";
     const thana = data.location?.thana || "তথ্য নেই";
     const district = data.location?.district || "তথ্য নেই";
     
-    // details.js অনুযায়ী ডাইনামিক পরিমাণ (landArea / houseArea / areaSqft / commercialArea)
+    // ডাইনামিক পরিমাণ (landArea / houseArea / areaSqft / commercialArea)
     const size = data.landArea || data.houseArea || data.areaSqft || data.commercialArea || '০';
     const unit = data.landAreaUnit || data.houseAreaUnit || data.areaSqftUnit || data.commercialAreaUnit || '';
     
     const type = data.type || 'প্রপার্টি';
     const category = data.category || 'বিক্রয়';
     
-    // details.js অনুযায়ী ডাইনামিক মূল্য ও কারেন্সি ফিল্ড ম্যাচিং
+    // ডাইনামিক মূল্য ও কারেন্সি ফিল্ড ম্যাচিং
     let amount = category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let priceUnit = data.priceUnit || data.rentUnit || ""; 
     let displayPrice = amount ? new Intl.NumberFormat('bn-BD').format(amount) : 'আলোচনা সাপেক্ষে';
@@ -233,7 +234,7 @@ function createFbPostHTML(docId, data) {
     const hasDocs = data.documents && (data.documents.khotian || data.documents.sketch);
     const verifiedBadge = hasDocs ? `<span class="badge-verified" style="background:#42b72a; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-right:5px;">✓ কাগজ ভেরিফাইড</span>` : '';
 
-    // স্লাইডার ইমেজ রেন্ডারিং (প্রথম ৫টি ইমেজ ব্যাকআপ সহ)
+    // স্লাইডার ইমেজ রেন্ডারিং
     let images = [];
     if (data.images) data.images.forEach(img => images.push(img.url || img));
     
@@ -249,7 +250,6 @@ function createFbPostHTML(docId, data) {
         <button class="fb-slider-btn fb-next" style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; z-index: 5;">&#10095;</button>
     ` : '';
 
-    // প্রতিটি ডকের জন্য ইউনিক আইডি দিয়ে রিয়েল-টাইম ইউজার ডাটা হ্যান্ডলিং এলিমেন্ট জেনারেট করা হচ্ছে
     return `
         <div class="fb-feed-card" style="background:#fff; border:1px solid #ced0d4; border-radius:8px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,0.05); display:flex; flex-direction:column; font-family:'Hind Siliguri', sans-serif;">
             
@@ -304,7 +304,7 @@ function createFbPostHTML(docId, data) {
     `;
 }
 
-// --- ডাইনামিক ভাবে পোস্টদাতার রিয়েল-টাইম নাম ও ছবি পুশ করার জন্য হেল্পার ফাংশন ---
+// --- পোস্টদাতার রিয়েল-টাইম নাম ও ছবি পুশ করার ফাংশন ---
 function loadPostAuthorDetails(docId, userId) {
     if (!userId) return;
     db.collection('users').doc(userId).get().then(userDoc => {
@@ -332,7 +332,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
             .where('status', '==', 'published')
             .get();
             
-        propertyG.innerHTML = ''; // কন্টেনার খালি করা
+        propertyG.innerHTML = ''; 
         let hasPost = false;
         
         const filterType = document.getElementById('filterType')?.value;
@@ -348,9 +348,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
             if (formattedSearch && !data.title?.toLowerCase().includes(formattedSearch) && !data.location?.district?.toLowerCase().includes(formattedSearch) && !data.location?.thana?.toLowerCase().includes(formattedSearch)) return;
 
             hasPost = true;
-            // কার্ডের এইচটিএমএল স্ট্রাকচার যুক্ত করা
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(doc.id, data));
-            // ব্যাকগ্রাউন্ডে পোস্টদাতার নাম ও ছবি ডাইনামিকালি লোড করা
             loadPostAuthorDetails(doc.id, data.userId);
         });
 
@@ -372,6 +370,7 @@ function setupUIEventListeners() {
         overlay.onclick = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
     }
 
+    // 🎯 সংশোধন: এখানে লুপটি এখন নিখুঁতভাবে .fb-tab-btn এর উপর কাজ করবে
     navButtons.forEach(btn => {
         btn.onclick = function() {
             navButtons.forEach(b => b.classList.remove('active'));
@@ -385,6 +384,7 @@ function setupUIEventListeners() {
             if (gridContainer) gridContainer.style.display = 'block';
             if (mapSection) mapSection.style.display = 'none';
             
+            // ক্যাটাগরি ডাটা ('বিক্রয়' বা 'ভাড়া') তুলে এনে ফিড রেন্ডার করা হচ্ছে
             fetchAndDisplayProperties(this.getAttribute('data-category'), globalSearchInput?.value || '');
         };
     });
@@ -400,7 +400,7 @@ function setupUIEventListeners() {
             if (gridContainer) gridContainer.style.display = 'none';
             if (mapSection) mapSection.style.display = 'block';
             
-            const activeNavButton = document.querySelector('.nav-filters .nav-button.active');
+            const activeNavButton = document.querySelector('.fb-tab-btn.active');
             const currentCat = activeNavButton ? activeNavButton.getAttribute('data-category') : 'বিক্রয়';
             initMap(currentCat);
         };
@@ -409,7 +409,7 @@ function setupUIEventListeners() {
     const btnAdvancedSearch = document.getElementById('btnAdvancedSearch');
     if (btnAdvancedSearch) {
         btnAdvancedSearch.onclick = () => {
-            const activeNavButton = document.querySelector('.nav-filters .nav-button.active');
+            const activeNavButton = document.querySelector('.fb-tab-btn.active');
             const category = activeNavButton ? activeNavButton.getAttribute('data-category') : 'বিক্রয়';
             fetchAndDisplayProperties(category, globalSearchInput?.value || '');
         };
@@ -418,7 +418,7 @@ function setupUIEventListeners() {
     if (globalSearchInput) {
         globalSearchInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
-                const activeNavButton = document.querySelector('.nav-filters .nav-button.active');
+                const activeNavButton = document.querySelector('.fb-tab-btn.active');
                 const category = activeNavButton ? activeNavButton.getAttribute('data-category') : 'বিক্রয়';
                 fetchAndDisplayProperties(category, globalSearchInput.value);
             }
