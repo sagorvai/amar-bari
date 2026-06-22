@@ -167,6 +167,68 @@
         .search-bar { 
             padding: 0 15px 8px; 
         }
+
+        /* 📱 ফেসবুক স্টাইল প্রোপার্টি কার্ড ডিজাইন */
+        .fb-feed-card {
+            background: var(--fb-card-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; text-decoration: none; color: inherit;
+        }
+
+        /* কার্ড হেডার (ইউজার ইনফো ভাইব) */
+        .card-author-header {
+            padding: 12px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .author-info { display: flex; align-items: center; gap: 10px; }
+        .author-avatar {
+            width: 40px; height: 40px; border-radius: 50%; background: #e4e6eb;
+            display: flex; align-items: center; justify-content: center; color: var(--fb-blue);
+        }
+        .author-meta h4 { margin: 0; font-size: 15px; font-weight: 600; color: var(--text-main); }
+        .author-meta p { margin: 2px 0 0 0; font-size: 12px; color: var(--text-sub); display: flex; align-items: center; gap: 4px; }
+
+        .badge-verified { background: var(--success); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge-category { background: var(--fb-blue); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+
+        /* পোস্ট ডেসক্রিপশন টেক্সট */
+        .card-body-text { padding: 0 12px 12px 12px; font-size: 14px; line-height: 1.5; color: var(--text-main); }
+
+        /* বড় ইমেজ স্লাইডার মিডিয়া সেকশন */
+        .card-media-section { position: relative; height: 260px; background: #000; overflow: hidden; }
+        .fb-slider { width: 100%; height: 100%; position: relative; }
+        .fb-slide-item { width: 100%; height: 100%; background-size: cover; background-position: center; position: absolute; top:0; left:0; }
+        
+        .fb-slider-btn {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(0,0,0,0.5); color: white; border: none; width: 36px; height: 36px;
+            border-radius: 50%; cursor: pointer; font-size: 18px; z-index: 5; display: flex; align-items: center; justify-content: center;
+        }
+        .fb-prev { left: 12px; } .fb-next { right: 12px; }
+
+        .price-tag-overlay {
+            position: absolute; bottom: 12px; right: 12px; background: rgba(0, 0, 0, 0.75);
+            color: #fff; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 16px; z-index: 4;
+        }
+
+        /* রিয়্যাক্ট অ্যান্ড কমেন্ট কাউন্টার */
+        .fb-stats-bar {
+            padding: 10px 12px; display: flex; justify-content: space-between;
+            font-size: 13px; color: var(--text-sub); border-bottom: 1px solid #f2f3f5;
+        }
+        .fb-reactions { display: flex; align-items: center; gap: 4px; }
+        .fb-react-icon { background: var(--fb-blue); color: white; border-radius: 50%; font-size: 14px; padding: 2px; }
+
+        /* ফেসবুক অ্যাকশন বাটন গ্রুপ */
+        .fb-action-buttons {
+            display: flex; padding: 4px; border-top: 1px solid #f2f3f5;
+        }
+        .fb-action-btn {
+            flex: 1; padding: 10px; border: none; background: none; cursor: pointer;
+            font-family: inherit; font-size: 14px; font-weight: 600; color: var(--text-sub);
+            display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 4px;
+        }
+        .fb-action-btn:hover { background-color: var(--fb-bg); }
+        .fb-action-btn.liked { color: var(--fb-blue); }
         
         
         /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স (সর্বাধিক 600px) --- */
