@@ -41,8 +41,8 @@ const translations = {
         titleRecent: "🆕 সাম্প্রতিক প্রপার্টিসমূহ (Recent Properties)",
         titleFeatured: "⭐ জনপ্রিয় ও ভেরিফাইড প্রপার্টি (Featured Properties)",
         titleLocations: "📍 প্রধান লোকেশন ভিত্তিক লিস্টিং",
-        seoTitle: "আমার বাড়ি.কম - দالاলি মুক্ত বাংলাদেশের একমাত্র আবাসন সামাজিক মাধ্যম",
-        seoBody: "<p>বর্তমান ডিজিটাল যুগে সঠিক ও ঝামেলামুক্ত উপায়ে নিজের জন্য একটি আবাসন বা প্রপার্টি খুঁজে নেওয়া বেশ কঠিন। "আমার বাড়ি.কম" আপনাকে দিচ্ছে কোনো দালাল বা মধ্যস্বত্বভোগী ছাড়াই সরাসরি প্রপার্টি মালিকের সাথে যোগাযোগের এক অনন্য সুযোগ। এখানে আপনি খুলনা বিভাগসহ বাংলাদেশের যেকোনো প্রান্তের জমি, ফ্ল্যাট, কমার্শিয়াল স্পেস বা স্বাধীন বাড়ি কেনাবেচা ও ভাড়া নেওয়ার ডাইনামিক লাইভ লিস্টিং দেখতে পাবেন। আমাদের বিশেষত্ব হলো বিজ্ঞাপনের স্বচ্ছতা—যেখানে প্রপার্টির বাহ্যিক রূপের পাশাপাশি আইনি মালিকানা নিশ্চিত করতে খতিয়ান এবং স্কেচ বা ভূমির নকশা সরাসরি দেখার ফিচার যুক্ত রয়েছে। নিরাপদ ও commission-মুক্ত আবাসন গড়ার এই যাত্রায় আমাদের সাথেই থাকুন।</p><p>গুগল সার্চ ইঞ্জিন ফ্রেন্ডলি ইন্টারফেসের কারণে আমাদের প্রতিটা ডিটেইলস পেজ অত্যন্ত দ্রুত ইনডেক্স হয়। ক্রেতা এবং বিক্রেতার মাঝে সরাসরি মেলবন্ধন তৈরি করাই আমাদের লক্ষ্য। কোনো হিডেন চার্জ ছাড়াই আপনার প্রপার্টি লিস্টিং সাবমিট করুন এবং সেরা ডিলটি লুফে নিন।</p>",
+        seoTitle: "আমার বাড়ি.কম - দালালি মুক্ত বাংলাদেশের একমাত্র আবাসন সামাজিক মাধ্যম",
+        seoBody: "<p>বর্তমান ডিজিটাল যুগে সঠিক ও ঝামেলামুক্ত উপায়ে নিজের জন্য একটি আবাসন বা প্রপার্টি খুঁজে নেওয়া বেশ কঠিন। \"আমার বাড়ি.কম\" আপনাকে দিচ্ছে কোনো দালাল বা মধ্যস্বত্বভোগী ছাড়াই সরাসরি প্রপার্টি মালিকের সাথে যোগাযোগের এক অনন্য সুযোগ। এখানে আপনি খুলনা বিভাগসহ বাংলাদেশের যেকোনো প্রান্তের জমি, ফ্ল্যাট, কমার্শিয়াল স্পেস বা স্বাধীন বাড়ি কেনাবেচা ও ভাড়া নেওয়ার ডাইনামিক লাইভ লিস্টিং দেখতে পাবেন। আমাদের বিশেষত্ব হলো বিজ্ঞাপনের স্বচ্ছতা—যেখানে প্রপার্টির বাহ্যিক রূপের পাশাপাশি আইনি মালিকানা নিশ্চিত করতে খতিয়ান এবং স্কেচ বা ভূমির নকশা সরাসরি দেখার ফিচার যুক্ত রয়েছে। নিরাপদ ও commission-মুক্ত আবাসন গড়ার এই যাত্রায় আমাদের সাথেই থাকুন।</p><p>গুগল সার্চ ইঞ্জিন ফ্রেন্ডলি ইন্টারফেসের কারণে আমাদের প্রতিটা ডিটেইলস পেজ अत्यंत দ্রুত ইনডেক্স হয়। ক্রেতা এবং বিক্রেতার মাঝে সরাসরি মেলবন্ধন তৈরি করাই আমাদের লক্ষ্য। কোনো হিডেন চার্জ ছাড়াই আপনার প্রপার্টি লিস্টিং সাবমিট করুন এবং সেরা ডিলটি লুফে নিন।</p>",
         footerText: "&copy; 2026 আমার বাড়ি.কম। ফেসবুক স্টাইল আবাসন সামাজিক যোগাযোগ মাধ্যম। সর্বস্বত্ব সংরক্ষিত。",
         unknownDistrict: "অজানা জেলা",
         unknownThana: "অজানা থানা",
@@ -67,7 +67,7 @@ const translations = {
         titleFeatured: "⭐ Popular & Verified Properties (Featured)",
         titleLocations: "📍 Listings by Top Locations",
         seoTitle: "AmarBari.com - Bangladesh's Only Broker-Free Real Estate Social Network",
-        seoBody: "<p>In today's digital era, finding the perfect housing or property safely and without hassle is often quite challenging. "AmarBari.com" offers you a unique opportunity to directly connect with property owners without any brokers or third-party middlemen. Here, you will find dynamic live listings for land, flats, commercial spaces, or independent houses for sale and rent across any corner of Bangladesh, including Khulna Division. Our specialization is ad transparency—featuring the ability to view sub-deeds, land maps, and ledger copies directly online to ensure legal ownership. Stay with us in building a safe and commission-free real estate network.</p>",
+        seoBody: "<p>In today's digital era, finding the perfect housing or property safely and without hassle is often quite challenging. \"AmarBari.com\" offers you a unique opportunity to directly connect with property owners without any brokers or third-party middlemen. Here, you will find dynamic live listings for land, flats, commercial spaces, or independent houses for sale and rent across any corner of Bangladesh, including Khulna Division. Our specialization is ad transparency—featuring the ability to view sub-deeds, land maps, and ledger copies directly online to ensure legal ownership. Stay with us in building a safe and commission-free real estate network.</p>",
         footerText: "&copy; 2026 AmarBari.com. Facebook-style real estate social network. All rights reserved.",
         unknownDistrict: "Unknown District",
         unknownThana: "Unknown Thana",
@@ -107,7 +107,7 @@ function updateLanguage(lang) {
     fetchAndDisplayProperties(category, globalSearchInput.value);
 }
 
-// --- Dynamic Image Slider Inside Cards ---
+// --- Dynamic Image Slider Inside Cards (Restored from Cut Code) ---
 function setupSliderLogic() {
     const sliderButtons = document.querySelectorAll('.slider-nav-btn');
     sliderButtons.forEach(button => {
@@ -137,12 +137,13 @@ function setupSliderLogic() {
     });
 }
 
-// --- HTML Property Card Constructor ---
+// --- HTML Property Card Constructor (Restored and Updated) ---
 function createPropertyCardHTML(property) {
     const t = translations[currentLanguage];
     const propertyId = property.id;
     const title = property.title || t.untitledProperty;
     
+    //details.js matching fields
     const district = property.location?.district || t.unknownDistrict;
     const thana = property.location?.thana || t.unknownThana;
     const village = property.location?.village || property.location?.area || t.unknownArea; 
@@ -162,47 +163,47 @@ function createPropertyCardHTML(property) {
     let specsHTML = ''; 
     
     if (category === 'বিক্রয়') {
-        priceDetailsHTML = `<div class="property-price sale-price">৳ ${priceValue}</div>`;
+        priceDetailsHTML = `<div class=\"property-price sale-price\">৳ ${priceValue}</div>`;
         specsHTML = `
-            <span title="Type"><i class="material-icons">home</i> ${propertyType}</span>
-            <span title="Size"><i class="material-icons">square_foot</i> ${displaySize}</span>
-            <span title="Bedrooms"><i class="material-icons">king_bed</i> ${bedrooms}</span> 
+            <span title="Type"><i class=\"material-icons\">home</i> ${propertyType}</span>
+            <span title="Size"><i class=\"material-icons\">square_foot</i> ${displaySize}</span>
+            <span title="Bedrooms"><i class=\"material-icons\">king_bed</i> ${bedrooms}</span> 
         `;
     } else {
-        priceDetailsHTML = `<div class="property-price rent-price">৳ ${priceValue} <span class="unit">${t.perMonth}</span></div>`;
+        priceDetailsHTML = `<div class=\"property-price rent-price\">৳ ${priceValue} <span class="unit">${t.perMonth}</span></div>`;
         specsHTML = `
-            <span title="Type"><i class="material-icons">home</i> ${propertyType}</span>
-            <span title="Bedrooms"><i class="material-icons">king_bed</i> ${bedrooms}</span>
-            <span title="Bathrooms"><i class="material-icons">bathtub</i> ${bathrooms}</span>
+            <span title="Type"><i class=\"material-icons\">home</i> ${propertyType}</span>
+            <span title="Bedrooms"><i class=\"material-icons\">king_bed</i> ${bedrooms}</span>
+            <span title="Bathrooms"><i class=\"material-icons\">bathtub</i> ${bathrooms}</span>
         `;
     }
 
     const images = property.images || [];
-    // If no images are available, apply a placeholder
-    const finalImages = images.length > 0 ? images : [{url: 'https://via.placeholder.com/400x250?text=AmarBari'}];
+    // If no images are available, apply a placeholder with WebP format preference
+    const finalImages = images.length > 0 ? images : [{url: 'https://via.placeholder.com/400x250.webp?text=AmarBari'}];
     
     const sliderItemsHTML = finalImages.map((img, idx) => 
         `<div class="slider-item" style="background-image: url('${img.url}'); ${idx === 0 ? 'display: block;' : 'display: none;'}"></div>`
     ).join('');
 
     const sliderNav = finalImages.length > 1 ? `
-        <button class="slider-nav-btn prev-btn">&#10094;</button>
-        <button class="slider-nav-btn next-btn">&#10095;</button>
+        <button class=\"slider-nav-btn prev-btn\">&#10094;</button>
+        <button class=\"slider-nav-btn next-btn\">&#10095;</button>
     ` : '';
     
     return `
         <a href="details.html?id=${propertyId}" class="property-card">
-            <div class="property-image-container slider-container">
-                <div class="image-slider" data-current-index="0" data-total-slides="${finalImages.length}">
+            <div class=\"property-image-container slider-container\">
+                <div class=\"image-slider\" data-current-index="0" data-total-slides="${finalImages.length}">
                     ${sliderItemsHTML}
                 </div>
                 ${sliderNav}
-                <span class="property-category">${category === 'বিক্রয়' ? t.btnSale : t.btnRent}</span>
+                <span class=\"property-category\">${category === 'বিক্রয়' ? t.btnSale : t.btnRent}</span>
             </div>
-            <div class="property-details">
-                <h3 class="property-title">${title}</h3>
-                <p class="property-location"><i class="material-icons location-icon">location_on</i> ${fullLocation}</p>
-                <div class="property-specs">${specsHTML}</div>
+            <div class=\"property-details\">
+                <h3 class=\"property-title\">${title}</h3>
+                <p class=\"property-location\"><i class=\"material-icons location-icon\">location_on</i> ${fullLocation}</p>
+                <div class=\"property-specs\">${specsHTML}</div>
                 ${priceDetailsHTML}
             </div>
         </a>`;
