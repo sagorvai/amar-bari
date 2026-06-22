@@ -90,7 +90,7 @@ async function initMap() {
     } catch (error) { console.error("Map Load Error:", error); }
 }
 
-// --- স্লাইডার নেভিগেশন লজিক (আপনার মূল কোড) ---
+// --- স্লাইডার নেভিগেশন লজিক ---
 function setupSliderLogic() {
     const sliderButtons = document.querySelectorAll('.slider-nav-btn');
     sliderButtons.forEach(button => {
@@ -120,7 +120,7 @@ function setupSliderLogic() {
     });
 }
 
-// --- প্রপার্টি কার্ডের HTML তৈরি (আপনার মূল কোড) ---
+// --- প্রপার্টি কার্ডের HTML তৈরি ---
 function createPropertyCardHTML(property) {
     const propertyId = property.id;
     const title = property.title || 'শিরোনামবিহীন প্রপার্টি';
@@ -184,7 +184,7 @@ function createPropertyCardHTML(property) {
                 ${priceDetailsHTML}
             </div>
         </a>`;
-}
+                }
 
 // --- প্রপার্টি ফেচ ও ডিসপ্লে ফাংশন (আপনার মূল লজিক + ম্যাপ কন্ডিশন) ---
 async function fetchAndDisplayProperties(category, searchTerm = '') {
