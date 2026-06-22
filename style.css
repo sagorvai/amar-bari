@@ -1224,3 +1224,130 @@ h2 {
     object-position: center; /* ছবির মাঝখানের অংশ ফোকাস করবে */
     display: block;
            }
+
+
+  /* --- ✅ প্রপার্টি গ্রিড ও কার্ডের স্টাইল --- */
+.property-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* responsive grid */
+    gap: 20px;
+    padding: 20px 0; 
+}
+
+.property-card {
+    text-decoration: none; 
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    background-color: white;
+    min-height: 350px; 
+}
+
+.property-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.property-image-container {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.property-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.property-category {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.property-details {
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.property-title {
+    font-size: 1.2em;
+    margin: 0 0 10px 0;
+    color: #333;
+    /* Truncate long titles */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.property-location {
+    display: flex;
+    align-items: center;
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.property-location .location-icon {
+    font-size: 18px;
+    margin-right: 4px;
+    color: var(--primary-color);
+}
+
+.property-specs {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+    color: #555;
+    font-size: 0.9em;
+}
+
+.property-specs span {
+    display: flex;
+    align-items: center;
+}
+
+.property-specs .material-icons {
+    font-size: 18px;
+    margin-right: 3px;
+    color: #007bff;
+}
+
+.property-price {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #28a745; 
+    margin-top: auto; /* মূল্যকে নিচে ঠেলে দেয় */
+    padding-top: 10px; 
+    border-top: 1px solid #eee;
+}
+
+/* লোডিং এবং ত্রুটি বার্তা */
+.loading-message, .no-results-message, .error-message {
+    grid-column: 1 / -1; 
+    text-align: center;
+    padding: 50px 20px;
+    color: #6c757d;
+    font-size: 1.1em;
+}
+
+/* মোবাইল রেসপনসিভ ফিক্স */
+@media (max-width: 600px) {
+    .property-grid {
+        grid-template-columns: 1fr; /* মোবাইল এ একক কলাম */
+        padding: 10px 0;
+    }
+           }
