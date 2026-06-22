@@ -272,7 +272,7 @@ function createFbPostHTML(docId, data) {
             <div class="card-body-text" style="padding:0 12px 12px 12px; font-size:14px; line-height:1.5; color:#050505;">
                 <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 700; color: #050505;">${title}</h3>
                 <div style="margin-top:4px; color:#050505;">
-                    <b>${size} ${unit}, ${type}, ${category}।</b> বিস্তারিত জানতে ও সরাসরি যোগাযোগ করতে নিচে দেয়া বাটনে ক্লিক করুন।
+                    <b>${size} ${unit}, ${type}, ${category}।হবে</b> বিস্তারিত জানতে ও সরাসরি যোগাযোগ করতে নিচে দেয়া বাটনে ক্লিক করুন।
                 </div>
             </div>
 
@@ -291,7 +291,7 @@ function createFbPostHTML(docId, data) {
                     <i class="material-icons" style="background:#1877f2; color:white; border-radius:50%; font-size:12px; padding:3px;">thumb_up</i>
                     <span class="likes-num">${data.likes || 0} জন পছন্দ করেছেন</span>
                 </div>
-                <div>৫টি কমেন্ট</div>
+                <div></div>
             </div>
 
             <div class="fb-action-buttons" style="display:flex; padding:4px; border-top:1px solid #f2f3f5;">
