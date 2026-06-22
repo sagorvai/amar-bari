@@ -272,7 +272,7 @@ function createFbPostHTML(docId, data) {
             <div class="card-body-text" style="padding:0 12px 12px 12px; font-size:14px; line-height:1.5; color:#050505;">
                 <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 700; color: #050505;">${title}</h3>
                 <div style="margin-top:4px; color:#050505;">
-                    <b>${size} ${unit}, ${type}, ${category}।হবে</b> বিস্তারিত জানতে ও সরাসরি যোগাযোগ করতে নিচে দেয়া বাটনে ক্লিক করুন।
+                    <b>${size} ${unit} ${type} ${category} হবে।</b> বিস্তারিত জানতে ও সরাসরি যোগাযোগ করতে নিচে দেয়া বাটনে ক্লিক করুন।
                 </div>
             </div>
 
