@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- 🎯 এসইও মেটা ট্যাগ (রোডম্যাপ অনুযায়ী) -->
+    <!-- 🎯 এসইও মেটা ট্যাগ (amar_bari_seo_roadmap.pdf অনুযায়ী) -->
     <title>আমার বাড়ি.কম | বাংলাদেশ ও খুলনায় ফ্ল্যাট, প্লট এবং বাড়ি কেনাবেচার সেরা মাধ্যম</title>
     <meta name="description" content="কোনো দালাল বা থার্ড-পার্টি কমিশন ছাড়াই সরাসরি মালিকের কাছ থেকে প্রপার্টি, ফ্ল্যাট, বাড়ি এবং জমি কিনুন বা ভাড়া নিন। খতিয়ান ও নকশা যাচাইকৃত নিরাপদ প্ল্যাটফর্ম।">
-    <meta name="keywords" content="আমার বাড়ি, প্রপার্টি কেনাবেচা, ফ্ল্যাট ভাড়া, জমি বিক্রি, খুলনায় বাড়ি, দালালমুক্ত রিয়েল এস্টেট, amarbari">
+    <meta name="keywords" content="আমার বাড়ি, প্রপার্টি কেনাবেচা, ফ্ল্যাট ভাড়া, জমি বিক্রি, খুলনায় বাড়ি, داলালমুক্ত রিয়েল এস্টেট, amarbari">
     
-    <!-- গুগল ফন্ট ও আইকন -->
+    <!-- গুগল ফন্ট ও আইকন (ফেসবুক স্টাইল মেটেরিয়াল ভাইব) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -37,7 +37,7 @@
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     </script>
 
-    <!-- 🌐 রিয়েল এস্টেট স্কিমা মার্কআপ (গুগল সার্চে ১ নম্বরে আসার জন্য) -->
+    <!-- 🌐 রিয়েল এস্টেট স্কিমা মার্কআপ -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -56,484 +56,358 @@
 
     <style>
         :root {
-            --primary: #007bff;
-            --primary-dark: #0056b3;
-            --success: #28a745;
-            --dark: #333333;
-            --gray-text: #666666;
-            --light-bg: #f8fafc;
-            --border-color: #eee;
+            --fb-blue: #1877f2;
+            --fb-bg: #f0f2f5;
+            --fb-card-bg: #ffffff;
+            --text-main: #050505;
+            --text-sub: #65676b;
+            --border-color: #ced0d4;
+            --success: #42b72a;
         }
 
         body {
             font-family: 'Hind Siliguri', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            padding-top: 60px;
-            background-color: #f1f5f9;
-            color: var(--dark);
+            padding-top: 56px;
+            background-color: var(--fb-bg);
+            color: var(--text-main);
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 15px;
+            padding: 0 8px;
         }
 
-        /* 📱 মেইন হেডার (ফিক্সড ও মোবাইল ফ্রেন্ডলি) */
-        .main-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
+        /* 🔵 ফেসবুক স্টাইল টপ নেভিগেশন বার */
+        .fb-header {
+            position: fixed; top: 0; left: 0; right: 0; height: 56px;
+            background-color: var(--fb-card-bg); box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            z-index: 1000; display: flex; align-items: center; border-bottom: 1px solid var(--border-color);
         }
 
-        .header-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
+        .header-content {
+            display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 16px;
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            flex-shrink: 1;
-            min-width: 0;
+        .header-left { display: flex; align-items: center; gap: 8px; }
+        .menu-btn { cursor: pointer; color: var(--text-sub); font-size: 28px; }
+        
+        .logo-fb {
+            font-size: 22px; font-weight: 800; color: var(--fb-blue);
+            text-decoration: none; display: flex; align-items: center; gap: 4px;
         }
 
-        .menu-icon {
-            cursor: pointer;
-            color: var(--dark);
-            margin-right: 8px;
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        
+        .fb-icon-circle {
+            background-color: #e4e6eb; width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            position: relative; text-decoration: none; color: var(--text-main);
+        }
+        .fb-icon-circle:hover { background-color: #d8dadf; }
+        .fb-badge {
+            position: absolute; top: -2px; right: -2px; background: #e41e3f; color: white;
+            border-radius: 50%; padding: 1px 6px; font-size: 11px; font-weight: bold; display: none;
         }
 
-        .logo-title {
-            display: flex;
-            align-items: center;
-            font-size: 1.4em;
-            font-weight: bold;
-            color: var(--primary);
-            text-decoration: none;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .fb-profile-pic {
+            width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+            cursor: pointer; border: 1px solid var(--border-color);
         }
 
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-shrink: 0;
-        }
-
-        .icon-wrapper {
-            position: relative;
-            display: inline-flex;
-            cursor: pointer;
-            align-items: center;
-            justify-content: center;
-            height: 32px;
-            width: 32px;
-        }
-
-        .notification-count {
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            background-color: red;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 5px;
-            font-size: 0.7em;
-            font-weight: bold;
-            display: none;
-        }
-
-        .notification-icon, .message-icon { color: var(--primary); }
-        .post-icon-header { color: var(--success); }
-
-        .profile-image-wrapper {
-            cursor: pointer;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 2px solid var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #profileImage { width: 100%; height: 100%; object-fit: cover; }
-
-        /* 🧭 সাইডবার ও ওভারলে */
+        /* 🧭 সাইডবার */
         .sidebar {
-            position: fixed;
-            top: 0;
-            left: -280px;
-            width: 280px;
-            height: 100%;
-            background: white;
-            box-shadow: 4px 0 12px rgba(0,0,0,0.15);
-            transition: left 0.3s ease;
-            z-index: 1050;
+            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
+            background: white; box-shadow: 4px 0 12px rgba(0,0,0,0.1);
+            transition: left 0.3s ease; z-index: 1050; padding-top: 10px;
         }
         .sidebar.active { left: 0; }
-        .sidebar nav { padding-top: 20px; display: flex; flex-direction: column; }
-        .sidebar nav a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 20px;
-            color: var(--dark);
-            text-decoration: none;
-            font-weight: 500;
-            border-bottom: 1px solid #f1f5f9;
+        .sidebar a {
+            display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+            color: var(--text-main); text-decoration: none; font-weight: 500;
         }
-        .sidebar nav a:hover { background: var(--light-bg); color: var(--primary); }
+        .sidebar a:hover { background: var(--fb-bg); }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; z-index: 1040; }
         .overlay.active { display: block; }
 
-        /* 🚀 প্রিমিয়াম হিরো সেকশন (এসইও ১ নম্বর টার্গেট) */
-        .hero-section {
-            background: linear-gradient(135deg, #0056b3 0%, #007bff 100%);
-            color: white;
-            padding: 40px 0;
-            text-align: center;
+        /* 🚀 হিরো এবং অ্যাডভান্সড সার্চ (হোমপেজ H1 অপ্টিমাইজেশন) */
+        .fb-hero {
+            background: var(--fb-card-bg); padding: 20px 16px; margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color); border-radius: 0 0 8px 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
-        .seo-main-title {
-            font-size: 24px;
-            margin: 0 0 10px 0;
-            font-weight: 700;
-            line-height: 1.3;
+        .seo-h1 {
+            font-size: 20px; font-weight: 700; margin: 0 0 16px 0; text-align: center; color: var(--text-main);
         }
 
-        .hero-section p {
-            font-size: 14px;
-            margin: 0 0 25px 0;
-            color: #e3f2fd;
+        /* ফেসবুক ফিড স্টাইল সার্চ বার */
+        .fb-search-box {
+            background: var(--fb-bg); padding: 12px; border-radius: 20px;
+            display: grid; grid-template-columns: 1fr; gap: 8px; max-width: 680px; margin: 0 auto;
+        }
+        .fb-search-box select, .fb-search-box input {
+            background: white; border: 1px solid var(--border-color); padding: 10px 16px;
+            border-radius: 20px; font-family: inherit; font-size: 14px; outline: none;
+        }
+        .fb-search-btn {
+            background: var(--fb-blue); color: white; border: none; padding: 10px;
+            border-radius: 20px; font-weight: bold; font-size: 15px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
         }
 
-        /* 🔍 অ্যাডভান্সড সার্চ ইঞ্জিন লেআউট */
-        .advanced-search-box {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            max-width: 950px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
+        /* 📑 ট্যাব ফিল্টার */
+        .fb-tabs {
+            display: flex; background: var(--fb-card-bg); border-bottom: 1px solid var(--border-color);
+            margin-bottom: 16px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow: hidden;
+        }
+        .fb-tab-btn {
+            flex: 1; padding: 14px; border: none; background: none; cursor: pointer;
+            font-family: inherit; font-weight: bold; font-size: 15px; color: var(--text-sub);
+            display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
+        }
+        .fb-tab-btn.active { color: var(--fb-blue); border-bottom: 3px solid var(--fb-blue); background: rgba(24, 119, 242, 0.05); }
+
+        /* 👥 ৩ কলাম লেআউট (মোবাইল, ট্যাবলেট ও ডেক্সটপ আলাদা করতে) */
+        .main-layout { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+        /* 📱 ফেসবুক স্টাইল প্রোপার্টি কার্ড ডিজাইন */
+        .fb-feed-card {
+            background: var(--fb-card-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; text-decoration: none; color: inherit;
         }
 
-        .search-field {
-            display: flex;
-            flex-direction: column;
-            text-align: left;
+        /* কার্ড হেডার (ইউজার ইনফো ভাইব) */
+        .card-author-header {
+            padding: 12px; display: flex; align-items: center; justify-content: space-between;
         }
-
-        .search-field label {
-            font-size: 11px;
-            color: #777;
-            margin-bottom: 4px;
-            font-weight: bold;
+        .author-info { display: flex; align-items: center; gap: 10px; }
+        .author-avatar {
+            width: 40px; height: 40px; border-radius: 50%; background: #e4e6eb;
+            display: flex; align-items: center; justify-content: center; color: var(--fb-blue);
         }
+        .author-meta h4 { margin: 0; font-size: 15px; font-weight: 600; color: var(--text-main); }
+        .author-meta p { margin: 2px 0 0 0; font-size: 12px; color: var(--text-sub); display: flex; align-items: center; gap: 4px; }
 
-        .search-field select, .search-field input {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 14px;
-            outline: none;
-            color: var(--dark);
-        }
+        .badge-verified { background: var(--success); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge-category { background: var(--fb-blue); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
 
-        .btn-search {
-            background: var(--success);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            height: 42px;
-            margin-top: 15px;
-        }
+        /* পোস্ট ডেসক্রিপশন টেক্সট */
+        .card-body-text { padding: 0 12px 12px 12px; font-size: 14px; line-height: 1.5; color: var(--text-main); }
 
-        /* 🧭 নেভিগেশন ফিল্টার ক্যাটাগরি */
-        .nav-filters {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .nav-button {
-            padding: 10px 18px;
-            border: 1px solid #ddd;
-            background: white;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: bold;
-            font-family: inherit;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 14px;
-        }
-
-        .nav-button.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        /* 📋 প্রোপার্টি গ্রিড রেসপন্সিভনেস (মোবাইল, ট্যাবলেট, ডেক্সটপ আলাদা লেআউট) */
-        .property-grid {
-            display: grid;
-            gap: 20px;
-            padding: 10px 0 30px;
-        }
-
-        .property-card {
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-            background-color: white;
-            position: relative;
-            transition: transform 0.2s;
-        }
-
-        .property-card:hover { transform: translateY(-4px); }
-
-        .property-image-container { position: relative; height: 180px; overflow: hidden; }
-        .image-slider { width: 100%; height: 100%; background-size: cover; background-position: center; position: relative; }
-        .slider-item { width: 100%; height: 100%; background-size: cover; background-position: center; position: absolute; top:0; left:0; }
+        /* বড় ইমেজ স্লাইডার মিডিয়া সেকশন */
+        .card-media-section { position: relative; height: 260px; background: #000; overflow: hidden; }
+        .fb-slider { width: 100%; height: 100%; position: relative; }
+        .fb-slide-item { width: 100%; height: 100%; background-size: cover; background-position: center; position: absolute; top:0; left:0; }
         
-        .slider-nav-btn {
+        .fb-slider-btn {
             position: absolute; top: 50%; transform: translateY(-50%);
-            background: rgba(0,0,0,0.4); color: white; border: none; padding: 6px 9px;
-            cursor: pointer; font-size: 14px; border-radius: 3px; z-index: 5;
+            background: rgba(0,0,0,0.5); color: white; border: none; width: 36px; height: 36px;
+            border-radius: 50%; cursor: pointer; font-size: 18px; z-index: 5; display: flex; align-items: center; justify-content: center;
         }
-        .prev-btn { left: 8px; } .next-btn { right: 8px; }
+        .fb-prev { left: 12px; } .fb-next { right: 12px; }
 
-        .property-category {
-            position: absolute; top: 10px; right: 10px;
-            background-color: var(--primary); color: white;
-            padding: 3px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; z-index: 4;
-        }
-
-        .verified-badge {
-            position: absolute; top: 10px; left: 10px;
-            background-color: var(--success); color: white;
-            padding: 3px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; z-index: 4;
-            display: flex; align-items: center; gap: 2px;
+        .price-tag-overlay {
+            position: absolute; bottom: 12px; right: 12px; background: rgba(0, 0, 0, 0.75);
+            color: #fff; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 16px; z-index: 4;
         }
 
-        .property-details { padding: 12px; display: flex; flex-direction: column; flex-grow: 1; }
-        .property-title { font-size: 1.1em; margin: 0 0 8px 0; color: #222; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .property-location { display: flex; align-items: center; color: var(--gray-text); font-size: 0.85em; margin-bottom: 8px; }
-        .property-location .location-icon { font-size: 16px; margin-right: 2px; color: var(--primary); }
-        .property-specs { display: flex; gap: 12px; margin-bottom: 8px; color: #555; font-size: 0.85em; }
-        .property-specs span { display: flex; align-items: center; gap: 2px; }
-        .property-specs .material-icons { font-size: 16px; color: var(--primary); }
-        .property-price { font-size: 1.2em; font-weight: bold; color: var(--success); margin-top: auto; padding-top: 8px; border-top: 1px solid #f1f5f9; }
-
-        /* 📝 এসইও বাংলা টেক্সট কন্টেন্ট সেকশন (রোডম্যাপের গুরুত্বপূর্ণ শর্ত) */
-        .seo-content-section {
-            background-color: white;
-            padding: 25px;
-            border-radius: 12px;
-            margin: 30px 0;
-            border: 1px solid var(--border-color);
+        /* রিয়্যাক্ট অ্যান্ড কমেন্ট কাউন্টার */
+        .fb-stats-bar {
+            padding: 10px 12px; display: flex; justify-content: space-between;
+            font-size: 13px; color: var(--text-sub); border-bottom: 1px solid #f2f3f5;
         }
-        .seo-content-section h3 { color: var(--primary); margin-top: 0; }
-        .seo-content-section p { font-size: 14px; line-height: 1.6; color: #444; text-align: justify; }
+        .fb-reactions { display: flex; align-items: center; gap: 4px; }
+        .fb-react-icon { background: var(--fb-blue); color: white; border-radius: 50%; font-size: 14px; padding: 2px; }
 
-        /* 💳 ফুটার */
-        .footer { background: #1a202c; color: #a0aec0; padding: 20px 0; text-align: center; font-size: 14px; }
+        /* ফেসবুক অ্যাকশন বাটন গ্রুপ */
+        .fb-action-buttons {
+            display: flex; padding: 4px; border-top: 1px solid #f2f3f5;
+        }
+        .fb-action-btn {
+            flex: 1; padding: 10px; border: none; background: none; cursor: pointer;
+            font-family: inherit; font-size: 14px; font-weight: 600; color: var(--text-sub);
+            display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 4px;
+        }
+        .fb-action-btn:hover { background-color: var(--fb-bg); }
+        .fb-action-btn.liked { color: var(--fb-blue); }
+
+        /* 📝 এসইও বাংলা কন্টেন্ট */
+        .fb-seo-section { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin: 20px 0; }
+        .fb-seo-section h3 { margin-top: 0; color: var(--fb-blue); }
+        .fb-seo-section p { font-size: 14px; line-height: 1.6; color: #444; text-align: justify; }
+
+        /* ফুটার */
+        .fb-footer { background: white; border-top: 1px solid var(--border-color); padding: 16px 0; text-align: center; font-size: 13px; color: var(--text-sub); }
 
         /* ==========================================================================
-           💻 মিডিয়া কুয়েরি: মোবাইল, ট্যাবলেট এবং ডেক্সটপ আলাদা ইন্টারফেস ফিক্স
+           💻 মিডিয়া কুয়েরি: মোবাইল, ট্যাবলেট এবং ডেক্সটপ কমপ্লিট ফেসবুক লেআউট
            ========================================================================== */
         
-        /* 📱 ১. মোবাইল ভিউ (Up to 599px) */
-        @media (max-width: 599px) {
-            .logo-title { font-size: 1.2em; }
-            .hero-section { padding: 25px 0; }
-            .seo-main-title { font-size: 20px; }
-            .advanced-search-box { padding: 12px; }
-            .btn-search { margin-top: 5px; }
-            .property-grid { grid-template-columns: 1fr; } /* একক কলাম */
-            .nav-button { padding: 8px 14px; font-size: 13px; }
+        /* 📱 ১. মোবাইল স্ক্রিন (Up to 767px) */
+        @media (max-width: 767px) {
+            .main-layout { grid-template-columns: 1fr; }
+            .fb-search-box { padding: 8px; border-radius: 12px; }
+            .card-media-section { height: 220px; }
         }
 
-        /* 📑 ২. ট্যাবলেট ভিউ (600px থেকে 1023px) */
-        @media (min-width: 600px) and (max-width: 1023px) {
-            .seo-main-title { font-size: 26px; }
-            .advanced-search-box { grid-template-columns: repeat(2, 1fr); padding: 20px; } /* দুই কলাম */
-            .btn-search { grid-column: span 2; margin-top: 10px; }
-            .property-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; } /* ২ কলাম গ্রিড */
+        /* 📑 ২. ট্যাবলেট স্ক্রিন (768px থেকে 1099px) */
+        @media (min-width: 768px) and (max-width: 1099px) {
+            .fb-search-box { grid-template-columns: repeat(3, 1fr); border-radius: 30px; }
+            .fb-search-btn { grid-column: span 3; }
+            .main-layout { grid-template-columns: 1fr; max-width: 680px; margin: 0 auto; } /* ফিড সেন্ট্রালাইজড */
+            .seo-h1 { font-size: 24px; }
         }
 
-        /* 💻 ৩. ডেক্সটপ ভিউ (1024px এবং তার উপরে) */
-        @media (min-width: 1024px) {
-            .seo-main-title { font-size: 32px; }
-            .advanced-search-box { grid-template-columns: repeat(3, 1fr) auto; align-items: end; padding: 20px; } /* ফুল ওয়াইড এক লাইনে */
-            .btn-search { margin-top: 0; height: 42px; padding: 0 25px; }
-            .property-grid { grid-template-columns: repeat(3, 1fr); gap: 25px; } /* ৩ কলাম প্রিমিয়াম লেআউট */
+        /* 💻 ৩. প্রফেশনাল ডেক্সটপ স্ক্রিন (1100px এবং তার উপরে) */
+        @media (min-width: 1100px) {
+            .seo-h1 { font-size: 26px; }
+            .fb-search-box { grid-template-columns: repeat(3, 1fr) auto; border-radius: 40px; max-width: 900px; }
+            /* ৩ কলাম বিশিষ্ট রিয়াল ফেসবুক গ্রিড লেআউট */
+            .main-layout { grid-template-columns: 280px 1fr 300px; gap: 24px; }
+            
+            .left-sidebar-panel { display: block; }
+            .right-widgets-panel { display: block; }
+            .card-media-section { height: 320px; }
         }
+
+        /* ডেক্সটপ প্যানেল হাইড ট্রিক */
+        .left-sidebar-panel, .right-widgets-panel { display: none; }
+        .widget-card { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .widget-card h5 { margin: 0 0 12px 0; font-size: 16px; color: var(--text-sub); }
+        .widget-link { display: flex; align-items: center; gap: 10px; padding: 8px; text-decoration: none; color: var(--text-main); font-weight: 500; border-radius: 6px; }
+        .widget-link:hover { background: #e4e6eb; }
     </style>
 </head>
 <body>
 
-    <!-- ১. মেইন হেডার -->
-    <header class="main-header">
-        <div class="container header-top">
+    <!-- ১. ফেসবুক স্টাইল হেডার -->
+    <header class="fb-header">
+        <div class="header-content">
             <div class="header-left">
-                <i class="material-icons menu-icon" id="menuButton">menu</i>
-                <a href="index.html" class="logo-title">
-                    <i class="material-icons" style="vertical-align: middle; margin-right: 4px;">home</i>আমার বাড়ি.কম
+                <i class="material-icons menu-btn" id="menuButton">menu</i>
+                <a href="index.html" class="logo-fb">
+                    <i class="material-icons" style="font-size: 32px;">facebook</i>আমার বাড়ি
                 </a>
             </div>
             
             <div class="header-actions">
-                <div class="icon-wrapper" id="notificationButton">
-                    <i class="material-icons notification-icon">notifications_none</i>
-                    <span class="notification-count" id="notification-count">0</span>
+                <a href="post.html" class="fb-icon-circle" title="প্রপার্টি পোস্ট">
+                    <i class="material-icons" style="color: var(--success);">add_circle</i>
+                </a>
+                <div class="fb-icon-circle" id="messageButton" title="মেসেজ">
+                    <i class="material-icons">chat</i>
+                    <span class="fb-badge" id="message-count">0</span>
                 </div>
-                <div class="icon-wrapper" id="headerPostButton">
-                    <i class="material-icons post-icon-header">add_circle_outline</i>
-                    <span class="notification-count" id="post-count" style="background-color: var(--success);">0</span>
+                <div class="fb-icon-circle" id="notificationButton" title="নোটিফিকেশন">
+                    <i class="material-icons">notifications</i>
+                    <span class="fb-badge" id="notification-count">0</span>
                 </div>
-                <div class="icon-wrapper" id="messageButton">
-                    <i class="material-icons message-icon">chat_bubble_outline</i>
-                    <span class="notification-count" id="message-count">0</span>
-                </div>
-                <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <img id="profileImage" src="" alt="Profile" style="display: none;">
-                    <i class="material-icons" id="defaultProfileIcon" style="font-size: 30px; color: var(--gray-text);">account_circle</i>
-                </div>
+                <img id="profileImage" class="fb-profile-pic" src="https://via.placeholder.com/40px" alt="Profile" style="display:none;">
+                <i class="material-icons" id="defaultProfileIcon" style="font-size: 40px; color: var(--text-sub); cursor:pointer;">account_circle</i>
             </div>
         </div>
     </header>
 
-    <!-- ২. সাইডবার -->
+    <!-- ২. বাম পাশের মোবাইল স্লাইডিং সাইডবার -->
     <div class="sidebar" id="sidebar">
-        <nav>
-            <a href="index.html" style="background: var(--light-bg); font-weight: bold; color: var(--primary);">
-                <i class="material-icons">dashboard</i> ড্যাশবোর্ড
-            </a>
-            <a href="post.html"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            <a href="tips.html"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
-            <a href="privacy.html"><i class="material-icons">security</i> প্রাইভেসি পলیسی</a> 
-            <a href="about.html"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html"><i class="material-icons">mail</i> যোগাযোগ</a>
-            <a href="auth.html" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-        </nav>
+        <a href="index.html" style="background: var(--fb-bg); font-weight: bold; color: var(--fb-blue); border-radius: 8px; margin: 4px 8px;">
+            <i class="material-icons">feed</i> নিউজ ফিড
+        </a>
+        <a href="post.html"><i class="material-icons">add_business</i> প্রপার্টি পোস্ট করুন</a>
+        <a href="tips.html"><i class="material-icons">sticky_note_2</i> আবাসন গাইডলাইন</a>
+        <a href="privacy.html"><i class="material-icons">verified_user</i> সিকিউরিটি ও প্রাইভেসি</a> 
+        <a href="auth.html" id="login-link-sidebar"><i class="material-icons">login</i> অ্যাকাউন্ট লগইন</a>
     </div>
     <div class="overlay" id="overlay"></div>
 
-    <!-- ৩. হিরো ব্যানার এবং অ্যাডভান্সড সার্চ সেকশন (এসইও ফোকাসড) -->
-    <section class="hero-section">
-        <div class="container">
-            <!-- রোডম্যাপের একমাত্র H1 শর্ত বাস্তবায়ন -->
-            <h1 class="seo-main-title">খুলনা ও বাংলাদেশে ফ্ল্যাট, প্লট এবং বাড়ি কেনাবেচার সেরা মাধ্যম - আমার বাড়ি.কম</h1>
-            <p>দালালমুক্ত, নিরাপদ এবং সরাসরি মালিকের সাথে যোগাযোগের একমাত্র নির্ভরযোগ্য আবাসন পোর্টাল</p>
+    <div class="container">
+        <!-- ৩. হিরো অ্যান্ড সার্চ প্যানেল -->
+        <section class="fb-hero">
+            <h1 class="seo-h1">খুলনা ও বাংলাদেশে ফ্ল্যাট, প্লট এবং বাড়ি কেনাবেচার সেরা মাধ্যম - আমার বাড়ি.কম</h1>
             
-            <div class="advanced-search-box">
-                <div class="search-field">
-                    <label>ক্যাটাগরি টাইপ</label>
-                    <select id="filterType">
-                        <option value="">সব ধরনের প্রপার্টি</option>
-                        <option value="বাড়ি">বাড়ি (House)</option>
-                        <option value="ফ্ল্যাট">ফ্ল্যাট (Apartment)</option>
-                        <option value="জমি">জমি (Land)</option>
-                        <option value="দোকান">বাণিজ্যিক স্পেস</option>
-                    </select>
-                </div>
-                <div class="search-field">
-                    <label>বিভাগ সিলেক্ট করুন</label>
-                    <select id="filterDivision">
-                        <option value="">সব বিভাগ</option>
-                        <option value="খুলনা">খুলনা</option>
-                        <option value="ঢাকা">ঢাকা</option>
-                        <option value="চট্টগ্রাম">চট্টগ্রাম</option>
-                    </select>
-                </div>
-                <div class="search-field">
-                    <label>অনুসন্ধান করুন</label>
-                    <input type="text" id="globalSearchInput" placeholder="শহর, এলাকা বা প্রপার্টির নাম...">
-                </div>
-                <button class="btn-search" id="btnAdvancedSearch">
-                    <i class="material-icons">search</i> খুঁজুন
+            <div class="fb-search-box">
+                <select id="filterType">
+                    <option value="">সব ধরনের আবাসন</option>
+                    <option value="বাড়ি">বাড়ি (House)</option>
+                    <option value="ফ্ল্যাট">ফ্ল্যাট (Apartment)</option>
+                    <option value="জমি">জমি (Land)</option>
+                </select>
+                <select id="filterDivision">
+                    <option value="">সব বিভাগ</option>
+                    <option value="খুলনা">খুলনা</option>
+                    <option value="ঢাকা">ঢাকা</option>
+                    <option value="চট্টগ্রাম">চট্টগ্রাম</option>
+                </select>
+                <input type="text" id="globalSearchInput" placeholder="এখানে এলাকা বা জেলা সার্চ করুন...">
+                <button class="fb-search-btn" id="btnAdvancedSearch">
+                    <i class="material-icons">search</i> ফিড ফিল্টার
                 </button>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ৪. ক্যাটাগরি ফিল্টার এবং ম্যাপ টগল বাটন -->
-    <div class="container">
-        <div class="nav-filters">
-            <button class="nav-button active" data-category="বিক্রয়">
-                <i class="material-icons">sell</i> বিক্রয়
-            </button>
-            <button class="nav-button" data-category="ভাড়া">
-                <i class="material-icons">storefront</i> ভাড়া
-            </button>
-            <button class="nav-button" id="mapViewToggleBtn">
-                <i class="material-icons">map</i> ম্যাপ ভিউ
-            </button>
-        </div>
-
-        <!-- ৫. মেইন কন্টেন্ট বডি -->
-        <main class="main-content">
-            <!-- প্রপার্টি লিস্ট গ্রিড সেকশন -->
-            <section id="property-grid-container" style="display: block;">
-                <div class="property-grid"></div>
-            </section>
-
-            <!-- ম্যাপ ভিউ সেকশন -->
-            <section id="map-section" style="display: none;">
-                <h2 style="font-size: 1.4em; margin-bottom: 15px;">📍 প্রপার্টি ম্যাপ লোকেশন ভিউ</h2>
-                <div id="map-container" style="height: 500px; width: 100%; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                    <p style="text-align: center; padding-top: 230px; color: var(--gray-text);">ম্যাপ লোড হচ্ছে...</p>
+        <!-- ৪. ফেসবুক মেইন ৩-কলাম লেআউট ফিল্ড -->
+        <div class="main-layout">
+            
+            <!-- ক) ডেক্সটপ বাম প্যানেল (শর্টকাট লিংকস) -->
+            <aside class="left-sidebar-panel">
+                <div class="widget-card" style="border:none; background:transparent; padding:0;">
+                    <a href="index.html" class="widget-link" style="background: #e4e6eb;"><i class="material-icons" style="color:var(--fb-blue)">feed</i>আজকের ফিড</a>
+                    <a href="post.html" class="widget-link"><i class="material-icons" style="color:var(--success)">add_business</i>প্রপার্টি আপলোড</a>
+                    <a href="tips.html" class="widget-link"><i class="material-icons" style="color:#f5bb41">lightbulb</i>আইনি পরামর্শ</a>
                 </div>
-            </section>
-        </main>
+            </aside>
 
-        <!-- 📝 ৬. টেক্সট কন্টেন্ট সেকশন (এসইও ক্রলারের রেটিং বাড়াতে) -->
-        <section class="seo-content-section">
-            <h3>আমার বাড়ি.কম - আপনার নির্ভরযোগ্য আবাসন পার্টনার</h3>
-            <p>বর্তমান ডিজিটাল যুগে সঠিক ও ঝামেলামুক্ত উপায়ে নিজের জন্য একটি আবাসন বা প্রপার্টি খুঁজে নেওয়া বেশ কঠিন। "আমার বাড়ি.কম" আপনাকে দিচ্ছে কোনো দালাল বা মধ্যস্বত্বভোগী ছাড়াই সরাসরি প্রপার্টি মালিকের সাথে যোগাযোগের এক অনন্য সুযোগ। এখানে আপনি খুলনা বিভাগসহ বাংলাদেশের যেকোনো প্রান্তের জমি, ফ্ল্যাট, কমার্শিয়াল স্পেস বা স্বাধীন বাড়ি কেনাবেচা ও ভাড়া নেওয়ার ডাইনামিক লাইভ লিস্টিং দেখতে পাবেন। আমাদের বিশেষত্ব হলো বিজ্ঞাপনের স্বচ্ছতা—যেখানে প্রপার্টির বাহ্যিক রূপের পাশাপাশি আইনি মালিকানা নিশ্চিত করতে খতিয়ান এবং স্কেচ বা ভূমির নকশা সরাসরি দেখার ফিচার যুক্ত রয়েছে। নিরাপদ ও কমিশনমুক্ত আবাসন গড়ার এই যাত্রায় আমাদের সাথেই থাকুন।</p>
+            <!-- খ) মাঝখানের মেইন নিউজ ফিড (প্রোপার্টি কার্ডসমূহ) -->
+            <main class="center-feed-panel">
+                <div class="fb-tabs">
+                    <button class="fb-tab-btn active" data-category="বিক্রয়">
+                        <i class="material-icons">shopping_bag</i> বিক্রির জন্য পোস্ট
+                    </button>
+                    <button class="fb-tab-btn" data-category="ভাড়া">
+                        <i class="material-icons">hotel</i> ভাড়ার জন্য পোস্ট
+                    </button>
+                    <button class="fb-tab-btn" id="mapViewToggleBtn">
+                        <i class="material-icons">pin_drop</i> ম্যাপে দেখুন
+                    </button>
+                </div>
+
+                <!-- ফিড কনটেইনার -->
+                <div id="property-grid-container">
+                    <div class="property-grid"></div>
+                </div>
+
+                <!-- ম্যাপ ভিউ কনটেইনার -->
+                <div id="map-section" style="display: none;">
+                    <div id="map-container" style="height: 480px; width: 100%; border-radius: 8px; border: 1px solid var(--border-color);"></div>
+                </div>
+            </main>
+
+            <!-- গ) ডেক্সটপ ডান প্যানেল (বিজ্ঞপ্তি বা সাজেস্টেড উইজেট) -->
+            <aside class="right-widgets-panel">
+                <div class="widget-card">
+                    <h5>📢 নিরাপদ আবাসন বার্তা</h5>
+                    <p style="font-size:13px; color:var(--text-sub); margin:0; line-height:1.4;">যে কোনো প্রপার্টি ক্রয়ের পূর্বে অবশ্যই ফিজিক্যালি কাগজ স্কেচ এবং মূল মালিকের খতিয়ান ডাবল চেক করে নিন। আমার বাড়ি.কম কোনো থার্ড পার্টি কমিশন নেয় না।</p>
+                </div>
+            </aside>
+        </div>
+
+        <!-- 📝 ৫. টেক্সট কন্টেন্ট সেকশন (গুগল এসইও-র জন্য ৫০০-৮০০ শব্দ) -->
+        <section class="fb-seo-section">
+            <h3>আমার বাড়ি.কম - দালালি মুক্ত বাংলাদেশের একমাত্র আবাসন সামাজিক মাধ্যম</h3>
+            <p>বর্তমান ডিজিটাল যুগে সঠিক ও ঝামেলামুক্ত উপায়ে নিজের জন্য একটি আবাসন বা প্রপার্টি খুঁজে নেওয়া বেশ कठिन। "আমার বাড়ি.কম" আপনাকে দিচ্ছে কোনো দালাল বা মধ্যস্বত্বভোগী ছাড়াই সরাসরি প্রপার্টি মালিকের সাথে যোগাযোগের এক অনন্য সুযোগ। এখানে আপনি খুলনা বিভাগসহ বাংলাদেশের যেকোনো প্রান্তের জমি, ফ্ল্যাট, কমার্শিয়াল স্পেস বা স্বাধীন বাড়ি কেনাবেচা ও ভাড়া নেওয়ার ডাইনামিক লাইভ লিস্টিং দেখতে পাবেন। আমাদের বিশেষত্ব হলো বিজ্ঞাপনের স্বচ্ছতা—যেখানে প্রপার্টির বাহ্যিক রূপের পাশাপাশি আইনি মালিকানা নিশ্চিত করতে খতিয়ান এবং স্কেচ বা ভূমির নকশা সরাসরি দেখার ফিচার যুক্ত রয়েছে। নিরাপদ ও commission-মুক্ত আবাসন গড়ার এই যাত্রায় আমাদের সাথেই থাকুন।</p>
         </section>
     </div>
 
-    <!-- ৭. ফুটার -->
-    <footer class="footer">
+    <!-- ফুটার -->
+    <footer class="fb-footer">
         <div class="container">
-            <p>&copy; 2026 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত। আইনি স্বচ্ছতায় দালালমুক্ত আবাসন প্ল্যাটফর্ম।</p>
+            <p>&copy; 2026 আমার বাড়ি.কম। ফেসবুক স্টাইল আবাসন পোর্টাল। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
 
     <script src="index.js"></script>
 </body>
-        </html>
+    </html>
