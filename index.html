@@ -4,12 +4,10 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     
-    <!-- 🎯 এসইও মেটা ট্যাগ (amar_bari_seo_roadmap.pdf অনুযায়ী) -->
     <title id="page-title">আমার বাড়ি.কম | বাংলাদেশ ও খুলনায় ফ্ল্যাট, প্লট এবং বাড়ি কেনাবেচার সেরা মাধ্যম</title>
     <meta name="description" content="কোনো দালাল বা থার্ড-পার্টি কমিশন ছাড়াই সরাসরি মালিকের কাছ থেকে প্রপার্টি, ফ্ল্যাট, বাড়ি এবং জমি কিনুন বা ভাড়া নিন। খতিয়ান ও নকশা যাচাইকৃত নিরাপদ প্ল্যাটফর্ম।"/>
     <meta name="keywords" content="আমার বাড়ি, প্রপার্টি কেনাবেচা, ফ্ল্যাট ভাড়া, জমি বিক্রি, খুলনায় বাড়ি, দালালমুক্ত রিয়েল এস্টেট, amarbari"/>
     
-    <!-- 🏢 রিয়াল এস্টেট স্কিমা মার্কআপ (Schema.org / JSON-LD) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -26,17 +24,14 @@
     }
     </script>
 
-    <!-- গুগল ফন্ট ও আইকন -->
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/> 
     
-    <!-- Leaflet Map CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Firebase SDKs (v8) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -58,16 +53,13 @@
 </head>
 <body>
 
-    <!-- 🌐 হেডার ও নেভিগেশন (H1 অপ্টিমাইজেশন সহ) -->
     <header class="main-header">
         <div class="header-container">
             <button id="menuButton" class="icon-btn"><i class="material-icons">menu</i></button>
             <div class="brand-seo">
-                <!-- 🎯 SEO H1 Optimization: One single H1 tag for the brand and target keywords -->
                 <h1 id="main-heading" class="seo-h1">খুলনা ও বাংলাদেশে ফ্ল্যাট, প্লট এবং বাড়ি কেনাবেচার সেরা মাধ্যম - আমার বাড়ি.কম</h1>
             </div>
             
-            <!-- 🌐 ভাষা পরিবর্তনকারী (Language Switcher Dropdown) -->
             <div class="lang-switcher">
                 <select id="langSelect" class="lang-dropdown">
                     <option value="bn" selected>বাংলা (BN)</option>
@@ -75,7 +67,6 @@
                 </select>
             </div>
 
-            <!-- সার্চ বার -->
             <div class="search-container">
                 <input type="text" id="globalSearchInput" placeholder="প্রপার্টি খুঁজুন (যেমন: খুলনা, ফ্ল্যাট)..."/>
                 <button id="searchBtn"><i class="material-icons">search</i></button>
@@ -93,19 +84,17 @@
         </div>
     </header>
 
-    <!-- ক্যাটাগরি ফিল্টার নেভিগেশন বার -->
     <nav class="nav-filters">
         <button class="nav-button active" data-category="বিক্রয়" id="btn-sale">বিক্রয়</button>
         <button class="nav-button" data-category="ভাড়া" id="btn-rent">ভাড়া</button>
         <button class="nav-button" id="btn-map-toggle"><i class="material-icons">map</i> <span id="txt-map">ম্যাপ ভিউ</span></button>
     </nav>
 
-    <!-- সাইডবার (Sidebar) -->
     <div class="sidebar" id="sidebar">
         <nav class="sidebar-nav">
             <a href="#" id="side-home"><i class="material-icons">home</i> হোমপেজ</a>
             <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
-            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a> 
+            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">verified_user</i> সিকিউরিটি ও প্রাইভেসি</a> 
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
             <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
             <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
@@ -114,10 +103,8 @@
 
     <div class="overlay" id="overlay"></div>
 
-    <!-- মূল কন্টেন্ট এরিয়া -->
     <main class="main-content container">
         
-        <!-- 🗺️ ম্যাপ সেকশন -->
         <section id="map-section" style="display: none;">
             <h2 id="map-title">📍 প্রপার্টি ম্যাপ ভিউ</h2>
             <div id="map-container" style="height: 500px; width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
@@ -125,41 +112,34 @@
             </div>
         </section>
 
-        <!-- 📦 প্রপার্টি ডাইনামিক সেকশন (৩টি ক্যাটাগরি রোডম্যাপ অনুযায়ী) -->
         <section id="property-grid-container" style="display: block;">
             
-            <!-- ১. সাম্প্রতিক প্রপার্টিসমূহ (Recent Properties) -->
-            <div class="section-block">
-                <h2 class="section-title" id="title-recent">🆕 সাম্প্রতিক প্রপার্টিসমূহ (Recent Properties)</h2>
-                <div class="property-grid" id="recent-grid">
-                    <!-- জাভাস্ক্রিপ্ট এর মাধ্যমে কার্ড পুশ হবে -->
-                </div>
+            <div class=\"section-block\">
+                <h2 class=\"section-title\" id=\"title-recent\">🆕 সাম্প্রতিক প্রপার্টিসমূহ (Recent Properties)</h2>
+                <div class=\"property-grid\" id=\"recent-grid\">
+                    </div>
             </div>
 
-            <!-- ২. ভেরিফাইড ও জনপ্রিয় প্রপার্টি (Featured Properties) -->
             <div class="section-block" style="margin-top: 30px;">
-                <h2 class="section-title" id="title-featured">⭐ জনপ্রিয় ও ভেরিফাইড প্রপার্টি (Featured Properties)</h2>
-                <div class="property-grid" id="featured-grid">
-                    <!-- জাভাস্ক্রিপ্ট এর মাধ্যমে কার্ড পুশ হবে -->
-                </div>
+                <h2 class=\"section-title\" id=\"title-featured\">⭐ জনপ্রিয় ও ভেরিফাইড প্রপার্টি (Featured Properties)</h2>
+                <div class=\"property-grid\" id=\"featured-grid\">
+                    </div>
             </div>
 
-            <!-- ৩. লোকেশন ভিত্তিক দ্রুত লিংক সেকশন -->
-            <div class="section-block" style="margin-top: 30px;">
-                <h2 class="section-title" id="title-locations">📍 প্রধান লোকেশন ভিত্তিক লিস্টিং</h2>
-                <div class="location-tags" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-                    <button class="loc-tag-btn" data-loc="Khulna">খুলনা (Khulna)</button>
-                    <button class="loc-tag-btn" data-loc="Dhaka">ঢাকা (Dhaka)</button>
-                    <button class="loc-tag-btn" data-loc="Chattogram">চট্টগ্রাম (Chattogram)</button>
-                    <button class="loc-tag-btn" data-loc="Sylhet">সিলেট (Sylhet)</button>
+            <div class=\"section-block\" style=\"margin-top: 30px;\">
+                <h2 class=\"section-title\" id=\"title-locations\">📍 প্রধান লোকেশন ভিত্তিক লিস্টিং</h2>
+                <div class=\"location-tags\" style=\"display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;\">
+                    <button class=\"loc-tag-btn\" data-loc=\"Khulna\">খুলনা (Khulna)</button>
+                    <button class=\"loc-tag-btn\" data-loc=\"Dhaka\">ঢাকা (Dhaka)</button>
+                    <button class=\"loc-tag-btn\" data-loc=\"Chattogram\">চট্টগ্রাম (Chattogram)</button>
+                    <button class=\"loc-tag-btn\" data-loc=\"Sylhet\">সিলেট (Sylhet)</button>
                 </div>
             </div>
 
         </section>
 
-        <!-- 📝 ৫. টেক্সট কন্টেন্ট সেকশন (গুগল এসইও-র জন্য ৫০০-৮০০ শব্দ) -->
         <section class="fb-seo-section" style="margin-top: 40px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-            <h3 id="seo-title">আমার বাড়ি.কম - দالاলি মুক্ত বাংলাদেশের একমাত্র আবাসন সামাজিক মাধ্যম</h3>
+            <h3 id="seo-title">আমার বাড়ি.কম - দালালি মুক্ত বাংলাদেশের একমাত্র আবাসন সামাজিক মাধ্যম</h3>
             <div id="seo-body" style="line-height: 1.8; color: #444; font-size: 14px; text-align: justify;">
                 <p>বর্তমান ডিজিটাল যুগে সঠিক ও ঝামেলামুক্ত উপায়ে নিজের জন্য একটি আবাসন বা প্রপার্টি খুঁজে নেওয়া বেশ কঠিন। "আমার বাড়ি.কম" আপনাকে দিচ্ছে কোনো দালাল বা মধ্যস্বত্বভোগী ছাড়াই সরাসরি প্রপার্টি মালিকের সাথে যোগাযোগের এক অনন্য সুযোগ। এখানে আপনি খুলনা বিভাগসহ বাংলাদেশের যেকোনো প্রান্তের জমি, ফ্ল্যাট, কমার্শিয়াল স্পেস বা স্বাধীন বাড়ি কেনাবেচা ও ভাড়া নেওয়ার ডাইনামিক লাইভ লিস্টিং দেখতে পাবেন। আমাদের বিশেষত্ব হলো বিজ্ঞাপনের স্বচ্ছতা—যেখানে প্রপার্টির বাহ্যিক রূপের পাশাপাশি আইনি মালিকানা নিশ্চিত করতে খতিয়ান এবং স্কেচ বা ভূমির নকশা সরাসরি দেখার ফিচার যুক্ত রয়েছে। নিরাপদ ও commission-মুক্ত আবাসন গড়ার এই যাত্রায় আমাদের সাথেই থাকুন।</p>
                 <p>গুগল সার্চ ইঞ্জিন ফ্রেন্ডলি ইন্টারফেসের কারণে আমাদের প্রতিটা ডিটেইলস পেজ অত্যন্ত দ্রুত ইনডেক্স হয়। ক্রেতা এবং বিক্রেতার মাঝে সরাসরি মেলবন্ধন তৈরি করাই আমাদের লক্ষ্য। কোনো হিডেন চার্জ ছাড়াই আপনার প্রপার্টি লিস্টিং সাবমিট করুন এবং সেরা ডিলটি লুফে নিন।</p>
@@ -167,14 +147,12 @@
         </section>
     </main>
 
-    <!-- ফুটার -->
-    <footer class="fb-footer" style="margin-top: 50px; background: #242526; color: #b0b3b8; padding: 20px 0; text-align: center;">
+    <footer class=\"fb-footer\" style=\"margin-top: 50px; background: #242526; color: #b0b3b8; padding: 20px 0; text-align: center;\">
         <div class="container">
-            <p id="footer-text">&copy; 2026 আমার বাড়ি.কম। ফেসবুক স্টাইল আবাসন সামাজিক যোগাযোগ মাধ্যম। সর্বস্বত্ব সংরক্ষিত।</p>
+            <p id=\"footer-text\">&copy; 2026 আমার বাড়ি.কম। ফেসবুক স্টাইল আবাসন সামাজিক যোগাযোগ মাধ্যম। সর্বস্বত্ব সংরক্ষিত。</p>
         </div>
     </footer>
 
-    <!-- স্ক্রিপ্ট ফাইল সংযোগ -->
     <script src="index.js"></script>
 </body>
-</html>
+                    </html>
