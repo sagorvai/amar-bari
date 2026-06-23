@@ -285,10 +285,46 @@ function loadPostAuthorDetails(docId, userId) {
     }).catch(err => console.error("ইউজার কার্ড ডাটা লোড ত্রুটি:", err));
 }
 
-// সংশোধিত ডাটাবেজ ফেচ এবং কাস্টম সার্চ ইঞ্জিন মেকানিজম
+// 🎯 ১. বিভাগ অনুযায়ী জেলাগুলোর ডাইনামিক ডেটা তালিকা
+const bdDistricts = {
+    "খুলনা": ["বাগেরহাট", "চুয়াডাঙ্গা", "যশোর", "ঝিনাইদহ", "খুলনা", "কুষ্টিয়া", "মাগুরা", "মেহেরপুর", "নড়াইল", "সাতক্ষীরা"],
+    "ঢাকা": ["ঢাকা", "ফریدপুর", "গাজীপুর", "গোপালগঞ্জ", "কিশোরগঞ্জ", "মাদারীপুর", "মানিকগঞ্জ", "মুন্সিগঞ্জ", "নারায়ণগঞ্জ", "নরসিংদী", "রাজবাড়ী", "শরীয়তপুর", "টাঙ্গাইল"],
+    "চট্টগ্রাম": ["বান্দরবান", "ব্রাহ্মণবাড়িয়া", "চাঁদপুর", "চট্টগ্রাম", "কুমিল্লা", "কক্সবাজার", "ফেনী", "খাগড়াছড়ি", "লক্ষ্মীপুর", "নোয়াখালী", "রাঙ্গামাটি"],
+    "রাজশাহী": ["বগুড়া", "জয়পুরহাট", "নওগাঁ", "নাটোর", "নবাবগঞ্জ", "পাবনা", "রাজশাহী", "সিরাজগঞ্জ"],
+    "রংপুর": ["দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "রংপুর", "ঠাকুরগাঁও"],
+    "বরিশাল": ["বরগুনা", "বরিশাল", "ভোলা", "ঝালকাঠি", "পটুয়াখালী", "পিরোজপুর"],
+    "সিলেট": ["হবিগঞ্জ", "মৌলভীবাজার", "সুনামগঞ্জ", "সিলেট"],
+    "ময়মনসিংহ": ["ময়মনসিংহ", "নেত্রকোনা", "শেরপুর", "জামালপুর"]
+};
+
+// 🎯 ২. বিভাগ সিলেক্ট করলে জেলা ডাইনামিক করার কন্ট্রোলার
+const filterDivisionEl = document.getElementById('filterDivision');
+const filterDistrictEl = document.getElementById('filterDistrict');
+
+if (filterDivisionEl && filterDistrictEl) {
+    filterDivisionEl.addEventListener('change', function() {
+        const selectedDivision = this.value;
+        filterDistrictEl.innerHTML = '<option value="">সব জেলা</option>';
+        
+        if (selectedDivision && bdDistricts[selectedDivision]) {
+            filterDistrictEl.disabled = false;
+            bdDistricts[selectedDivision].forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+                filterDistrictEl.appendChild(option);
+            });
+        } else {
+            filterDistrictEl.disabled = true;
+            filterDistrictEl.innerHTML = '<option value="">প্রথমে বিভাগ মেলান</option>';
+        }
+    });
+}
+
+// 🎯 ৩. তোমার বর্ণনা অনুযায়ী তৈরি মূল বুদ্ধিমান সার্চইঞ্জিন ফাংশন
 async function fetchAndDisplayProperties(category, searchFilter = '') {
     if (!propertyG) return;
-    propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:#65676b; font-family:inherit;">নিউজ ফিড রিফ্রেশ হচ্ছে...</p>';
+    propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:#65676b;">নিউজ ফিড রিফ্রেশ হচ্ছে...</p>';
     
     try {
         let snap = await db.collection('properties')
@@ -299,34 +335,53 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         propertyG.innerHTML = '';
         let hasPost = false;
         
-        // নতুন ইনপুট ফিল্ডগুলোর ভ্যালু রিড করা
-        const filterType = document.getElementById('filterType')?.value;
-        const filterDistrict = document.getElementById('filterDistrict')?.value; // জেলা ফিল্টার
+        // ৪টি ঘরের ইনপুট রিড করা
+        const filterType = document.getElementById('filterType')?.value || '';
+        const filterDivision = document.getElementById('filterDivision')?.value || '';
+        const filterDistrict = document.getElementById('filterDistrict')?.value || '';
         const formattedSearch = searchFilter.toLowerCase().trim();
 
         snap.forEach(doc => {
             const data = doc.data();
             
-            // ১. আবাসনের ধরন চেক (বাড়ি, জমি, প্লট, ফ্ল্যাট, অফিস, দোকান)
-            if (filterType && data.type !== filterType) return;
+            // ডিফল্টভাবে ধরে নিচ্ছি পোস্টটি দেখাবে, যদি কোনো শর্ত পূরণ না হয় তখন এটি false হবে
+            let isMatched = true; 
+
+            // ১. যদি শুধু ধরন (Type) সিলেক্ট করে এবং ডাটার সাথে না মেলে
+            if (filterType && data.type !== filterType) {
+                isMatched = false;
+            }
             
-            // ২. জেলা চেক (ডাটাবেজের location.district ফিল্ডের সাথে মিলানো হচ্ছে)
-            if (filterDistrict && data.location?.district !== filterDistrict) return;
+            // ২. যদি শুধু বিভাগ (Division) সিলেক্ট করে এবং ডাটার সাথে না মেলে
+            if (filterDivision && data.location?.division !== filterDivision) {
+                isMatched = false;
+            }
             
-            // ৩. এলাকা সার্চ (থানা, গ্রাম বা রোড এবং টাইটেল চেক)
+            // ৩. যদি শুধু জেলা (District) সিলেক্ট করে এবং ডাটার সাথে না মেলে
+            if (filterDistrict && data.location?.district !== filterDistrict) {
+                isMatched = false;
+            }
+            
+            // ৪. যদি শুধু এলাকা/থানা/গ্রাম/রোড ফিল্ড পূরণ করে এবং ডাটার সাথে না মেলে
             if (formattedSearch) {
                 const titleMatch = data.title?.toLowerCase().includes(formattedSearch);
                 const villageMatch = data.location?.village?.toLowerCase().includes(formattedSearch);
                 const thanaMatch = data.location?.thana?.toLowerCase().includes(formattedSearch);
-                const roadMatch = data.location?.road?.toLowerCase().includes(formattedSearch); // যদি রোড ফিল্ড থাকে
+                const roadMatch = data.location?.road?.toLowerCase().includes(formattedSearch);
+                const districtTextMatch = data.location?.district?.toLowerCase().includes(formattedSearch);
                 
-                // কোনোটির সাথে না মিললে এই পোস্টটি স্কিপ করবে
-                if (!titleMatch && !villageMatch && !thanaMatch && !roadMatch) return;
+                // যদি ৪ নম্বর ঘরের কোনো লেখার সাথেই ম্যাচ না করে
+                if (!titleMatch && !villageMatch && !thanaMatch && !roadMatch && !districtTextMatch) {
+                    isMatched = false;
+                }
             }
 
-            hasPost = true;
-            propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(doc.id, data));
-            loadPostAuthorDetails(doc.id, data.userId);
+            // যদি গ্রাহকের পূরণ করা ঘরগুলোর শর্তের সাথে পোস্টটি টিকে যায় (Match করে), তবেই দেখাবে
+            if (isMatched) {
+                hasPost = true;
+                propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(doc.id, data));
+                loadPostAuthorDetails(doc.id, data.userId);
+            }
         });
 
         if (!hasPost) {
@@ -335,10 +390,10 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
             setupSliderAndLikeLogic();
         }
     } catch (error) {
-        console.error("প্রোপার্টি ডেটা ফেচ ত্রুটি:", error);
-        propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:red;">ফিড লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।</p>';
+        console.error("সার্চইঞ্জিন ত্রুটি:", error);
+        propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:red;">ফিড লোড করতে সমস্যা হয়েছে।</p>';
     }
-}
+            }
 
 // ইভেন্ট লিসেনার সেটআপ
 function setupUIEventListeners() {
