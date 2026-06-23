@@ -304,23 +304,36 @@
             <h1 class="seo-h1">খুলনা ও বাংলাদেশে ফ্ল্যাট, প্লট এবং বাড়ি কেনাবেচার সেরা মাধ্যম - আমার বাড়ি.কম</h1>
             
             <div class="fb-search-box">
-                <select id="filterType">
-                    <option value="">সব ধরনের আবাসন</option>
-                    <option value="বাড়ি">বাড়ি (House)</option>
-                    <option value="ফ্ল্যাট">ফ্ল্যাট (Apartment)</option>
-                    <option value="জমি">জমি (Land)</option>
-                </select>
-                <select id="filterDivision">
-                    <option value="">সব বিভাগ</option>
-                    <option value="খুলনা">খুলনা</option>
-                    <option value="ঢাকা">ঢাকা</option>
-                    <option value="চট্টগ্রাম">চট্টগ্রাম</option>
-                </select>
-                <input type="text" id="globalSearchInput" placeholder="এখানে এলাকা বা জেলা সার্চ করুন...">
-                <button class="fb-search-btn" id="btnAdvancedSearch">
-                    <i class="material-icons">search</i> フィードフィルター
-                </button>
+    <!-- ১ম ঘর: আবাসনের ধরন -->
+    <select id="filterType">
+        <option value="">সব ধরনের আবাসন</option>
+        <option value="জমি">জমি (Land)</option>
+        <option value="বাড়ি">বাড়ি (House)</option>
+        <option value="প্লট">প্লট (Plot)</option>
+        <option value="ফ্ল্যাট">ফ্ল্যাট (Apartment)</option>
+        <option value="অফিস">অফিস (Office)</option>
+        <option value="দোকান">দোকান (Shop)</option>
+    </select>
+    
+    <!-- ২য় ঘর: জেলা (বিভাগের পরিবর্তে) -->
+    <select id="filterDistrict">
+        <option value="">সব জেলা</option>
+        <option value="খুলনা">খুলনা</option>
+        <option value="ঢাকা">ঢাকা</option>
+        <option value="যশোর">যশোর</option>
+        <option value="বাগেরহাট">বাগেরহাট</option>
+        <option value="সাতক্ষীরা">সাতক্ষীরা</option>
+    </select>
+    
+    <!-- ৩য় ঘর: এলাকা (থানা, গ্রাম বা রোড) -->
+    <input type="text" id="globalSearchInput" placeholder="এলাকা, থানা, গ্রাম বা রোড লিখুন...">
+    
+    <button class="fb-search-btn" id="btnAdvancedSearch">
+        <i class="material-icons">search</i> খুঁজুন
+    </button>
             </div>
+
+
         </section>
 
         <div class="main-layout">
