@@ -1,516 +1,549 @@
-const firebaseConfig = {
-    apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
-    authDomain: "amar-bari-website.firebaseapp.com",
-    projectId: "amar-bari-website",
-    storageBucket: "amar-bari-website.firebasestorage.app",
-    messagingSenderId: "719084789035",
-    appId: "1:719084789035:web:f4da765290b3519d0e82fe"
-};
-
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+// Firebase Global Reference
 const db = firebase.firestore();
+const auth = firebase.auth();
 
-const urlParams = new URLSearchParams(window.location.search);
-const postId = urlParams.get('id');
+// UI Elements Selector
+const menuButton = document.getElementById('menuButton');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
 
-document.addEventListener('DOMContentLoaded', async () => {
-    if (!postId) return;
-    try {
-        const doc = await db.collection('properties').doc(postId).get();
-        if (doc.exists) {
-            const data = doc.data();
-            renderDetails(data);
-            loadRelatedPosts(data);
-            setupLikeSystem(); 
-        }
-    } catch (e) {
-        console.error("ডেটা লোড করতে সমস্যা:", e);
-    }
-});
+const notificationButton = document.getElementById('notificationButton'); 
+const messageButton = document.getElementById('messageButton');
+const profileImageWrapper = document.getElementById('profileImageWrapper'); 
+const profileImage = document.getElementById('profileImage'); 
+const defaultProfileIcon = document.getElementById('defaultProfileIcon'); 
 
-function renderDetails(data) {
-    document.getElementById('p-title').textContent = data.title || "";
-    document.getElementById('p-desc').textContent = data.description || "";
+// কাউন্টারস
+const notificationCount = document.getElementById('notification-count');
+const messageCount = document.getElementById('message-count');
 
-    // ১. দাম ও ইউনিট
-    let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
-    let unit = data.priceUnit || data.rentUnit || ""; 
-    document.getElementById('p-price').textContent = amount ? `৳ ${amount} (${unit})` : "আলোচনা সাপেক্ষ";
+// 🎯 সংশোধন: HTML ফাইলের সঠিক ক্লাস সিলেক্টর ম্যাপিং (.fb-tabs .fb-tab-btn)
+const navButtons = document.querySelectorAll('.fb-tabs .fb-tab-btn:not(#mapViewToggleBtn)'); 
+const propertyG = document.querySelector('.property-grid');
+const loginLinkSidebar = document.getElementById('login-link-sidebar');
+const globalSearchInput = document.getElementById('globalSearchInput');
 
-    // ইমেজ গ্যালারি
-    let images = [];
-    if (data.images) data.images.forEach(img => images.push(img.url || img));
-    if (data.documents?.khotian) images.push(data.documents.khotian.url || data.documents.khotian);
-    if (data.documents?.sketch) images.push(data.documents.sketch.url || data.documents.sketch);
+let map;
 
-    const gallery = document.getElementById('p-gallery');
-    if (gallery) {
-        gallery.innerHTML = '';
-        images.slice(0, 5).forEach(url => {
-            const div = document.createElement('div');
-            div.className = 'gal-item';
-            div.innerHTML = `<img src="${url}" onclick="openLightbox('${url}')">`;
-            gallery.appendChild(div);
-        });
-    }
-
-    // পোস্টদাতার ডাটা লোড ও প্রোফাইল পেইজ রিডাইরেক্ট লজিক
-    if (data.userId) {
-        db.collection('users').doc(data.userId).get().then(userDoc => {
-            if (userDoc.exists) {
-                const userData = userDoc.data();
-                document.getElementById('pub-name').textContent = userData.fullName || userData.name || "সম্মানিত বিক্রেতা";
-                if (userData.profilePic) {
-                    document.getElementById('pub-avatar').src = userData.profilePic;
-                }
+// প্রোফাইল পিকচার লোডার
+async function loadProfilePicture(user) {
+    if (profileImage && defaultProfileIcon) {
+        try {
+            const doc = await db.collection('users').doc(user.uid).get();
+            if (doc.exists && doc.data().profilePic) {
+                profileImage.src = doc.data().profilePic;
+                profileImage.style.display = 'block';
+                defaultProfileIcon.style.display = 'none';
             } else {
-                document.getElementById('pub-name').textContent = "সাধারণ ইউজার";
+                profileImage.style.display = 'none';
+                defaultProfileIcon.style.display = 'block';
             }
-        }).catch(() => {
-            document.getElementById('pub-name').textContent = "আমার বাড়ি ইউজার";
-        });
-
-        const authorTrigger = document.getElementById('authorProfileTrigger');
-        if (authorTrigger) {
-            authorTrigger.onclick = () => {
-                window.location.href = `seller-profile.html?userId=${data.userId}`;
-            };
+        } catch (error) {
+            console.error("প্রোফাইল ছবি লোড ত্রুটি:", error);
+            profileImage.style.display = 'none';
+            defaultProfileIcon.style.display = 'block';
         }
-    } else {
-        document.getElementById('pub-name').textContent = "বিজ্ঞাপনদাতা";
-    }
-
-    if (data.createdAt) {
-        let dateObj = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-        document.getElementById('pub-time').textContent = formatPostTime(dateObj);
-    } else {
-        document.getElementById('pub-time').textContent = "কিছুক্ষণ আগে";
-    }
-
-    const addRow = (tableId, label, value) => {
-        if (!value || value === "" || value === "undefined") return;
-        const table = document.getElementById(tableId);
-        if (table) table.innerHTML += `<tr><td>${label}</td><td>${value}</td></tr>`;
-    };
-
-    // ২. 🏠 প্রপার্টির তথ্য
-    const basicT = 'table-basic';
-    if (document.getElementById(basicT)) {
-        document.getElementById(basicT).innerHTML = ""; 
-        addRow(basicT, "ক্যাটাগরি", data.category);
-        addRow(basicT, "টাইপ", data.type);
-        addRow(basicT, "জমির ধরন", data.landType);
-        addRow(basicT, "প্রপার্টির বয়স", data.propertyAge? `${data.propertyAge} বছর` : "");
-        
-        if (data.category === 'ভাড়া') {
-            addRow(basicT, "ভাড়ার ধরন", data.rentType);
-            addRow(basicT, "ওঠার তারিখ", data.moveInDate);
-            addRow(basicT, "অগ্রিম (এডভ্যান্স)", data.advance ? `৳ ${data.advance} টাকা` : "");
-        }
-
-        addRow(basicT, "বেডরুম", data.bedrooms || data.rooms? `${data.rooms} টি` : "");
-        addRow(basicT, "ডাইনিং", data.dining? `${data.dining} টি` : "");
-        addRow(basicT, "বাথরুম", data.bathrooms? `${data.bathrooms} টি` : "");
-        addRow(basicT, "কিচেন", data.kitchen? `${data.kitchen} টি` : "");
-        addRow(basicT, "বেলকনি", data.balcony? `${data.balcony} টি` : "");
-        addRow(basicT, "ফ্লোর নম্বর", data.floorNo || data.floorLevel);
-        addRow(basicT, "রাস্তা", data.roadWidth ? `${data.roadWidth} ফিট` : "");
-        addRow(basicT, "ফেসিং", data.facing? `${data.facing} দিক` : "");
-        
-        if (data.utilities && data.utilities.length > 0) {
-            addRow(basicT, "সুবিধা সমূহ", Array.isArray(data.utilities) ? data.utilities.join(', ') : data.utilities);
-        }
-
-        let area = data.landArea || data.houseArea || data.areaSqft || data.commercialArea;
-        let areaUnit = data.landAreaUnit || data.houseAreaUnit || data.areaSqftUnit || data.commercialAreaUnit || "";
-        addRow(basicT, "পরিমাণ", area ? `${area} (${areaUnit})` : "");
-    }
-
-    // ৩. 📑 মালিকানা তথ্য
-    const ownerSection = document.getElementById('section-owner');
-    if (ownerSection) {
-        if (data.category === 'বিক্রয়' && data.owner) {
-            ownerSection.style.display = 'block';
-            const ownT = 'table-owner';
-            if (document.getElementById(ownT)) {
-                document.getElementById(ownT).innerHTML = "";
-                addRow(ownT, "দাতার নাম", data.owner.donorName);
-                let khotian = data.owner.khotianNo;
-                let khotianType = data.owner.khotianNoType || "";
-                addRow(ownT, "খতিয়ান নং", khotian ? `${khotian} (${khotianType})` : "");
-                let dag = data.owner.dagNo;
-                let dagType = data.owner.dagNoType || "";
-                addRow(ownT, "দাগ নং", dag ? `${dag}` : "");
-                addRow(ownT, "মৌজা", data.owner.mouja);
-            }
-        } else {
-            ownerSection.style.display = 'none';
-        }
-    }
-    
-    // ৪. 📍 অবস্থান
-    const locT = 'table-location';
-    if (document.getElementById(locT)) {
-        document.getElementById(locT).innerHTML = "";
-        addRow(locT, "জেলা", data.location?.district);
-        addRow(locT, "এরিয়া", data.location?.areaType);
-        addRow(locT, "উপজেলা", data.location?.upazila);
-        addRow(locT, "থানা", data.location?.thana);
-        addRow(locT, "ইউনিয়ন", data.location?.union);
-        addRow(locT, "ওয়ার্ড নম্বর", data.location?.wardNo);
-        addRow(locT, "গ্রাম/এলাকা", data.location?.village);
-        addRow(locT, "রাস্তা", data.location?.road);
-    }
-
-    if (data.location && data.location.lat && data.location.lng) {
-        initSinglePropertyMap(data);
-    }
-
-    // ৫. 📞 যোগাযোগ ও মেসেজ অ্যাকশন
-    const conT = 'table-contact';
-    if (document.getElementById(conT)) {
-        document.getElementById(conT).innerHTML = "";
-        addRow(conT, "প্রাথমিক ফোন", data.phoneNumber);
-        addRow(conT, "অতিরিক্ত ফোন", data.secondaryPhone);
-    }
-    if (document.getElementById('p-call')) {
-        document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
-    }
-
-    const msgBtn = document.getElementById('p-message');
-    if (msgBtn) {
-        msgBtn.onclick = () => {
-            const currentUser = firebase.auth().currentUser;
-            if (!currentUser) { 
-                alert("মেসেজ করতে প্রথমে লগইন করুন।"); 
-                window.location.href = "auth.html"; 
-                return; 
-            }
-            if (currentUser.uid === data.userId) { 
-                alert("এটি আপনার নিজের পোস্ট!"); 
-                return; 
-            }
-            const chatId = [currentUser.uid, data.userId].sort().join('_') + `_${postId}`;
-            window.location.href = `messages.html?chatId=${chatId}&postId=${postId}`;
-        };
-    }
-
-    // =======================================================
-    // 🎯 আমার বাড়ি.কম - এক্সপার্ট ডাইনামিক এসইও ইঞ্জিন
-    // =======================================================
-    const currentUrl = window.location.href;
-
-    const village = data.location?.village || "তথ্য নেই";
-    const thana = data.location?.thana || "তথ্য নেই";
-    const district = data.location?.district || "তথ্য নেই";
-    const fullLocation = `${village}, ${thana}, ${district}`;
-
-    const seoTitle = `${data.title || "আমার বাড়ি.কম প্রপার্টি"} - ${thana}, ${district} | আমার বাড়ি.কম`;
-    const seoDescription = `${fullLocation}-এ আকর্ষনীয় মূল্যে প্রপার্টি। মূল্য: ৳${data.category === 'বিক্রয়' ? (data.price || "আলোচনা সাপেক্ষ") : (data.monthlyRent || "আলোচনা সাপেক্ষ")} টাকা। বিস্তারিত তথ্য ও ছবির জন্য ভিজিট করুন আমার বাড়ি ডট কম।`;
-    
-    let firstImg = "https://i.postimg.cc/YSbRvftN/FB-IMG-1781692297303.jpg"; 
-    if (data.images && data.images.length > 0) {
-        firstImg = data.images[0].url || data.images[0];
-    }
-
-    document.title = seoTitle; 
-    
-    const seoTitleTag = document.getElementById('seo-title');
-    if (seoTitleTag) {
-        seoTitleTag.innerText = seoTitle;
-    }
-    
-    document.getElementById('seo-desc')?.setAttribute('content', seoDescription);
-    document.getElementById('seo-canonical')?.setAttribute('href', currentUrl);
-
-    document.getElementById('og-url')?.setAttribute('content', currentUrl);
-    document.getElementById('og-title')?.setAttribute('content', seoTitle);
-    document.getElementById('og-desc')?.setAttribute('content', seoDescription);
-    document.getElementById('og-image')?.setAttribute('content', firstImg);
-
-    const schemaData = {
-        "@context": "https://schema.org",
-        "@type": "RealEstateListing",
-        "name": data.title || "আমার বাড়ি.কম প্রপার্টি", 
-        "description": data.description ? data.description.substring(0, 200) : seoDescription,
-        "url": currentUrl,
-        "image": firstImg, 
-        "offers": {
-            "@type": "Offer",
-            "price": data.category === 'বিক্রয়' ? (data.price || 0) : (data.monthlyRent || 0), 
-            "priceCurrency": "BDT",
-            "availability": "https://schema.org/InStock"
-        },
-        "location": {
-            "@type": "Place",
-            "name": fullLocation,
-            "address": {
-                "@type": "PostalAddress",
-                "streetAddress": village,       
-                "addressLocality": thana,      
-                "addressRegion": district,     
-                "addressCountry": "BD"
-            }
-        }
-    };
-    
-    const schemaTag = document.getElementById('seo-schema');
-    if (schemaTag) {
-        schemaTag.text = JSON.stringify(schemaData);
-    }
-
-    setupSaveAndShareSystem(data);
-} // <--- renderDetails ফাংশনটি এখানে সুরক্ষিতভাবে শেষ হয়েছে।
-
-function initSinglePropertyMap(data) {
-    const mapContainer = document.getElementById('map-container');
-    if (!mapContainer) return;
-    try {
-        const map = L.map('map-container').setView([data.location.lat, data.location.lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        const propertyType = data.type || data.propertyType || 'প্রপার্টি';
-        const redPinIcon = L.divIcon({
-            html: `
-                <div style="position: relative; width: 60px; height: 35px; display: flex; flex-direction: column; align-items: center;">
-                    <div style="background-color: #e74c3c; color: white; padding: 4px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; white-space: nowrap; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); text-align: center; min-width: 50px;">
-                        ${propertyType}
-                    </div>
-                    <div style="width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 10px solid #e74c3c; margin-top: -2px;"></div>
-                </div>`,
-            className: 'custom-pin',
-            iconSize: [60, 45],
-            iconAnchor: [30, 45]
-        });
-
-        L.marker([data.location.lat, data.location.lng], { icon: redPinIcon })
-         .addTo(map)
-         .bindPopup(`<b>${data.title}</b><br>লোকেশন এখানে`)
-         .openPopup();
-    } catch (e) {
-        console.error("ম্যাপ লোড এরর:", e);
     }
 }
 
-async function setupLikeSystem() {
-    const likeBtn = document.getElementById('likeBtn');
-    const likeIcon = document.getElementById('likeIcon');
-    if (!likeBtn) return;
-
-    const storageKey = `liked_post_${postId}`;
-    let isLiked = localStorage.getItem(storageKey) === 'true';
-
-    const updateLikeUI = (status) => {
-        if (status) {
-            if (likeIcon) { likeIcon.textContent = 'thumb_up'; likeIcon.style.color = '#007bff'; }
-        } else {
-            if (likeIcon) { likeIcon.textContent = 'thumb_up_off_alt'; likeIcon.style.color = '#7f8c8d'; }
-        }
-    };
-
-    updateLikeUI(isLiked);
+// আইকন কাউন্টার আপডেট
+async function updateIconCounts() {
+    const user = auth.currentUser;
+    if (!user) return;
 
     try {
-        db.collection('properties').doc(postId).onSnapshot((doc) => {
-            if (doc.exists) {
-                const postData = doc.data();
-                const totalLikes = postData.likes || 0;
-                const likeCountText = document.getElementById('likeCountText');
-                if (likeCountText) likeCountText.textContent = `${totalLikes} লাইক`;
+        const notifSnap = await db.collection('notifications').where('userId', '==', user.uid).where('read', '==', false).get();
+        if (notificationCount) {
+            if (!notifSnap.empty) {
+                notificationCount.textContent = notifSnap.size;
+                notificationCount.style.display = 'inline-block';
+            } else {
+                notificationCount.style.display = 'none';
+            }
+        }
+
+        const msgSnap = await db.collection('messages').where('receiverId', '==', user.uid).where('read', '==', false).get();
+        if (messageCount) {
+            if (!msgSnap.empty) {
+                messageCount.textContent = msgSnap.size;
+                messageCount.style.display = 'inline-block';
+            } else {
+                messageCount.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error("কাউন্টার আপডেট ত্রুটি:", error);
+    }
+}
+
+// লগআউট হ্যান্ডলার
+function handleLogout(e) {
+    e.preventDefault();
+    auth.signOut().then(() => {
+        alert('সফলভাবে লগআউট হয়েছে!');
+        window.location.reload();
+    }).catch(err => {
+        console.error('লগআউট ত্রুটি:', err);
+    });
+}
+
+// কাস্টম ম্যাপ পিন
+function createCustomMarker(category, type) {
+    const color = category === 'বিক্রয়' ? '#1877f2' : '#42b72a';
+    return L.divIcon({
+        html: `<div style="background:${color}; color:#fff; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; border:2px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,0.2); white-space: nowrap;">${type}</div>`,
+        className: 'fb-pin',
+        iconSize: [65, 28]
+    });
+}
+
+// ম্যাপ ইনিশিয়েলাইজেশন
+async function initMap(category) {
+    const mapSection = document.getElementById('map-section');
+    if (!mapSection || mapSection.style.display === 'none') return;
+
+    if (map) { map.remove(); }
+    
+    map = L.map('map-container').setView([22.8456, 89.5403], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    try {
+        const snap = await db.collection('properties')
+            .where('category', '==', category)
+            .where('status', '==', 'published')
+            .get();
+
+        snap.forEach(doc => {
+            const data = doc.data();
+            if (data.location && data.location.lat && data.location.lng) {
+                const marker = L.marker([data.location.lat, data.location.lng], {
+                    icon: createCustomMarker(data.category, data.type || 'বাসা')
+                }).addTo(map);
+                
+                let pAmt = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
+                let displayPrice = pAmt ? new Intl.NumberFormat('bn-BD').format(pAmt) : 'আলোচনা সাপেক্ষে';
+
+                marker.bindPopup(`
+                    <div style="font-family:'Hind Siliguri', sans-serif;">
+                        <b style="font-size:14px; color:#1877f2;">${data.title || 'শিরোনামহীন'}</b><br>
+                        মূল্য: ৳ ${displayPrice}<br>
+                        <a href="details.html?id=${doc.id}" style="display:inline-block; margin-top:6px; background:#1877f2; color:#fff; padding:3px 8px; text-decoration:none; border-radius:4px; font-size:11px;">পোস্টে যান</a>
+                    </div>
+                `);
             }
         });
     } catch (err) {
-        console.log("লাইক সংখ্যা রিড করতে সমস্যা:", err);
+        console.error("ম্যাপ ডেটা লোড ত্রুটি:", err);
     }
-
-    likeBtn.addEventListener('click', async () => {
-        isLiked = !isLiked;
-        localStorage.setItem(storageKey, isLiked);
-        updateLikeUI(isLiked);
-
-        try {
-            const postRef = db.collection('properties').doc(postId);
-            await postRef.update({
-                likes: firebase.firestore.FieldValue.increment(isLiked ? 1 : -1)
-            });
-        } catch (e) {
-            console.log("ফায়ারবেসে লাইক ডেটা আপডেট করতে সমস্যা:", e);
-        }
-    });
 }
 
-function setupSaveAndShareSystem(data) {
-    const saveBtn = document.getElementById('p-save');
-    const shareBtn = document.getElementById('p-share');
-    const currentUrl = window.location.href;
+// স্লাইডার ও লাইক লজিক
+function setupSliderAndLikeLogic() {
+    document.querySelectorAll('.fb-slider-btn').forEach(button => {
+        button.onclick = function(e) {
+            e.preventDefault(); 
+            e.stopPropagation();
+            const slider = e.target.closest('.fb-slider');
+            const slides = slider.querySelectorAll('.fb-slide-item');
+            const total = parseInt(slider.dataset.totalSlides);
+            let idx = parseInt(slider.dataset.currentIndex);
 
-    if (saveBtn) {
-        const saveStorageKey = `saved_post_${postId}`;
-        let isSaved = localStorage.getItem(saveStorageKey) === 'true';
-
-        const updateSaveUI = (status) => {
-            const icon = saveBtn.querySelector('i');
-            if (icon) {
-                if (status) {
-                    icon.textContent = 'bookmark'; 
-                    saveBtn.style.color = '#27ae60'; 
-                    if (saveBtn.querySelector('span')) saveBtn.querySelector('span').textContent = 'সেভড';
-                } else {
-                    icon.textContent = 'bookmark_border'; 
-                    saveBtn.style.color = '#2c3e50';
-                    if (saveBtn.querySelector('span')) saveBtn.querySelector('span').textContent = 'সেভ';
-                }
-            }
-        };
-
-        updateSaveUI(isSaved);
-
-        saveBtn.onclick = () => {
-            isSaved = !isSaved;
-            localStorage.setItem(saveStorageKey, isSaved);
-            updateSaveUI(isSaved);
-            alert(isSaved ? "পোস্টটি আপনার ব্রাউজারে সেভ করা হয়েছে!" : "সেভ তালিকা থেকে বাদ দেওয়া হয়েছে।");
-        };
-    }
-
-    if (shareBtn) {
-        shareBtn.onclick = async () => {
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: data.title || "আমার বাড়ি.কম প্রপার্টি",
-                        text: `আমার বাড়ি.কম-এ এই চমৎকার প্রপার্টিটি দেখুন: ${data.title}`,
-                        url: currentUrl
-                    });
-                } catch (err) {
-                    console.log("শেয়ার বাতিল বা ব্যর্থ হয়েছে:", err);
-                }
+            if (e.target.classList.contains('fb-next')) {
+                idx = (idx + 1) % total;
             } else {
-                const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
-                window.open(fbShareUrl, '_blank', 'width=600,height=400');
+                idx = (idx - 1 + total) % total;
+            }
+
+            slides.forEach(s => s.style.display = 'none');
+            slides[idx].style.display = 'block';
+            slider.dataset.currentIndex = idx;
+        };
+    });
+
+    document.querySelectorAll('.like-btn-toggle').forEach(btn => {
+        btn.onclick = function(e) {
+            e.preventDefault(); 
+            e.stopPropagation();
+            this.classList.toggle('liked');
+            const countSpan = this.querySelector('.like-count');
+            let count = parseInt(countSpan.textContent);
+            if (this.classList.contains('liked')) {
+                this.style.color = '#1877f2';
+                countSpan.textContent = count + 1;
+            } else {
+                this.style.color = 'inherit';
+                countSpan.textContent = count - 1;
             }
         };
-    }
-}
-
-function formatPostTime(date) {
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHour = Math.floor(diffMins / 60);
-    const diffDay = Math.floor(diffHour / 24);
-    const diffWeek = Math.floor(diffDay / 7);
-    const diffMonth = Math.floor(diffWeek / 4);
-
-    if (diffMins < 1) return "এইমাত্র";
-    if (diffMins < 60) return `${diffMins} মিনিট আগে`;
-    if (diffHour < 24) return `${diffHour} ঘণ্টা আগে`;
-    if (diffDay < 7) return `${diffDay} দিন আগে`;
-    if (diffWeek < 4) return `${diffWeek} সপ্তাহ আগে`;
-    if (diffMonth < 3) return `${diffMonth} মাস আগে`;
-
-    return date.toLocaleDateString('bn-BD', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
     });
 }
 
-async function loadRelatedPosts(currentData) {
-    const list = document.getElementById('related-list');
-    const seeMoreBox = document.getElementById('see-more-box');
-    if (!list) return;
-    try {
-        const snapshot = await db.collection('properties')
-            .where('category', '==', currentData.category)
-            .limit(50) 
-            .get();
-
-        let allPosts = [];
-        snapshot.forEach(doc => {
-            if (doc.id !== postId) allPosts.push({ id: doc.id, ...doc.data() });
-        });
-
-        allPosts.sort((a, b) => {
-            const aVillage = (a.location?.village === currentData.location?.village) ? 1 : 0;
-            const bVillage = (b.location?.village === currentData.location?.village) ? 1 : 0;
-            if (aVillage !== bVillage) return bVillage - aVillage;
-            const aThana = (a.location?.thana === currentData.location?.thana) ? 1 : 0;
-            const bThana = (b.location?.thana === currentData.location?.thana) ? 1 : 0;
-            return bThana - aThana;
-        });
-
-        list.innerHTML = "";
-        allPosts.slice(0, 10).forEach(post => {
-            let pAmt = post.category === 'বিক্রয়' ? post.price : post.monthlyRent;
-            let pUnit = post.priceUnit || post.rentUnit || "";
-            list.innerHTML += `
-                <div class="rel-card" onclick="location.href='details.html?id=${post.id}'">
-                    <img src="${post.images?.[0]?.url || post.images?.[0] || 'placeholder.jpg'}">
-                    <div class="rel-info">
-                        <h4 class="rel-title">${post.title}</h4>
-                        <p class="rel-price">৳ ${pAmt} (${pUnit})</p>
-                        <p class="rel-loc">${post.location?.village || ''}, ${post.location?.thana || ''}, ${post.location?.district || ''}</p>
-                    </div>
-                </div>`;
-        });
-        if (allPosts.length > 10 && seeMoreBox) seeMoreBox.style.display = 'block';
-    } catch (e) { console.error(e); }
-}
-
-function openLightbox(url) {
-    const lbImg = document.getElementById('lb-img');
-    const lb = document.getElementById('lightbox');
-    if(lbImg && lb) {
-        lbImg.src = url;
-        lb.style.display = 'flex';
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const menuButton = document.getElementById('menuButton');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-
-    if (menuButton) {
-        menuButton.addEventListener('click', () => {
-            sidebar.classList.add('active');
-            overlay.classList.add('active');
-        });
-    }
-
-    const closeSidebar = () => {
-        if(sidebar && overlay) {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        }
-    };
-
-    if (overlay) overlay.addEventListener('click', closeSidebar);
-
-    document.getElementById('notificationButton')?.addEventListener('click', () => location.href = 'notifications.html');
-    document.getElementById('headerPostButton')?.addEventListener('click', () => location.href = 'post.html');
-    document.getElementById('messageButton')?.addEventListener('click', () => location.href = 'messages.html');
-    document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
-});
-
-firebase.auth().onAuthStateChanged(async (user) => {
-    const headerProfileImg = document.querySelector('#profileImageWrapper img');
+// ফেসবুক পোস্ট কার্ড মেকার (HTML জেনারেটর)
+function createFbPostHTML(docId, data) {
+    const title = data.title || 'শিরোনামহীন প্রোপার্টি';
+    const village = data.location?.village || "তথ্য নেই";
+    const thana = data.location?.thana || "তথ্য নেই";
+    const district = data.location?.district || "তথ্য নেই";
     
-    if (user && headerProfileImg) {
-        try {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().profilePic) {
-                headerProfileImg.src = userDoc.data().profilePic;
-            } else if (user.photoURL) {
-                headerProfileImg.src = user.photoURL;
-            } else {
-                headerProfileImg.src = 'assets/images/default-avatar.png';
-            }
-        } catch (error) {
-            console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
-        }
+    const size = data.landArea || data.houseArea || data.areaSqft || data.commercialArea || '০';
+    const unit = data.landAreaUnit || data.houseAreaUnit || data.areaSqftUnit || data.commercialAreaUnit || '';
+    
+    const type = data.type || 'প্রপার্টি';
+    const category = data.category || 'বিক্রয়';
+    
+    let amount = category === 'বিক্রয়' ? data.price : data.monthlyRent;
+    let priceUnit = data.priceUnit || data.rentUnit || ""; 
+    let displayPrice = amount ? new Intl.NumberFormat('bn-BD').format(amount) : 'আলোচনা সাপেক্ষে';
+
+    const hasDocs = data.documents && (data.documents.khotian || data.documents.sketch);
+    const verifiedBadge = hasDocs ? `<span class="badge-verified" style="background:#42b72a; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-right:5px;">✓ কাগজ ভেরিফাইড</span>` : '';
+
+    let images = [];
+    if (data.images) data.images.forEach(img => images.push(img.url || img));
+    
+    let mediaHTML = `<div class="fb-slide-item" style="background-image: url('https://via.placeholder.com/500x260?text=No+Photo'); display:block; width:100%; height:100%; background-size:cover; background-position:center;"></div>`;
+    if (images.length > 0) {
+        mediaHTML = images.map((img, i) => `
+            <div class="fb-slide-item" style="background-image: url('${img}'); display:${i === 0 ? 'block' : 'none'}; width:100%; height:100%; background-size:cover; background-position:center;"></div>
+        `).join('');
     }
+
+    const navArrows = images.length > 1 ? `
+        <button class="fb-slider-btn fb-prev" style="position: absolute; top: 50%; left: 12px; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; z-index: 5;">&#10094;</button>
+        <button class="fb-slider-btn fb-next" style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; z-index: 5;">&#10095;</button>
+    ` : '';
+
+    return `
+        <div class="fb-feed-card" style="background:#fff; border:1px solid #ced0d4; border-radius:8px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,0.05); display:flex; flex-direction:column; font-family:'Hind Siliguri', sans-serif;">
+            <div class="card-author-header" style="padding:12px; display:flex; align-items:center; justify-content:space-between;">
+                <div class="author-info" style="display:flex; align-items:center; gap:10px;">
+                    <img id="author-pic-${docId}" src="https://via.placeholder.com/40?text=Pic" class="author-avatar-img" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid #ced0d4;" alt="pic">
+                    <div class="author-meta">
+                        <h4 id="author-name-${docId}" style="margin:0; font-size:15px; font-weight:600; color:#050505;">আমার বাড়ি ইউজার</h4>
+                        <p style="margin:2px 0 0 0; font-size:12px; color:#65676b; display:flex; align-items:center; gap:4px;">
+                            <i class="material-icons" style="font-size:12px;">place</i> ${village}, ${thana}, ${district}
+                        </p>
+                    </div>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    ${verifiedBadge}
+                    <span class="badge-category" style="background:#1877f2; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold;">${category}</span>
+                </div>
+            </div>
+            
+            <div class="card-body-text" style="padding:0 12px 12px 12px; font-size:14px; line-height:1.5; color:#050505;">
+                <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 700; color: #050505;">${title}</h3>
+                <div style="margin-top:4px; color:#050505;">
+                    <b>${size} ${unit}, ${type}, ${category}।</b> বিস্তারিত জানতে ও সরাসরি যোগাযোগ করতে নিচে দেয়া বাটনে ক্লিক করুন।
+                </div>
+            </div>
+
+            <div class="card-media-section" style="position:relative; height:280px; background:#000; overflow:hidden;">
+                <div class="fb-slider" data-current-index="0" data-total-slides="${images.length}" style="width:100%; height:100%; position:relative;">
+                    ${mediaHTML}
+                    ${navArrows}
+                </div>
+                <div class="price-tag-overlay" style="position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.75); color:#fff; padding:6px 12px; border-radius:6px; font-weight:bold; font-size:16px; z-index:4;">
+                    ৳ ${displayPrice} ${priceUnit ? `(${priceUnit})` : ''} ${category === 'ভাড়া' ? '/মাস' : ''}
+                </div>
+            </div>
+
+            <div class="fb-stats-bar" style="padding:10px 12px; display:flex; justify-content:space-between; font-size:13px; color:#65676b; border-bottom:1px solid #f2f3f5;">
+                <div class="fb-reactions" style="display:flex; align-items:center; gap:4px;">
+                    <i class="material-icons" style="background:#1877f2; color:white; border-radius:50%; font-size:12px; padding:3px;">thumb_up</i>
+                    <span class="likes-num"><span class="like-count">${data.likes || 0}</span> জন পছন্দ করেছেন</span>
+                </div>
+                <div>কমেন্ট দেখুন</div>
+            </div>
+
+            <div class="fb-action-buttons" style="display:flex; padding:4px; border-top:1px solid #f2f3f5;">
+                <button class="fb-action-btn like-btn-toggle" style="flex:1; padding:10px; border:none; background:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:600; color:#65676b; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:4px;"><i class="material-icons">thumb_up_off_alt</i> লাইক</button>
+                <a href="details.html?id=${docId}" class="fb-action-btn" style="flex:1; padding:10px; border:none; background:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:700; color:#ff4d4d; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:4px; text-decoration:none;">
+                    <i class="material-icons">double_arrow</i> বিস্তারিত ও যোগাযোগ
+                </a>
+            </div>
+        </div>
+    `;
+}
+
+// প্রোপার্টি আপলোড দাতার ছবি ও নাম লোডার
+function loadPostAuthorDetails(docId, userId) {
+    if (!userId) return;
+    db.collection('users').doc(userId).get().then(userDoc => {
+        if (userDoc.exists) {
+            const userData = userDoc.data();
+            const nameEl = document.getElementById(`author-name-${docId}`);
+            const picEl = document.getElementById(`author-pic-${docId}`);
+            
+            if (nameEl) nameEl.textContent = userData.fullName || userData.name || "সম্মানিত বিক্রেতা";
+            if (picEl && userData.profilePic) {
+                picEl.src = userData.profilePic;
+            }
+        }
+    }).catch(err => console.error("ইউজার কার্ড ডাটা লোড ত্রুটি:", err));
+}
+
+// 🇧🇩 বাংলাদেশের বিভাগ অনুযায়ী জেলাগুলোর ডাইনামিক ডেটা অবজেক্ট
+const bdDistricts = {
+    "খুলনা": ["বাগেরহাট", "চুয়াডাঙ্গা", "যশোর", "ঝিনাইদহ", "খুলনা", "কুষ্টিয়া", "মাগুরা", "মেহেরপুর", "নড়াইল", "সাতক্ষীরা"],
+    "ঢাকা": ["ঢাকা", "ফরিদপুর", "গাজীপুর", "গোপালগঞ্জ", "কিশোরগঞ্জ", "মাদারীপুর", "মানিকগঞ্জ", "মুন্সিগঞ্জ", "নারায়ণগঞ্জ", "নরসিংদী", "রাজবাড়ী", "শরীয়তপুর", "টাঙ্গাইল"],
+    "চট্টগ্রাম": ["বান্দরবান", "ব্রাহ্মণবাড়িয়া", "চাঁদপুর", "চট্টগ্রাম", "কুমিল্লা", "কক্সবাজার", "ফেনী", "খাগড়াছড়ি", "লক্ষ্মীপুর", "নোয়াখালী", "রাঙ্গামাটি"],
+    "রাজশাহী": ["বগুড়া", "জয়পুরহাট", "নওগাঁ", "নাটোর", "নবাবগঞ্জ", "পাবনা", "রাজশাহী", "সিরাজগঞ্জ"],
+    "রংপুর": ["দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "রংপুর", "ঠাকুরগাঁও"],
+    "বরিশাল": ["বরগুনা", "বরিশাল", "ভোল্লা", "ঝালকাঠি", "পটুয়াখালী", "পিরোজপুর"],
+    "সিলেট": ["হবিগঞ্জ", "মৌলভীবাজার", "সুনামগঞ্জ", "সিলেট"],
+    "ময়মনসিংহ": ["ময়মনসিংহ", "নেত্রকোনা", "শেরপুর", "জামালপুর"]
+};
+
+// 🎯 বিভাগ সিলেক্ট করলে ডাইনামিক জেলা লোড করার ফাংশন
+const filterDivisionEl = document.getElementById('filterDivision');
+const filterDistrictEl = document.getElementById('filterDistrict');
+
+if (filterDivisionEl && filterDistrictEl) {
+    filterDivisionEl.addEventListener('change', function() {
+        const selectedDivision = this.value;
+        
+        // রিসেট জেলা ড্রপডাউন
+        filterDistrictEl.innerHTML = '<option value="">সব জেলা</option>';
+        
+        if (selectedDivision && bdDistricts[selectedDivision]) {
+            filterDistrictEl.disabled = false;
+            bdDistricts[selectedDivision].forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+                filterDistrictEl.appendChild(option);
+            });
+        } else {
+            filterDistrictEl.disabled = true;
+            filterDistrictEl.innerHTML = '<option value="">প্রথমে বিভাগ মেলান</option>';
+        }
+    });
+}
+
+// 🎯 ১. বিভাগ অনুযায়ী জেলাগুলোর ডাইনামিক ডেটা তালিকা
+const bdDistricts = {
+    "খুলনা": ["বাগেরহাট", "চুয়াডাঙ্গা", "যশোর", "ঝিনাইদহ", "খুলনা", "কুষ্টিয়া", "মাগুরা", "মেহেরপুর", "নড়াইল", "সাতক্ষীরা"],
+    "ঢাকা": ["ঢাকা", "ফریدপুর", "গাজীপুর", "গোপালগঞ্জ", "কিশোরগঞ্জ", "মাদারীপুর", "মানিকগঞ্জ", "মুন্সিগঞ্জ", "নারায়ণগঞ্জ", "নরসিংদী", "রাজবাড়ী", "শরীয়তপুর", "টাঙ্গাইল"],
+    "চট্টগ্রাম": ["বান্দরবান", "ব্রাহ্মণবাড়িয়া", "চাঁদপুর", "চট্টগ্রাম", "কুমিল্লা", "কক্সবাজার", "ফেনী", "খাগড়াছড়ি", "লক্ষ্মীপুর", "নোয়াখালী", "রাঙ্গামাটি"],
+    "রাজশাহী": ["বগুড়া", "জয়পুরহাট", "নওগাঁ", "নাটোর", "নবাবগঞ্জ", "পাবনা", "রাজশাহী", "সিরাজগঞ্জ"],
+    "রংপুর": ["দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "রংপুর", "ঠাকুরগাঁও"],
+    "বরিশাল": ["বরগুনা", "বরিশাল", "ভোলা", "ঝালকাঠি", "পটুয়াখালী", "পিরোজপুর"],
+    "সিলেট": ["হবিগঞ্জ", "মৌলভীবাজার", "সুনামগঞ্জ", "সিলেট"],
+    "ময়মনসিংহ": ["ময়মনসিংহ", "নেত্রকোনা", "শেরপুর", "জামালপুর"]
+};
+
+// 🎯 ২. বিভাগ সিলেক্ট করলে জেলা ডাইনামিক করার কন্ট্রোলার
+const filterDivisionEl = document.getElementById('filterDivision');
+const filterDistrictEl = document.getElementById('filterDistrict');
+
+if (filterDivisionEl && filterDistrictEl) {
+    filterDivisionEl.addEventListener('change', function() {
+        const selectedDivision = this.value;
+        filterDistrictEl.innerHTML = '<option value="">সব জেলা</option>';
+        
+        if (selectedDivision && bdDistricts[selectedDivision]) {
+            filterDistrictEl.disabled = false;
+            bdDistricts[selectedDivision].forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+                filterDistrictEl.appendChild(option);
+            });
+        } else {
+            filterDistrictEl.disabled = true;
+            filterDistrictEl.innerHTML = '<option value="">প্রথমে বিভাগ মেলান</option>';
+        }
+    });
+}
+
+// 🎯 ৩. তোমার বর্ণনা অনুযায়ী তৈরি মূল বুদ্ধিমান সার্চইঞ্জিন ফাংশন
+async function fetchAndDisplayProperties(category, searchFilter = '') {
+    if (!propertyG) return;
+    propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:#65676b;">নিউজ ফিড রিফ্রেশ হচ্ছে...</p>';
+    
+    try {
+        let snap = await db.collection('properties')
+            .where('category', '==', category)
+            .where('status', '==', 'published')
+            .get();
+            
+        propertyG.innerHTML = '';
+        let hasPost = false;
+        
+        // ৪টি ঘরের ইনপুট রিড করা
+        const filterType = document.getElementById('filterType')?.value || '';
+        const filterDivision = document.getElementById('filterDivision')?.value || '';
+        const filterDistrict = document.getElementById('filterDistrict')?.value || '';
+        const formattedSearch = searchFilter.toLowerCase().trim();
+
+        snap.forEach(doc => {
+            const data = doc.data();
+            
+            // ডিফল্টভাবে ধরে নিচ্ছি পোস্টটি দেখাবে, যদি কোনো শর্ত পূরণ না হয় তখন এটি false হবে
+            let isMatched = true; 
+
+            // ১. যদি শুধু ধরন (Type) সিলেক্ট করে এবং ডাটার সাথে না মেলে
+            if (filterType && data.type !== filterType) {
+                isMatched = false;
+            }
+            
+            // ২. যদি শুধু বিভাগ (Division) সিলেক্ট করে এবং ডাটার সাথে না মেলে
+            if (filterDivision && data.location?.division !== filterDivision) {
+                isMatched = false;
+            }
+            
+            // ৩. যদি শুধু জেলা (District) সিলেক্ট করে এবং ডাটার সাথে না মেলে
+            if (filterDistrict && data.location?.district !== filterDistrict) {
+                isMatched = false;
+            }
+            
+            // ৪. যদি শুধু এলাকা/থানা/গ্রাম/রোড ফিল্ড পূরণ করে এবং ডাটার সাথে না মেলে
+            if (formattedSearch) {
+                const titleMatch = data.title?.toLowerCase().includes(formattedSearch);
+                const villageMatch = data.location?.village?.toLowerCase().includes(formattedSearch);
+                const thanaMatch = data.location?.thana?.toLowerCase().includes(formattedSearch);
+                const roadMatch = data.location?.road?.toLowerCase().includes(formattedSearch);
+                const districtTextMatch = data.location?.district?.toLowerCase().includes(formattedSearch);
+                
+                // যদি ৪ নম্বর ঘরের কোনো লেখার সাথেই ম্যাচ না করে
+                if (!titleMatch && !villageMatch && !thanaMatch && !roadMatch && !districtTextMatch) {
+                    isMatched = false;
+                }
+            }
+
+            // যদি গ্রাহকের পূরণ করা ঘরগুলোর শর্তের সাথে পোস্টটি টিকে যায় (Match করে), তবেই দেখাবে
+            if (isMatched) {
+                hasPost = true;
+                propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(doc.id, data));
+                loadPostAuthorDetails(doc.id, data.userId);
+            }
+        });
+
+        if (!hasPost) {
+            propertyG.innerHTML = '<p style="text-align:center; padding:40px; color:#65676b;">আপনার সার্চ অনুযায়ী এই মুহূর্তে কোনো পোস্ট পাওয়া যায়নি।</p>';
+        } else {
+            setupSliderAndLikeLogic();
+        }
+    } catch (error) {
+        console.error("সার্চইঞ্জিন ত্রুটি:", error);
+        propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:red;">ফিড লোড করতে সমস্যা হয়েছে।</p>';
+    }
+            }
+
+// 🎯 বাটন এবং এন্টার ইভেন্ট হ্যান্ডলার আপডেট (setupUIEventListeners ফাংশনের ভেতর এগুলো নিশ্চিত করো)
+const btnAdvancedSearch = document.getElementById('btnAdvancedSearch');
+if (btnAdvancedSearch) {
+    btnAdvancedSearch.onclick = () => {
+        const activeNavButton = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
+        const category = activeNavButton ? activeNavButton.getAttribute('data-category') : 'বিক্রয়';
+        const searchText = document.getElementById('globalSearchInput')?.value || '';
+        fetchAndDisplayProperties(category, searchText);
+    };
+}
+
+const inputSearch = document.getElementById('globalSearchInput');
+if (inputSearch) {
+    inputSearch.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+            const activeNavButton = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
+            const category = activeNavButton ? activeNavButton.getAttribute('data-category') : 'বিক্রয়';
+            fetchAndDisplayProperties(category, inputSearch.value);
+        }
+    });
+            }
+
+// ইভেন্ট লিসেনার সেটআপ
+function setupUIEventListeners() {
+    if (menuButton && sidebar && overlay) {
+        menuButton.onclick = () => { sidebar.classList.add('active'); overlay.classList.add('active'); };
+        overlay.onclick = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
+    }
+
+    // 🎯 সংশোধন: সঠিক ক্লাস ফিল্টারিং অনুযায়ী লুপ সেটআপ
+    navButtons.forEach(btn => {
+        btn.onclick = function() {
+            navButtons.forEach(b => b.classList.remove('active'));
+            const mapViewToggleBtn = document.getElementById('mapViewToggleBtn');
+            if (mapViewToggleBtn) mapViewToggleBtn.classList.remove('active');
+            
+            this.classList.add('active');
+            
+            const gridContainer = document.getElementById('property-grid-container');
+            const mapSection = document.getElementById('map-section');
+            if (gridContainer) gridContainer.style.display = 'block';
+            if (mapSection) mapSection.style.display = 'none';
+            
+            fetchAndDisplayProperties(this.getAttribute('data-category'), globalSearchInput?.value || '');
+        };
+    });
+
+    const mapViewToggleBtn = document.getElementById('mapViewToggleBtn');
+    if (mapViewToggleBtn) {
+        mapViewToggleBtn.onclick = function() {
+            navButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const gridContainer = document.getElementById('property-grid-container');
+            const mapSection = document.getElementById('map-section');
+            if (gridContainer) gridContainer.style.display = 'none';
+            if (mapSection) mapSection.style.display = 'block';
+            
+            // 🎯 সংশোধন: ক্যাটগরি চেক করার জন্য ডাইনামিক ক্লাস রিড করা
+            const activeNavButton = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
+            const currentCat = activeNavButton ? activeNavButton.getAttribute('data-category') : 'বিক্রয়';
+            initMap(currentCat);
+        };
+    }
+
+    const btnAdvancedSearch = document.getElementById('btnAdvancedSearch');
+    if (btnAdvancedSearch) {
+        btnAdvancedSearch.onclick = () => {
+            const activeNavButton = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
+            const category = activeNavButton ? activeNavButton.getAttribute('data-category') : 'বিক্রয়';
+            fetchAndDisplayProperties(category, globalSearchInput?.value || '');
+        };
+    }
+
+    if (globalSearchInput) {
+        globalSearchInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                const activeNavButton = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
+                const category = activeNavButton ? activeNavButton.getAttribute('data-category') : 'বিক্রয়';
+                fetchAndDisplayProperties(category, globalSearchInput.value);
+            }
+        });
+    }
+}
+
+// অ্যাপ্লিকেশন রানিং সোর্স
+document.addEventListener('DOMContentLoaded', () => {
+    setupUIEventListeners();
+    fetchAndDisplayProperties('বিক্রয়', ''); 
+    
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            loadProfilePicture(user); 
+            updateIconCounts(); 
+            if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগআউট';
+                loginLinkSidebar.href = '#';
+                loginLinkSidebar.removeEventListener('click', handleLogout);
+                loginLinkSidebar.addEventListener('click', handleLogout);
+            }
+        } else {
+            if (profileImage) profileImage.style.display = 'none';
+            if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
+            if (notificationCount) notificationCount.style.display = 'none';
+            if (messageCount) messageCount.style.display = 'none';
+            if (loginLinkSidebar) {
+                loginLinkSidebar.textContent = 'লগইন';
+                loginLinkSidebar.href = 'auth.html';
+                loginLinkSidebar.removeEventListener('click', handleLogout); 
+            }
+        }
+    });
 });
