@@ -285,7 +285,7 @@ function loadPostAuthorDetails(docId, userId) {
     }).catch(err => console.error("ইউজার কার্ড ডাটা লোড ত্রুটি:", err));
 }
 
-// ডাটাবেজ ফেচ এবং মেইন রেন্ডারিং মেকানিজম
+// সংশোধিত ডাটাবেজ ফেচ এবং কাস্টম সার্চ ইঞ্জিন মেকানিজম
 async function fetchAndDisplayProperties(category, searchFilter = '') {
     if (!propertyG) return;
     propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:#65676b; font-family:inherit;">নিউজ ফিড রিফ্রেশ হচ্ছে...</p>';
@@ -299,16 +299,30 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         propertyG.innerHTML = '';
         let hasPost = false;
         
+        // নতুন ইনপুট ফিল্ডগুলোর ভ্যালু রিড করা
         const filterType = document.getElementById('filterType')?.value;
-        const filterDivision = document.getElementById('filterDivision')?.value;
+        const filterDistrict = document.getElementById('filterDistrict')?.value; // জেলা ফিল্টার
         const formattedSearch = searchFilter.toLowerCase().trim();
 
         snap.forEach(doc => {
             const data = doc.data();
             
+            // ১. আবাসনের ধরন চেক (বাড়ি, জমি, প্লট, ফ্ল্যাট, অফিস, দোকান)
             if (filterType && data.type !== filterType) return;
-            if (filterDivision && data.location?.division !== filterDivision) return;
-            if (formattedSearch && !data.title?.toLowerCase().includes(formattedSearch) && !data.location?.district?.toLowerCase().includes(formattedSearch) && !data.location?.thana?.toLowerCase().includes(formattedSearch)) return;
+            
+            // ২. জেলা চেক (ডাটাবেজের location.district ফিল্ডের সাথে মিলানো হচ্ছে)
+            if (filterDistrict && data.location?.district !== filterDistrict) return;
+            
+            // ৩. এলাকা সার্চ (থানা, গ্রাম বা রোড এবং টাইটেল চেক)
+            if (formattedSearch) {
+                const titleMatch = data.title?.toLowerCase().includes(formattedSearch);
+                const villageMatch = data.location?.village?.toLowerCase().includes(formattedSearch);
+                const thanaMatch = data.location?.thana?.toLowerCase().includes(formattedSearch);
+                const roadMatch = data.location?.road?.toLowerCase().includes(formattedSearch); // যদি রোড ফিল্ড থাকে
+                
+                // কোনোটির সাথে না মিললে এই পোস্টটি স্কিপ করবে
+                if (!titleMatch && !villageMatch && !thanaMatch && !roadMatch) return;
+            }
 
             hasPost = true;
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(doc.id, data));
@@ -316,7 +330,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         });
 
         if (!hasPost) {
-            propertyG.innerHTML = '<p style="text-align:center; padding:40px; color:#65676b;">ফিডে এই মুহূর্তে কোনো পোস্ট পাওয়া যায়নি।</p>';
+            propertyG.innerHTML = '<p style="text-align:center; padding:40px; color:#65676b;">আপনার সার্চ অনুযায়ী এই মুহূর্তে কোনো পোস্ট পাওয়া যায়নি।</p>';
         } else {
             setupSliderAndLikeLogic();
         }
