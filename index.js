@@ -285,10 +285,48 @@ function loadPostAuthorDetails(docId, userId) {
     }).catch(err => console.error("ইউজার কার্ড ডাটা লোড ত্রুটি:", err));
 }
 
-// সংশোধিত ডাটাবেজ ফেচ এবং কাস্টম সার্চ ইঞ্জিন মেকানিজম
+// 🇧🇩 বাংলাদেশের বিভাগ অনুযায়ী জেলাগুলোর ডাইনামিক ডেটা অবজেক্ট
+const bdDistricts = {
+    "খুলনা": ["বাগেরহাট", "চুয়াডাঙ্গা", "যশোর", "ঝিনাইদহ", "খুলনা", "কুষ্টিয়া", "মাগুরা", "মেহেরপুর", "নড়াইল", "সাতক্ষীরা"],
+    "ঢাকা": ["ঢাকা", "ফরিদপুর", "গাজীপুর", "গোপালগঞ্জ", "কিশোরগঞ্জ", "মাদারীপুর", "মানিকগঞ্জ", "মুন্সিগঞ্জ", "নারায়ণগঞ্জ", "নরসিংদী", "রাজবাড়ী", "শরীয়তপুর", "টাঙ্গাইল"],
+    "চট্টগ্রাম": ["বান্দরবান", "ব্রাহ্মণবাড়িয়া", "চাঁদপুর", "চট্টগ্রাম", "কুমিল্লা", "কক্সবাজার", "ফেনী", "খাগড়াছড়ি", "লক্ষ্মীপুর", "নোয়াখালী", "রাঙ্গামাটি"],
+    "রাজশাহী": ["বগুড়া", "জয়পুরহাট", "নওগাঁ", "নাটোর", "নবাবগঞ্জ", "পাবনা", "রাজশাহী", "সিরাজগঞ্জ"],
+    "রংপুর": ["দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "রংপুর", "ঠাকুরগাঁও"],
+    "বরিশাল": ["বরগুনা", "বরিশাল", "ভোল্লা", "ঝালকাঠি", "পটুয়াখালী", "পিরোজপুর"],
+    "সিলেট": ["হবিগঞ্জ", "মৌলভীবাজার", "সুনামগঞ্জ", "সিলেট"],
+    "ময়মনসিংহ": ["ময়মনসিংহ", "নেত্রকোনা", "শেরপুর", "জামালপুর"]
+};
+
+// 🎯 বিভাগ সিলেক্ট করলে ডাইনামিক জেলা লোড করার ফাংশন
+const filterDivisionEl = document.getElementById('filterDivision');
+const filterDistrictEl = document.getElementById('filterDistrict');
+
+if (filterDivisionEl && filterDistrictEl) {
+    filterDivisionEl.addEventListener('change', function() {
+        const selectedDivision = this.value;
+        
+        // রিসেট জেলা ড্রপডাউন
+        filterDistrictEl.innerHTML = '<option value="">সব জেলা</option>';
+        
+        if (selectedDivision && bdDistricts[selectedDivision]) {
+            filterDistrictEl.disabled = false;
+            bdDistricts[selectedDivision].forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+                filterDistrictEl.appendChild(option);
+            });
+        } else {
+            filterDistrictEl.disabled = true;
+            filterDistrictEl.innerHTML = '<option value="">প্রথমে বিভাগ মেলান</option>';
+        }
+    });
+}
+
+// 🎯 ৪-স্তরের সংশোধিত ডাটাবেজ ফেচ এবং সার্চ ইঞ্জিন মেকানিজম
 async function fetchAndDisplayProperties(category, searchFilter = '') {
     if (!propertyG) return;
-    propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:#65676b; font-family:inherit;">নিউজ ফিড রিফ্রেশ হচ্ছে...</p>';
+    propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:#65676b;">নিউজ ফিড রিফ্রেশ হচ্ছে...</p>';
     
     try {
         let snap = await db.collection('properties')
@@ -299,28 +337,31 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         propertyG.innerHTML = '';
         let hasPost = false;
         
-        // নতুন ইনপুট ফিল্ডগুলোর ভ্যালু রিড করা
+        // ৪টি ইনপুট ফিল্ডের ভ্যালু রিড করা
         const filterType = document.getElementById('filterType')?.value;
-        const filterDistrict = document.getElementById('filterDistrict')?.value; // জেলা ফিল্টার
+        const filterDivision = document.getElementById('filterDivision')?.value;
+        const filterDistrict = document.getElementById('filterDistrict')?.value;
         const formattedSearch = searchFilter.toLowerCase().trim();
 
         snap.forEach(doc => {
             const data = doc.data();
             
-            // ১. আবাসনের ধরন চেক (বাড়ি, জমি, প্লট, ফ্ল্যাট, অফিস, দোকান)
+            // ১. আবাসনের ধরন ফিল্টার (জমি, বাড়ি, প্লট, ফ্ল্যাট, অফিস, দোকান)
             if (filterType && data.type !== filterType) return;
             
-            // ২. জেলা চেক (ডাটাবেজের location.district ফিল্ডের সাথে মিলানো হচ্ছে)
+            // ২. বিভাগ ফিল্টার (location.division)
+            if (filterDivision && data.location?.division !== filterDivision) return;
+            
+            // ৩. জেলা ফিল্টার (location.district)
             if (filterDistrict && data.location?.district !== filterDistrict) return;
             
-            // ৩. এলাকা সার্চ (থানা, গ্রাম বা রোড এবং টাইটেল চেক)
+            // ৪. এলাকা সার্চ (থানা, গ্রাম, রোড এবং টাইটেল কিওয়ার্ড ম্যাচিং)
             if (formattedSearch) {
                 const titleMatch = data.title?.toLowerCase().includes(formattedSearch);
                 const villageMatch = data.location?.village?.toLowerCase().includes(formattedSearch);
                 const thanaMatch = data.location?.thana?.toLowerCase().includes(formattedSearch);
-                const roadMatch = data.location?.road?.toLowerCase().includes(formattedSearch); // যদি রোড ফিল্ড থাকে
+                const roadMatch = data.location?.road?.toLowerCase().includes(formattedSearch);
                 
-                // কোনোটির সাথে না মিললে এই পোস্টটি স্কিপ করবে
                 if (!titleMatch && !villageMatch && !thanaMatch && !roadMatch) return;
             }
 
@@ -330,7 +371,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         });
 
         if (!hasPost) {
-            propertyG.innerHTML = '<p style="text-align:center; padding:40px; color:#65676b;">আপনার সার্চ অনুযায়ী এই মুহূর্তে কোনো পোস্ট পাওয়া যায়নি।</p>';
+            propertyG.innerHTML = '<p style="text-align:center; padding:40px; color:#65676b;">আপনার ফিল্টার অনুযায়ী এই মুহূর্তে কোনো পোস্ট পাওয়া যায়নি।</p>';
         } else {
             setupSliderAndLikeLogic();
         }
@@ -339,6 +380,28 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:red;">ফিড লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।</p>';
     }
 }
+
+// 🎯 বাটন এবং এন্টার ইভেন্ট হ্যান্ডলার আপডেট (setupUIEventListeners ফাংশনের ভেতর এগুলো নিশ্চিত করো)
+const btnAdvancedSearch = document.getElementById('btnAdvancedSearch');
+if (btnAdvancedSearch) {
+    btnAdvancedSearch.onclick = () => {
+        const activeNavButton = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
+        const category = activeNavButton ? activeNavButton.getAttribute('data-category') : 'বিক্রয়';
+        const searchText = document.getElementById('globalSearchInput')?.value || '';
+        fetchAndDisplayProperties(category, searchText);
+    };
+}
+
+const inputSearch = document.getElementById('globalSearchInput');
+if (inputSearch) {
+    inputSearch.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+            const activeNavButton = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
+            const category = activeNavButton ? activeNavButton.getAttribute('data-category') : 'বিক্রয়';
+            fetchAndDisplayProperties(category, inputSearch.value);
+        }
+    });
+            }
 
 // ইভেন্ট লিসেনার সেটআপ
 function setupUIEventListeners() {
