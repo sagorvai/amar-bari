@@ -420,41 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginLinkSidebar = document.getElementById('login-link-sidebar');
 
 
-    // --- অথেন্টিকেশন স্টেট চেঞ্জ লজিক (হেডার/সাইডবার UI আপডেট) ---
-    // ধরে নেওয়া হচ্ছে auth ভ্যারিয়েবল গ্লোবালি সংজ্ঞায়িত আছে।
-    if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                // লগইন অবস্থায়: প্রোফাইল ইমেজ লোড এবং সঠিক সাইডবার লিঙ্ক দেখানো
-                loadHeaderProfile(user); 
-                if (profileImageWrapper) profileImageWrapper.style.display = 'flex'; 
-
-                // সাইডবার লিঙ্ক আপডেট
-                if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
-                if (loginLinkSidebar) {
-                    loginLinkSidebar.textContent = 'লগআউট';
-                    loginLinkSidebar.href = '#'; 
-                    loginLinkSidebar.onclick = handleLogout; 
-                }
-            } else {
-                // লগআউট অবস্থায়: ডিফল্ট আইকন দেখানো এবং সাইডবার লিঙ্ক আপডেট
-                if (headerProfileImage && defaultProfileIcon) {
-                    headerProfileImage.style.display = 'none';
-                    defaultProfileIcon.style.display = 'block';
-                }
-                if (profileImageWrapper) profileImageWrapper.style.display = 'flex';
-                
-                // সাইডবার লিঙ্ক আপডেট
-                if (postLinkSidebar) postLinkSidebar.style.display = 'none';
-                if (loginLinkSidebar) {
-                    loginLinkSidebar.textContent = 'লগইন';
-                    loginLinkSidebar.href = 'auth.html';
-                    loginLinkSidebar.onclick = null;
-                }
-            }
-        });
-    }
-
+    
     // --- হেডার আইকন কার্যকারিতা ---
     
     // মেনু বাটন এবং সাইডবার টগল
