@@ -115,9 +115,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function generateTypeDropdown(category) {
         let options = [];
         if (category === 'বিক্রয়') {
-            options = ['জমি', 'প্লট', 'বাড়ি', 'ফ্লাট', 'দোকান', 'অফিস']; 
+            options = ['জমি', 'প্লট', 'বাড়ি', 'ফ্ল্যাট', 'দোকান', 'অফিস']; 
         } else if (category === 'ভাড়া') {
-            options = ['বাড়ি', 'ফ্লাট', 'অফিস', 'দোকান']; 
+            options = ['বাড়ি', 'ফ্ল্যাট', 'অফিস', 'দোকান']; 
         }
 
         const typeSelectHTML = `
