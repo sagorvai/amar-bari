@@ -288,7 +288,7 @@ function loadPostAuthorDetails(docId, userId) {
 // 🎯 ১. বিভাগ অনুযায়ী জেলাগুলোর ডাইনামিক ডেটা তালিকা
 const bdDistricts = {
     "খুলনা": ["বাগেরহাট", "চুয়াডাঙ্গা", "যশোর", "ঝিনাইদহ", "খুলনা", "কুষ্টিয়া", "মাগুরা", "মেহেরপুর", "নড়াইল", "সাতক্ষীরা"],
-    "ঢাকা": ["ঢাকা", "ফریدপুর", "গাজীপুর", "গোপালগঞ্জ", "কিশোরগঞ্জ", "মাদারীপুর", "মানিকগঞ্জ", "মুন্সিগঞ্জ", "নারায়ণগঞ্জ", "নরসিংদী", "রাজবাড়ী", "শরীয়তপুর", "টাঙ্গাইল"],
+    "ঢাকা": ["ঢাকা", "ফরিদপুর", "গাজীপুর", "গোপালগঞ্জ", "কিশোরগঞ্জ", "মাদারীপুর", "মানিকগঞ্জ", "মুন্সিগঞ্জ", "নারায়ণগঞ্জ", "নরসিংদী", "রাজবাড়ী", "শরীয়তপুর", "টাঙ্গাইল"],
     "চট্টগ্রাম": ["বান্দরবান", "ব্রাহ্মণবাড়িয়া", "চাঁদপুর", "চট্টগ্রাম", "কুমিল্লা", "কক্সবাজার", "ফেনী", "খাগড়াছড়ি", "লক্ষ্মীপুর", "নোয়াখালী", "রাঙ্গামাটি"],
     "রাজশাহী": ["বগুড়া", "জয়পুরহাট", "নওগাঁ", "নাটোর", "নবাবগঞ্জ", "পাবনা", "রাজশাহী", "সিরাজগঞ্জ"],
     "রংপুর": ["দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "রংপুর", "ঠাকুরগাঁও"],
@@ -337,7 +337,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         
         // ৪টি ঘরের ইনপুট রিড করা
         const filterType = document.getElementById('filterType')?.value || '';
-        const filterDivision = document.getElementById('filterDivision')?.value || '';
+        
         const filterDistrict = document.getElementById('filterDistrict')?.value || '';
         const formattedSearch = searchFilter.toLowerCase().trim();
 
@@ -352,10 +352,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
                 isMatched = false;
             }
             
-            // ২. যদি শুধু বিভাগ (Division) সিলেক্ট করে এবং ডাটার সাথে না মেলে
-            if (filterDivision && data.location?.division !== filterDivision) {
-                isMatched = false;
-            }
+            
             
             // ৩. যদি শুধু জেলা (District) সিলেক্ট করে এবং ডাটার সাথে না মেলে
             if (filterDistrict && data.location?.district !== filterDistrict) {
