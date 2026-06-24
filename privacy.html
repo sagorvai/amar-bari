@@ -360,11 +360,6 @@
     <script>
   // header_logic.js
 
-// Firebase SDKs (আপনার মূল HTML ফাইলে লোড করা থাকতে হবে)
-// const db = firebase.firestore(); 
-// const auth = firebase.auth();
-// ধরে নেওয়া হচ্ছে db এবং auth ভ্যারিয়েবলগুলো বিশ্বব্যাপী (globally) সংজ্ঞায়িত আছে।
-
 // 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
 firebase.auth().onAuthStateChanged(async (user) => {
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
