@@ -45,6 +45,101 @@
       padding: 0;
     }
 
+
+    .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; 
+            padding: 8px 15px; 
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0; 
+        }
+
+        .menu-icon {
+             margin-right: 0; 
+             cursor: pointer;
+        }
+        
+        .logo-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.8em; 
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 0px; 
+            text-decoration: none; 
+            white-space: nowrap; 
+        }
+        .logo-title:visited {
+             color: var(--primary-color);
+        }
+        .logo-icon {
+            margin-right: 5px;
+        }
+
+        /* ডানের ব্লক (আইকন) ফিক্স */
+        .header-actions {
+             display: flex;
+             align-items: center;
+             gap: 12px; 
+             position: relative; 
+             flex-shrink: 0; 
+        }
+        
+        /* কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
+        .icon-wrapper {
+             position: relative;
+             display: inline-flex;
+             cursor: pointer;
+             align-items: center; 
+             justify-content: center;
+             height: 30px; 
+             width: 30px; 
+        }
+        
+        /* কমন নোটিফিকেশন কাউন্ট স্টাইল */
+        .notification-count {
+            position: absolute;
+            top: -5px; 
+            right: -8px; 
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 5px; 
+            font-size: 0.7em;
+            font-weight: bold;
+            min-width: 10px;
+            text-align: center;
+            line-height: 1; 
+            display: none; 
+        }
+        
+        /* আইকন কালার */
+        .notification-icon { color: var(--primary-color); }
+        .message-icon { color: var(--primary-color); }
+        .post-icon-header { color: #28a745; }
+
+        /* প্রোফাইল ইমেজ স্টাইল */
+        .profile-image-wrapper {
+            cursor: pointer;
+            width: 35px; /* আইকন থেকে সামান্য বড় */
+            height: 35px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary-color); /* রঙের বর্ডার */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #profileImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+    
     .preview-wrapper {
       max-width: 800px;
       margin: 30px auto;
