@@ -198,7 +198,7 @@ function createFbPostHTML(docId, data) {
     let displayPrice = amount ? new Intl.NumberFormat('bn-BD').format(amount) : 'আলোচনা সাপেক্ষে';
 
     const hasDocs = data.documents && (data.documents.khotian || data.documents.sketch);
-    const verifiedBadge = hasDocs ? `<span class="badge-verified" style="background:#42b72a; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-right:5px;">✓ কাগজ ভেরিফাইড</span>` : '';
+    const verifiedBadge = hasDocs ? `<span class="badge-verified" style="background:#42b72a; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-right:5px;">✓ ভেরিফাইড</span>` : '';
 
     let images = [];
     if (data.images) data.images.forEach(img => images.push(img.url || img));
