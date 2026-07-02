@@ -1,3 +1,64 @@
+// ১. ফায়ারবেস কনফিগারেশন এবং ইনিশিয়ালাইজেশন
+const firebaseConfig = {
+    apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+    authDomain: "amar-bari-website.firebaseapp.com",
+    projectId: "amar-bari-website",
+    storageBucket: "amar-bari-website.firebasestorage.app",
+    messagingSenderId: "719084789035",
+    appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// ⚡ সিকিউরিটি চেক ও প্রোফাইল ভ্যালিডেশন লজিক (পেজ লোড হওয়ার সাথে সাথেই রান হবে)
+auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+        // ১. লগইন না থাকলে সরাসরি auth.html পেইজে রিডাইরেক্ট করবে
+        window.location.href = "auth.html";
+        return;
+    }
+
+    try {
+        // ২. ফায়ারস্টোরের 'users' কালেকশন থেকে ইউজারের ডাটা চেক করা
+        const docSnap = await db.collection('users').doc(user.uid).get();
+
+        let hasName = false;
+        let hasPhoto = false;
+
+        if (docSnap.exists) {
+            const userData = docSnap.data();
+            // আপনার প্রোফাইল ফাইলের ফিল্ড নেম (fullName এবং profilePic) চেক করা হচ্ছে
+            hasName = userData.fullName && userData.fullName.trim() !== "";
+            hasPhoto = userData.profilePic && userData.profilePic.trim() !== "";
+        } else {
+            // যদি ফায়ারস্টোরে ডকুমেন্ট না থাকে, তবে ফায়ারবেস অথেন্টিকেশনের ডিফল্ট ডাটা চেক করবে
+            hasName = user.displayName && user.displayName.trim() !== "";
+            hasPhoto = user.photoURL && user.photoURL.trim() !== "";
+        }
+
+        // ৩. নাম অথবা প্রোফাইল পিকচার যেকোনো একটি মিসিং থাকলে কাস্টম পপআপ দেখানো হবে
+        if (!hasName || !hasPhoto) {
+            const modal = document.getElementById('profile-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                
+                // পোস্ট পেইজের সাবমিট বাটনটি ডিজেবল করে দেওয়া যাতে জোর করে ফর্ম সাবমিট করতে না পারে
+                const submitBtn = document.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = "0.5";
+                    submitBtn.style.cursor = "not-allowed";
+                }
+            }
+        }
+    } catch (error) {
+        console.error("ইউজার প্রোফাইল ভ্যালিডেশন চেক করতে সমস্যা হয়েছে:", error);
+    }
+});
+
 
 // post.js - Fixed with Client-Side Image Compression (KB size) & Fast Parallel Uploads
 const db = firebase.firestore();
