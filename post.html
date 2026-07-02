@@ -253,36 +253,47 @@
     object-fit: cover;
 }
 
-/* লাইভ আপলোডিং ওভারলে ও প্রোগ্রেস পার্সেন্টেজ */
-.upload-overlay {
+        /* আপলোড চলার সময় ছবি ঝাপসা করার CSS */
+.image-preview-wrapper.uploading img {
+    filter: blur(4px);
+    opacity: 0.6;
+}
+
+/* পার্সেন্টেজ ওভারলে স্টাইল (Circular Loading Box) */
+.upload-progress-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(15, 23, 42, 0.75);
+    background: rgba(0, 0, 0, 0.4); /* হালকা অন্ধকার ব্যাকগ্রাউন্ড */
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
     color: white;
     font-weight: bold;
     font-size: 14px;
-    z-index: 5;
+    z-index: 2;
 }
-.spinner-loader {
-    border: 3px solid rgba(255, 255, 255, 0.2);
+
+/* গোল প্রোগ্রেস স্পিনার (CSS দিয়ে তৈরি বৃত্তাকার লোডার) */
+.circular-spinner {
+    border: 3px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    border-top: 3px solid #ffffff;
+    border-top: 3px solid #e0115f; /* তোমার থিম কালার দিতে পারো */
     width: 24px;
     height: 24px;
-    animation: spinRound 1s linear infinite;
-    margin-bottom: 6px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 4px;
 }
-@keyframes spinRound {
+
+@keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+        
+
 
 /* টপ-রাইট কর্নারে ডিলিট বাটন */
 .remove-image-btn {
