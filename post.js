@@ -51,21 +51,38 @@ const compressImage = (file, maxWidth = 1200, quality = 0.7) => {
     });
 };
 
-// Utility Function: Uploads file directly to Firebase Storage for staging
-const uploadStagedImage = async (file, index, userId, docType = 'main') => {
-    const baseDir = docType === 'main' ? 'staging/images' : `staging/documents/${docType}`;
-    const filePath = `${baseDir}/${userId}/${Date.now()}_${index}_${file.name}`;
-    const imageRef = storage.ref().child(filePath);
-    
-    const snapshot = await imageRef.put(file);
-    const downloadURL = await snapshot.ref.getDownloadURL();
-    
-    return {
-        fileName: file.name,
-        fileMimeType: file.type,
-        storagePath: filePath,
-        url: downloadURL
-    };
+// পরিবর্তন করা ফাংশন: এটি আপলোড প্রোগ্রেস ট্র্যাক করবে এবং কলব্যাক ফাংশনে পার্সেন্টেজ পাঠাবে
+const uploadStagedImage = (file, index, userId, docType = 'main', onProgress) => {
+    return new Promise((resolve, reject) => {
+        const baseDir = docType === 'main' ? 'staging/images' : `staging/documents/${docType}`;
+        const filePath = `${baseDir}/${userId}/${Date.now()}_${index}_${file.name}`;
+        const imageRef = storage.ref().child(filePath);
+        
+        // আপলোড টাস্ক শুরু
+        const uploadTask = imageRef.put(file);
+        
+        // প্রোগ্রেস এবং পার্সেন্টেজ ট্র্যাকিং লিসেনার
+        uploadTask.on('state_changed', 
+            (snapshot) => {
+                // পার্সেন্টেজ হিসাব করা
+                const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                if (onProgress) onProgress(progress); // লিজেনারকে পার্সেন্টেজ পাঠানো
+            }, 
+            (error) => {
+                reject(error);
+            }, 
+            async () => {
+                // আপলোড সফলভাবে শেষ হলে URL নেওয়া
+                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                resolve({
+                    fileName: file.name,
+                    fileMimeType: file.type,
+                    storagePath: filePath,
+                    url: downloadURL
+                });
+            }
+        );
+    });
 };
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -580,67 +597,119 @@ document.addEventListener('DOMContentLoaded', function() {
         previewArea.appendChild(wrapper);
     }
 
-    async function handleImageUploadAndPreview(event, previewAreaId, maxFiles, docType = 'main') {
-        const previewArea = document.getElementById(previewAreaId);
-        const files = event.target.files;
-        if (files.length === 0) return;
+   async function handleImageUploadAndPreview(event, previewAreaId, maxFiles, docType = 'main') {
+    const previewArea = document.getElementById(previewAreaId);
+    const files = event.target.files;
+    if (files.length === 0) return;
 
-        let stagedMetadata = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-        let imagesToStore = stagedMetadata.images || [];
+    let stagedMetadata = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+    let imagesToStore = stagedMetadata.images || [];
 
-        if (docType === 'main' && (imagesToStore.length + files.length) > maxFiles) {
-            alert(`আপনি প্রপার্টির জন্য সর্বোচ্চ ${maxFiles}টি ছবি আপলোড করতে পারবেন।`);
-            event.target.value = '';
-            return;
-        }
-
-        if (maxFiles === 1) {
-            previewArea.innerHTML = '';
-        }
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'ছবি সাইজ অপ্টিমাইজ ও আপলোড হচ্ছে...';
-
-        const user = auth.currentUser;
-        const userId = user ? user.uid : 'anonymous';
-
-        const uploadPromises = Array.from(files).map(async (file, i) => {
-            const uniqueFileId = Date.now() + '_' + i;
-            try {
-                const compressedFile = await compressImage(file);
-                const uploadResult = await uploadStagedImage(compressedFile, i, userId, docType);
-                uploadResult.id = uniqueFileId;
-                return { success: true, result: uploadResult, fileId: uniqueFileId };
-            } catch (error) {
-                console.error("ফাইল প্রোসেস বা আপলোডে সমস্যা:", error);
-                return { success: false, fileName: file.name };
-            }
-        });
-
-        const uploadedResults = await Promise.all(uploadPromises);
-
-        uploadedResults.forEach(res => {
-            if (res.success) {
-                renderExistingPreview(previewArea, res.fileId, res.result.url, docType);
-                if (docType === 'main') {
-                    imagesToStore.push(res.result);
-                } else {
-                    stagedMetadata[docType] = res.result;
-                }
-            } else {
-                alert(`ফাইল আপলোড ব্যর্থ হয়েছে: ${res.fileName}`);
-            }
-        });
-
-        if (docType === 'main') {
-            stagedMetadata.images = imagesToStore;
-        }
-
-        sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
-        event.target.value = ''; 
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'প্রিভিউ দেখুন ও পোস্ট করুন';
+    if (docType === 'main' && (imagesToStore.length + files.length) > maxFiles) {
+        alert(`আপনি প্রপার্টির জন্য সর্বোচ্চ ${maxFiles}টি ছবি আপলোড করতে পারবেন।`);
+        event.target.value = '';
+        return;
     }
+
+    if (maxFiles === 1) {
+        previewArea.innerHTML = '';
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'ছবি সাইজ অপ্টিমাইজ ও আপলোড হচ্ছে...';
+
+    const user = auth.currentUser;
+    const userId = user ? user.uid : 'anonymous';
+
+    // প্রতিটি ফাইলের জন্য সমান্তরাল লুপ
+    const uploadPromises = Array.from(files).map(async (file, i) => {
+        const uniqueFileId = Date.now() + '_' + i;
+        
+        // ১. আপলোড শুরুর আগেই ব্রাউজারের লোকাল মেমোরি থেকে ছবি নিয়ে ঝাপসা থাম্বনেইল তৈরি (ইনস্ট্যান্ট রেসপন্স)
+        const localImgUrl = URL.createObjectURL(file);
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-preview-wrapper uploading'; // ঝাপসা করার ক্লাস
+        wrapper.id = `box-${uniqueFileId}`;
+        wrapper.innerHTML = `
+            <img class="preview-image" src="${localImgUrl}">
+            <div class="upload-progress-overlay" id="progress-${uniqueFileId}">
+                <div class="circular-spinner"></div>
+                <span class="pct-text">0%</span>
+            </div>
+        `;
+        previewArea.appendChild(wrapper);
+
+        try {
+            // ২. ইমেজ কম্প্রেস করা
+            const compressedFile = await compressImage(file);
+            
+            // ৩. প্রোগ্রেস ট্র্যাকিং সহ আপলোড শুরু করা
+            const uploadResult = await uploadStagedImage(compressedFile, i, userId, docType, (percent) => {
+                // স্ক্রিনে লাইভ পার্সেন্টেজ টেক্সট আপডেট
+                const progressOverlay = document.getElementById(`progress-${uniqueFileId}`);
+                if (progressOverlay) {
+                    progressOverlay.querySelector('.pct-text').textContent = `${percent}%`;
+                }
+            });
+
+            // ৪. আপলোড শেষ হলে ঝাপসা ইফেক্ট এবং পার্সেন্টেজ ওভারলে রিমুভ করা
+            wrapper.classList.remove('uploading');
+            const overlay = document.getElementById(`progress-${uniqueFileId}`);
+            if (overlay) overlay.remove();
+
+            // রিমুভ বাটন যুক্ত করা
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-image-btn';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+                if (docType === 'main') {
+                    currentMeta.images = (currentMeta.images || []).filter(m => m.id !== uniqueFileId);
+                } else {
+                    delete currentMeta[docType];
+                }
+                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+                wrapper.remove();
+            };
+            wrapper.appendChild(removeBtn);
+
+            uploadResult.id = uniqueFileId;
+            return { success: true, result: uploadResult, fileId: uniqueFileId };
+
+        } catch (error) {
+            console.error("ফাইল প্রোসেস বা আপলোডে সমস্যা:", error);
+            wrapper.remove(); // ব্যর্থ হলে থাম্বনেইলটি মুছে ফেলা হবে
+            return { success: false, fileName: file.name };
+        }
+    });
+
+    const uploadedResults = await Promise.all(uploadPromises);
+
+    uploadedResults.forEach(res => {
+        if (res.success) {
+            if (docType === 'main') {
+                imagesToStore.push(res.result);
+            } else {
+                stagedMetadata[docType] = res.result;
+            }
+        } else {
+            alert(`ফাইল আপলোড ব্যর্থ হয়েছে: ${res.fileName}`);
+        }
+    });
+
+    if (docType === 'main') {
+        stagedMetadata.images = imagesToStore;
+    }
+
+    sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
+    event.target.value = ''; 
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'প্রিভিউ দেখুন ও পোস্ট করুন';
+                }
+    
 
     if (postCategorySelect) {
         postCategorySelect.addEventListener('change', (e) => {
