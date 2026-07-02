@@ -364,6 +364,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
                 const titleMatch = data.title?.toLowerCase().includes(formattedSearch);
                 const villageMatch = data.location?.village?.toLowerCase().includes(formattedSearch);
                 const thanaMatch = data.location?.thana?.toLowerCase().includes(formattedSearch);
+                const thanaMatch = data.location?.upazila?.toLowerCase().includes(formattedSearch);
                 const roadMatch = data.location?.road?.toLowerCase().includes(formattedSearch);
                 const districtTextMatch = data.location?.district?.toLowerCase().includes(formattedSearch);
                 
