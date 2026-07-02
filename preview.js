@@ -160,6 +160,33 @@ function goBack() {
   location.href = 'post.html';
 }
 
+// একটি ইউআরএল থেকে ফাইল অবজেক্ট বা ব্লব তৈরি করে নতুন লোকেশনে আপলোড করার হেল্পার ফাংশন
+async function moveImageToPermanentStorage(url, userId, docType = 'images') {
+  if (!url) return null;
+  try {
+    // ১. স্টোরেজের বর্তমান ইউআরএল থেকে ফাইলটি ডাউনলোড (fetch) করা হচ্ছে
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    // ২. স্থায়ী ফোল্ডারের পাথ নির্ধারণ (staging/ থেকে সরিয়ে সরাসরি properties/-এ)
+    const storageRef = firebase.storage().ref();
+    const baseDir = docType === 'images' ? 'properties/images' : `properties/documents/${docType}`;
+    
+    // ফাইলের একটি ইউনিক নাম তৈরি করা
+    const filename = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const permanentFileRef = storageRef.child(`${baseDir}/${userId}/${filename}`);
+
+    // ৩. স্থায়ী ফোল্ডারে নতুন করে আপলোড করা
+    const uploadTask = await permanentFileRef.put(blob);
+    
+    // ৪. নতুন স্থায়ী ডাউনলোড ইউআরএল রিটার্ন করা
+    return await permanentFileRef.getDownloadURL();
+  } catch (error) {
+    console.error("ফাইল স্থায়ী স্টোরেজে স্থানান্তর করতে ব্যর্থ:", error);
+    return url; // কোনো কারণে ব্যর্থ হলে আগের ইউআরএলটিই ব্যাকআপ হিসেবে রাখা
+  }
+}
+
 async function publishPost() {
   const user = auth.currentUser;
   if (!user) {
@@ -167,16 +194,53 @@ async function publishPost() {
     return;
   }
 
+  // লোডিং অ্যালার্ট বা স্পিনার দেখানো ভালো, কারণ রি-আপলোডে সামান্য সময় লাগতে পারে
+  const originalBtn = document.querySelector('.btn-publish');
+  if(originalBtn) {
+     originalBtn.disabled = true;
+     originalBtn.innerText = '⏳ প্রসেসিং হচ্ছে...';
+  }
+
   try {
+    const userId = user.uid;
+
+    // ১. সাধারণ প্রোপার্টি ছবিগুলো একে একে স্থায়ী ফোল্ডারে মুভ করা
+    const finalImages = [];
+    const propertyImages = imageData.images || [];
+    for (let img of propertyImages) {
+      const currentUrl = img.url || img;
+      if (currentUrl) {
+        const permanentUrl = await moveImageToPermanentStorage(currentUrl, userId, 'images');
+        finalImages.push(img.url ? { ...img, url: permanentUrl } : permanentUrl);
+      }
+    }
+
+    // ২. খতিয়ান ইমেজ স্থায়ী ফোল্ডারে মুভ করা
+    let finalKhotian = null;
+    if (imageData.khotian) {
+      const khotianUrl = imageData.khotian.url || imageData.khotian;
+      const permanentKhotianUrl = await moveImageToPermanentStorage(khotianUrl, userId, 'khotian');
+      finalKhotian = imageData.khotian.url ? { ...imageData.khotian, url: permanentKhotianUrl } : permanentKhotianUrl;
+    }
+
+    // ৩. নকশা/স্কেচ ইমেজ স্থায়ী ফোল্ডারে মুভ করা
+    let finalSketch = null;
+    if (imageData.sketch) {
+      const sketchUrl = imageData.sketch.url || imageData.sketch;
+      const permanentSketchUrl = await moveImageToPermanentStorage(sketchUrl, userId, 'sketch');
+      finalSketch = imageData.sketch.url ? { ...imageData.sketch, url: permanentSketchUrl } : permanentSketchUrl;
+    }
+
+    // ৪. এবার ডেটাবেজে সম্পূর্ণ স্থায়ী ইউআরএল সহ ডেটা সেভ করা হচ্ছে
     await db.collection('properties').add({
       ...postData,
-      images: imageData.images || [],
+      images: finalImages,
       documents: {
-        khotian: imageData.khotian || null,
-        sketch: imageData.sketch || null
+        khotian: finalKhotian,
+        sketch: finalSketch
       },
       status: 'published',
-      userId: user.uid,
+      userId: userId,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
@@ -187,9 +251,12 @@ async function publishPost() {
   } catch (e) {
     console.error(e);
     alert('পোস্ট প্রকাশ করতে সমস্যা হয়েছে, আবার চেষ্টা করুন।');
+    if(originalBtn) {
+      originalBtn.disabled = false;
+      originalBtn.innerText = '✅ চূড়ান্ত পোস্ট করুন';
+   }
   }
-        }
-
+}
  // 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
 firebase.auth().onAuthStateChanged(async (user) => {
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
