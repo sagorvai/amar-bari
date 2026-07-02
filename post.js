@@ -11,57 +11,6 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
 const db = firebase.firestore();
-const auth = firebase.auth();
-
-// ⚡ সিকিউরিটি চেক ও প্রোফাইল ভ্যালিডেশন লজিক (পেজ লোড হওয়ার সাথে সাথেই রান হবে)
-auth.onAuthStateChanged(async (user) => {
-    if (!user) {
-        // ১. লগইন না থাকলে সরাসরি auth.html পেইজে রিডাইরেক্ট করবে
-        window.location.href = "auth.html";
-        return;
-    }
-
-    try {
-        // ২. ফায়ারস্টোরের 'users' কালেকশন থেকে ইউজারের ডাটা চেক করা
-        const docSnap = await db.collection('users').doc(user.uid).get();
-
-        let hasName = false;
-        let hasPhoto = false;
-
-        if (docSnap.exists) {
-            const userData = docSnap.data();
-            // আপনার প্রোফাইল ফাইলের ফিল্ড নেম (fullName এবং profilePic) চেক করা হচ্ছে
-            hasName = userData.fullName && userData.fullName.trim() !== "";
-            hasPhoto = userData.profilePic && userData.profilePic.trim() !== "";
-        } else {
-            // যদি ফায়ারস্টোরে ডকুমেন্ট না থাকে, তবে ফায়ারবেস অথেন্টিকেশনের ডিফল্ট ডাটা চেক করবে
-            hasName = user.displayName && user.displayName.trim() !== "";
-            hasPhoto = user.photoURL && user.photoURL.trim() !== "";
-        }
-
-        // ৩. নাম অথবা প্রোফাইল পিকচার যেকোনো একটি মিসিং থাকলে কাস্টম পপআপ দেখানো হবে
-        if (!hasName || !hasPhoto) {
-            const modal = document.getElementById('profile-modal');
-            if (modal) {
-                modal.style.display = 'flex';
-                
-                // পোস্ট পেইজের সাবমিট বাটনটি ডিজেবল করে দেওয়া যাতে জোর করে ফর্ম সাবমিট করতে না পারে
-                const submitBtn = document.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.style.opacity = "0.5";
-                    submitBtn.style.cursor = "not-allowed";
-                }
-            }
-        }
-    } catch (error) {
-        console.error("ইউজার প্রোফাইল ভ্যালিডেশন চেক করতে সমস্যা হয়েছে:", error);
-    }
-});
-
-
-// post.js - Fixed with Client-Side Image Compression (KB size) & Fast Parallel Uploads
-const db = firebase.firestore();
 const storage = firebase.storage();
 const auth = firebase.auth();
 
@@ -168,8 +117,8 @@ document.addEventListener('DOMContentLoaded', function() {
             "মানিকগঞ্জ": { "উপজেলা": ["মানিকগঞ্জ সদর", "সিংগাইর", "শিবালয়", "ঘিওর", "হরিরামপুর", "সাটুরিয়া", "দৌলতপুর"] },
             "মুন্সীগঞ্জ": { "উপজেলা": ["মুন্সীগঞ্জ সদর", "টংগিবাড়ী", "শ্রীনগর", "লৌহজং", "গজারিয়া", "সিরাজদিখান"] },
             "নরসিংদী": { "উপজেলা": ["নরসিংদী সদর", "পলাশ", "শিবপুর", "মনোহরদী", "বেলাবো", "রায়পুরা"] },
-            "মাদারীপুর": { "উপজেলা": ["মাদারীপুর সদর", "শিবচর", "কালকিনি", "রাজৈর", "ডাসার"] },
-            "গোপালগঞ্জ": { "উপজেলা": ["গোপালগঞ্জ সদর", "টুঙ্গিপাড়া", "কোটালীপাড়া", "কাশিয়ানী", "مুকসুদপুর"] },
+            "مাদারীপুর": { "উপজেলা": ["مাদারীপুর সদর", "শিবচর", "কালকিনি", "রাজৈর", "ডাসার"] },
+            "গোপালগঞ্জ": { "উপজেলা": ["গোপালগঞ্জ সদর", "টুঙ্গিপাড়া", "কোটালীপাড়া", "কাশিয়ানী", "مুকсуদপুর"] },
             "রাজবাড়ী": { "উপজেলা": ["রাজবাড়ী সদর", "গোয়ালন্দ", "পাংশা", "বালিয়াকান্দি", "কালুখালী"] },
             "শরীয়তপুর": { "উপজেলা": ["শরীয়তপুর সদর", "ডামুড্যা", "নড়িয়া", "জাজিরা", "ভেদরগঞ্জ", "গোসাইরহাট"] },
             "কিশোরগঞ্জ": { "উপজেলা": ["কিশোরগঞ্জ সদর", "করিমগঞ্জ", "তাড়াইল", "হোসেনপুর", "পাকুন্দিয়া", "কটিয়াদী", "বাজিতপুর", "কুলিয়ারচর", "ভৈরব", "নিকলী", "মিঠামইন", "ইটনা", "অষ্টগ্রাম"] }
@@ -188,47 +137,47 @@ document.addEventListener('DOMContentLoaded', function() {
             "ব্রাহ্মণবাড়িয়া": { "উপজেলা": ["ব্রাহ্মণবাড়িয়া সদর", "আশুগঞ্জ", "সরাইল", "নাসিরনগর", "নবীনগর", "বাঞ্ছারামপুর", "কসবা", "আখাউড়া", "বিজয়নগর"] },
             "নোয়াখালী": { "উপজেলা": ["নোয়াখালী সদর", "কোম্পানীগঞ্জ", "বেগমগঞ্জ", "চাটখিল", "সেনবাগ", "হাতিয়া", "চৌমুহনী", "subarnachar", "कबीरহাট"] },
             "লক্ষ্মীপুর": { "উপজেলা": ["লক্ষ্মীপুর সদর", "রায়পুর", "রামগঞ্জ", "রামগতি", "কমলনগর"] },
-            "চাঁদপুর": { "উপজেলা": ["চাঁদপুর সদর", "হাজীগঞ্জ", "কচুয়া", "ফরিদগঞ্জ", "মতলব উত্তর", "মতলব দক্ষিণ", "হাইমচর", "শাহরাস্তি"] },
-            "খাগড়াছড়ি": { "উপজেলা": ["খাগড়াছড়ি সদর", "দীঘিনালা", "পানছড়ি", "মাটিরাঙ্গা", "মহালছড়ি", "মানিকছড়ি", "রামগড়", "গুইমারা", "লক্ষ্মীছড়ি"] },
+            "চাঁদপুর": { "উপজেলা": ["চাঁদপুর সদর", "হাজীগঞ্জ", "কচুয়া", "ফরিদগঞ্জ", "মতলব উত্তর", "মতলব দক্ষিণ", "হাইমচর", "शाहরাস্তি"] },
+            "খাগড়াছড়ি": { "উপজেলা": ["খাগড়াছড়ি সদর", "দীঘিনালা", "পানছড়ি", "মাটিরাঙ্গা", "মহালছড়ি", "মানিকছড়ি", "রামগড়", "গুইমারা", "লক্ষ্মীছড়ি"] },
             "রাঙ্গামাটি": { "উপজেলা": ["রাঙ্গামাটি সদর", "কাপ্তাই", "কাউখালী", "বাঘাইছড়ি", "লংগদু", "রাজস্থলী", "জুরাছড়ি", "বলাইছড়ি", "নানিয়ারচর", "বরকল"] },
             "বান্দরবান": { "উপজেলা": ["বান্দরবান সদর", "লামা", "আলীকদম", "নাইক্ষ্যংছড়ি", "রুমা", "থানচি", "রোয়াংছড়ি"] }
         },
         "খুলনা বিভাগ": {
             "খুলনা": {
-                "সিটি কর্পোরেশন": ["খুলনা সদর", "দৌলতপুর", "খালিশপুর", "খানজাহান আলী", "লবণচরা", "হরিণটানা", "আড়ংঘাটা", "সোনাডাঙ্গা"],
+                "সিটি কর্পোরেশন": ["খুলনা সদর", "দৌলতপুর", "খালিশপুর", "خانজাহান আলী", "লবণচরা", "হরিণটানা", "আড়ংঘাটা", "সোনাডাঙ্গা"],
                 "উপজেলা": ["বটিয়াঘাটা", "দাকোপ", "ডুমুরিয়া", "দিঘলিয়া", "কয়রা", "পাইকগাছা", "ফুলতলা", "রূপসা", "তেরখাদা"]
             },
-            "যশোর": { "উপজেলা": ["যশোর সদর", "অভয়নগর", "বাঘেরপাড়া", "চৌগাছা", "ঝিকরগাছা", "কেশবপুর", "মণিরামপুর", "শার্শা"] },
+            "যশোর": { "উপজেলা": ["যশোর সদর", "অভয়নগর", "বাঘেরপাড়া", "চৌগাছা", "ঝিকরগাছা", "কেশবপুর", "مণিরামপুর", "শার্শা"] },
             "কুষ্টিয়া": { "উপজেলা": ["কুষ্টিয়া সদর", "কুমারখালী", "খোকসা", "মিরপুর", "ভেড়ামারা", "দৌলতপুর"] },
-            "বাগেরহাট": { "উপজেলা": ["বাগেরহাট সদর", "চিতলমারী", "ফকিরহাট", "কচুয়া", "মোল্লাহাট", "মংলা", "মোরেলগঞ্জ", "রামপাল", "শরণখোলা"] },
+            "বাগেরহাট": { "উপজেলা": ["বাগেরহাট সদর", "চিতলমারী", "ফকিরহাট", "কচুয়া", "مোল্লাহাট", "مংলা", "مোরেলগঞ্জ", "রামপাল", "শরণখোলা"] },
             "সাতক্ষীরা": { "উপজেলা": ["সাতক্ষীরা সদর", "কলারোয়া", "তালা", "দেবহাটা", "কালীগঞ্জ", "শ্যামনগর", "আশাশুনি"] },
-            "ঝিনাইদহ": { "উপজেলা": ["ঝিনাইদহ সদর", "শৈলকুপা", "হরিণাকুণ্ডু", "কালীগঞ্জ", "কোটচাঁদপুর", "মহেশপুর"] },
-            "মাগুরা": { "উপজেলা": ["মাগুরা সদর", "শ্রীপুর", "মহম্মদপুর", "শালিখা"] },
+            "ঝিনাইদহ": { "উপজেলা": ["ঝিনাইদহ সদর", "শৈলকুপা", "হরিণাকুণ্ডু", "কালীগঞ্জ", "কোটচাঁদপুর", "مহেশপুর"] },
+            "مাগুরা": { "উপজেলা": ["مাগুরা সদর", "শ্রীপুর", "مহম্মদপুর", "শালিখা"] },
             "নড়াইল": { "উপজেলা": ["নড়াইল সদর", "লোহাগড়া", "কালিয়া"] },
-            "মেহেরপুর": { "উপজেলা": ["মেহেরপুর সদর", "গাংনী", "মুজিবনগর"] },
-            "চুয়াডাঙ্গা": { "উপজেলা": ["চুয়াডাঙ্গা সদর", "আলমডাঙ্গা", "দামুড়হুদা", "জীবননগর"] }
+            "মেহেরপুর": { "উপজেলা": ["মেহেরপুর সদর", "গাংনী", "مুজিবনগর"] },
+            "চুয়াডাঙ্গা": { "উপজেলা": ["চুয়াডাঙ্গা সদর", "আলमডাঙ্গা", "দামুড়হুদা", "জীবননগর"] }
         },
         "রাজশাহী বিভাগ": {
             "রাজশাহী": {
                 "সিটি কর্পোরেশন": ["বোয়ালিয়া", "রাজপাড়া", "মতিহার", "শাহ মখদুম", "চন্দ্রিমা", "কাটাখালী"],
-                "উপজেলা": ["পবা", "গোদাগাড়ী", "তানোর", "মোহনপুর", "বাগমারা", "দুর্গাপুর", "পুট্টিয়া", "চারঘাট", "বাঘা"]
+                "উপজেলা": ["পবা", "গোদাগাড়ী", "তানোর", "مোহনপুর", "বাগমারা", "দুর্গাপুর", "পুট্টিয়া", "চারঘাট", "বাঘা"]
             },
             "বগুড়া": { "উপজেলা": ["বগুড়া সদর", "শাজাহানপুর", "শেরপুর", "ধুনট", "গাবতলী", "সারিয়াকান্দি", "নন্দীগ্রাম", "কাহালু", "আদমদিঘী", "دুপচাঁচিয়া", "শিবগঞ্জ", "সোনাতলা"] },
             "পাবনা": { "উপজেলা": ["পাবনা সদর", "ঈশ্বরদী", "আটঘরিয়া", "চাটমোহর", "ভাঙ্গুড়া", "ফریدপুর", "সুজানগর", "বেড়া", "সাঁথিয়া"] },
             "নাটোর": { "উপজেলা": ["নাটোর সদর", "সিংড়া", "বড়াইগ্রাম", "গুরুদাসপুর", "লালপুর", "বাগাতিপাড়া", "নলডাঙ্গা"] },
-            "নওগাঁ": { "উপজেলা": ["নওগাঁ সদর", "রানীনগর", "আত্রাই", "মহাদেবপুর", "বদলগাছী", "পত্নীতলা", "ধামইরহাট", "নিয়ামতপুর", "পোরশা", "সাপাহার", "মান্দা"] },
+            "নওগাঁ": { "উপজেলা": ["নওগাঁ সদর", "রানীনগর", "আত্রাই", "مহাদেবপুর", "বদলগাছী", "পত্নীতলা", "ধামইরহাট", "নিয়ামতপুর", "পোরশা", "সাপাহার", "مান্দা"] },
             "জয়পুরহাট": { "উপজেলা": ["জয়পুরহাট সদর", "পাঁচবিবি", "আক্কেলপুর", "ক্ষেতলাল", "কালাই"] },
-            "সিরাজগঞ্জ": { "উপজেলা": ["সিরাজগঞ্জ সদর", "বেলকুచి", "চৌহালী", "কামারখন্দ", "কাজীপুর", "রায়গঞ্জ", "শাহজাদপুর", "তাড়াশ", "উল্লাপাড়া"] },
+            "সিরাজগঞ্জ": { "উপজেলা": ["সিরাজগঞ্জ সদর", "বেলকুচি", "চৌহালী", "কামারখন্দ", "কাজীপুর", "রায়গঞ্জ", "শাহজাদপুর", "তাড়াশ", "উল্লাপাড়া"] },
             "চাঁপাইনবাবগঞ্জ": { "উপজেলা": ["চাঁপাইনবাবগঞ্জ সদর", "শিবগঞ্জ", "গোমস্তাপুর", "ناচোল", "ভোলাহাট"] }
         },
         "বরিশাল বিভাগ": {
             "বরিশাল": {
                 "সিটি কর্পোরেশন": ["কোতোয়ালী মেট্রো", "কাউনিয়া", "বন্দর মেট্রো", "এয়ারপোর্ট মেট্রো"],
-                "উপজেলা": ["বরিশাল সদর", "বাকেরগঞ্জ", "বাবুগঞ্জ", "উজিরপুর", "বানারীপাড়া", "গৌরনদী", "আগৈলঝারা", "মেহেন্দিগঞ্জ", "মুলাদী", "হিজলা"]
+                "উপজেলা": ["বরিশাল সদর", "বাকেরগঞ্জ", "বাবুগঞ্জ", "উজিরপুর", "বানারীপাড়া", "গৌরনদী", "আগৈলঝারা", "মেহেন্দিগঞ্জ", "مুলাদী", "হিজলা"]
             },
-            "পটুয়াখালী": { "উপজেলা": ["পটুয়াখালী সদর", "বাউফল", "গলাচিপা", "দশমিনা", "কলাপাড়া", "মির্জাগঞ্জ", "دুমকী", "রঙ্গাবালী"] },
-            "ভোলা": { "উপজেলা": ["ভোলা সদর", "দৌলতখান", "বোরহানউদ্দিন", "তজুমদ্দিন", "লালমোহন", "চরফ্যাশন", "মনপুরা"] },
-            "পিরোজপুর": { "উপজেলা": ["পিরোজপুর সদর", "নাজিরপুর", "নেছারাবাদ", "কাউখালী", "ভাণ্ডারিয়া", "মঠবাড়িয়া", "ইন্দুরকানী"] },
+            "পটুয়াখালী": { "উপজেলা": ["পটুয়াখালী সদর", "বাউফল", "গলাচিপা", "দশমিনা", "কলাপাড়া", "مিরজাগঞ্জ", "دুমকী", "রঙ্গাবালী"] },
+            "ভোলা": { "উপজেলা": ["ভোলা সদর", "দৌলতখান", "বোরহানউদ্দিন", "তজুমদ্দিন", "লালমোহন", "চরফ্যাশন", "مনপুরা"] },
+            "পিরোজপুর": { "উপজেলা": ["পিরোজপুর সদর", "ناজিরপুর", "নেছারাবাদ", "কাউখালী", "ভাণ্ডারিয়া", "مঠবাড়িয়া", "ইন্দুরকানী"] },
             "বরগুনা": { "উপজেলা": ["বরগুনা সদর", "আমতলী", "তালতলী", "বামনা", "পাথরঘাটা", "বেতাগী"] },
             "ঝালকাঠি": { "উপজেলা": ["ঝালকাঠি সদর", "নলছিটি", "রাজাপুর", "কাঠালিয়া"] }
         },
@@ -237,29 +186,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 "সিটি কর্পোরেশন": ["কোতোয়ালী", "শাহপরান", "এয়ারপোর্ট", "مোগলাবাজার", "দক্ষিণ সুরমা"],
                 "উপজেলা": ["সিলেট সদর", "গোলাপগঞ্জ", "বিয়ানীবাজার", "জৈنتাপুর", "গোয়াইনঘাট", "কানাইঘাট", "কোম্পানীগঞ্জ", "বালাগঞ্জ", "বিশ্বনাথ", "ফেঞ্চুগঞ্জ", "জকিগঞ্জ", "ওসমানীনগর"]
             },
-            "সুনামগঞ্জ": { "উপজেলা": ["সুনামগঞ্জ সদর", "দক্ষিণ সুনামগঞ্জ", "دোয়ারাবাজার", "ছাতক", "জগন্নাথপুর", "দিরাই", "শালлла", "ধর্মপাশা", "তাহিরপুর", "বিশ্বম্ভরপুর", "মধ্যনগর"] },
-            "হবিগঞ্জ": { "উপজেলা": ["হবিগঞ্জ সদর", "শায়েস্তাগঞ্জ", "নবীগঞ্জ", "বাহুবল", "আজমিরীগঞ্জ", "বানিয়াচং", "লাখাই", "চুনারুঘাট", "মাধবপুর"] },
-            "মৌলভীবাজার": { "উপজেলা": ["مৌলভীবাজার সদর", "শ্রীমঙ্গল", "কমলগঞ্জ", "রাজনগর", "কুলাউড়া", "জুড়ী", "বড়লেখা"] }
+            "সুনামগঞ্জ": { "উপজেলা": ["সুনামগঞ্জ সদর", "দক্ষিণ সুনামগঞ্জ", "دোয়ারাবাজার", "ছাতক", "জগন্নাথপুর", "দিরাই", "শালлла", "ধর্মপাশা", "তাহিরপুর", "বিশ্বম্ভরপুর", "مধ্যনগর"] },
+            "হবিগঞ্জ": { "উপজেলা": ["হবিগঞ্জ সদর", "શાએસ્તાગંજ", "নবীগঞ্জ", "বাহুবল", "আজমিরীগঞ্জ", "বানিয়াচং", "লাখাই", "চুনারুঘাট", "مাধবপুর"] },
+            "مৌলভীবাজার": { "উপজেলা": ["مৌলভীবাজার সদর", "শ্রীমঙ্গল", "কমলগঞ্জ", "রাজনগর", "কুলাউড়া", "জুড়ী", "বড়লেখা"] }
         },
         "রংপুর বিভাগ": {
             "রংপুর": {
-                "সিটি কর্পোরেশন": ["কোতোয়ালী মেট্রো", "পরশুরাম", "তাজহাট", "মাহিগঞ্জ", "হারাগাছ"],
-                "উপজেলা": ["রংপুর সদর", "মিঠাপুকুর", "পীরগঞ্জ", "পীরগাছা", "কাউনিয়া", "গঙ্গাচড়া", "তারাগঞ্জ", "বদরগঞ্জ"]
+                "সিটি কর্পোরেশন": ["কোতোয়ালী মেট্রো", "পরশুরাম", "তাজহাট", "مাহিগঞ্জ", "হারাগাছ"],
+                "উপজেলা": ["রংপুর সদর", "مীঠাপুকুর", "পীরগঞ্জ", "পীরগাছা", "কাউনিয়া", "গঙ্গাচড়া", "তারাগঞ্জ", "বদরগঞ্জ"]
             },
-            "দিনাজপুর": { "উপজেলা": ["দিনাজপুর সদর", "বিরল", "বোচাগঞ্জ", "কাহারোল", "বীরগঞ্জ", "চিরিরবন্দর", "পার্বতীপুর", "ফুলবাড়ী", "নবাবগঞ্জ", "বিরামপুর", "হাকিমপুর", "ঘোড়াঘাট", "খানসামা"] },
+            "দিনাজপুর": { "উপজেলা": ["দিনাজপুর সদর", "বিরল", "বোচাগঞ্জ", "কাহারোল", "বীরগঞ্জ", "চিরিরবন্দর", "পার্বতীপুর", "ফুলবাড়ী", "ناবাগঞ্জ", "বিরামপুর", "হাকিমপুর", "ঘোড়াঘাট", "খানসামা"] },
             "গাইবান্ধা": { "উপজেলা": ["গাইবান্ধা সদর", "সাদুল্লাপুর", "পলাশবাড়ী", "গোবিন্দগঞ্জ", "সুন্দরগঞ্জ", "সাঘাটা", "ফুলছড়ি"] },
-            "কুড়িগ্রাম": { "উপজেলা": ["কুড়িগ্রাম সদর", "রাজারহাট", "উলিপুর", "চিলমারী", "রৌমারী", "চর রাজিবপুর", "নাগেশ্বরী", "ভুরুঙ্গামারী", "ফুলবাড়ী"] },
-            "নীলফামারী": { "উপজেলা": ["নীলফামারী সদর", "সৈয়দপুর", "ডোমার", "ডিমলা", "জলঢাকা", "কিশোরগঞ্জ"] },
-            "লালমনিরহাট": { "উপজেলা": ["লালমনিরহাট সদর", "মহেন্দ্রনগর", "আদিতমারী", "কালীগঞ্জ", "হাতীবান্ধা", "পাটগ্রাম"] },
+            "কুড়িগ্রাম": { "উপজেলা": ["কুড়িগ্রাম সদর", "রাজারহাট", "উলিপুর", "চিলমারী", "রৌমারী", "চর রাজিবপুর", "नाগেশ্বরী", "ভুরুঙ্গামারী", "ফুলবাড়ী"] },
+            "নিলফামারী": { "উপজেলা": ["নিলফামারী সদর", "সৈয়দপুর", "ডোমার", "ডিমলা", "জলঢাকা", "কিশোরগঞ্জ"] },
+            "লালমনিরহাট": { "উপজেলা": ["লালমনিরহাট সদর", "مহেন্দ্রনগর", "আদিতমারী", "কালীগঞ্জ", "হাতীবান্ধা", "পাটগ্রাম"] },
             "পঞ্চগড়": { "উপজেলা": ["পঞ্চগড় সদর", "বোদা", "দেবীগঞ্জ", "অটোয়ারী", "তেঁতুলিয়া"] },
             "ঠাকুরগাঁও": { "উপজেলা": ["ঠাকুরগাঁও সদর", "বালীয়াডাঙ্গী", "পীরগঞ্জ", "রাণীশংকৈল", "হরিপুর"] }
         },
         "ময়মনসিংহ বিভাগ": {
             "ময়মনসিংহ": {
-                "সিটি কর্পোরেশন": ["ময়মনসিংহ সদর মেট্রো", "কোতোয়ালী"],
-                "উপজেলা": ["ময়মনসিংহ সদর", "মুক্তাগাছা", "ফুলবাড়ীয়া", "ত্রিশাল", "ভালuকা", "গফরগাঁও", "নন্দাইল", "ঈশ্বরগঞ্জ", "গৌরীপুর", "হালুয়াঘাট", "ধোবাউড়া", "ফুলপুর", "তারাকান্দা"]
+                "সিটি কর্পোরেশন": ["मयমনসিংহ সদর মেট্রো", "কোতোয়ালী"],
+                "উপজেলা": ["मयমনসিংহ সদর", "مুক্তাগাছা", "ফুলবাড়ীয়া", "ত্রিশাল", "ভালuका", "গফরগাঁও", "নন্দাইল", "ঈশ্বরগঞ্জ", "গৌরীপুর", "হালুয়াঘাট", "ধোবাউড়া", "ফুলপুর", "তারাকান্দা"]
             },
-            "নেত্রকোনা": { "উপজেলা": ["নেত্রকোনা সদর", "বারহাট্টা", "কলমাকান্দা", "দুগাপুর", "পূর্বধলা", "مোহনগঞ্জ", "আটপাড়া", "مদন", "খালিয়াজুরী", "কেন্দুয়া"] },
+            "নেত্রকোনা": { "উপজেলা": ["নেত্রকোনা সদর", "বারহাট্টা", "কলমাকান্দা", "دুগাপুর", "পূর্বধলা", "مোহনগঞ্জ", "আটপাড়া", "مদন", "খালিয়াজুরী", "কেন্দুয়া"] },
             "জামালপুর": { "উপজেলা": ["জামালপুর সদর", "মেলান্দহ", "ইসলামপুর", "দেওয়ানগঞ্জ", "বকশীগঞ্জ", "مাদারগঞ্জ", "সরিষাবাড়ী"] },
             "শেরপুর": { "উপজেলা": ["শেরপুর সদর", "নালিতাবাড়ী", "শ্রীবরদী", "ঝিনাইগাতী", "নকলা"] }
         }
@@ -461,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (category === 'বিক্রয়') {
             let ownershipHTML = `
                 <div class="form-section ownership-section">
-                    <h3>মালিকানা বিবরণ</h3>
+                    <h3>مালিকানা বিবরণ</h3>
                     <div class="input-group"><label for="donor-name">দাতার নাম:</label><input type="text" id="donor-name" required value="${stagedData?.owner?.donorName || ''}"></div>
                     
                     <div class="input-inline-group">
@@ -485,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="text" id="dag-no-input" required value="${stagedData?.owner?.dagNo || ''}">
                     </div>
 
-                    <div class="input-group"><label for="mouja-owner">মৌজা:</label><input type="text" id="mouja-owner" required value="${stagedData?.owner?.mouja || ''}"></div>
+                    <div class="input-group"><label for="mouja-owner">مৌজা:</label><input type="text" id="mouja-owner" required value="${stagedData?.owner?.mouja || ''}"></div>
                     
                     <div class="input-group">
                         <label>সর্বশেষ খতিয়ানের ছবি (১টি):</label>
@@ -537,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </select>
                 </div>
             `;
-        } else if (type === 'ফ্লাট') {
+        } else if (type === 'ফલાট' || type === 'ফ্ল্যাট') {
             priceRentHTML += `
                 <div class="input-group">
                     <label for="flat-area-sqft">পরিমাণ (স্কয়ার ফিট):</label>
@@ -587,7 +536,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="number" id="advance" required value="${stagedData?.advance || ''}">
                 </div>
             `;
-            if (type === 'বাড়ি' || type === 'ফ্লাট') {
+            if (type === 'বাড়ি' || type === 'ফলাট' || type === 'ফ্ল্যাট') {
                 priceRentHTML += `
                     <div class="input-group">
                         <label for="rent-type">ভাড়ার ধরন:</label>
@@ -756,13 +705,10 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             const mapElement = document.getElementById('map-container');
             if (mapElement) {
-                // ১. ম্যাপের ওপরে Lat/Lng দেখানোর জন্য একটি সুন্দর ছোট বক্স বাবল তৈরি করা
                 let coordinateDisplay = document.getElementById('map-coordinate-badge');
                 if (!coordinateDisplay) {
                     coordinateDisplay = document.createElement('div');
-                    coordinateDisplay = document.createElement('div');
                     coordinateDisplay.id = 'map-coordinate-badge';
-                    // সিএসএস স্টাইল (ইনলাইন) যাতে ম্যাপের ঠিক ওপরে সুন্দর করে ভাসে
                     coordinateDisplay.style.cssText = `
                         position: absolute;
                         top: 10px;
@@ -777,7 +723,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         z-index: 1000;
                         pointer-events: none;
                     `;
-                    mapElement.style.position = 'relative'; // প্যারেন্ট পজিশন ঠিক করা
+                    mapElement.style.position = 'relative'; 
                     mapElement.appendChild(coordinateDisplay);
                 }
 
@@ -791,33 +737,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 var marker;
 
-                // ফাংশন: ইনপুট ও ডিসপ্লে আপডেট করা
                 function updateLocationInputs(lat, lng) {
                     document.getElementById('lat').value = lat;
                     document.getElementById('lng').value = lng;
                     coordinateDisplay.textContent = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
                 }
 
-                // ৩. ব্যবহারকারীর ব্রাউজার থেকে লাইভ লোকেশন (Geolocation API) নেওয়া
                 if (navigator.geolocation && !document.getElementById('lat').value) {
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
                             const liveLat = position.coords.latitude;
                             const liveLng = position.coords.longitude;
                             
-                            // ম্যাপকে লাইভ লোকেশনে ফোকাস করা
                             map.setView([liveLat, liveLng], 15);
                             
-                            // পিন বসানো
                             if (marker) map.removeLayer(marker);
                             marker = L.marker([liveLat, liveLng]).addTo(map);
                             
-                            // ডাটা আপডেট
                             updateLocationInputs(liveLat, liveLng);
                         },
                         (error) => {
                             console.log("লাইভ লোকেশন অ্যাক্সেস পাওয়া যায়নি, ডিফল্ট লোকেশন দেখানো হচ্ছে।");
-                            // আগের জমানো বা ডিফল্ট পিন রেন্ডার
                             if (document.getElementById('lat').value && document.getElementById('lng').value) {
                                 marker = L.marker([defaultLat, defaultLng]).addTo(map);
                                 updateLocationInputs(defaultLat, defaultLng);
@@ -825,19 +765,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     );
                 } else if (document.getElementById('lat').value && document.getElementById('lng').value) {
-                    // যদি অলরেডি সেশন/স্টেজড ডাটা থাকে তবে সেটাই দেখাবে
                     marker = L.marker([defaultLat, defaultLng]).addTo(map);
                     updateLocationInputs(defaultLat, defaultLng);
                 }
 
-                // ২. ম্যাপে ক্লিক করে পিন পরিবর্তনের সাথে সাথে আপডেট
                 map.on('click', function(e) {
                     const lat = e.latlng.lat;
                     const lng = e.latlng.lng;
                     if (marker) map.removeLayer(marker);
                     marker = L.marker([lat, lng]).addTo(map);
                     
-                    // ডাটা ও ডিসপ্লে আপডেট
                     updateLocationInputs(lat, lng);
                 });
             }
@@ -863,7 +800,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('sketch-image')?.addEventListener('change', (e) => handleImageUploadAndPreview(e, 'sketch-preview-area', 1, 'sketch'));
     } 
 
-    // লিখিত এড্রেস ফিল্ড জেনারেটর (ফিক্সড)
     function renderTextInputs(areaType, stagedData = null) {
         const container = document.getElementById('sub-address-fields');
         let inputHTML = '';
@@ -1126,18 +1062,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.landType = getValue('land-type');
                 if (type === 'প্লট') propertyData.plotNo = getValue('plot-no');
             } else {
-                if (type === 'বাড়ি' || type === 'ফ্লাট') {
+                if (type === 'বাড়ি' || type === 'ফલાট' || type === 'ফ্ল্যাট') {
                     propertyData.propertyAge = getValue('property-age');
                     propertyData.roadWidth = getValue('road-width');
                     propertyData.dining = getValue('dining');
                     propertyData.balcony = getValue('balcony');
                 }
                 if (type === 'বাড়ি') propertyData.floors = getValue('floors');
-                if (type === 'ফ্লাট' || type === 'অফিস') propertyData.floorNo = getValue('floor-no');
+                if (type === 'ফલાট' || type === 'ফ্ল্যাট' || type === 'অফিস') propertyData.floorNo = getValue('floor-no');
                 if (type !== 'দোকান') {
                     propertyData.rooms = getValue('rooms');
                     propertyData.bathrooms = getValue('bathrooms');
-                    if (type === 'বাড়ি' || type === 'ফ্লাট') propertyData.kitchen = getValue('kitchen');
+                    if (type === 'বাড়ি' || type === 'ফલાট' || type === 'ফ্ল্যাট') propertyData.kitchen = getValue('kitchen');
                 } else {
                     propertyData.shopCount = getValue('shop-count');
                 }
@@ -1146,7 +1082,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (type === 'বাড়ি') {
                 propertyData.houseArea = getValue('house-area');
                 propertyData.houseAreaUnit = getValue('house-area-unit');
-            } else if (type === 'ফ্লাট') {
+            } else if (type === 'ফલાট' || type === 'ফ্ল্যাট') {
                 propertyData.areaSqft = getValue('flat-area-sqft');
                 propertyData.areaSqftUnit = getValue('area-sqft-unit');
             } else if (type === 'দোকান' || type === 'অফিস') {
@@ -1170,7 +1106,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.monthlyRent = getValue('monthly-rent');
                 propertyData.priceUnit = getValue('price-unit');
                 propertyData.advance = getValue('advance');
-                if (type === 'বাড়ি' || type === 'ফ্লাট') {
+                if (type === 'বাড়ি' || type === 'ফલાট' || type === 'ফ্ল্যাট') {
                     propertyData.rentType = getValue('rent-type');
                 }
                 propertyData.moveInDate = getValue('move-in-date');
@@ -1186,32 +1122,73 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // ⚡ সিঙ্ক্রোনাইজড অথেন্টিকেশন, সিকিউরিটি এবং প্রোফাইল ভ্যালিডেশন লজিক
     if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async (user) => {
             const authWarningMessage = document.getElementById('auth-warning-message');
             const propertyFormDisplay = document.getElementById('property-form');
             const primaryPhoneInput = document.getElementById('primary-phone');
             const headerProfileImg = document.querySelector('#profileImageWrapper img');
 
-            if (user) {
-                if (propertyFormDisplay) propertyFormDisplay.style.display = 'block';
-                if (authWarningMessage) authWarningMessage.style.display = 'none';
-
-                db.collection('users').doc(user.uid).get().then(doc => {
-                    const userData = doc.data();
-                    if (primaryPhoneInput && userData?.phoneNumber) {
-                        primaryPhoneInput.value = userData.phoneNumber;
-                        primaryPhoneInput.disabled = true; 
-                    }
-                    if (headerProfileImg && userData) {
-                        headerProfileImg.src = userData.profilePic || user.photoURL || 'assets/images/default-avatar.png';
-                    }
-                    loadStagedData();
-                }).catch(() => loadStagedData());
-            } else {
+            if (!user) {
+                // ১. ইউজার লগইন না থাকলে সরাসরি auth.html পেইজে রিডাইরেক্ট করবে
+                window.location.href = "auth.html";
+                
                 if (propertyFormDisplay) propertyFormDisplay.style.display = 'none';
                 if (authWarningMessage) authWarningMessage.style.display = 'block';
                 if (headerProfileImg) headerProfileImg.src = 'assets/images/default-avatar.png';
+                return;
+            }
+
+            // ইউজার লগইন থাকলে পোস্ট ফর্মটি প্রাথমিকভবে ওপেন হবে এবং ওয়ার্নিং হাইড হবে
+            if (propertyFormDisplay) propertyFormDisplay.style.display = 'block';
+            if (authWarningMessage) authWarningMessage.style.display = 'none';
+
+            try {
+                // ২. ফায়ারস্টোরের 'users' কালেকশন থেকে ইউজারের ডাটা চেক করা
+                const doc = await db.collection('users').doc(user.uid).get();
+                let hasName = false;
+                let hasPhoto = false;
+                let userData = null;
+
+                if (doc.exists) {
+                    userData = doc.data();
+                    hasName = userData.fullName && userData.fullName.trim() !== "";
+                    hasPhoto = userData.profilePic && userData.profilePic.trim() !== "";
+                } else {
+                    hasName = user.displayName && user.displayName.trim() !== "";
+                    hasPhoto = user.photoURL && user.photoURL.trim() !== "";
+                }
+
+                // ৩. যদি নাম অথবা প্রোফাইল পিকচার যেকোনো একটি মিসিং থাকে তবে কাস্টম পপআপ মোডাল দেখানো হবে
+                if (!hasName || !hasPhoto) {
+                    const modal = document.getElementById('profile-modal');
+                    if (modal) {
+                        modal.style.display = 'flex';
+                        
+                        // ফর্ম ও সাবমিট বাটন ডিজেবল ও লক করে দেওয়া
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.style.opacity = "0.5";
+                            submitBtn.style.cursor = "not-allowed";
+                        }
+                    }
+                }
+
+                // ৪. অন্যান্য প্রোফাইল ডেটা ফিল্ড ও প্রি-লোডেড ভ্যালু প্রসেস করা
+                if (primaryPhoneInput && userData?.phoneNumber) {
+                    primaryPhoneInput.value = userData.phoneNumber;
+                    primaryPhoneInput.disabled = true; 
+                }
+                if (headerProfileImg) {
+                    headerProfileImg.src = userData?.profilePic || user.photoURL || 'assets/images/default-avatar.png';
+                }
+                
+                loadStagedData();
+
+            } catch (error) {
+                console.error("ইউজার প্রোফাইল চেক করতে সমস্যা হয়েছে:", error);
+                loadStagedData();
             }
         });
     }
