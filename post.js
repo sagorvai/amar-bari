@@ -690,10 +690,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
         }, 200);
 
-        // ওপেনস্ট্রিটম্যাপ রেন্ডারিং
+        // ওপেনস্ট্রিটম্যাপ রেন্ডারিং (লাইভ লোকেশন ও লাইভ কোঅর্ডিনেট ডিসপ্লে সহ)
         setTimeout(() => {
             const mapElement = document.getElementById('map-container');
             if (mapElement) {
+                // ১. ম্যাপের ওপরে Lat/Lng দেখানোর জন্য একটি সুন্দর ছোট বক্স বাবল তৈরি করা
+                let coordinateDisplay = document.getElementById('map-coordinate-badge');
+                if (!coordinateDisplay) {
+                    coordinateDisplay = document.createElement('div');
+                    coordinateDisplay = document.createElement('div');
+                    coordinateDisplay.id = 'map-coordinate-badge';
+                    // সিএসএস স্টাইল (ইনলাইন) যাতে ম্যাপের ঠিক ওপরে সুন্দর করে ভাসে
+                    coordinateDisplay.style.cssText = `
+                        position: absolute;
+                        top: 10px;
+                        right: 10px;
+                        background: rgba(255, 255, 255, 0.9);
+                        padding: 6px 12px;
+                        border-radius: 20px;
+                        font-size: 12px;
+                        font-weight: bold;
+                        color: #333;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                        z-index: 1000;
+                        pointer-events: none;
+                    `;
+                    mapElement.style.position = 'relative'; // প্যারেন্ট পজিশন ঠিক করা
+                    mapElement.appendChild(coordinateDisplay);
+                }
+
                 let defaultLat = parseFloat(document.getElementById('lat').value) || 23.8103;
                 let defaultLng = parseFloat(document.getElementById('lng').value) || 90.4125;
                 
@@ -703,17 +728,55 @@ document.addEventListener('DOMContentLoaded', function() {
                 }).addTo(map);
 
                 var marker;
-                if (document.getElementById('lat').value && document.getElementById('lng').value) {
-                    marker = L.marker([defaultLat, defaultLng]).addTo(map);
+
+                // ফাংশন: ইনপুট ও ডিসপ্লে আপডেট করা
+                function updateLocationInputs(lat, lng) {
+                    document.getElementById('lat').value = lat;
+                    document.getElementById('lng').value = lng;
+                    coordinateDisplay.textContent = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
                 }
 
+                // ৩. ব্যবহারকারীর ব্রাউজার থেকে লাইভ লোকেশন (Geolocation API) নেওয়া
+                if (navigator.geolocation && !document.getElementById('lat').value) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const liveLat = position.coords.latitude;
+                            const liveLng = position.coords.longitude;
+                            
+                            // ম্যাপকে লাইভ লোকেশনে ফোকাস করা
+                            map.setView([liveLat, liveLng], 15);
+                            
+                            // পিন বসানো
+                            if (marker) map.removeLayer(marker);
+                            marker = L.marker([liveLat, liveLng]).addTo(map);
+                            
+                            // ডাটা আপডেট
+                            updateLocationInputs(liveLat, liveLng);
+                        },
+                        (error) => {
+                            console.log("লাইভ লোকেশন অ্যাক্সেস পাওয়া যায়নি, ডিফল্ট লোকেশন দেখানো হচ্ছে।");
+                            // আগের জমানো বা ডিফল্ট পিন রেন্ডার
+                            if (document.getElementById('lat').value && document.getElementById('lng').value) {
+                                marker = L.marker([defaultLat, defaultLng]).addTo(map);
+                                updateLocationInputs(defaultLat, defaultLng);
+                            }
+                        }
+                    );
+                } else if (document.getElementById('lat').value && document.getElementById('lng').value) {
+                    // যদি অলরেডি সেশন/স্টেজড ডাটা থাকে তবে সেটাই দেখাবে
+                    marker = L.marker([defaultLat, defaultLng]).addTo(map);
+                    updateLocationInputs(defaultLat, defaultLng);
+                }
+
+                // ২. ম্যাপে ক্লিক করে পিন পরিবর্তনের সাথে সাথে আপডেট
                 map.on('click', function(e) {
                     const lat = e.latlng.lat;
                     const lng = e.latlng.lng;
                     if (marker) map.removeLayer(marker);
                     marker = L.marker([lat, lng]).addTo(map);
-                    document.getElementById('lat').value = lat;
-                    document.getElementById('lng').value = lng;
+                    
+                    // ডাটা ও ডিসপ্লে আপডেট
+                    updateLocationInputs(lat, lng);
                 });
             }
         }, 100);
