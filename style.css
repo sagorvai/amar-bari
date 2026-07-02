@@ -1258,54 +1258,5 @@ h2 {
             object-fit: cover;
 
            
-/* প্রিভিউ র‍্যাপার পজিশনিং */
-.image-preview-wrapper {
-    position: relative;
-    display: inline-block;
-    width: 100px;
-    height: 100px;
-    margin: 5px;
-    border-radius: 8px;
-    overflow: hidden;
-}
 
-/* আপলোড চলার সময় ছবি ঝাপসা করার CSS */
-.image-preview-wrapper.uploading img {
-    filter: blur(4px);
-    opacity: 0.6;
-}
-
-/* পার্সেন্টেজ ওভারলে স্টাইল (Circular Loading Box) */
-.upload-progress-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.4); /* হালকা অন্ধকার ব্যাকগ্রাউন্ড */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    color: white;
-    font-weight: bold;
-    font-size: 14px;
-    z-index: 2;
-}
-
-/* গোল প্রোগ্রেস স্পিনার (CSS দিয়ে তৈরি বৃত্তাকার লোডার) */
-.circular-spinner {
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top: 3px solid #e0115f; /* তোমার থিম কালার দিতে পারো */
-    width: 24px;
-    height: 24px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 4px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-   }
 
