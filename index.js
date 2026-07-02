@@ -369,7 +369,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
                 const districtTextMatch = data.location?.district?.toLowerCase().includes(formattedSearch);
                 
                 // যদি ৪ নম্বর ঘরের কোনো লেখার সাথেই ম্যাচ না করে
-                if (!titleMatch && !villageMatch && !thanaMatch && !roadMatch && !districtTextMatch) {
+                if (!titleMatch && !villageMatch && !thanaMatch && !upazila && !roadMatch && !districtTextMatch) {
                     isMatched = false;
                 }
             }
