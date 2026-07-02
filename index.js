@@ -184,7 +184,7 @@ function setupSliderAndLikeLogic() {
 function createFbPostHTML(docId, data) {
     const title = data.title || 'শিরোনামহীন প্রোপার্টি';
     const village = data.location?.village || "তথ্য নেই";
-    const thana = data.location?.thana || "তথ্য নেই";
+    const thana = data.location?.thana || data.location?.upazila || "তথ্য নেই";
     const district = data.location?.district || "তথ্য নেই";
     
     const size = data.landArea || data.houseArea || data.areaSqft || data.commercialArea || '০';
