@@ -439,31 +439,296 @@ document.addEventListener('DOMContentLoaded', function() {
         priceRentHTML += '</div>';
         fieldsHTML += priceRentHTML;
 
-        let addressHTML = `
-            <div class="form-section address-section">
-                <h3>ঠিকানা ও অবস্থান</h3>
-                <div class="input-inline-group">
-                    <div class="input-group"><label for="division">বিভাগ:</label><input type="text" id="division" required value="${stagedData?.location?.division || ''}"></div>
-                    <div class="input-group"><label for="district">জেলা:</label><input type="text" id="district" required value="${stagedData?.location?.district || ''}"></div>
+        // ১. বাংলাদেশের ৮টি বিভাগ, ৬৪টি জেলা এবং তাদের অধীনে থাকা এরিয়া ও থানার সম্পূর্ণ ডাইনামিক অবজেক্ট
+const BD_GEOGRAPHY = {
+    "ঢাকা বিভাগ": {
+        "ঢাকা": {
+            "সিটি কর্পোরেশন": ["মিরপুর", "উত্তরা", "ধানমন্ডি", "গুলশান", "পল্টন", "মতিঝিল", "শাহবাগ", "মোহাম্মদপুর", "তেজগাঁও", "রমনা", "খিলগাঁও", "বাড্ডা", "মিরপুর মডেল", "কাফরুল", "পল্লবী", "দারুস সালাম", "শাহ আলী", "তুরাগ", "উত্তরখান", "দক্ষিণখান", "খিলক্ষেত", "ভাটারা", "রামপুরা", "সবুজবাগ", "মতিঝিল", "চকবাজার", "কোতোয়ালী", "বংশাল", "সূত্রাপুর", "হাজারীবাগ", "ধানমন্ডি", "কলাবাগান", "তেজগাঁও শিল্পাঞ্চল", "শেরেবাংলা নগর", "হাতিরঝিল", "কদমতলী", "যাত্রাবাড়ী", "শ্যামপুর", "ডেমরা", "ওয়ারী", "গেন্ডারিয়া", "লালবাগ", "কামরাঙ্গীরচর"],
+            "উপজেলা": ["সাভার", "ধামরাই", "কেরানীগঞ্জ", "দোহার", "নবাবগঞ্জ"]
+        },
+        "গাজীপুর": {
+            "সিটি কর্পোরেশন": ["গাজীপুর সদর", "কোনাবাড়ী", "বাসন", "গাছা", "টঙ্গী পূর্ব", "টঙ্গী পশ্চিম", "পূবাইল", "কাশিয়াপুর"],
+            "উপজেলা": ["কালিয়াকৈর", "কালীগঞ্জ", "শ্রীপুর", "কাপাসিয়া"]
+        },
+        "নারায়ণগঞ্জ": {
+            "সিটি কর্পোরেশন": ["নারায়ণগঞ্জ সদর", "সিদ্ধিরগঞ্জ", "বন্দর"],
+            "উপজেলা": ["আড়াইহাজার", "রূপগঞ্জ", "সোনারগাঁও"]
+        },
+        "টাঙ্গাইল": { "উপজেলা": ["টাঙ্গাইল সদর", "কালিহাতী", "ঘাটাইল", "মির্জাপুর", "মধুপুর", "গোপালপুর", "সখিপুর", "ভূঞাপুর", "বাসাইল", "দেলদুয়ার", "নাগরপুর", "ধনবাড়ী"] },
+        "ফরিদপুর": { "উপজেলা": ["ফরিদপুর সদর", "মধুখালী", "বোয়ালমারী", "আলফাডাঙ্গা", "নগরকান্দা", "ভাঙ্গা", "সদরপুর", "চরভদ্রাসন", "সালথা"] },
+        "মানিকগঞ্জ": { "উপজেলা": ["মানিকগঞ্জ সদর", "সিংগাইর", "শিবালয়", "ঘিওর", "হরিরামপুর", "সাটুরিয়া", "দৌলতপুর"] },
+        "মুন্সীগঞ্জ": { "উপজেলা": ["মুন্সীগঞ্জ সদর", "টংগিবাড়ী", "শ্রীনগর", "লৌহজং", "গজারিয়া", "সিরাজদিখান"] },
+        "নরসিংদী": { "উপজেলা": ["নরসিংদী সদর", "পলাশ", "শিবপুর", "মনোহরদী", "বেলাবো", "রায়পুরা"] },
+        "মাদারীপুর": { "উপজেলা": ["মাদারীপুর সদর", "শিবচর", "কালকিনি", "রাজৈর", "ডাসার"] },
+        "গোপালগঞ্জ": { "উপজেলা": ["গোপালগঞ্জ সদর", "টুঙ্গিপাড়া", "কোটালীপাড়া", "কাশিয়ানী", "মুকসুদপুর"] },
+        "রাজবাড়ী": { "উপজেলা": ["রাজবাড়ী সদর", "গোয়ালন্দ", "পাংশা", "বালিয়াকান্দি", "কালুখালী"] },
+        "শরীয়তপুর": { "উপজেলা": ["শরীয়তপুর সদর", "ডামুড্যা", "নড়িয়া", "জাজিরা", "ভেদরগঞ্জ", "গোসাইরহাট"] },
+        "কিশোরগঞ্জ": { "উপজেলা": ["কিশোরগঞ্জ সদর", "করিমগঞ্জ", "তাড়াইল", "হোসেনপুর", "পাকুন্দিয়া", "কটিয়াদী", "বাজিতপুর", "কুলিয়ারচর", "ভৈরব", "নিকলী", "মিঠামইন", "ইটনা", "অষ্টগ্রাম"] }
+    },
+    "চট্টগ্রাম বিভাগ": {
+        "চট্টগ্রাম": {
+            "সিটি কর্পোরেশন": ["কোতোয়ালী", "ডবলমুরিং", "পাঁচলাইশ", "খুলশী", "চান্দগাঁও", "পতেঙ্গা", "পাহাড়তলী", "বন্দর", "বাকলিয়া", "বায়োজিদ বোস্তামী", "হালিশহর", "আকবর শাহ", "কর্ণফুলী", "চকবাজার", "সদরঘাট"],
+            "উপজেলা": ["হাটহাজারী", "সীতাকুণ্ড", "মিরসরাই", "পটিয়া", "রাউজান", "রঙ্গুনিয়া", "বোয়ালখালী", "আনোয়ারা", "চন্দনাইশ", "বাঁশখালী", "সাতকানিয়া", "লোহাগাড়া", "সন্দীপ", "ফটিকছড়ি"]
+        },
+        "কুমিল্লা": {
+            "সিটি কর্পোরেশন": ["কুমিল্লা সদর", "কোতোয়ালী মেট্রো", "সদর দক্ষিণ"],
+            "উপজেলা": ["লাকসাম", "চৌদ্দগ্রাম", "লাঙ্গলকোট", "বরুড়া", "চান্দিনা", "বুড়িচং", "ব্রাহ্মণপাড়া", "দেবীদ্বার", "মুরাদনগর", "দাউদকান্দি", "হোমনা", "তিতাস", "মেঘনা", "মনোহরগঞ্জ"]
+        },
+        "কক্সবাজার": { "উপজেলা": ["কক্সবাজার সদর", "উখিয়া", "টেকনাফ", "রামু", "চকরিয়া", "মহেশখালী", "পেকুয়া", "কুতুবদিয়া", "ঈদগাঁও"] },
+        "ফেনী": { "উপজেলা": ["ফেনী সদর", "দাগনভূঞা", "ছাগলনাইয়া", "পরশুরাম", "ফুলগাজী", "সোনাগাজী"] },
+        "ব্রাহ্মণবাড়িয়া": { "উপজেলা": ["ব্রাহ্মণবাড়িয়া সদর", "আশুগঞ্জ", "সরাইল", "নাসিরনগর", "নবীনগর", "বাঞ্ছারামপুর", "কসবা", "আখাউড়া", "বিজয়নগর"] },
+        "নোয়াখালী": { "উপজেলা": ["নোয়াখালী সদর", "কোম্পানীগঞ্জ", "বেগমগঞ্জ", "চাটখিল", "সেনবাগ", "হাতিয়া", "চৌমুহনী", "subarnachar", "कबीरহাট"] },
+        "লক্ষ্মীপুর": { "উপজেলা": ["লক্ষ্মীপুর সদর", "রায়পুর", "রামগঞ্জ", "রামগতি", "কমলনগর"] },
+        "চাঁদপুর": { "উপজেলা": ["চাঁদপুর সদর", "হাজীগঞ্জ", "কচুয়া", "ফরিদগঞ্জ", "মতলব উত্তর", "মতলব দক্ষিণ", "হাইমচর", "শাহরাস্তি"] },
+        "খাগড়াছড়ি": { "উপজেলা": ["খাগড়াছড়ি সদর", "দীঘিনালা", "পানছড়ি", "মাটিরাঙ্গা", "মহালছড়ি", "মানিকছড়ি", "রামগড়", "গুইমারা", "লক্ষ্মীছড়ি"] },
+        "রাঙ্গামাটি": { "উপজেলা": ["রাঙ্গামাটি সদর", "কাপ্তাই", "কাউখালী", "বাঘাইছড়ি", "লংগদু", "রাজস্থলী", "জুরাছড়ি", "বলাইছড়ি", "নানিয়ারচর", "বরকল"] },
+        "বান্দরবান": { "উপজেলা": ["বান্দরবান সদর", "লামা", "আলীকদম", "নাইক্ষ্যংছড়ি", "রুমা", "থানচি", "রোয়াংছড়ি"] }
+    },
+    "খুলনা বিভাগ": {
+        "খুলনা": {
+            "সিটি কর্পোরেশন": ["খুলনা সদর", "দৌলতপুর", "খালিশপুর", "খান জাহান আলী", "লবণচরা", "হরিণটানা", "আড়ংঘাটা", "সোনাডাঙ্গা"],
+            "উপজেলা": ["বটিয়াঘাটা", "দাকোপ", "ডুমুরিয়া", "দিঘলিয়া", "কয়রা", "পাইকগাছা", "ফুলতলা", "রূপসা", "তেরখাদা"]
+        },
+        "যশোর": { "উপজেলা": ["যশোর সদর", "অভয়নগর", "বাঘেরপাড়া", "চৌগাছা", "ঝিকরগাছা", "কেশবপুর", "মণিরামপুর", "শার্শা"] },
+        "কুষ্টিয়া": { "উপজেলা": ["কুষ্টিয়া সদর", "কুমারখালী", "খোকসা", "মিরপুর", "ভেড়ামারা", "দৌলতপুর"] },
+        "বাগেরহাট": { "উপজেলা": ["বাগেরহাট সদর", "চিতলমারী", "ফকিরহাট", "কচুয়া", "মোল্লাহাট", "মংলা", "মোরেলগঞ্জ", "রামপাল", "শরণখোলা"] },
+        "sathkhira": { "উপজেলা": ["সাতক্ষীরা সদর", "কলারোয়া", "তালা", "দেবহাটা", "কালীগঞ্জ", "শ্যামনগর", "আশাশুনি"] },
+        "ঝিনাইদহ": { "উপজেলা": ["ঝিনাইদহ সদর", "শৈলকুপা", "হরিণাকুণ্ডু", "কালীগঞ্জ", "কোটচাঁদপুর", "মহেশপুর"] },
+        "মাগুরা": { "উপজেলা": ["মাগুরা সদর", "শ্রীপুর", "মহম্মদপুর", "শালিখা"] },
+        "নড়াইল": { "উপজেলা": ["নড়াইল সদর", "লোহাগড়া", "কালিয়া"] },
+        "মেহেরপুর": { "উপজেলা": ["মেহেরপুর সদর", "গাংনী", "মুজিবনগর"] },
+        "চুয়াডাঙ্গা": { "উপজেলা": ["চুয়াডাঙ্গা সদর", "আলমডাঙ্গা", "দামুড়হুদা", "জীবননগর"] }
+    },
+    "রাজশাহী বিভাগ": {
+        "রাজশাহী": {
+            "সিটি কর্পোরেশন": ["বোয়ালিয়া", "রাজপাড়া", "মতিহার", "শাহ মখদুম", "চন্দ্রিমা", "কাটাখালী"],
+            "উপজেলা": ["পবা", "গোদাগাড়ী", "তানোর", "মোহনপুর", "বাগমারা", "দুর্গাপুর", "পুট্টিয়া", "চারঘাট", "বাঘা"]
+        },
+        "বগুড়া": { "উপজেলা": ["বগুড়া সদর", "শাজাহানপুর", "শেরপুর", "ধুনট", "গাবতলী", "সারিয়াকান্দি", "নন্দীগ্রাম", "কাহালু", "আদমদিঘী", "দুপচাঁচিয়া", "শিবগঞ্জ", "সোনাতলা"] },
+        "পাবনা": { "উপজেলা": ["পাবনা সদর", "ঈশ্বরদী", "আটঘরিয়া", "চাটমোহর", "ভাঙ্গুড়া", "ফরিদপুর", "সুজানগর", "বেড়া", "সাঁথিয়া"] },
+        "নাটোর": { "উপজেলা": ["নাটোর সদর", "সিংড়া", "বড়াইগ্রাম", "গুরুদাসপুর", "লালপুর", "বাগাতিপাড়া", "নলডাঙ্গা"] },
+        "নওগাঁ": { "উপজেলা": ["নওগাঁ সদর", "রানীনগর", "আত্রাই", "মহাদেবপুর", "বদলগাছী", "পত্নীতলা", "ধামইরহাট", "নিয়ামতপুর", "পোরশা", "সাপাহার", "মান্দা"] },
+        "জয়পুরহাট": { "উপজেলা": ["জয়পুরহাট সদর", "পাঁচবিবি", "আক্কেলপুর", "ক্ষেতলাল", "কালাই"] },
+        "সিরাজগঞ্জ": { "উপজেলা": ["সিরাজগঞ্জ সদর", "বেলকুচি", "চৌহালী", "কামারখন্দ", "কাজীপুর", "রায়গঞ্জ", "শাহজাদপুর", "তাড়াশ", "উল্লাপাড়া"] },
+        "চাঁপাইনবাবগঞ্জ": { "উপজেলা": ["চাঁপাইনবাবগঞ্জ সদর", "শিবগঞ্জ", "গোমস্তাপুর", "নাচোল", "ভোলাহাট"] }
+    },
+    "বরিশাল বিভাগ": {
+        "বরিশাল": {
+            "সিটি কর্পোরেশন": ["কোতোয়ালী মেট্রো", "কাউনিয়া", "বন্দর মেট্রো", "এয়ারপোর্ট মেট্রো"],
+            "উপজেলা": ["বরিশাল সদর", "বাকেরগঞ্জ", "বাবুগঞ্জ", "উজিরপুর", "বানারীপাড়া", "গৌরনদী", "আগৈলঝারা", "মেহেন্দিগঞ্জ", "মুলাদী", "হিজলা"]
+        },
+        "পটুয়াখালী": { "উপজেলা": ["পটুয়াখালী সদর", "বাউফল", "গলাচিপা", "দশমিনা", "কলাপাড়া", "মির্জাগঞ্জ", "দুমকী", "রঙ্গাবালী"] },
+        "ভোলা": { "উপজেলা": ["ভোলা সদর", "দৌলতখান", "বোরহানউদ্দিন", "তজুমদ্দিন", "লালমোহন", "চরফ্যাশন", "মনপুরা"] },
+        "পিরোজপুর": { "উপজেলা": ["পিরোজপুর সদর", "নাজিরপুর", "নেছারাবাদ", "কাউখালী", "ভাণ্ডারিয়া", "মঠবাড়িয়া", "ইন্দুরকানী"] },
+        "বরগুনা": { "উপজেলা": ["বরগুনা সদর", "আমতলী", "তালতলী", "বামনা", "পাথরঘাটা", "বেতাগী"] },
+        "ঝালকাঠি": { "উপজেলা": ["ঝালকাঠি সদর", "নলছিটি", "রাজাপুর", "কাঠালিয়া"] }
+    },
+    "সিলেট বিভাগ": {
+        "সিলেট": {
+            "সিটি কর্পোরেশন": ["কোতোয়ালী", "শাহপরান", "এয়ারপোর্ট", "মোগলাবাজার", "দক্ষিণ সুরমা"],
+            "উপজেলা": ["সিলেট সদর", "গোলাপগঞ্জ", "বিয়ানীবাজার", "জৈন্তাপুর", "গোয়াইনঘাট", "কানাইঘাট", "কোম্পানীগঞ্জ", "বালাগঞ্জ", "বিশ্বনাথ", "ফেঞ্চুগঞ্জ", "জকিগঞ্জ", "ওসমানীনগর"]
+        },
+        "সুনামগঞ্জ": { "উপজেলা": ["সুনামগঞ্জ সদর", "দক্ষিণ সুনামগঞ্জ", "দোয়ারাবাজার", "ছাতক", "জগন্নাথপুর", "দিরাই", "শাল্লা", "ধর্মপাশা", "তাহিরপুর", "বিশ্বম্ভরপুর", "মধ্যনগর"] },
+        "হবিগঞ্জ": { "উপজেলা": ["হবিগঞ্জ সদর", "শায়েস্তাগঞ্জ", "নবীগঞ্জ", "বাহুবল", "আজমিরীগঞ্জ", "বানিয়াচং", "লাখাই", "চুনারুঘাট", "মাধবপুর"] },
+        "مؤلوی‌বাজার": { "উপজেলা": ["মৌলভীবাজার সদর", "শ্রীমঙ্গল", "কমলগঞ্জ", "রাজনগর", "কুলাউড়া", "জুড়ী", "বড়লেখা"] }
+    },
+    "রংপুর বিভাগ": {
+        "রংপুর": {
+            "সিটি কর্পোরেশন": ["কোতোয়ালী মেট্রো", "পরশুরাম", "তাজহাট", "মাহিগঞ্জ", "হারাগাছ"],
+            "উপজেলা": ["রংপুর সদর", "মিঠাপুকুর", "পীরগঞ্জ", "পীরগাছা", "কাউনিয়া", "গঙ্গাচড়া", "তারাগঞ্জ", "বদরগঞ্জ"]
+        },
+        "দিনাজপুর": { "উপজেলা": ["দিনাজপুর সদর", "বিরল", "বোচাগঞ্জ", "কাহারোল", "বীরগঞ্জ", "চিরিরবন্দর", "পার্বতীপুর", "ফুলবাড়ী", "নবাবগঞ্জ", "বিরামপুর", "হাকিমপুর", "ঘোড়াঘাট", "খানসামা"] },
+        "গাইবান্ধা": { "উপজেলা": ["গাইবান্ধা সদর", "সাদুল্লাপুর", "পলাশবাড়ী", "গোবিন্দগঞ্জ", "সুন্দরগঞ্জ", "সাঘাটা", "ফুলছড়ি"] },
+        "কুড়িগ্রাম": { "উপজেলা": ["কুড়িগ্রাম সদর", "রাজারহাট", "উলিপুর", "চিলমারী", "রৌমারী", "চর রাজিবপুর", "নাগেশ্বরী", "ভুরুঙ্গামারী", "ফুলবাড়ী"] },
+        "নীলফামারী": { "উপজেলা": ["নীলফামারী সদর", "সৈয়দপুর", "ডোমার", "ডিমলা", "জলঢাকা", "কিশোরগঞ্জ"] },
+        "লালমনিরহাট": { "উপজেলা": ["লালমনিরহাট সদর", "মহেন্দ্রনগর", "আদিতমারী", "কালীগঞ্জ", "হাতীবান্ধা", "পাটগ্রাম"] },
+        "পঞ্চগড়": { "উপজেলা": ["পঞ্চগড় সদর", "বোদা", "দেবীগঞ্জ", "অটোয়ারী", "তেঁতুলিয়া"] },
+        "ঠাকুরগাঁও": { "উপজেলা": ["ঠাকুরগাঁও সদর", "বালীয়াডাঙ্গী", "পীরগঞ্জ", "রাণীশংকৈল", "হরিপুর"] }
+    },
+    "ময়মনসিংহ বিভাগ": {
+        "ময়মনসিংহ": {
+            "সিটি কর্পোরেশন": ["ময়মনসিংহ সদর মেট্রো", "কোতোয়ালী"],
+            "উপজেলা": ["ময়মনসিংহ সদর", "মুক্তাগাছা", "ফুলবাড়ীয়া", "ত্রিশাল", "ভালুকা", "গফরগাঁও", "নন্দাইল", "ঈশ্বরগঞ্জ", "গৌরীপুর", "হালুয়াঘাট", "ধোবাউড়া", "ফুলপুর", "তারাকান্দা"]
+        },
+        "নেত্রকোনা": { "উপজেলা": ["নেত্রকোনা সদর", "বারহাট্টা", "কলমাকান্দা", "দুর্গাপুর", "পূর্বধলা", "মোহনগঞ্জ", "আটপাড়া", "মদন", "খালিয়াজুরী", "কেন্দুয়া"] },
+        "জামালপুর": { "উপজেলা": ["জামালপুর সদর", "মেলান্দহ", "ইসলামপুর", "দেওয়ানগঞ্জ", "বকশীগঞ্জ", "মাদারগঞ্জ", "সরিষাবাড়ী"] },
+        "শেরপুর": { "উপজেলা": ["শেরপুর সদর", "নালিতাবাড়ী", "শ্রীবরদী", "ঝিনাইগাতী", "নকলা"] }
+    }
+};
+
+// ২. ঠিকানা ও অবস্থান সেকশন জেনারেট করার মূল কোড পরিবর্তন
+// (generateSpecificFields ফাংশনের ভেতরের ঠিকানা সেকশনটি নিচের কোড দিয়ে রিপ্লেস করো)[cite: 5]
+
+let addressHTML = `
+    <div class="form-section address-section">
+        <h3>ঠিকানা ও অবস্থান</h3>
+        
+        <div class="input-inline-group">
+            <div class="input-group">
+                <label for="division-select">বিভাগ:</label>
+                <select id="division-select" required>
+                    <option value="">-- বিভাগ নির্বাচন করুন --</option>
+                    ${Object.keys(BD_GEOGRAPHY).map(div => `<option value="${div}">${div}</option>`).join('')}
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="district-select">জেলা:</label>
+                <select id="district-select" required disabled>
+                    <option value="">-- প্রথমে বিভাগ নির্বাচন করুন --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="input-inline-group">
+            <div class="input-group">
+                <label for="area-type-select">এলাকার ধরন:</label>
+                <select id="area-type-select" required disabled>
+                    <option value="">-- এরিয়া ধরন --</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label id="thana-upazila-label" for="thana-upazila-select">থানা / উপজেলা:</label>
+                <select id="thana-upazila-select" required disabled>
+                    <option value="">-- নির্বাচন করুন --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- কাস্টম রিটেন টেক্সট ইনপুট ফিল্ডস (ইউনিয়ন, ওয়ার্ড, গ্রাম, রোড) -->
+        <div id="sub-address-fields"></div>
+
+        <div class="form-group">
+            <label for="googleMap">Google ম্যাপ লোকেশন (পিন করুন):</label>
+            <input type="hidden" id="lat" value="${stagedData?.location?.lat || ''}">
+            <input type="hidden" id="lng" value="${stagedData?.location?.lng || ''}">
+            <div id="map-container" style="height: 300px; width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; z-index: 1;"></div>
+        </div>
+    </div>
+`;
+
+// ৩. চেইন ড্রপডাউন এবং টেক্সট ইনপুটের ইভেন্ট হ্যান্ডলার লজিক (অনুরূপভাবে রিঅ্যাক্ট/জেকোয়েরি বা সাধারণ জেএস-এ সেট করতে পারো)[cite: 5]
+setTimeout(() => {
+    const divSelect = document.getElementById('division-select');
+    const distSelect = document.getElementById('district-select');
+    const areaTypeSelect = document.getElementById('area-type-select');
+    const thanaSelect = document.getElementById('thana-upazila-select');
+
+    // ক) বিভাগ সিলেক্ট করলে জেলা আসবে
+    divSelect?.addEventListener('change', function() {
+        const selectedDiv = this.value;
+        distSelect.innerHTML = '<option value="">-- জেলা নির্বাচন করুন --</option>';
+        distSelect.disabled = true;
+        areaTypeSelect.innerHTML = '<option value="">-- এরিয়া ধরন --</option>';
+        areaTypeSelect.disabled = true;
+        thanaSelect.innerHTML = '<option value="">-- নির্বাচন করুন --</option>';
+        thanaSelect.disabled = true;
+        document.getElementById('sub-address-fields').innerHTML = '';
+
+        if (selectedDiv && BD_GEOGRAPHY[selectedDiv]) {
+            distSelect.disabled = false;
+            Object.keys(BD_GEOGRAPHY[selectedDiv]).forEach(dist => {
+                distSelect.options.add(new Option(dist, dist));
+            });
+        }
+    });
+
+    // খ) জেলা সিলেক্ট করলে এরিয়ার ধরন (সিটি কর্পোরেশন / উপজেলা) আসবে
+    distSelect?.addEventListener('change', function() {
+        const selectedDiv = divSelect.value;
+        const selectedDist = this.value;
+
+        areaTypeSelect.innerHTML = '<option value="">-- এরিয়া ধরন --</option>';
+        areaTypeSelect.disabled = true;
+        thanaSelect.innerHTML = '<option value="">-- নির্বাচন করুন --</option>';
+        thanaSelect.disabled = true;
+        document.getElementById('sub-address-fields').innerHTML = '';
+
+        if (selectedDist && BD_GEOGRAPHY[selectedDiv]?.[selectedDist]) {
+            areaTypeSelect.disabled = false;
+            const availableTypes = Object.keys(BD_GEOGRAPHY[selectedDiv][selectedDist]);
+            
+            availableTypes.forEach(type => {
+                areaTypeSelect.options.add(new Option(type, type));
+            });
+        }
+    });
+
+    // গ) এরিয়া টাইপ সিলেক্ট করলে ঐ এরিয়ার অধীনে থানা/উপজেলা আসবে
+    areaTypeSelect?.addEventListener('change', function() {
+        const selectedDiv = divSelect.value;
+        const selectedDist = distSelect.value;
+        const selectedType = this.value;
+
+        thanaSelect.innerHTML = '<option value="">-- নির্বাচন করুন --</option>';
+        thanaSelect.disabled = true;
+
+        if (selectedType && BD_GEOGRAPHY[selectedDiv]?.[selectedDist]?.[selectedType]) {
+            thanaSelect.disabled = false;
+            
+            // লেবেল সেট করা
+            document.getElementById('thana-upazila-label').textContent = selectedType === 'সিটি কর্পোরেশন' ? "মেট্রোপলিটন থানা:" : "উপজেলা:";
+
+            const places = BD_GEOGRAPHY[selectedDiv][selectedDist][selectedType];
+            places.forEach(place => {
+                thanaSelect.options.add(new Option(place, place));
+            });
+
+            // ঘ) থানা/উপজেলা পর্যন্ত ডাইনামিক ফিল্টার হওয়ার পর রিটেন টেক্সট ইনপুটগুলো তৈরি করা
+            renderTextInputs(selectedType);
+        } else {
+            document.getElementById('sub-address-fields').innerHTML = '';
+        }
+    });
+
+}, 200);
+
+// ৪. তোমার কন্ডিশন অনুযায়ী টেক্সট ইনপুট এরিয়া রেন্ডার করার ফাংশন
+function renderTextInputs(areaType) {
+    const container = document.getElementById('sub-address-fields');
+    
+    let inputHTML = '';
+    
+    // কন্ডিশন: সিটি কর্পোরেশন হলে ইউনিয়ন ইনপুট আসবে না, উপজেলা হলে আসবে
+    if (areaType === 'উপজেলা') {
+        inputHTML += `
+            <div class="input-inline-group">
+                <div class="input-group">
+                    <label for="union-input">ইউনিয়ন (লিখিত):</label>
+                    <input type="text" id="union-input" placeholder="যেমন: ১ নং আটরা গিলাতলা" required value="${stagedData?.location?.union || ''}">
                 </div>
                 <div class="input-group">
-                    <label for="area-type-select">এলাকার ধরন:</label>
-                    <select id="area-type-select" required>
-                        <option value="">-- নির্বাচন করুন --</option>
-                        <option value="উপজেলা" ${stagedData?.location?.areaType === 'উপজেলা' ? 'selected' : ''}>উপজেলা</option>
-                        <option value="সিটি কর্পোরেশন" ${stagedData?.location?.areaType === 'সিটি কর্পোরেশন' ? 'selected' : ''}>সিটি কর্পোরেশন</option>
-                    </select>
-                </div>
-                <div id="sub-address-fields"></div>
-                <div class="form-group">
-                    <label for="googleMap">Google ম্যাপ লোকেশন (পিন করুন):</label>
-                    <input type="hidden" id="lat" value="${stagedData?.location?.lat || ''}">
-                    <input type="hidden" id="lng" value="${stagedData?.location?.lng || ''}">
-                    <div id="map-container" style="height: 300px; width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; z-index: 1;"></div>
+                    <label for="ward-input">ওয়ার্ড নম্বর (লিখিত):</label>
+                    <input type="text" id="ward-input" placeholder="যেমন: ৫ নং ওয়ার্ড" required value="${stagedData?.location?.wardNo || ''}">
                 </div>
             </div>
         `;
-        fieldsHTML += addressHTML;
+    } else {
+        // সিটি কর্পোরেশনের ক্ষেত্রে ইউনিয়ন ফিল্ড স্কিপ করা হলো
+        inputHTML += `
+            <div class="form-group">
+                <label for="ward-input">ওয়ার্ড নম্বর (লিখিত):</label>
+                <input type="text" id="ward-input" placeholder="যেমন: ২৪ নং ওয়ার্ড" required value="${stagedData?.location?.wardNo || ''}">
+            </div>
+        `;
+    }
+
+    // গ্রাম এবং রোডের জন্য ইনপুট ২টা নিচে যুক্ত হলো
+    inputHTML += `
+        <div class="input-inline-group">
+            <div class="input-group">
+                <label for="village-input">গ্রাম / মহল্লা (লিখিত):</label>
+                <input type="text" id="village-input" placeholder="যেমন: বসুপাড়া / গ্রাম লিখুন" required value="${stagedData?.location?.village || ''}">
+            </div>
+            <div class="input-group">
+                <label for="road-input">রাস্তা / রোড / বাড়ি নং (লিখিত):</label>
+                <input type="text" id="road-input" placeholder="যেমন: রোড নং ৪, বাড়ি নং ১০" required value="${stagedData?.location?.road || ''}">
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = inputHTML;
+                      }
+
         
         let contactHTML = `
             <div class="form-section contact-section">
@@ -534,35 +799,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('sketch-image')?.addEventListener('change', (e) => handleImageUploadAndPreview(e, 'sketch-preview-area', 1, 'sketch'));
     } 
 
-    function generateSubAddressFields(areaType, stagedData = null) {
-        const subAddressFieldsContainer = document.getElementById('sub-address-fields');
-        let subFieldsHTML = '';
-        if (areaType === 'উপজেলা') {
-            subFieldsHTML = `
-                <div class="input-inline-group">
-                    <div class="input-group"><label for="upazila-name">উপজেলা:</label><input type="text" id="upazila-name" required value="${stagedData?.location?.upazila || ''}"></div>
-                    <div class="input-group"><label for="thana-name">থানা:</label><input type="text" id="thana-name" required value="${stagedData?.location?.thana || ''}"></div>
-                </div>
-                <div class="input-inline-group">
-                    <div class="input-group"><label for="union-name">ইউনিয়ন:</label><input type="text" id="union-name" required value="${stagedData?.location?.union || ''}"></div>
-                    <div class="input-group"><label for="village-name">গ্রাম/মহল্লা:</label><input type="text" id="village-name" required value="${stagedData?.location?.village || ''}"></div>
-                </div>
-                <div class="input-group"><label for="road-name">রাস্তা/রোড:</label><input type="text" id="road-name" required value="${stagedData?.location?.road || ''}"></div>
-            `;
-        } else if (areaType === 'সিটি কর্পোরেশন') {
-            subFieldsHTML = `
-                <div class="input-inline-group">
-                    <div class="input-group"><label for="thana-name">থানা:</label><input type="text" id="thana-name" required value="${stagedData?.location?.thana || ''}"></div>
-                    <div class="input-group"><label for="ward-no">ওয়ার্ড নং:</label><input type="text" id="ward-no" required value="${stagedData?.location?.wardNo || ''}"></div>
-                </div>
-                <div class="input-inline-group">
-                    <div class="input-group"><label for="village-name">গ্রাম/মহল্লা:</label><input type="text" id="village-name" required value="${stagedData?.location?.village || ''}"></div>
-                    <div class="input-group"><label for="road-name">রাস্তা/রোড:</label><input type="text" id="road-name" required value="${stagedData?.location?.road || ''}"></div>
-                </div>
-            `;
-        }
-        subAddressFieldsContainer.innerHTML = subFieldsHTML;
-    }
+    
 
     function renderExistingPreview(previewArea, fileId, url, docType) {
         const placeholder = previewArea.querySelector('.placeholder-text');
@@ -751,8 +988,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const propertyData = {
-                category,
+            const areaTypeVal = document.getElementById('area-type-select')?.value || '';
+
+const propertyData = {
+    category,
                 type,
                 title: getValue('property-title'),
                 description: getValue('description'),
@@ -761,19 +1000,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 userId: user.uid,
                 status: 'pending',
                 listerType: getValue('lister-type'),
-                location: {
-                    division: getValue('division'),
-                    district: getValue('district'),
-                    areaType: getValue('area-type-select'),
-                    thana: getValue('thana-name') || '',
-                    upazila: getValue('upazila-name') || '',
-                    union: getValue('union-name') || '',
-                    village: getValue('village-name') || '',
-                    road: getValue('road-name') || '',
-                    lat: parseFloat(getValue('lat')) || null,
-                    lng: parseFloat(getValue('lng')) || null
-                }
-            };
+    location: {
+        division: document.getElementById('division-select')?.value || '',
+        district: document.getElementById('district-select')?.value || '',
+        areaType: areaTypeVal,
+        // ডাইনামিক সিলেকশনের থানা বা উপজেলা
+        thana: areaTypeVal === 'সিটি কর্পোরেশন' ? document.getElementById('thana-upazila-select')?.value || '' : '',
+        upazila: areaTypeVal === 'উপজেলা' ? document.getElementById('thana-upazila-select')?.value || '' : '',
+        
+        // লিখিত কাস্টম টেক্সট ইনপুটসমূহ
+        union: areaTypeVal === 'উপজেলা' ? (document.getElementById('union-input')?.value || '') : 'N/A',
+        wardNo: document.getElementById('ward-input')?.value || '',
+        village: document.getElementById('village-input')?.value || '',
+        road: document.getElementById('road-input')?.value || '',
+        
+        lat: parseFloat(document.getElementById('lat').value) || null,
+        lng: parseFloat(document.getElementById('lng').value) || null
+    }
+};
 
             if (type !== 'জমি' && type !== 'প্লট') {
                 propertyData.facing = getValue('facing');
