@@ -187,7 +187,6 @@ function renderDetails(data) {
                 return; 
             }
 
-            // সেলার আইডি এবং পোস্ট আইডি চেক
             const sellerId = data.userId;
             if (!sellerId || !postId) {
                 alert("প্রপার্টি বা বিক্রেতার তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।");
@@ -199,7 +198,6 @@ function renderDetails(data) {
                 return; 
             }
 
-            // ১. পোস্ট ভিত্তিক ইউনিক চ্যাট আইডি তৈরি (Buyer_Seller_PostId)
             const sortedUserIds = [currentUser.uid, sellerId].sort();
             const chatId = `${sortedUserIds[0]}_${sortedUserIds[1]}_${postId}`;
 
@@ -208,7 +206,6 @@ function renderDetails(data) {
                 const chatDoc = await chatRef.get();
 
                 if (!chatDoc.exists) {
-                    // ২. নতুন চ্যাট ডকুমেন্ট সেট করা
                     await chatRef.set({
                         chatId: chatId,
                         participants: [currentUser.uid, sellerId],
@@ -218,19 +215,17 @@ function renderDetails(data) {
                         senderId: currentUser.uid,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    console.log("পোস্ট ভিত্তিক নতুন চ্যাট রুম সফলভাবে তৈরি হয়েছে!");
                 }
 
-                // ৩. মেসেজ পেইজে রিডাইরেক্ট
-                window.location.href = `messages.html?chatId=${chatId}&postId=${postId}`;
+                // 🎯 পরিবর্তন: ইউআরএল-এর শেষে &action=direct যুক্ত করা হলো
+                window.location.href = `messages.html?chatId=${chatId}&postId=${postId}&action=direct`;
 
             } catch (error) {
-                // কনসোলে আসল এরর প্রিন্ট হবে (যেমন: Missing or insufficient permissions)
                 console.error("ফায়ারস্টোর চ্যাট এরর ডিটেইলস:", error);
-                alert(`দুঃখিত, চ্যাট রুম তৈরি করা যায়নি। এরর: ${error.message || error}`);
+                alert(`দুঃখিত, চ্যাট রুম তৈরি করা যায়নি।`);
             }
         };
-            }
+    }
     
     // =======================================================
     // 🎯 আমার বাড়ি.কম - এক্সপার্ট ডাইনামিক এসইও ইঞ্জিন
