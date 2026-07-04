@@ -238,8 +238,12 @@
     </div>
     <div class="overlay" id="overlay"></div>
 
-    <div class="container">
-        <button class="btn-back" onclick="window.history.back()"><i class="material-icons">arrow_back</i> ফিরে যান</button>
+    <!-- হেডার (ব্যাক বাটন সহ মেসেজ টপ বার) -->
+    <div class="container" style="position: fixed; top:0; left:0; right:0; height:60px; background:white; box-shadow:0 1px 5px rgba(0,0,0,0.1); z-index:1001; display:flex; align-items:center; padding: 0 15px;">
+        <a href="index.html" style="text-decoration:none; display:flex; align-items:center; gap:5px; color:var(--primary); font-weight:bold;">
+            <i class="material-icons">arrow_back</i> আমার বাড়ি.কম-এ ফিরুন
+        </a>
+    </div>
     
     <div class="chat-container">
         <!-- বামপাশ: চ্যাট লিস্ট -->
