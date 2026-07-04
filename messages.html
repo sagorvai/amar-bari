@@ -111,6 +111,9 @@
             .logo-title { font-size: 1.2em; }
             .header-actions { gap: 8px; }
         }
+
+        .btn-back { background: white; border: 1px solid #ddd; color: var(--dark); padding: 8px 16px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 14px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: fit-content; transition: 0.2s; }
+        .btn-back:hover { background: var(--primary); color: white; border-color: var(--primary); }
         
        . text-decoration:none; {display:flex; align-items:center; gap:5px; color:var(--primary); font-weight:bold;}
         
@@ -238,7 +241,8 @@
     </div>
     <div class="overlay" id="overlay"></div>
 
-    
+    <div class="container">
+        <button class="btn-back" onclick="window.history.back()"><i class="material-icons">arrow_back</i> ফিরে যান</button>
     
     <div class="chat-container">
         <!-- বামপাশ: চ্যাট লিস্ট -->
