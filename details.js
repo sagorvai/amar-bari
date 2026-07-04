@@ -179,34 +179,41 @@ function renderDetails(data) {
 
     const msgBtn = document.getElementById('p-message');
     if (msgBtn) {
-        msgBtn.onclick = async () => { // এখানে async যুক্ত করা হয়েছে
+        msgBtn.onclick = async () => {
             const currentUser = firebase.auth().currentUser;
             if (!currentUser) { 
                 alert("মেসেজ করতে প্রথমে লগইন করুন।"); 
                 window.location.href = "auth.html"; 
                 return; 
             }
-            if (currentUser.uid === data.userId) { 
+
+            // সেলার আইডি এবং পোস্ট আইডি চেক
+            const sellerId = data.userId;
+            if (!sellerId || !postId) {
+                alert("প্রপার্টি বা বিক্রেতার তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।");
+                return;
+            }
+
+            if (currentUser.uid === sellerId) { 
                 alert("এটি আপনার নিজের পোস্ট! আপনি নিজের পোস্টে মেসেজ করতে পারবেন না।"); 
                 return; 
             }
 
-            // 🎯 ১. পোস্ট ভিত্তিক ইউনিক চ্যাট আইডি তৈরি (Buyer_Seller_PostId)
-            const sortedUserIds = [currentUser.uid, data.userId].sort();
+            // ১. পোস্ট ভিত্তিক ইউনিক চ্যাট আইডি তৈরি (Buyer_Seller_PostId)
+            const sortedUserIds = [currentUser.uid, sellerId].sort();
             const chatId = `${sortedUserIds[0]}_${sortedUserIds[1]}_${postId}`;
 
             try {
-                // ২. ফায়ারস্টোরের 'chats' কালেকশনে এই চ্যাটটি ইতিমধ্যে আছে কিনা চেক করা
                 const chatRef = db.collection('chats').doc(chatId);
                 const chatDoc = await chatRef.get();
 
-                // ৩. যদি এই পোস্টের জন্য এদের মাঝে আগে কোনো চ্যাট তৈরি না হয়ে থাকে, তবে নতুন ডকুমেন্ট তৈরি হবে
                 if (!chatDoc.exists) {
+                    // ২. নতুন চ্যাট ডকুমেন্ট সেট করা
                     await chatRef.set({
                         chatId: chatId,
-                        participants: [currentUser.uid, data.userId],
+                        participants: [currentUser.uid, sellerId],
                         postId: postId,
-                        postTitle: data.title || "প্রপার্টি চ্যাট", // মেসেজ লিস্টে চেনার সুবিধার্থে
+                        postTitle: data.title || "প্রপার্টি চ্যাট",
                         lastMessage: "চ্যাট শুরু হয়েছে...",
                         senderId: currentUser.uid,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -214,15 +221,17 @@ function renderDetails(data) {
                     console.log("পোস্ট ভিত্তিক নতুন চ্যাট রুম সফলভাবে তৈরি হয়েছে!");
                 }
 
-                // ৪. চ্যাট রুম নিশ্চিত করার পর মেসেজ পেইজে রিডাইরেক্ট করা
+                // ৩. মেসেজ পেইজে রিডাইরেক্ট
                 window.location.href = `messages.html?chatId=${chatId}&postId=${postId}`;
 
             } catch (error) {
-                console.error("চ্যাট শুরু করতে সমস্যা হয়েছে:", error);
-                alert("দুঃখিত, চ্যাট রুম তৈরি করা যায়নি। দয়া করে আবার চেষ্টা করুন।");
+                // কনসোলে আসল এরর প্রিন্ট হবে (যেমন: Missing or insufficient permissions)
+                console.error("ফায়ারস্টোর চ্যাট এরর ডিটেইলস:", error);
+                alert(`দুঃখিত, চ্যাট রুম তৈরি করা যায়নি। এরর: ${error.message || error}`);
             }
         };
-    }
+            }
+    
     // =======================================================
     // 🎯 আমার বাড়ি.কম - এক্সপার্ট ডাইনামিক এসইও ইঞ্জিন
     // =======================================================
