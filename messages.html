@@ -2,7 +2,7 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <title>মেসেজ বক্স | আমার বাড়ি.কম</title>
     
     <link rel="stylesheet" href="style.css">
@@ -64,6 +64,21 @@
         .chat-input-area input:focus { border-color: var(--primary); }
         .btn-send { background: var(--primary); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-send:hover { background: #0056b3; }
+
+        /* আপনার মেসেজ ইনপুট কন্টেইনারের ক্লাস বা আইডি (ধরে নিলাম নাম .input-container) */
+.input-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    padding: 10px;
+    box-sizing: border-box;
+    z-index: 1000;
+    
+    /* 🎯 এই লাইনটি কিবোর্ডের উপরে ইনপুট বক্স ধরে রাখতে সাহায্য করবে */
+    bottom: env(safe-area-inset-bottom, 0px); 
+        }
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
