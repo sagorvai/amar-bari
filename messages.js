@@ -292,3 +292,30 @@ if (backBtn) {
         }
     };
 }
+
+const messageInput = document.querySelector('.input-container input'); // আপনার ইনপুট বক্সের ট্যাগ বা ক্লাস দিন
+const inputContainer = document.querySelector('.input-container');   // আপনার পুরো ইনপুট বক্স ও সেন্ড বাটনের মেইন কন্টেইনার
+
+if (messageInput && inputContainer) {
+    // যখন ইউজার ইনপুট বক্সে ক্লিক করবে (কিবোর্ড ওপেন হবে)
+    messageInput.addEventListener('focus', () => {
+        setTimeout(() => {
+            // ইনপুট বক্সটিকে স্ক্রল করে স্ক্রিনের মাঝখানে বা কিবোর্ডের ঠিক উপরে নিয়ে আসবে
+            messageInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300); // কিবোর্ড খোলার জন্য সামান্য সময় দেওয়া হয়েছে
+    });
+
+    // এছাড়া ভিজ্যুয়াল ভিউপোর্ট এপিআই ব্যবহার করে কিবোর্ডের হাইট ট্র্যাক করা (অ্যান্ড্রয়েডের জন্য বেস্ট)
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            const offset = window.innerHeight - window.visualViewport.height;
+            if (offset > 0) {
+                // কিবোর্ড ওপেন থাকলে কন্টেইনারটিকে কিবোর্ডের সমপরিমাণ উপরে তুলবে
+                inputContainer.style.bottom = `${offset}px`;
+            } else {
+                // কিবোর্ড বন্ধ হলে আবার নিচে নেমে যাবে
+                inputContainer.style.bottom = '0px';
+            }
+        });
+    }
+}
