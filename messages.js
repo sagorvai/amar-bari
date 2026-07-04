@@ -1,5 +1,5 @@
 // =======================================================
-// 🎯 আমার বাড়ি.কম - আলটিমেট রিয়েল-টাইম চ্যাট ইঞ্জিন
+// 🎯 আমার বাড়ি.কম - আলটিমেট রিয়েল-টাইম চ্যাট ইঞ্জিন (ডাইরেক্ট চ্যাট মোড সহ)
 // =======================================================
 
 const firebaseConfig = {
@@ -19,6 +19,7 @@ const db = firebase.firestore();
 const urlParams = new URLSearchParams(window.location.search);
 let currentChatId = urlParams.get('chatId');
 let currentPostId = urlParams.get('postId');
+let currentAction = urlParams.get('action'); // 🎯 ডিটেইলস পেজ থেকে ডাইরেক্ট মোড ট্র্যাকিং
 
 let currentUser = null;
 let activeChatListener = null;
@@ -41,6 +42,13 @@ function initChatSystem() {
 
     // যদি details.html থেকে সরাসরি চ্যাট আইডি পাঠানো হয়ে থাকে
     if (currentChatId) {
+        // 🎯 ডাইরেক্ট মোড বা মোবাইল স্ক্রিনের জন্য লেআউট ম্যানেজমেন্ট
+        if (currentAction === 'direct' || window.innerWidth <= 768) {
+            const sidebar = document.getElementById('chatSidebar');
+            const mainBox = document.getElementById('chatMainBox');
+            if (sidebar) sidebar.classList.add('hidden');
+            if (mainBox) mainBox.classList.add('active');
+        }
         openChatBox(currentChatId, currentPostId);
     }
 }
@@ -84,12 +92,11 @@ function loadChatList() {
 
                 // আইটেমে ক্লিক করলে চ্যাট বক্স ওপেন হবে
                 chatItemDiv.onclick = () => {
-                    if (window.innerWidth <= 768) {
-                        const sidebar = document.getElementById('chatSidebar');
-                        const mainBox = document.getElementById('chatMainBox');
-                        if (sidebar) sidebar.classList.add('hidden');
-                        if (mainBox) mainBox.classList.add('active');
-                    }
+                    const sidebar = document.getElementById('chatSidebar');
+                    const mainBox = document.getElementById('chatMainBox');
+                    if (sidebar) sidebar.classList.add('hidden');
+                    if (mainBox) mainBox.classList.add('active');
+                    
                     openChatBox(chatId, chatData.postId);
                 };
 
@@ -149,7 +156,7 @@ async function openChatBox(chatId, postId) {
         console.error("চ্যাট ইনিশিয়ালিং এরর:", e);
     }
 
-    // প্রপার্টির মিনি কার্ড লোড করা
+    // প্রপার্টির মিনিカード লোড করা
     loadPropertyContext(postId || currentPostId);
 
     // আগের কোনো লিসেনার সচল থাকলে তা রিমুভ করা
@@ -208,10 +215,7 @@ async function sendMessage(text) {
     };
 
     try {
-        // সাব-কালেকশনে মেসেজ যুক্ত করা
         await db.collection('chats').doc(currentChatId).collection('messages').add(messageData);
-
-        // মেইন চ্যাটে লাস্ট মেসেজ আপডেট
         await db.collection('chats').doc(currentChatId).update({
             lastMessage: cleanText,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -273,11 +277,18 @@ function sendQuickReply(text) {
     sendMessage(text);
 }
 
-// মোবাইল রেসপনসিভ ব্যাক বাটন অ্যাকশন
+// 🎯 ডাইরেক্ট চ্যাট মোড এবং মোবাইল রেসপনসিভ ব্যাক বাটন ফিক্স
 const backBtn = document.getElementById('backToListBtn');
 if (backBtn) {
     backBtn.onclick = () => {
+        // চ্যাট বক্স হাইড করে মূল চ্যাট লিস্ট ওপেন করা
         document.getElementById('chatMainBox').classList.remove('active');
         document.getElementById('chatSidebar').classList.remove('hidden');
+        
+        // ইউআরএল থেকে ডাইরেক্ট প্যারামিটার রিসেট করে দেওয়া যাতে পুনরায় পেজ লোড হলে পুরো লিস্ট দেখায়
+        if (currentAction === 'direct') {
+            window.history.pushState({}, document.title, "messages.html");
+            currentAction = null;
+        }
     };
 }
