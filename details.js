@@ -190,7 +190,11 @@ function renderDetails(data) {
                 alert("এটি আপনার নিজের পোস্ট!"); 
                 return; 
             }
-            const chatId = [currentUser.uid, data.userId].sort().join('_') + `_${postId}`;
+            
+            // 🎯 ফিক্স: chatId থেকে + `_${postId}` অংশটুকু বাদ দেওয়া হলো
+            const chatId = [currentUser.uid, data.userId].sort().join('_');
+            
+            // সঠিক প্যারামিটার সহ মেসেজ পেইজে পাঠানো হচ্ছে
             window.location.href = `messages.html?chatId=${chatId}&postId=${postId}`;
         };
     }
