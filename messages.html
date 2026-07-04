@@ -104,6 +104,9 @@
 
         .profile-image-wrapper { cursor: pointer; width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; }
         .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+
+        .btn-back { background: white; border: 1px solid #ddd; color: var(--dark); padding: 8px 16px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 14px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: fit-content; transition: 0.2s; }
+        .btn-back:hover { background: var(--primary); color: white; border-color: var(--primary); }
         
         @media (max-width: 600px) {
             body { padding-top: 55px; }
@@ -111,31 +114,7 @@
             .header-actions { gap: 8px; }
         }
         
-        .profile-premium-card { 
-            background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; border: 1px solid var(--border);
-        }
-        .profile-cover-photo::before {
-            
-            content: "corporate_fare";
-            font-family: 'Material Icons';
-            position: absolute;
-            right: 15px;
-            bottom: -15px;
-            font-size: 120px;
-            color: rgba(255, 255, 255, 0.08);
-            pointer-events: none;
-        }
-
-            .profile-cover-photo::after {
-            content: "home";
-            font-family: 'Material Icons';
-            position: absolute;
-            left: 20px;
-            top: 20px;
-            font-size: 70px;
-            color: rgba(255, 255, 255, 0.05);
-            pointer-events: none;
-            }
+        
         
         /* Main Layout */
         .chat-container { display: flex; flex: 1; max-width: 1200px; width: 100%; margin: 60px auto 0 auto; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; height: calc(100vh - 60px); }
@@ -261,11 +240,8 @@
     </div>
     <div class="overlay" id="overlay"></div>
 
-    <div class="arrow_back">
-        <a href="index.html" style="text-decoration:none; display:flex; align-items:center; gap:5px; color:var(--primary); font-weight:bold;">
-            <i class="material-icons">arrow_back</i> আমার বাড়ি.কম-এ ফিরুন
-        </a>
-    </div> 
+    .<div class="container">
+        <button class="btn-back" onclick="window.history.back()"><i class="material-icons">arrow_back</i> ফিরে যান</button>
     
     <div class="chat-container">
         <!-- বামপাশ: চ্যাট লিস্ট -->
