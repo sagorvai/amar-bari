@@ -40,11 +40,11 @@ function initChatSystem() {
     }
 }
 
-// ১. চ্যাট লিস্ট লোড করা (বামপাশে)
+
+// ১. চ্যাট লিস্ট লোড করা (বামপাশে) - FIXED
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     
-    // কারেন্ট ইউজার যে চ্যাটগুলোর অংশীদার (participants array) সেগুলোকে কুয়েরি করা
     db.collection('chats')
         .where('participants', 'array-contains', currentUser.uid)
         .onSnapshot((snapshot) => {
@@ -54,19 +54,17 @@ function loadChatList() {
             }
 
             chatListContainer.innerHTML = "";
-            snapshot.forEach(async (doc) => {
+            snapshot.forEach((doc) => { // async বাদ দেওয়া হয়েছে কারণ ভেতরে await নেই
                 const chatData = doc.data();
                 const chatId = doc.id;
                 
-                // অপর পক্ষের ইউজার আইডি বের করা
+                // নিরাপদভাবে অপর পক্ষের ইউজার আইডি বের করা (পার্টিসিপেন্টদের মধ্যে যেটি আপনার নিজের আইডি নয়)
                 const otherUserId = chatData.participants.find(id => id !== currentUser.uid);
                 
-                // চ্যাট আইটেমের জন্য এইচটিএমএল কন্টেইনার তৈরি
                 const chatItemDiv = document.createElement('div');
                 chatItemDiv.className = `chat-item ${chatId === currentChatId ? 'active' : ''}`;
                 chatItemDiv.id = `item_${chatId}`;
                 
-                // ডিফল্ট প্লেসহোল্ডার ডেটা
                 chatItemDiv.innerHTML = `
                     <img src="https://via.placeholder.com/45/007bff/ffffff?text=U" id="avatar_${chatId}">
                     <div class="chat-item-info">
@@ -77,9 +75,7 @@ function loadChatList() {
                 
                 chatListContainer.appendChild(chatItemDiv);
 
-                // ক্লিক করলে চ্যাট ওপেন হবে
                 chatItemDiv.onclick = () => {
-                    // মোবাইল ভিউয়ের জন্য ক্লাসের টগল
                     if (window.innerWidth <= 768) {
                         document.getElementById('chatSidebar').classList.add('hidden');
                         document.getElementById('chatMainBox').classList.add('active');
@@ -87,21 +83,31 @@ function loadChatList() {
                     openChatBox(chatId, chatData.postId);
                 };
 
-                // অপর পক্ষের ইউজারের নাম ও প্রোফাইল ছবি লোড করা
+                // অপর পক্ষের ইউজারের নাম ও প্রোফাইল ছবি লোড করা (এরর হ্যান্ডলিং সহ)
                 if (otherUserId) {
                     db.collection('users').doc(otherUserId).get().then(uDoc => {
                         if (uDoc.exists) {
-                            document.getElementById(`name_${chatId}`).textContent = uDoc.data().fullName || uDoc.data().name || "ব্যবহারকারী";
-                            if (uDoc.data().profilePic) {
-                                document.getElementById(`avatar_${chatId}`).src = uDoc.data().profilePic;
+                            const userData = uDoc.data();
+                            document.getElementById(`name_${chatId}`).textContent = userData.fullName || userData.name || "ব্যবহারকারী";
+                            if (userData.profilePic) {
+                                document.getElementById(`avatar_${chatId}`).src = userData.profilePic;
                             }
+                        } else {
+                            document.getElementById(`name_${chatId}`).textContent = "সাধারণ ইউজার";
                         }
+                    }).catch((err) => {
+                        console.error("ইউজার ডাটা লোড করতে সমস্যা:", err);
+                        document.getElementById(`name_${chatId}`).textContent = "আমার বাড়ি ইউজার";
                     });
+                } else {
+                    document.getElementById(`name_${chatId}`).textContent = "বিজ্ঞাপনদাতা";
                 }
             });
+        }, (error) => {
+            console.error("চ্যাট লিস্ট স্ন্যাপশট এরর:", error);
+            chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:red;">ডেটা লোড করতে ব্যর্থ হয়েছে।</div>`;
         });
-}
-
+                             }
 // ২. নির্দিষ্ট চ্যাট বক্স ওপেন করা
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
