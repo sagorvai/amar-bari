@@ -342,7 +342,9 @@ async function loadUserProperties(userId) {
     }
 });
 
-// ⚡ নতুন ফাংশন: বুকমার্ক/সেভ করা প্রপার্টি লোড করা
+
+
+// 🛠️ ফিক্সড ফাংশন: বুকমার্ক/সেভ করা প্রপার্টি লোড করা (for...of লুপ ব্যবহার করে)
 async function loadSavedProperties(userId) {
     const savedListEl = document.getElementById('saved-posts');
     const savedCountEl = document.getElementById('saved-posts-count');
@@ -351,7 +353,6 @@ async function loadSavedProperties(userId) {
     savedListEl.innerHTML = '<p style="text-align:center; padding:20px;">বুকমার্ক খোঁজা হচ্ছে...</p>';
 
     try {
-        // মনে করছি তোমার ফায়ারস্টোরে 'saves' বা 'bookmarks' নামে কালেকশন আছে যেখানে userId দিয়ে সেভ করা হয়
         const savedSnapshot = await db.collection('saves').where('userId', '==', userId).get();
         
         if(savedCountEl) savedCountEl.textContent = savedSnapshot.size;
@@ -361,18 +362,16 @@ async function loadSavedProperties(userId) {
             return;
         }
 
-        // গ্রিড কন্টেইনার তৈরি
         savedListEl.innerHTML = '<div id="saved-properties-grid" class="property-grid"></div>';
         const savedGrid = document.getElementById('saved-properties-grid');
 
-        // প্রতিটি সেভ করা ডকুমেন্টের জন্য আসল প্রপার্টি ডাটা ফায়ারস্টোর থেকে আনা
-        savedSnapshot.forEach(async (saveDoc) => {
+        // FIXED: for...of লুপ ব্যবহার করা হলো async/await সঠিকভাবে কাজ করার জন্য
+        for (const saveDoc of savedSnapshot.docs) {
             const saveData = saveDoc.data();
-            const postId = saveData.postId; // সেভ ডকুমেন্টের ভেতরের প্রপার্টি আইডি
+            const postId = saveData.postId;
 
-            if (!postId) return;
+            if (!postId) continue;
 
-            // আসল প্রপার্টির ডাটা রিড করা
             const postDoc = await db.collection('properties').doc(postId).get();
             if (postDoc.exists) {
                 const p = postDoc.data();
@@ -402,12 +401,11 @@ async function loadSavedProperties(userId) {
                 `;
                 savedGrid.appendChild(card);
             }
-        });
+        }
 
     } catch (error) {
         console.error("Saved properties error:", error);
         savedListEl.innerHTML = '<p style="text-align:center; color:red; padding:20px;">বুকমার্ক লোড করতে সমস্যা হয়েছে।</p>';
     }
-            }
-
+                }
 
