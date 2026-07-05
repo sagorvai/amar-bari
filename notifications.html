@@ -261,30 +261,32 @@
     
     <script>
 
+// header_logic.js
 
-        // 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
-firebase.auth().onAuthStateChanged(async (user) => {
-    const headerProfileImg = document.querySelector('#profileImageWrapper img');
-    
-    if (user && headerProfileImg) {
-        try {
-            // ফায়ারবেস 'users' কালেকশন থেকে ইউজারের ডাটা আনা হচ্ছে
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().profilePic) {
-                // ডাটাবেজে প্রোফাইল পিকচার থাকলে সেটি হেডারে সেট হবে
-                headerProfileImg.src = userDoc.data().profilePic;
-            } else if (user.photoURL) {
-                // গুগল লগইন করা থাকলে গুগল প্রোফাইল পিকচার সেট হবে
-                headerProfileImg.src = user.photoURL;
-            } else {
-                // কোনো ছবি না থাকলে একটি ডিফল্ট অ্যাভাটার সেট হবে
-                headerProfileImg.src = 'assets/images/default-avatar.png'; // আপনার প্রজেক্টের ডিফল্ট ছবির পাথ দিন
+// Firebase SDKs (আপনার মূল HTML ফাইলে লোড করা থাকতে হবে)
+// const db = firebase.firestore(); 
+// const auth = firebase.auth();
+// ধরে নেওয়া হচ্ছে db এবং auth ভ্যারিয়েবলগুলো বিশ্বব্যাপী (globally) সংজ্ঞায়িত আছে।
+
+// --- ফাংশন ১: হেডার প্রোফাইল লোড করার জন্য ---
+function loadHeaderProfile(user) {
+    const headerProfileImage = document.getElementById('profileImage');
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+
+    // db এর গ্লোবাল অ্যাক্সেস ধরে নেওয়া হয়েছে
+    db.collection('users').doc(user.uid).get().then(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            if (data.profilePictureUrl && headerProfileImage && defaultProfileIcon) {
+                headerProfileImage.src = data.profilePictureUrl;
+                headerProfileImage.style.display = 'block';
+                defaultProfileIcon.style.display = 'none';
             }
-        } catch (error) {
-            console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
         }
-    }
-});
+    }).catch(error => {
+        console.error("Header profile load failed:", error);
+    });
+                               }
 
         
 // --- ফাংশন ২: লগআউট হ্যান্ডেলার ---
