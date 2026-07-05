@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>পোস্ট ইডিট করুন | আমার বাড়ি.কম</title>
+    
+    <!-- বিদ্যমান CSS ফাইল -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
+    
+    <!-- Leaflet Map CSS (লোকেশন পিন করার জন্য প্রয়োজন হতে পারে) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <script>
+      // আপনার বিদ্যমান Firebase কনফিগারেশন
+      const firebaseConfig = {
+          apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+          authDomain: "amar-bari-website.firebaseapp.com",
+          projectId: "amar-bari-website",
+          storageBucket: "amar-bari-website.firebasestorage.app",
+          messagingSenderId: "719084789035",
+          appId: "1:719084789035:web:f4da765290b3519d0e82fe"
+      };
+      
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      const db = firebase.firestore();
+      const storage = firebase.storage();
+      const auth = firebase.auth();
+    </script>
+    
+    <style>
+        /* ইডিট পেইজের জন্য কাস্টম অতিরিক্ত CSS (UI মিল রাখার জন্য) */
+        :root { --primary-color: #007bff; --danger: #ef4444; --success: #28a745; }
+        body { margin: 0; padding-top: 60px; font-family: Arial, sans-serif; background-color: #f4f7f6; }
+        
+        /* হেডার ও সাইডবার ফিক্স (আপনার style.css থেকে নেওয়া) */
+        .main-header { position: fixed; top: 0; left: 0; right: 0; background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1000; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
+        .logo-title { display: flex; align-items: center; font-size: 1.5em; font-weight: bold; color: var(--primary-color); text-decoration: none; }
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .profile-image-wrapper { cursor: pointer; width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary-color); }
+        .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* কন্টেইনার */
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; padding-bottom: 50px; }
+        
+        /* লোডিং স্ক্রিন */
+        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ফর্ম স্টাইল */
+        .post-form-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .form-section { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        .form-section h3 { margin-top: 0; color: #333; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 14px; }
+        .input-group input[type="text"], .input-group input[type="number"], .input-group input[type="tel"], .input-group input[type="date"], .input-group select, .input-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        .input-inline-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        
+        /* ইমেজ ম্যানেজমেন্ট UI (Post পেইজের মতো) */
+        .custom-upload-box { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; background: #f8fafc; cursor: pointer; margin-bottom: 15px; transition: 0.2s; }
+        .custom-upload-box:hover { border-color: var(--primary-color); background: #f1f5f9; }
+        .upload-icon-cloud { font-size: 40px; color: #6366f1; margin-bottom: 8px; }
+        .upload-text-main { font-size: 15px; font-weight: bold; color: #1e293b; }
+        
+        .image-preview-area { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 10px; }
+        .image-preview-wrapper { position: relative; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; cursor: grab; }
+        .image-preview-wrapper.dragging { opacity: 0.5; border: 2px solid var(--primary-color); }
+        .preview-image { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* পুরোনো ছবি চিহ্নিত করার জন্য ব্যাজ */
+        .old-image-badge { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); color: white; font-size: 10px; text-align: center; padding: 2px 0; }
+        
+        .remove-image-btn { position: absolute; top: 4px; right: 4px; background: rgba(239, 68, 68, 0.9); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; z-index: 10; }
+
+        /* আপলোড প্রোগ্রেস */
+        .upload-progress-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; color: white; font-size: 12px; font-weight: bold; }
+
+        /* অ্যাকশন বাটন */
+        .edit-actions { margin-top: 30px; display: flex; gap: 15px; position: sticky; bottom: 20px; z-index: 100; }
+        .btn-save { flex: 2; background: var(--success); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-save:disabled { background: #a7f3d0; cursor: not-allowed; }
+        .btn-cancel { flex: 1; background: #e5e7eb; color: #374151; border: none; padding: 15px; border-radius: 8px; font-size: 16px; cursor: pointer; text-align: center; text-decoration: none; }
+
+        /* ভৌগোলিক ড্রপডাউন */
+        .unit-select { max-width: 80px !important; margin-left: -5px; border-left: none !important; border-radius: 0 6px 6px 0 !important; background: #f3f4f6; }
+        .input-with-unit { display: flex; align-items: center; }
+        .input-with-unit input { border-radius: 6px 0 0 6px !important; }
+
+        @media (max-width: 600px) {
+            .container { padding: 10px; margin-top: 10px; }
+            .post-form-container { padding: 15px; }
+            .edit-actions { flex-direction: column-reverse; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- লোডিং স্ক্রিন -->
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <p>পোস্টের তথ্য লোড হচ্ছে...</p>
+    </div>
+
+    <!-- হেডার (details.html থেকে সংগৃহীত) -->
+    <header class="main-header">
+        <div class="header-left">
+            <a href="index.html" class="logo-title">
+               <i class="material-icons">home</i>  
+                <span>আমার বাড়ি.কম</span>
+            </a>
+        </div>
+        <div class="header-actions">
+            <div class="profile-image-wrapper" id="profileImageWrapper" onclick="location.href='profile.html'">
+                <img src="assets/images/default-avatar.png" alt="Profile" id="headerProfileImg">
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="post-form-container">
+            <h2>✏️ পোস্ট ইডিট করুন</h2>
+            
+            <form id="edit-property-form">
+                <!-- ১. সাধারণ তথ্য -->
+                <div class="form-section">
+                    <h3><i class="material-icons">info</i> সাধারণ তথ্য</h3>
+                    <div class="input-inline-group">
+                        <div class="input-group">
+                            <label>ক্যাটাগরি</label>
+                            <input type="text" id="display-category" disabled>
+                        </div>
+                        <div class="input-group">
+                            <label>প্রপার্টির ধরন</label>
+                            <input type="text" id="display-type" disabled>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="property-title">শিরোনাম</label>
+                        <input type="text" id="property-title" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="description">বিস্তারিত বর্ণনা</label>
+                        <textarea id="description" rows="6"></textarea>
+                    </div>
+                </div>
+
+                <!-- ২. ছবি ম্যানেজমেন্ট (প্রধান আকর্ষণ) -->
+                <div class="form-section">
+                    <h3><i class="material-icons">collections</i> প্রপার্টির ছবি (Add/Delete/Reorder)</h3>
+                    <p style="font-size: 12px; color: #666; margin-top: -10px; margin-bottom: 15px;">ছবি ড্রাগ করে ক্রমানুসার (Order) পরিবর্তন করুন। প্রথম ছবিটি থাম্বনেইল হিসেবে দেখাবে।</p>
+                    
+                    <div class="custom-upload-box" id="upload-trigger">
+                        <i class="material-icons upload-icon-cloud">cloud_upload</i>
+                        <div class="upload-text-main">নতুন ছবি যুক্ত করুন</div>
+                        <input type="file" id="images-input" accept="image/*" multiple style="display: none;">
+                    </div>
+                    
+                    <!-- ছবি দেখানোর এরিয়া -->
+                    <div class="image-preview-area" id="image-preview-area">
+                        <!-- পুরোনো ও নতুন ছবি এখানে লোড হবে -->
+                    </div>
+                </div>
+
+                <!-- ৩. মূল্য ও পরিমাণ (Dynamic based on Category/Type) -->
+                <div class="form-section" id="section-price">
+                    <h3><i class="material-icons">payments</i> মূল্য ও পরিমাণ</h3>
+                    <div id="dynamic-price-fields" class="input-inline-group">
+                        <!-- JS দিয়ে লোড হবে -->
+                    </div>
+                </div>
+                
+                <!-- ৪. অন্যান্য তথ্য (Beds, Baths, Road etc.) -->
+                <div class="form-section" id="section-details">
+                    <h3><i class="material-icons">king_bed</i> প্রপার্টির বিবরণ</h3>
+                    <div id="dynamic-details-fields" class="input-inline-group">
+                        <!-- JS দিয়ে লোড হবে -->
+                    </div>
+                </div>
+
+                <!-- ৫. অবস্থান (ঠিকানা) - শুধুমাত্র লিখিত ফিল্ড রাখা হয়েছে জটিলতা এড়াতে -->
+                <div class="form-section">
+                    <h3><i class="material-icons">place</i> অবস্থান ও ঠিকানা</h3>
+                    <div class="input-inline-group">
+                        <div class="input-group"><label>বিভাগ</label><input type="text" id="loc-division" disabled></div>
+                        <div class="input-group"><label>জেলা</label><input type="text" id="loc-district" disabled></div>
+                        <div class="input-group"><label>থানা/উপজেলা</label><input type="text" id="loc-thana" disabled></div>
+                    </div>
+                    <div class="input-inline-group">
+                        <div class="input-group"><label for="loc-village">গ্রাম/এলাকা</label><input type="text" id="loc-village" required></div>
+                        <div class="input-group"><label for="loc-road">রাস্তা/বাড়ি নং</label><input type="text" id="loc-road"></div>
+                    </div>
+                </div>
+
+                <!-- ৬. যোগাযোগ -->
+                <div class="form-section">
+                    <h3><i class="material-icons">call</i> যোগাযোগ</h3>
+                    <div class="input-inline-group">
+                        <div class="input-group"><label>প্রাথমিক ফোন</label><input type="tel" id="primary-phone" disabled></div>
+                        <div class="input-group"><label for="secondary-phone">অতিরিক্ত ফোন</label><input type="tel" id="secondary-phone"></div>
+                    </div>
+                </div>
+
+                <!-- অ্যাকশন বাটন -->
+                <div class="edit-actions">
+                    <a href="#" id="btn-cancel" class="btn-cancel">বাতিল</a>
+                    <button type="submit" id="btn-save" class="btn-save">
+                        <i class="material-icons">save</i>
+                        <span>পরিবর্তন সেভ করুন</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="footer" style="background: white; padding: 15px; text-align: center; border-top: 1px solid #eee; font-size: 13px; color: #666;">
+        <p>&copy; 2026 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+    </footer>
+
+    <!-- SortableJS (ছবি Reorder করার জন্য জনপ্রিয় লাইব্রেরি) -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="edit-post.js"></script>
+</body>
+</html>
