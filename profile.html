@@ -544,22 +544,7 @@
         </div>
     </div>
 
-    <div id="propertyModal" class="modal">
-        <div class="modal-content" style="max-width: 500px;">
-            <span class="close-modal" onclick="closePropertyModal()">&times;</span>
-            <div id="modal-content-inner"></div>
-            
-            <div class="modal-action-buttons">
-                <button id="modal-edit-btn" class="btn-modal-edit">
-                    <i class="material-icons" style="font-size:18px;">edit</i> এডিট করুন
-                </button>
-                <button id="modal-delete-btn" class="btn-modal-delete">
-                    <i class="material-icons" style="font-size:18px;">delete</i> মুছে ফেলুন
-                </button>
-            </div>
-        </div>
-    </div>
-
+    
     <script src="profile.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -598,9 +583,7 @@
             evt.currentTarget.classList.add("active");
         }
 
-        function closePropertyModal() {
-            document.getElementById('propertyModal').style.display = 'none';
-        }
+        
     </script>
 
     <footer class="footer">
