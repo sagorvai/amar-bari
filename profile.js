@@ -111,6 +111,12 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             window.location.href = 'auth.html';
         }
+
+        try {
+    await loadSavedProperties(user.uid);
+} catch (err) {
+    console.error("Saved properties load error:", err);
+        }
     });
 
     // ২. প্রোফাইল ডাটাবেজ থেকে রিড করা
@@ -163,53 +169,58 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ৩. ইউজারের নিজস্ব প্রপার্টি কুয়েরি করা
-    async function loadUserProperties(userId) {
-        if(!propertiesList) return;
-        propertiesList.innerHTML = '<p style="text-align:center; width:100%;">খোঁজা হচ্ছে...</p>';
-        try {
-            let snapshot = await db.collection('properties').where('userId', '==', userId).get();
-            if (snapshot.empty) {
-                snapshot = await db.collection('properties').where('uid', '==', userId).get();
+async function loadUserProperties(userId) {
+    if(!propertiesList) return;
+    propertiesList.innerHTML = '<p style="text-align:center; width:100%;">খোঁজা হচ্ছে...</p>';
+    try {
+        let snapshot = await db.collection('properties').where('userId', '==', userId).get();
+        if (snapshot.empty) {
+            snapshot = await db.collection('properties').where('uid', '==', userId).get();
+        }
+
+        propertiesList.innerHTML = '';
+        if(totalPostsEl) totalPostsEl.textContent = snapshot.size;
+
+        if (snapshot.empty) {
+            if(document.getElementById('empty-posts-message')) document.getElementById('empty-posts-message').style.display = 'block';
+            return;
+        }
+
+        snapshot.forEach(doc => {
+            const p = doc.data();
+            const card = document.createElement('div');
+            card.className = 'property-card';
+            card.style.cursor = "pointer";
+            
+            // ⭐ পরিবর্তন: মডাল না খুলে সরাসরি ডিটেইলস পেজে চলে যাবে
+            card.onclick = () => {
+                window.location.href = `details.html?id=${doc.id}`;
+            };
+            
+            let imageUrl = 'https://via.placeholder.com/150?text=No+Image';
+            if (p.images && p.images.length > 0) {
+                imageUrl = p.images[0].url || p.images[0];
+            } else if (p.image) {
+                imageUrl = p.image;
             }
 
-            propertiesList.innerHTML = '';
-            if(totalPostsEl) totalPostsEl.textContent = snapshot.size;
+            let displayPrice = p.price || p.rent || p.monthlyRent || p.amount || '০';
 
-            if (snapshot.empty) {
-                if(document.getElementById('empty-posts-message')) document.getElementById('empty-posts-message').style.display = 'block';
-                return;
-            }
-
-            snapshot.forEach(doc => {
-                const p = doc.data();
-                const card = document.createElement('div');
-                card.className = 'property-card';
-                card.style.cursor = "pointer";
-                card.onclick = () => showPropertyDetails(doc.id, p);
-                
-                let imageUrl = 'https://via.placeholder.com/150?text=No+Image';
-                if (p.images && p.images.length > 0) {
-                    imageUrl = p.images[0].url || p.images[0];
-                } else if (p.image) {
-                    imageUrl = p.image;
+            card.innerHTML = `
+                <img src="${imageUrl}" style="width:100%; height:105px; object-fit:cover;">
+                <div style="padding:8px;">
+                    <h4 style="margin:0 0 4px 0; font-size:12px; height:32px; overflow:hidden; color:var(--dark); font-weight:600;">${p.title || 'শিরোনামহীন'}</h4>
+                    <p style="color:var(--success); font-weight:bold; margin:0; font-size:12px;">৳ ${displayPrice}</p>
+                </div>
+            `;
+            propertiesList.appendChild(card);
+        });
+    } catch (e) { 
+        console.error("Properties list fetch error:", e);
+    }
                 }
 
-                let displayPrice = p.price || p.rent || p.monthlyRent || p.amount || '০';
-
-                card.innerHTML = `
-                    <img src="${imageUrl}" style="width:100%; height:105px; object-fit:cover;">
-                    <div style="padding:8px;">
-                        <h4 style="margin:0 0 4px 0; font-size:12px; height:32px; overflow:hidden; color:var(--dark); font-weight:600;">${p.title || 'শিরোনামহীন'}</h4>
-                        <p style="color:var(--success); font-weight:bold; margin:0; font-size:12px;">৳ ${displayPrice}</p>
-                    </div>
-                `;
-                propertiesList.appendChild(card);
-            });
-        } catch (e) { 
-            console.error("Properties list fetch error:", e);
-        }
-    }
-
+    
     // ৪. প্রপার্টি ডিটেইলস মডাল রেন্ডার, এডিট এবং ডিলিট লজিক
     window.showPropertyDetails = function(docId, propertyData) {
         const modalInner = document.getElementById('modal-content-inner');
@@ -330,3 +341,73 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 });
+
+// ⚡ নতুন ফাংশন: বুকমার্ক/সেভ করা প্রপার্টি লোড করা
+async function loadSavedProperties(userId) {
+    const savedListEl = document.getElementById('saved-posts');
+    const savedCountEl = document.getElementById('saved-posts-count');
+    if (!savedListEl) return;
+
+    savedListEl.innerHTML = '<p style="text-align:center; padding:20px;">বুকমার্ক খোঁজা হচ্ছে...</p>';
+
+    try {
+        // মনে করছি তোমার ফায়ারস্টোরে 'saves' বা 'bookmarks' নামে কালেকশন আছে যেখানে userId দিয়ে সেভ করা হয়
+        const savedSnapshot = await db.collection('saves').where('userId', '==', userId).get();
+        
+        if(savedCountEl) savedCountEl.textContent = savedSnapshot.size;
+
+        if (savedSnapshot.empty) {
+            savedListEl.innerHTML = '<p style="text-align:center; padding: 30px; color: var(--gray);">বুকমার্ক তালিকায় কোনো আইটেম নেই।</p>';
+            return;
+        }
+
+        // গ্রিড কন্টেইনার তৈরি
+        savedListEl.innerHTML = '<div id="saved-properties-grid" class="property-grid"></div>';
+        const savedGrid = document.getElementById('saved-properties-grid');
+
+        // প্রতিটি সেভ করা ডকুমেন্টের জন্য আসল প্রপার্টি ডাটা ফায়ারস্টোর থেকে আনা
+        savedSnapshot.forEach(async (saveDoc) => {
+            const saveData = saveDoc.data();
+            const postId = saveData.postId; // সেভ ডকুমেন্টের ভেতরের প্রপার্টি আইডি
+
+            if (!postId) return;
+
+            // আসল প্রপার্টির ডাটা রিড করা
+            const postDoc = await db.collection('properties').doc(postId).get();
+            if (postDoc.exists) {
+                const p = postDoc.data();
+                
+                const card = document.createElement('div');
+                card.className = 'property-card';
+                card.style.cursor = "pointer";
+                card.onclick = () => {
+                    window.location.href = `details.html?id=${postDoc.id}`;
+                };
+
+                let imageUrl = 'https://via.placeholder.com/150?text=No+Image';
+                if (p.images && p.images.length > 0) {
+                    imageUrl = p.images[0].url || p.images[0];
+                } else if (p.image) {
+                    imageUrl = p.image;
+                }
+
+                let displayPrice = p.price || p.rent || p.monthlyRent || p.amount || '০';
+
+                card.innerHTML = `
+                    <img src="${imageUrl}" style="width:100%; height:105px; object-fit:cover;">
+                    <div style="padding:8px;">
+                        <h4 style="margin:0 0 4px 0; font-size:12px; height:32px; overflow:hidden; color:var(--dark); font-weight:600;">${p.title || 'শিরোনামহীন'}</h4>
+                        <p style="color:var(--success); font-weight:bold; margin:0; font-size:12px;">৳ ${displayPrice}</p>
+                    </div>
+                `;
+                savedGrid.appendChild(card);
+            }
+        });
+
+    } catch (error) {
+        console.error("Saved properties error:", error);
+        savedListEl.innerHTML = '<p style="text-align:center; color:red; padding:20px;">বুকমার্ক লোড করতে সমস্যা হয়েছে।</p>';
+    }
+            }
+
+
