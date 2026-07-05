@@ -166,7 +166,11 @@ function renderDetails(data) {
         initSinglePropertyMap(data);
     }
 
-    // ৫. 📞 যোগাযোগ ও মেসেজ অ্যাকশন
+    // =======================================================
+    // 📞 ৫. বাটন ও অ্যাকশন কন্ট্রোল (ভিজিটর বনাম পোস্টদাতা)
+    // =======================================================
+    
+    // সিএসএস টেবিল ও কল লিংক ডিফল্ট সেটআপ
     const conT = 'table-contact';
     if (document.getElementById(conT)) {
         document.getElementById(conT).innerHTML = "";
@@ -177,6 +181,71 @@ function renderDetails(data) {
         document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
     }
 
+    // অথেনটিকেশন চেক করে বাটন টগল করা
+    firebase.auth().onAuthStateChanged((currentUser) => {
+        const sellerId = data.userId;
+        
+        // বাটনগুলোর এলিমেন্ট রেফারেন্স
+        const callBtn = document.getElementById('p-call');
+        const msgBtn = document.getElementById('p-message');
+        const saveBtn = document.getElementById('p-save');
+        
+        const editBtn = document.getElementById('p-edit');
+        const boostBtn = document.getElementById('p-boost');
+        const deleteBtn = document.getElementById('p-delete');
+
+        // যদি ইউজার লগইন করা থাকে এবং তিনিই এই পোস্টের মালিক হন
+        if (currentUser && currentUser.uid === sellerId) {
+            // ভিজিটর বাটনগুলো হাইড করুন
+            if (callBtn) callBtn.style.display = 'none';
+            if (msgBtn) msgBtn.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'none';
+
+            // নিজের বাটনগুলো শো করুন
+            if (editBtn) editBtn.style.display = 'flex';
+            if (boostBtn) boostBtn.style.display = 'flex';
+            if (deleteBtn) deleteBtn.style.display = 'flex';
+
+            // --- ওনার অ্যাকশন বাটনগুলোর ইভেন্ট লিসেনার ---
+            if (editBtn) {
+                editBtn.onclick = () => {
+                    window.location.href = `edit-post.html?id=${postId}`;
+                };
+            }
+            if (boostBtn) {
+                boostBtn.onclick = () => {
+                    window.location.href = `boost.html?id=${postId}`;
+                };
+            }
+            if (deleteBtn) {
+                deleteBtn.onclick = async () => {
+                    if (confirm("আপনি কি নিশ্চিতভাবে এই প্রপার্টিটি ডিলিট করতে চান?")) {
+                        try {
+                            await db.collection('properties').doc(postId).delete();
+                            alert("প্রপার্টিটি সফলভাবে ডিলিট করা হয়েছে।");
+                            window.location.href = "index.html"; // ড্যাশবোর্ডে ফেরত পাঠানো
+                        } catch (error) {
+                            console.error("ডিলিট করতে সমস্যা:", error);
+                            alert("দুঃখিত, পোস্টটি ডিলিট করা যায়নি।");
+                        }
+                    }
+                };
+            }
+
+        } else {
+            // ইউজার যদি ভিজিটর হন (অথবা লগইন না থাকে)
+            if (callBtn && data.phoneNumber) callBtn.style.display = 'flex';
+            if (msgBtn) msgBtn.style.display = 'flex';
+            if (saveBtn) saveBtn.style.display = 'flex';
+
+            // ওনার বাটনগুলো হাইড রাখুন
+            if (editBtn) editBtn.style.display = 'none';
+            if (boostBtn) boostBtn.style.display = 'none';
+            if (deleteBtn) deleteBtn.style.display = 'none';
+        }
+    });
+
+    // মেসেজ বাটনের ক্লিকের মূল লজিক (ভিজিটরদের জন্য)
     const msgBtn = document.getElementById('p-message');
     if (msgBtn) {
         msgBtn.onclick = async () => {
@@ -191,11 +260,6 @@ function renderDetails(data) {
             if (!sellerId || !postId) {
                 alert("প্রপার্টি বা বিক্রেতার তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।");
                 return;
-            }
-
-            if (currentUser.uid === sellerId) { 
-                alert("এটি আপনার নিজের পোস্ট! আপনি নিজের পোস্টে মেসেজ করতে পারবেন না।"); 
-                return; 
             }
 
             const sortedUserIds = [currentUser.uid, sellerId].sort();
@@ -217,7 +281,6 @@ function renderDetails(data) {
                     });
                 }
 
-                // 🎯 পরিবর্তন: ইউআরএল-এর শেষে &action=direct যুক্ত করা হলো
                 window.location.href = `messages.html?chatId=${chatId}&postId=${postId}&action=direct`;
 
             } catch (error) {
@@ -225,7 +288,8 @@ function renderDetails(data) {
                 alert(`দুঃখিত, চ্যাট রুম তৈরি করা যায়নি।`);
             }
         };
-    }
+            }
+    
     
     // =======================================================
     // 🎯 আমার বাড়ি.কম - এক্সপার্ট ডাইনামিক এসইও ইঞ্জিন
