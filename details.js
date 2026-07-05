@@ -177,6 +177,105 @@ function renderDetails(data) {
         document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
     }
 
+    // =======================================================
+    // 🎯 পোস্টদাতার নিজের পোস্ট হলে বাটন পরিবর্তন লজিক
+    // =======================================================
+    const callBtn = document.getElementById('p-call');
+    const msgBtn = document.getElementById('p-message');
+    const saveBtn = document.getElementById('p-save');
+
+    // ফায়ারবেস কারেন্ট ইউজার চেক করা হচ্ছে
+    firebase.auth().onAuthStateChanged((currentUser) => {
+        if (currentUser && currentUser.uid === data.userId) {[cite: 12]
+            
+            // ১. কল বাটন -> এডিট বাটন
+            if (callBtn) {
+                callBtn.removeAttribute('href'); // tel: লিঙ্কটি রিমুভ করা হলো[cite: 12]
+                callBtn.className = "btn-act"; // গ্রিন কালার ক্লাস বাদ দিয়ে নরমাল করা হলো
+                callBtn.innerHTML = `<i class="material-icons">edit</i> এডিট করুন`;
+                callBtn.onclick = (e) => {
+                    e.preventDefault();
+                    window.location.href = `edit-post.html?id=${postId}`;[cite: 12]
+                };
+            }
+
+            // ২. মেসেজ বাটন -> বুস্ট বাটন
+            if (msgBtn) {
+                msgBtn.innerHTML = `<i class="material-icons">bolt</i> বুস্ট করুন`;
+                msgBtn.style.color = "#ff9800"; // বুস্টের জন্য আকর্ষণীয় রঙ
+                msgBtn.onclick = () => {
+                    window.location.href = `boost.html?id=${postId}`;[cite: 12]
+                };
+            }
+
+            // ৩. সেভ বাটন -> ডিলিট বাটন
+            if (saveBtn) {
+                saveBtn.innerHTML = `<i class="material-icons">delete</i> ডিলিট`;
+                saveBtn.style.color = "#e74c3c"; // ডিলিটের জন্য লাল রঙ
+                saveBtn.onclick = async () => {
+                    const confirmDelete = confirm("আপনি কি নিশ্চিতভাবে এই পোস্টটি ডিলিট করতে চান? এটি আর ফিরিয়ে আনা যাবে না।");
+                    if (confirmDelete) {
+                        try {
+                            // ফায়ারস্টোর থেকে সরাসরি প্রপার্টি ডিলিট করা হচ্ছে
+                            await db.collection('properties').doc(postId).delete();[cite: 12]
+                            alert("পোস্টটি সফলভাবে ডিলিট করা হয়েছে।");
+                            window.location.href = "index.html";[cite: 12]
+                        } catch (error) {
+                            console.error("পোস্ট ডিলিট করতে সমস্যা:", error);
+                            alert("দুঃখিত, পোস্টটি ডিলিট করা যায়নি। আবার চেষ্টা করুন।");
+                        }
+                    }
+                };
+            }
+
+        } else {
+            // ইউজার যদি নিজের পোস্ট না দেখে (অন্যের পোস্ট দেখে), তবে আগের ডিফল্ট লজিকগুলো চলবে
+            
+            // ডিফল্ট কল বাটন
+            if (callBtn) {
+                callBtn.href = `tel:${data.phoneNumber}`;[cite: 12]
+            }
+
+            // ডিফল্ট মেসেজ বাটন লজিক (তোমার আগের কোড)
+            if (msgBtn) {
+                msgBtn.innerHTML = `<i class="material-icons">chat</i> মেসেজ`;[cite: 12]
+                msgBtn.style.color = ""; // ডিফল্ট কালার
+                msgBtn.onclick = async () => {
+                    // ... (তোমার আগের ফায়ারস্টোর চ্যাট রুম তৈরির কোডটুকু হুবহু এখানে থাকবে) ...[cite: 12]
+                    const currentUser = firebase.auth().currentUser;[cite: 12]
+                    if (!currentUser) { alert("মেসেজ করতে প্রথমে লগইন করুন।"); window.location.href = "auth.html"; return; }[cite: 12]
+                    const sellerId = data.userId;[cite: 12]
+                    if (!sellerId || !postId) { alert("প্রপার্টি বা বিক্রেতার তথ্য পাওয়া যায়নি।"); return; }[cite: 12]
+                    
+                    const sortedUserIds = [currentUser.uid, sellerId].sort();[cite: 12]
+                    const chatId = `${sortedUserIds[0]}_${sortedUserIds[1]}_${postId}`;[cite: 12]
+
+                    try {
+                        const chatRef = db.collection('chats').doc(chatId);[cite: 12]
+                        const chatDoc = await chatRef.get();[cite: 12]
+                        if (!chatDoc.exists) {
+                            await chatRef.set({
+                                chatId: chatId, participants: [currentUser.uid, sellerId], postId: postId,
+                                postTitle: data.title || "প্রপার্টি চ্যাট", lastMessage: "চ্যাট শুরু হয়েছে...",
+                                senderId: currentUser.uid, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            });[cite: 12]
+                        }
+                        window.location.href = `messages.html?chatId=${chatId}&postId=${postId}&action=direct`;[cite: 12]
+                    } catch (error) { console.error(error); }
+                };
+            }
+
+            // ডিফল্ট সেভ বাটন লজিক (তোমার আগের কোড)
+            if (saveBtn) {
+                saveBtn.style.color = ""; 
+                setupSaveAndShareSystem(data); // সেভ সিস্টেমের ফাংশন কল[cite: 12]
+            }
+        }
+    });
+
+    // ৪. শেয়ার বাটন (নিজের হোক বা অন্যের হোক, এটা সবসময় একই থাকবে)
+    // এর জন্য আলাদা কোনো পরিবর্তনের প্রয়োজন নেই, তোমার ফাইলে থাকা setupSaveAndShareSystem(data) এটি হ্যান্ডেল করবে।[cite: 12]
+
     const msgBtn = document.getElementById('p-message');
     if (msgBtn) {
         msgBtn.onclick = async () => {
