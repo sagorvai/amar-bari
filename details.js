@@ -97,10 +97,10 @@ function renderDetails(data) {
     const basicT = 'table-basic';
     if (document.getElementById(basicT)) {
         document.getElementById(basicT).innerHTML = ""; 
-        addRow(basicT, "ক্যাটাগরি", data.category);
+        addRow(basicT, "ک্যাটাগরি", data.category);
         addRow(basicT, "টাইপ", data.type);
         addRow(basicT, "জমির ধরন", data.landType);
-        addRow(basicT, "প্রপার্টির বয়স", data.propertyAge? `${data.propertyAge} বছর` : "");
+        addRow(basicT, "প্রপার্টির বয়স", data.propertyAge ? `${data.propertyAge} বছর` : "");
         
         if (data.category === 'ভাড়া') {
             addRow(basicT, "ভাড়ার ধরন", data.rentType);
@@ -108,14 +108,14 @@ function renderDetails(data) {
             addRow(basicT, "অগ্রিম (এডভ্যান্স)", data.advance ? `৳ ${data.advance} টাকা` : "");
         }
 
-        addRow(basicT, "বেডরুম", data.bedrooms || data.rooms? `${data.rooms} টি` : "");
-        addRow(basicT, "ডাইনিং", data.dining? `${data.dining} টি` : "");
-        addRow(basicT, "বাথরুম", data.bathrooms? `${data.bathrooms} টি` : "");
-        addRow(basicT, "কিচেন", data.kitchen? `${data.kitchen} টি` : "");
-        addRow(basicT, "বেলকনি", data.balcony? `${data.balcony} টি` : "");
+        addRow(basicT, "বেডরুম", (data.bedrooms || data.rooms) ? `${data.bedrooms || data.rooms} টি` : "");
+        addRow(basicT, "ডাইনিং", data.dining ? `${data.dining} টি` : "");
+        addRow(basicT, "বাথরুম", data.bathrooms ? `${data.bathrooms} টি` : "");
+        addRow(basicT, "কিচেন", data.kitchen ? `${data.kitchen} টি` : "");
+        addRow(basicT, "বেলকনি", data.balcony ? `${data.balcony} টি` : "");
         addRow(basicT, "ফ্লোর নম্বর", data.floorNo || data.floorLevel);
         addRow(basicT, "রাস্তা", data.roadWidth ? `${data.roadWidth} ফিট` : "");
-        addRow(basicT, "ফেসিং", data.facing? `${data.facing} দিক` : "");
+        addRow(basicT, "ফেসিং", data.facing ? `${data.facing} দিক` : "");
         
         if (data.utilities && data.utilities.length > 0) {
             addRow(basicT, "সুবিধা সমূহ", Array.isArray(data.utilities) ? data.utilities.join(', ') : data.utilities);
@@ -139,7 +139,6 @@ function renderDetails(data) {
                 let khotianType = data.owner.khotianNoType || "";
                 addRow(ownT, "খতিয়ান নং", khotian ? `${khotian} (${khotianType})` : "");
                 let dag = data.owner.dagNo;
-                let dagType = data.owner.dagNoType || "";
                 addRow(ownT, "দাগ নং", dag ? `${dag}` : "");
                 addRow(ownT, "মৌজা", data.owner.mouja);
             }
@@ -166,24 +165,17 @@ function renderDetails(data) {
         initSinglePropertyMap(data);
     }
 
-// ৫. 📞 যোগাযোগ ও বাটন অ্যাকশন কন্ট্রোল
+    // ৫. 📞 যোগাযোগ ও বাটন অ্যাকশন কন্ট্রোল
     const callBtn = document.getElementById('p-call');
     const msgBtn = document.getElementById('p-message');
     const saveBtn = document.getElementById('p-save');
 
-    if (document.getElementById('p-call')) {
+    if (document.getElementById('p-call') && data.phoneNumber) {
         document.getElementById('p-call').href = `tel:${data.phoneNumber}`;[cite: 14]
     }
 
-    // ফায়ারবেস কারেন্ট ইউজার স্টেট চেক করে বাটন ডাইনামিক করা হচ্ছে
     firebase.auth().onAuthStateChanged((currentUser) => {
         if (currentUser && currentUser.uid === data.userId) {[cite: 14]
-            
-            // ---------------------------------------------------
-            // 🏠 কন্ডিশন ১: পোস্টদাতা নিজেই যখন নিজের পোস্ট দেখছে
-            // ---------------------------------------------------
-            
-            // ১. কল বাটন -> এডিট বাটন
             if (callBtn) {
                 callBtn.removeAttribute('href');[cite: 14]
                 callBtn.className = "btn-act"; 
@@ -194,7 +186,6 @@ function renderDetails(data) {
                 };
             }
 
-            // ২. মেসেজ বাটন -> বুস্ট বাটন
             if (msgBtn) {
                 msgBtn.innerHTML = `<i class="material-icons">bolt</i> বুস্ট করুন`;[cite: 14]
                 msgBtn.style.color = "#ff9800"; 
@@ -203,7 +194,6 @@ function renderDetails(data) {
                 };
             }
 
-            // ৩. সেভ বাটন -> ডিলিট বাটন
             if (saveBtn) {
                 saveBtn.innerHTML = `<i class="material-icons">delete</i> ডিলিট`;[cite: 14]
                 saveBtn.style.color = "#e74c3c"; 
@@ -223,25 +213,19 @@ function renderDetails(data) {
             }
 
         } else {
-            // ---------------------------------------------------
-            // 👥 কন্ডিশন ২: সাধারণ ইউজার বা অন্য কেউ যখন পোস্ট দেখছে
-            // ---------------------------------------------------
-            
-            // ডিফল্ট কল বাটন
             if (callBtn) {
                 callBtn.href = `tel:${data.phoneNumber}`;[cite: 14]
                 callBtn.className = "btn-act btn-call";
                 callBtn.innerHTML = `<i class="material-icons">call</i> কল`;
-                callBtn.onclick = null; // ওল্ড এডিট ক্লিক ক্লিয়ার
+                callBtn.onclick = null; 
             }
 
-            // ডিফল্ট মেসেজ বাটন (সরাসরি চ্যাট রুম মেকানিজম)
             if (msgBtn) {
                 msgBtn.innerHTML = `<i class="material-icons">chat</i> মেসেজ`;[cite: 14]
                 msgBtn.style.color = ""; 
                 msgBtn.onclick = async () => {
-                    const currentUser = firebase.auth().currentUser;[cite: 14]
-                    if (!currentUser) { 
+                    const currUser = firebase.auth().currentUser;[cite: 14]
+                    if (!currUser) { 
                         alert("মেসেজ করতে প্রথমে লগইন করুন।"); 
                         window.location.href = "auth.html"; 
                         return; 
@@ -253,7 +237,7 @@ function renderDetails(data) {
                         return;
                     }
 
-                    const sortedUserIds = [currentUser.uid, sellerId].sort();[cite: 14]
+                    const sortedUserIds = [currUser.uid, sellerId].sort();[cite: 14]
                     const chatId = `${sortedUserIds[0]}_${sortedUserIds[1]}_${postId}`;[cite: 14]
 
                     try {
@@ -263,19 +247,18 @@ function renderDetails(data) {
                         if (!chatDoc.exists) {
                             await chatRef.set({
                                 chatId: chatId,
-                                participants: [currentUser.uid, sellerId],[cite: 14]
-                                buyerId: currentUser.uid,
+                                participants: [currUser.uid, sellerId],[cite: 14]
+                                buyerId: currUser.uid,
                                 sellerId: sellerId,
                                 postId: postId,
                                 postTitle: data.title || "প্রপার্টি চ্যাট",
                                 postImage: (data.images && data.images.length > 0) ? (data.images[0].url || data.images[0]) : "",
                                 lastMessage: "চ্যাট শুরু হয়েছে...",[cite: 14]
-                                senderId: currentUser.uid,[cite: 14]
+                                senderId: currUser.uid,[cite: 14]
                                 timestamp: firebase.firestore.FieldValue.serverTimestamp()[cite: 14]
                             });
                         }
 
-                        // ইউআরএল প্যারামিটার সহ ডিরেক্ট রিডাইরেক্ট 
                         window.location.href = `messages.html?chatId=${chatId}&postId=${postId}&action=direct`;[cite: 14]
 
                     } catch (error) {
@@ -285,7 +268,6 @@ function renderDetails(data) {
                 };
             }
 
-            // ডিফল্ট সেভ বাটন
             if (saveBtn) {
                 saveBtn.style.color = ""; 
                 setupSaveAndShareSystem(data);[cite: 14]
@@ -293,11 +275,8 @@ function renderDetails(data) {
         }
     });
     
-    // =======================================================
-    // 🎯 আমার বাড়ি.কম - এক্সপার্ট ডাইনামিক এসইও ইঞ্জিন
-    // =======================================================
+    // SEO ইঞ্জিন
     const currentUrl = window.location.href;
-
     const village = data.location?.village || "তথ্য নেই";
     const thana = data.location?.thana || "তথ্য নেই";
     const district = data.location?.district || "তথ্য নেই";
@@ -312,15 +291,11 @@ function renderDetails(data) {
     }
 
     document.title = seoTitle; 
-    
     const seoTitleTag = document.getElementById('seo-title');
-    if (seoTitleTag) {
-        seoTitleTag.innerText = seoTitle;
-    }
+    if (seoTitleTag) seoTitleTag.innerText = seoTitle;
     
     document.getElementById('seo-desc')?.setAttribute('content', seoDescription);
     document.getElementById('seo-canonical')?.setAttribute('href', currentUrl);
-
     document.getElementById('og-url')?.setAttribute('content', currentUrl);
     document.getElementById('og-title')?.setAttribute('content', seoTitle);
     document.getElementById('og-desc')?.setAttribute('content', seoDescription);
@@ -353,12 +328,10 @@ function renderDetails(data) {
     };
     
     const schemaTag = document.getElementById('seo-schema');
-    if (schemaTag) {
-        schemaTag.text = JSON.stringify(schemaData);
-    }
+    if (schemaTag) schemaTag.text = JSON.stringify(schemaData);
 
     setupSaveAndShareSystem(data);
-} // <--- renderDetails ফাংশনটি এখানে সুরক্ষিতভাবে শেষ হয়েছে।
+}
 
 function initSinglePropertyMap(data) {
     const mapContainer = document.getElementById('map-container');
@@ -454,11 +427,9 @@ function setupSaveAndShareSystem(data) {
                 if (status) {
                     icon.textContent = 'bookmark'; 
                     saveBtn.style.color = '#27ae60'; 
-                    if (saveBtn.querySelector('span')) saveBtn.querySelector('span').textContent = 'সেভড';
                 } else {
                     icon.textContent = 'bookmark_border'; 
                     saveBtn.style.color = '#2c3e50';
-                    if (saveBtn.querySelector('span')) saveBtn.querySelector('span').textContent = 'সেভ';
                 }
             }
         };
@@ -596,7 +567,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 firebase.auth().onAuthStateChanged(async (user) => {
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
-    
     if (user && headerProfileImg) {
         try {
             const userDoc = await db.collection('users').doc(user.uid).get();
