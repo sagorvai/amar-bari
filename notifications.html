@@ -278,7 +278,8 @@ function loadHeaderProfile(user) {
         if (doc.exists) {
             const data = doc.data();
             if (data.profilePictureUrl && headerProfileImage && defaultProfileIcon) {
-                headerProfileImage.src = data.profilePictureUrl;
+                headerProfileImage.src = userDoc.data().profilePic;
+            } else if (user.photoURL);
                 headerProfileImage.style.display = 'block';
                 defaultProfileIcon.style.display = 'none';
             }
