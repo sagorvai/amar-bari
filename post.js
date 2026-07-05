@@ -1156,6 +1156,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    if (notificationButton) {
+        notificationButton.addEventListener('click', () => {
+             window.location.href = 'notifications.html'; 
+        });
+    }
+    
     if (messageButton) {
         messageButton.addEventListener('click', () => {
              window.location.href = 'messages.html';
