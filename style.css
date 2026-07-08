@@ -1240,6 +1240,34 @@ h2 {
         .message-icon { color: #007bff; }
         .post-icon-header { color: #28a745; }
 
+        .icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* ১. গোল করার জন্য ম্যাজিক কোড */
+    height: 42px;
+    width: 42px;
+    border-radius: 50%; /* এটি চারকোনা বক্সকে একদম নিখুঁত গোল করে দেয় */
+    
+    /* ২. ব্যাকগ্রাউন্ড কালার (হালকা গ্লাস ফিল) */
+    background: rgba(255, 255, 255, 0.9);
+    
+    /* ৩. মডার্ন ও সফট ড্রপ শ্যাডো (যা নিচে হালকা ভাসমান ভাব তৈরি করে) */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
+    
+    /* ৪. সূক্ষ্ম বর্ডার এবং অ্যানিমেশন ট্রানজিশন */
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+/* ৫. মাউস নিলে (Hover করলে) শ্যাডোটি আরও রঙিন ও গভীর হওয়ার কোড */
+.icon-wrapper:hover {
+    transform: translateY(-3px); /* সামান্য ওপরে ভেসে উঠবে */
+    box-shadow: 0 5px 15px rgba(255, 90, 95, 0.2); /* ব্র্যান্ড কালারের একটি গ্লোয়িং শ্যাডো আসবে */
+           }
+
+
         /* প্রোফাইল ইমেজ স্টাইল */
         .profile-image-wrapper {
             cursor: pointer;
