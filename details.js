@@ -209,7 +209,7 @@ function renderDetails(data) {
             // --- ওনার অ্যাকশন বাটনগুলোর ইভেন্ট লিসেনার ---
             if (editBtn) {
                 editBtn.onclick = () => {
-                    window.location.href = `edit-post.html?id=${postId}`;
+                    window.location.href = `post.html?id=${postId}`;
                 };
             }
             if (boostBtn) {
