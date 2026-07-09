@@ -92,43 +92,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageButton = document.getElementById('messageButton');
     const profileImageWrapper = document.getElementById('profileImageWrapper');
 
-    // ইউআরএল (URL) থেকে এডিট আইডি চেক করা
-const urlParams = new URLSearchParams(window.location.search);
-editPostId = urlParams.get('edit');
-
-if (editPostId) {
-    isEditMode = true;
-    
-    // UI-র শিরোনাম ও বাটনের টেক্সট পরিবর্তন (আপনার আইডি অনুযায়ী নাম বদলে নিতে পারেন)
-    const pageTitle = document.getElementById('page-title') || document.querySelector('.form-container h2');
-    const submitBtn = document.getElementById('submit-btn') || document.querySelector('button[type="submit"]');
-    
-    if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
-    if (submitBtn) submitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
-
-    // ফায়ারস্টোর থেকে ওই নির্দিষ্ট পোস্টের ডেটা আনা
-    firebase.firestore().collection('posts').doc(editPostId).get()
-        .then((doc) => {
-            if (doc.exists) {
-                const postData = doc.data();
-                
-                // 📝 এখানে আপনার ফর্মের ইনপুট আইডি অনুযায়ী ডেটাগুলো ফর্মে বসিয়ে দিন
-                if (document.getElementById('title-input')) document.getElementById('title-input').value = postData.title || '';
-                if (document.getElementById('price-input')) document.getElementById('price-input').value = postData.price || '';
-                if (document.getElementById('description-input')) document.getElementById('description-input').value = postData.description || '';
-                if (document.getElementById('category-select')) document.getElementById('category-select').value = postData.category || '';
-                
-                // নোট: যদি ইমেজ থাকে, তবে তা প্রিভিউ হিসেবে দেখানোর লজিক এখানে দিতে পারেন
-                console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
-            } else {
-                alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
-            }
-        })
-        .catch((error) => {
-            console.error("ডেটা লোড করতে সমস্যা হয়েছে:", error);
-        });
-}
-
     
     // ভৌগোলিক অবজেক্ট
     const BD_GEOGRAPHY = {
@@ -1171,6 +1134,43 @@ if (editPostId) {
             submitBtn.textContent = 'প্রিভিউ দেখুন ও পোস্ট করুন';
         }
     });
+
+    // ইউআরএল (URL) থেকে এডিট আইডি চেক করা
+const urlParams = new URLSearchParams(window.location.search);
+editPostId = urlParams.get('edit');
+
+if (editPostId) {
+    isEditMode = true;
+    
+    // UI-র শিরোনাম ও বাটনের টেক্সট পরিবর্তন (আপনার আইডি অনুযায়ী নাম বদলে নিতে পারেন)
+    const pageTitle = document.getElementById('page-title') || document.querySelector('.form-container h2');
+    const submitBtn = document.getElementById('submit-btn') || document.querySelector('button[type="submit"]');
+    
+    if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
+    if (submitBtn) submitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
+
+    // ফায়ারস্টোর থেকে ওই নির্দিষ্ট পোস্টের ডেটা আনা
+    firebase.firestore().collection('posts').doc(editPostId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                const postData = doc.data();
+                
+                // 📝 এখানে আপনার ফর্মের ইনপুট আইডি অনুযায়ী ডেটাগুলো ফর্মে বসিয়ে দিন
+                if (document.getElementById('title-input')) document.getElementById('title-input').value = postData.title || '';
+                if (document.getElementById('price-input')) document.getElementById('price-input').value = postData.price || '';
+                if (document.getElementById('description-input')) document.getElementById('description-input').value = postData.description || '';
+                if (document.getElementById('category-select')) document.getElementById('category-select').value = postData.category || '';
+                
+                // নোট: যদি ইমেজ থাকে, তবে তা প্রিভিউ হিসেবে দেখানোর লজিক এখানে দিতে পারেন
+                console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
+            } else {
+                alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
+            }
+        })
+        .catch((error) => {
+            console.error("ডেটা লোড করতে সমস্যা হয়েছে:", error);
+        });
+            }
 
     if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
         auth.onAuthStateChanged(user => {
