@@ -1122,8 +1122,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // ✨ এই দুটি লাইন অবজেক্টের শেষে যুক্ত করুন:
-    isEditMode: isEditMode,
-    editPostId: editPostId,
+    isEditMode: isEditMode;
+    editPostId: editPostId;
 
             sessionStorage.setItem('stagedPropertyData', JSON.stringify(propertyData));
             window.location.href = 'preview.html';
@@ -1135,7 +1135,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ইউআরএল (URL) থেকে এডিট আইডি চেক করা
+    
+    if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
+
+        // ইউআরএল (URL) থেকে এডিট আইডি চেক করা
 const urlParams = new URLSearchParams(window.location.search);
 editPostId = urlParams.get('edit');
 
@@ -1170,9 +1173,9 @@ if (editPostId) {
         .catch((error) => {
             console.error("ডেটা লোড করতে সমস্যা হয়েছে:", error);
         });
-            }
+                    }
 
-    if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
+        
         auth.onAuthStateChanged(user => {
             const authWarningMessage = document.getElementById('auth-warning-message');
             const propertyFormDisplay = document.getElementById('property-form');
