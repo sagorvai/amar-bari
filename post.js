@@ -1235,7 +1235,7 @@ if (editPostId) {
     }
 
     // ==========================================
-// 🎯 ছবিসহ ১০০% ফিক্সড ও ওয়ার্কিং এডিট মুড কোড:
+// 🎯 ছবি সমস্যার ১০০% স্থায়ী ও সঠিক সমাধান কোড:
 // ==========================================
 const urlParams = new URLSearchParams(window.location.search);
 editPostId = urlParams.get('edit');
@@ -1297,29 +1297,16 @@ if (editPostId) {
                     if (document.getElementById('property-completion')) document.getElementById('property-completion').value = postData.completion || '';
                     if (document.getElementById('road-size')) document.getElementById('road-size').value = postData.roadSize || '';
 
-                    // 🖼️ 🌟 বিদ্যমান ছবিগুলো সঠিক 'preview-container'-এ দেখানোর লজিক
-                    const actualPreviewContainer = document.getElementById('preview-container');
-                    if (actualPreviewContainer && postData.images && postData.images.length > 0) {
-                        actualPreviewContainer.innerHTML = ''; // আগের ব্ল্যাঙ্ক স্টেট ক্লিয়ার করবে
+                    // 🖼️ 🌟 ছবি লোড করার আসল সমাধান:
+                    // আপনার কোডের গ্লোবাল stagedData অবজেক্টের ভেতরে ইমেজ লিংকগুলো পুশ করা
+                    if (typeof stagedData !== 'undefined' && postData.images) {
+                        stagedData.images = postData.images; // আগের আপলোড করা ছবিগুলো অ্যাসাইন হলো
                         
-                        // গ্লোবাল মেটাডেটাতে ছবিগুলো অ্যাসাইন করা যাতে সাবমিট করার সময় ছবি হারিয়ে না যায়
-                        if (typeof stagedImageMetadata !== 'undefined') {
-                            stagedImageMetadata.images = postData.images;
+                        // আপনার কোডের নিজস্ব বিল্ট-ইন প্রিভিউ ফাংশনটিকে কল করা
+                        if (typeof updateImagePreview === 'function') {
+                            updateImagePreview(); 
+                            console.log("কোডের নিজস্ব ফাংশন দিয়ে ছবি রেন্ডার করা হয়েছে।");
                         }
-
-                        postData.images.forEach((imgUrl, index) => {
-                            const imgCard = document.createElement('div');
-                            imgCard.className = 'preview-card';
-                            imgCard.style.position = 'relative';
-                            imgCard.style.display = 'inline-block';
-                            imgCard.style.margin = '8px';
-
-                            imgCard.innerHTML = `
-                                <img src="${imgUrl}" style="width: 90px; height: 90px; object-fit: cover; border-radius: 8px; border: 2px solid #e0e0e0;">
-                                <span class="remove-btn" style="position: absolute; top: -6px; right: -6px; background: #ff4d4d; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" onclick="this.parentElement.remove()">×</span>
-                            `;
-                            actualPreviewContainer.appendChild(imgCard);
-                        });
                     }
 
                 }, 150);
@@ -1331,6 +1318,6 @@ if (editPostId) {
         .catch((error) => {
             console.error("ফায়ারস্টোর থেকে ডেটা লোড করতে সমস্যা হয়েছে:", error);
         });
-}
+                        }
     
 });
