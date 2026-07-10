@@ -1235,7 +1235,7 @@ if (editPostId) {
     }
 
     // ==========================================
-// 🎯 ছবিসহ সম্পূর্ণ ফিক্সড এডিট মুড কোড:
+// 🎯 ছবিসহ ১০০% ফিক্সড ও ওয়ার্কিং এডিট মুড কোড:
 // ==========================================
 const urlParams = new URLSearchParams(window.location.search);
 editPostId = urlParams.get('edit');
@@ -1297,23 +1297,28 @@ if (editPostId) {
                     if (document.getElementById('property-completion')) document.getElementById('property-completion').value = postData.completion || '';
                     if (document.getElementById('road-size')) document.getElementById('road-size').value = postData.roadSize || '';
 
-                    // 🖼️ 🌟 বিদ্যমান ছবিগুলো স্ক্রিনে দেখানোর লজিক
-                    const imagePreviewGrid = document.getElementById('image-preview-grid'); // আপনার HTML এর প্রিভিউ কন্টেইনার আইডি
-                    if (imagePreviewGrid && postData.images && postData.images.length > 0) {
-                        imagePreviewGrid.innerHTML = ''; // আগের কোনো ডিফল্ট ভিউ থাকলে ক্লিয়ার করবে
+                    // 🖼️ 🌟 বিদ্যমান ছবিগুলো সঠিক 'preview-container'-এ দেখানোর লজিক
+                    const actualPreviewContainer = document.getElementById('preview-container');
+                    if (actualPreviewContainer && postData.images && postData.images.length > 0) {
+                        actualPreviewContainer.innerHTML = ''; // আগের ব্ল্যাঙ্ক স্টেট ক্লিয়ার করবে
                         
-                        postData.images.forEach((imgUrl, index) => {
-                            const previewWrapper = document.createElement('div');
-                            previewWrapper.className = 'preview-wrapper';
-                            previewWrapper.style.position = 'relative';
-                            previewWrapper.style.display = 'inline-block';
-                            previewWrapper.style.margin = '5px';
+                        // গ্লোবাল মেটাডেটাতে ছবিগুলো অ্যাসাইন করা যাতে সাবমিট করার সময় ছবি হারিয়ে না যায়
+                        if (typeof stagedImageMetadata !== 'undefined') {
+                            stagedImageMetadata.images = postData.images;
+                        }
 
-                            previewWrapper.innerHTML = `
-                                <img src="${imgUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
-                                <span class="remove-btn" style="position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer;" onclick="this.parentElement.remove()">×</span>
+                        postData.images.forEach((imgUrl, index) => {
+                            const imgCard = document.createElement('div');
+                            imgCard.className = 'preview-card';
+                            imgCard.style.position = 'relative';
+                            imgCard.style.display = 'inline-block';
+                            imgCard.style.margin = '8px';
+
+                            imgCard.innerHTML = `
+                                <img src="${imgUrl}" style="width: 90px; height: 90px; object-fit: cover; border-radius: 8px; border: 2px solid #e0e0e0;">
+                                <span class="remove-btn" style="position: absolute; top: -6px; right: -6px; background: #ff4d4d; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" onclick="this.parentElement.remove()">×</span>
                             `;
-                            imagePreviewGrid.appendChild(previewWrapper);
+                            actualPreviewContainer.appendChild(imgCard);
                         });
                     }
 
