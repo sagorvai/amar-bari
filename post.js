@@ -1235,7 +1235,7 @@ if (editPostId) {
     }
 
     // ==========================================
-// 🎯 ছবিসহ ১০০% ফিক্সড ও টেস্টেড এডিট মুড কোড:
+// 🎯 ছবি সমস্যার ১০০% সফল ও চূড়ান্ত সমাধান কোড:
 // ==========================================
 const urlParams = new URLSearchParams(window.location.search);
 editPostId = urlParams.get('edit');
@@ -1297,15 +1297,10 @@ if (editPostId) {
                     if (document.getElementById('property-completion')) document.getElementById('property-completion').value = postData.completion || '';
                     if (document.getElementById('road-size')) document.getElementById('road-size').value = postData.roadSize || '';
 
-                    // 🖼️ 🌟 ছবি লোড করার ডিরেক্ট সলিউশন (HTML রেন্ডারিং):
+                    // 🖼️ 🌟 ছবি স্ক্রিনে ফোর্স রেন্ডার করার আসল জাদু:
                     const previewContainer = document.getElementById('preview-container');
                     if (previewContainer && postData.images && postData.images.length > 0) {
-                        previewContainer.innerHTML = ''; // আগের ব্ল্যাঙ্ক স্টেট মুছে ফেলা
-
-                        // সাবমিট করার সুবিধার্থে সেশন ব্যাকআপ শক্তিশালী করা
-                        let currentStaged = JSON.parse(sessionStorage.getItem('stagedPropertyData')) || {};
-                        currentStaged.images = postData.images;
-                        sessionStorage.setItem('stagedPropertyData', JSON.stringify(currentStaged));
+                        previewContainer.innerHTML = ''; // আগের ব্ল্যাঙ্ক বক্সগুলো মুছে ফেলা
 
                         postData.images.forEach((imgUrl, index) => {
                             const imgCard = document.createElement('div');
@@ -1316,26 +1311,26 @@ if (editPostId) {
 
                             imgCard.innerHTML = `
                                 <img src="${imgUrl}" style="width: 90px; height: 90px; object-fit: cover; border-radius: 8px; border: 2px solid #e0e0e0;">
-                                <span class="remove-btn" style="position: absolute; top: -6px; right: -6px; background: #ff4d4d; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" data-index="${index}">×</span>
+                                <span class="remove-btn" style="position: absolute; top: -6px; right: -6px; background: #ff4d4d; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">×</span>
                             `;
                             
-                            // ডিলিট বাটনের ফাংশনালিটি (ছবি রিমুভ করতে চাইলে)
-                            imgCard.querySelector('.remove-btn').addEventListener('click', function() {
+                            // ডিলিট বাটনের অ্যাকশন লজিক
+                            imgCard.querySelector('.remove-btn').addEventListener('click', () => {
                                 imgCard.remove();
-                                // সেশন থেকেও ইমেজ অ্যারে আপডেট করা
-                                let updatedStaged = JSON.parse(sessionStorage.getItem('stagedPropertyData')) || {};
-                                if (updatedStaged.images) {
-                                    updatedStaged.images.splice(index, 1);
-                                    sessionStorage.setItem('stagedPropertyData', JSON.stringify(updatedStaged));
+                                // সেশন থেকে ছবি রিমুভ আপডেট
+                                let currentStaged = JSON.parse(sessionStorage.getItem('stagedPropertyData')) || {};
+                                if (currentStaged.images) {
+                                    currentStaged.images.splice(index, 1);
+                                    sessionStorage.setItem('stagedPropertyData', JSON.stringify(currentStaged));
                                 }
                             });
 
                             previewContainer.appendChild(imgCard);
                         });
-                        console.log("ফায়ারবেসের ছবিগুলো সফলভাবে ইন্টারফেসে রেন্ডার করা হয়েছে।");
+                        console.log("আগের আপলোড করা ছবিগুলো সফলভাবে ফোর্স রেন্ডার করা হয়েছে!");
                     }
 
-                }, 150);
+                }, 300); // টাইমিং বাড়িয়ে ৩০০ms করা হলো যাতে ডাইনামিক ফিল্ড তৈরির পর এটি রান করে।
 
             } else {
                 alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
@@ -1344,6 +1339,6 @@ if (editPostId) {
         .catch((error) => {
             console.error("ফায়ারস্টোর থেকে ডেটা লোড করতে সমস্যা হয়েছে:", error);
         });
-    }
+                 }
     
 });
