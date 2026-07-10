@@ -209,7 +209,7 @@ function renderDetails(data) {
             // --- ওনার অ্যাকশন বাটনগুলোর ইভেন্ট লিসেনার ---
             if (editBtn) {
                 editBtn.onclick = () => {
-                    window.location.href = `post.html?id=${postId}`;
+                    window.location.href = `post.html?edit=${postId}`;
                 };
             }
             if (boostBtn) {
@@ -592,12 +592,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
 
-// 🎯 এডিট বাটনের লজিক: আইডি সহ post.html পেজে পাঠানো
-document.getElementById('btn-edit-property')?.addEventListener('click', () => {
-    if (postId) {
-        window.location.href = `post.html?edit=${postId}`;
-    }
-});
 
 firebase.auth().onAuthStateChanged(async (user) => {
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
