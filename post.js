@@ -1234,103 +1234,74 @@ if (editPostId) {
         });
     }
 
-    // ==========================================
-// 🎯 ছবি সমস্যার ১০০% সফল ও চূড়ান্ত সমাধান কোড:
-// ==========================================
+    // ==========================================================
+// 🎯 এডিট মুডে পূর্বের ছবি শো এবং সাবমিট সমস্যার চূড়ান্ত সমাধান:
+// ==========================================================
 const urlParams = new URLSearchParams(window.location.search);
 editPostId = urlParams.get('edit');
 
 if (editPostId) {
     isEditMode = true;
     
-    // হেডার ও বাটনের টেক্সট পরিবর্তন করা
+    // হেডার ও বাটনের টেক্সট এডিট মুড অনুযায়ী পরিবর্তন
     const pageTitle = document.getElementById('page-title') || document.querySelector('.post-form-container h2');
     const localSubmitBtn = document.getElementById('submit-btn') || document.querySelector('.submit-button');
     
     if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
     if (localSubmitBtn) localSubmitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
 
-    // ফায়ারস্টোর থেকে ওই নির্দিষ্ট প্রপার্টির ডেটা আনা
+    // ফায়ারস্টোর থেকে ডেটা লোড করা
     db.collection('properties').doc(editPostId).get()
         .then((doc) => {
             if (doc.exists) {
                 const postData = doc.data();
-                console.log("সংশোধনের জন্য ডেটা সফলভাবে লোড হয়েছে:", postData);
+                console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
 
-                // ১. সেশন স্টোরেজে ডেটা ব্যাকআপ রাখা (প্রিভিউ পেজের জন্য)
+                // ১. মূল ডেটা সেশনে ব্যাকআপ রাখা
                 sessionStorage.setItem('stagedPropertyData', JSON.stringify(postData));
 
-                // ২. ক্যাটাগরি ড্রপডাউন সিলেক্ট করা এবং ইভেন্ট ফায়ার করা
+                // ২. ছবিগুলোর মেটাডেটা প্রপার ফরম্যাটে সাজিয়ে সেশনে পুশ করা (যা সাবমিট ব্লকিং ফিক্স করবে)
+                if (postData.images && postData.images.length > 0) {
+                    const formattedImages = postData.images.map((imgUrl, idx) => {
+                        return {
+                            id: `existing_${idx}_${Date.now()}`,
+                            fileName: `Existing_Image_${idx + 1}.jpg`,
+                            fileMimeType: "image/jpeg",
+                            storagePath: "", // আগের ছবি তাই পাথ ব্ল্যাঙ্ক রাখলেও সমস্যা নেই
+                            url: imgUrl
+                        };
+                    });
+
+                    const existingMeta = {
+                        images: formattedImages,
+                        khotian: postData.khotian || null,
+                        sketch: postData.sketch || null
+                    };
+                    sessionStorage.setItem('stagedImageMetadata', JSON.stringify(existingMeta));
+                } else {
+                    sessionStorage.setItem('stagedImageMetadata', JSON.stringify({ images: [] }));
+                }
+
+                // ৩. ফর্মের সব ডাইনামিক ফিল্ড অটো-জেনারেট করতে আপনার কোডের বিল্ট-ইন ফাংশন কল করা
+                if (typeof loadStagedData === 'function') {
+                    loadStagedData();
+                    console.log("বিল্ট-ইন loadStagedData() দিয়ে ফর্ম ও ইমেজ লোড সফল!");
+                }
+
+                // ৪. অতিরিক্ত সতর্কতা হিসেবে ক্যাটাগরি ও টাইপ সিলেক্ট ট্রিগার করা
                 const catEl = document.getElementById('post-category');
                 if (catEl && postData.category) {
                     catEl.value = postData.category;
                     catEl.dispatchEvent(new Event('change', { bubbles: true }));
                 }
 
-                // ৩. টাইপ ড্রপডাউন সিলেক্ট করা এবং ফিল্ড জেনারেট করা
                 setTimeout(() => {
                     const typeEl = document.getElementById('property-type');
                     if (typeEl && postData.type) {
                         typeEl.value = postData.type;
                         typeEl.dispatchEvent(new Event('change', { bubbles: true }));
                     }
-                }, 50);
-
-                // ৪. সব ইনপুট বক্সে ভ্যালু পুশ করা এবং ইমেজের প্রিভিউ তৈরি করা
-                setTimeout(() => {
-                    if (document.getElementById('property-title')) document.getElementById('property-title').value = postData.title || '';
-                    if (document.getElementById('property-desc')) document.getElementById('property-desc').value = postData.description || '';
-                    if (document.getElementById('price')) document.getElementById('price').value = postData.price || '';
-                    if (document.getElementById('area-size')) document.getElementById('area-size').value = postData.area || '';
-                    if (document.getElementById('location-input')) document.getElementById('location-input').value = postData.location || '';
-                    if (document.getElementById('whatsapp-phone')) document.getElementById('whatsapp-phone').value = postData.whatsapp || '';
-                    if (document.getElementById('video-link')) document.getElementById('video-link').value = postData.videoUrl || '';
-                    
-                    // ডাইনামিক ফিল্ডগুলোর ভ্যালু অ্যাসাইন
-                    if (document.getElementById('property-size')) document.getElementById('property-size').value = postData.size || '';
-                    if (document.getElementById('property-floor')) document.getElementById('property-floor').value = postData.floor || '';
-                    if (document.getElementById('property-facing')) document.getElementById('property-facing').value = postData.facing || '';
-                    if (document.getElementById('property-beds')) document.getElementById('property-beds').value = postData.beds || '';
-                    if (document.getElementById('property-baths')) document.getElementById('property-baths').value = postData.baths || '';
-                    if (document.getElementById('property-balconies')) document.getElementById('property-balconies').value = postData.balconies || '';
-                    if (document.getElementById('property-condition')) document.getElementById('property-condition').value = postData.condition || '';
-                    if (document.getElementById('property-completion')) document.getElementById('property-completion').value = postData.completion || '';
-                    if (document.getElementById('road-size')) document.getElementById('road-size').value = postData.roadSize || '';
-
-                    // 🖼️ 🌟 ছবি স্ক্রিনে ফোর্স রেন্ডার করার আসল জাদু:
-                    const previewContainer = document.getElementById('preview-container');
-                    if (previewContainer && postData.images && postData.images.length > 0) {
-                        previewContainer.innerHTML = ''; // আগের ব্ল্যাঙ্ক বক্সগুলো মুছে ফেলা
-
-                        postData.images.forEach((imgUrl, index) => {
-                            const imgCard = document.createElement('div');
-                            imgCard.className = 'preview-card';
-                            imgCard.style.position = 'relative';
-                            imgCard.style.display = 'inline-block';
-                            imgCard.style.margin = '8px';
-
-                            imgCard.innerHTML = `
-                                <img src="${imgUrl}" style="width: 90px; height: 90px; object-fit: cover; border-radius: 8px; border: 2px solid #e0e0e0;">
-                                <span class="remove-btn" style="position: absolute; top: -6px; right: -6px; background: #ff4d4d; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">×</span>
-                            `;
-                            
-                            // ডিলিট বাটনের অ্যাকশন লজিক
-                            imgCard.querySelector('.remove-btn').addEventListener('click', () => {
-                                imgCard.remove();
-                                // সেশন থেকে ছবি রিমুভ আপডেট
-                                let currentStaged = JSON.parse(sessionStorage.getItem('stagedPropertyData')) || {};
-                                if (currentStaged.images) {
-                                    currentStaged.images.splice(index, 1);
-                                    sessionStorage.setItem('stagedPropertyData', JSON.stringify(currentStaged));
-                                }
-                            });
-
-                            previewContainer.appendChild(imgCard);
-                        });
-                        console.log("আগের আপলোড করা ছবিগুলো সফলভাবে ফোর্স রেন্ডার করা হয়েছে!");
-                    }
-
-                }, 300); // টাইমিং বাড়িয়ে ৩০০ms করা হলো যাতে ডাইনামিক ফিল্ড তৈরির পর এটি রান করে।
+                }, 100);
 
             } else {
                 alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
@@ -1339,6 +1310,6 @@ if (editPostId) {
         .catch((error) => {
             console.error("ফায়ারস্টোর থেকে ডেটা লোড করতে সমস্যা হয়েছে:", error);
         });
-                 }
+    }
     
 });
