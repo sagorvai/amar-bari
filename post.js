@@ -1233,70 +1233,76 @@ if (editPostId) {
              window.location.href = 'profile.html'; 
         });
     }
+// ==========================================
+// 🎯 সংশোধিত ও সম্পূর্ণ ফিক্সড এডিট মুড কোড:
+// ==========================================
+const urlParams = new URLSearchParams(window.location.search);
+editPostId = urlParams.get('edit');
 
-    // ==========================================
-    // 🎯 এখানে নিচে নতুন এডিট মুডের কোডটি পেস্ট করুন:
-    // ==========================================
-    const urlParams = new URLSearchParams(window.location.search);
-    editPostId = urlParams.get('edit');
+if (editPostId) {
+    isEditMode = true;
+    
+    // হেডার ও বাটনের টেক্সট পরিবর্তন করা
+    const pageTitle = document.getElementById('page-title') || document.querySelector('.post-form-container h2');
+    const localSubmitBtn = document.getElementById('submit-btn') || document.querySelector('.submit-button');
+    
+    if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
+    if (localSubmitBtn) localSubmitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
 
-    if (editPostId) {
-        isEditMode = true;
-        
-        // হেডার ও বাটনের টেক্সট পরিবর্তন
-        const pageTitle = document.getElementById('page-title') || document.querySelector('.post-form-container h2');
-        const localSubmitBtn = document.getElementById('submit-btn') || document.querySelector('.submit-button');
-        
-        if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
-        if (localSubmitBtn) localSubmitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
+    // ফায়ারস্টোর থেকে ওই নির্দিষ্ট প্রপার্টির ডেটা আনা
+    db.collection('properties').doc(editPostId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                const postData = doc.data();
+                console.log("সংশোধনের জন্য ডেটা সফলভাবে লোড হয়েছে:", postData);
 
-        // ফায়ারস্টোর থেকে ওই নির্দিষ্ট পোস্টের ডেটা আনা
-        db.collection('properties').doc(editPostId).get()
-            .then((doc) => {
-                if (doc.exists) {
-                    const postData = doc.data();
-                    console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
+                // ১. সেশন স্টোরেজে ডেটা ব্যাকআপ রাখা (প্রিভিউ পেজের জন্য)
+                sessionStorage.setItem('stagedPropertyData', JSON.stringify(postData));
 
-                    // ১. ক্যাটাগরি এবং টাইপ ড্রপডাউন সিলেক্ট করা
-                    if (categorySelect) categorySelect.value = postData.category || 'বিক্রয়';
-                    generateTypeDropdown(); // টাইপ ড্রপডাউন জেনারেট করা
-
-                    if (typeSelect) typeSelect.value = postData.type || '';
-                    generateSpecificFields(); // ক্যাটাগরি ও টাইপ অনুযায়ী ডাইনামিক ফিল্ড জেনারেট করা
-
-                    // ২. এবার স্টেজড সেশনে ডেটা রাখা যাতে প্রিভিউ পেজেও কাজ করে
-                    sessionStorage.setItem('stagedPropertyData', JSON.stringify(postData));
-
-                    // ৩. 🌟 ম্যাজিক: এবার ১ মিলি-সেকেন্ড অপেক্ষা করে সব জেনারেটেড ফিল্ডে ফায়ারবেসের ভ্যালু বসানো
-                    setTimeout(() => {
-                        if (document.getElementById('property-title')) document.getElementById('property-title').value = postData.title || '';
-                        if (document.getElementById('property-desc')) document.getElementById('property-desc').value = postData.description || '';
-                        if (document.getElementById('price')) document.getElementById('price').value = postData.price || '';
-                        if (document.getElementById('area-size')) document.getElementById('area-size').value = postData.area || '';
-                        if (document.getElementById('location-input')) document.getElementById('location-input').value = postData.location || '';
-                        if (document.getElementById('primary-phone')) document.getElementById('primary-phone').value = postData.phone || '';
-                        if (document.getElementById('whatsapp-phone')) document.getElementById('whatsapp-phone').value = postData.whatsapp || '';
-                        if (document.getElementById('video-link')) document.getElementById('video-link').value = postData.videoUrl || '';
-                        
-                        // ডাইনামিকালি তৈরি হওয়া অন্যান্য নির্দিষ্ট ফিল্ডগুলোর ভ্যালু অ্যাসাইন
-                        if (document.getElementById('property-size')) document.getElementById('property-size').value = postData.size || '';
-                        if (document.getElementById('property-floor')) document.getElementById('property-floor').value = postData.floor || '';
-                        if (document.getElementById('property-facing')) document.getElementById('property-facing').value = postData.facing || '';
-                        if (document.getElementById('property-beds')) document.getElementById('property-beds').value = postData.beds || '';
-                        if (document.getElementById('property-baths')) document.getElementById('property-baths').value = postData.baths || '';
-                        if (document.getElementById('property-balconies')) document.getElementById('property-balconies').value = postData.balconies || '';
-                        if (document.getElementById('property-condition')) document.getElementById('property-condition').value = postData.condition || '';
-                        if (document.getElementById('property-completion')) document.getElementById('property-completion').value = postData.completion || '';
-                        if (document.getElementById('road-size')) document.getElementById('road-size').value = postData.roadSize || '';
-                    }, 50);
-
-                } else {
-                    alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
+                // ২. ক্যাটাগরি ড্রপডাউন সিলেক্ট করা এবং ইভেন্ট ফায়ার করা
+                const catEl = document.getElementById('post-category');
+                if (catEl && postData.category) {
+                    catEl.value = postData.category;
+                    catEl.dispatchEvent(new Event('change', { bubbles: true })); // এর ফলে টাইপ ড্রপডাউন অটো জেনারেট হবে
                 }
-            })
-            .catch((error) => {
-                console.error("ফায়ারস্টোর থেকে ডেটা লোড করতে সমস্যা হয়েছে:", error);
-            });
-    }
 
+                // ৩. একটু সময় দিয়ে টাইপ ড্রপডাউন সিলেক্ট করা এবং ফিল্ড জেনারেট করা
+                setTimeout(() => {
+                    const typeEl = document.getElementById('property-type');
+                    if (typeEl && postData.type) {
+                        typeEl.value = postData.type;
+                        typeEl.dispatchEvent(new Event('change', { bubbles: true })); // এর ফলে ডাইনামিক ফিল্ডগুলো তৈরি হবে
+                    }
+                }, 50);
+
+                // ৪. সবশেষে ডাইনামিক ফিল্ড তৈরি হওয়ার পর সব ইনপুট বক্সে ভ্যালু পুশ করা
+                setTimeout(() => {
+                    if (document.getElementById('property-title')) document.getElementById('property-title').value = postData.title || '';
+                    if (document.getElementById('property-desc')) document.getElementById('property-desc').value = postData.description || '';
+                    if (document.getElementById('price')) document.getElementById('price').value = postData.price || '';
+                    if (document.getElementById('area-size')) document.getElementById('area-size').value = postData.area || '';
+                    if (document.getElementById('location-input')) document.getElementById('location-input').value = postData.location || '';
+                    if (document.getElementById('whatsapp-phone')) document.getElementById('whatsapp-phone').value = postData.whatsapp || '';
+                    if (document.getElementById('video-link')) document.getElementById('video-link').value = postData.videoUrl || '';
+                    
+                    // ডাইনামিকালি তৈরি হওয়া স্পেসিফিক ফিল্ডগুলোর আইডি চেক করে ভ্যালু বসানো
+                    if (document.getElementById('property-size')) document.getElementById('property-size').value = postData.size || '';
+                    if (document.getElementById('property-floor')) document.getElementById('property-floor').value = postData.floor || '';
+                    if (document.getElementById('property-facing')) document.getElementById('property-facing').value = postData.facing || '';
+                    if (document.getElementById('property-beds')) document.getElementById('property-beds').value = postData.beds || '';
+                    if (document.getElementById('property-baths')) document.getElementById('property-baths').value = postData.baths || '';
+                    if (document.getElementById('property-balconies')) document.getElementById('property-balconies').value = postData.balconies || '';
+                    if (document.getElementById('property-condition')) document.getElementById('property-condition').value = postData.condition || '';
+                    if (document.getElementById('property-completion')) document.getElementById('property-completion').value = postData.completion || '';
+                    if (document.getElementById('road-size')) document.getElementById('road-size').value = postData.roadSize || '';
+                }, 150);
+
+            } else {
+                alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
+            }
+        })
+        .catch((error) => {
+            console.error("ফায়ারস্টোর থেকে ডেটা লোড করতে সমস্যা হয়েছে:", error);
+        });
+                           }
 });
