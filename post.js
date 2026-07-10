@@ -1135,39 +1135,49 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
 
         // ইউআরএল (URL) থেকে এডিট আইডি চেক করা
-        const urlParams = new URLSearchParams(window.location.search);
-        editPostId = urlParams.get('edit');
+const urlParams = new URLSearchParams(window.location.search);
+editPostId = urlParams.get('edit');
 
-        if (editPostId) {
-            isEditMode = true;
-            
-            const pageTitle = document.getElementById('page-title') || document.querySelector('.form-container h2');
-            const localSubmitBtn = document.getElementById('submit-btn') || document.querySelector('button[type="submit"]');
-            
-            if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
-            if (localSubmitBtn) localSubmitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
+if (editPostId) {
+    isEditMode = true;
+    
+    const pageTitle = document.getElementById('page-title') || document.querySelector('.post-form-container h2'); // ফিক্সড: আপনার HTML এ ক্লাস '.post-form-container h2'[cite: 11]
+    const localSubmitBtn = document.getElementById('submit-btn') || document.querySelector('.submit-button'); // ফিক্সড: আপনার HTML এ ক্লাস '.submit-button'[cite: 11]
+    
+    if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
+    if (localSubmitBtn) localSubmitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
 
-            // ফায়ারস্টোর থেকে ওই নির্দিষ্ট পোস্টের ডেটা আনা
-            firebase.firestore().collection('posts').doc(editPostId).get()
-                .then((doc) => {
-                    if (doc.exists) {
-                        const postData = doc.data();
-                        
-                        // ফিক্সড: আপনার ফর্মের আইডি 'property-title' এ ডেটা সেট করা হচ্ছে
-                        if (document.getElementById('property-title')) document.getElementById('property-title').value = postData.title || '';
-                        if (document.getElementById('price-input')) document.getElementById('price-input').value = postData.price || '';
-                        if (document.getElementById('description')) document.getElementById('description').value = postData.description || '';
-                        if (document.getElementById('post-category')) document.getElementById('post-category').value = postData.category || '';
-                        
-                        console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
-                    } else {
-                        alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
-                    }
-                })
-                .catch((error) => {
-                    console.error("ডেটা লোড করতে সমস্যা হয়েছে:", error);
-                });
-        }
+    // ফায়ারস্টোর থেকে ওই নির্দিষ্ট পোস্টের ডেটা আনা
+    firebase.firestore().collection('posts').doc(editPostId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                const postData = doc.data();
+                console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
+
+                // ম্যাজিক ট্রিক: ফায়ারস্টোরের ডেটা সরাসরি সেশন স্টোরেজে স্টেজড ডেটা হিসেবে সেভ করা
+                sessionStorage.setItem('stagedPropertyData', JSON.stringify(postData));
+                
+                // যদি পোস্টে আগে থেকে ইমেজ থাকে, সেগুলোর মেটাডেটাও সেশনে পুশ করে রাখা (ঐচ্ছিক কিন্তু নিরাপদ)
+                if (postData.images || postData.owner) {
+                    const existingMeta = {
+                        images: postData.images || [],
+                        khotian: postData.khotian || null,
+                        sketch: postData.sketch || null
+                    };
+                    sessionStorage.setItem('stagedImageMetadata', JSON.stringify(existingMeta));
+                }
+
+                // এবার স্টেজড ডেটা লোড করার মেইন ফাংশনটি কল করুন, যা অটোমেটিক সব ডাইনামিক ফিল্ড তৈরি করে ভ্যালু বসিয়ে দেবে
+                loadStagedData();
+
+            } else {
+                alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
+            }
+        })
+        .catch((error) => {
+            console.error("ডেটা লোড করতে সমস্যা হয়েছে:", error);
+        });
+                        }
 
         
         auth.onAuthStateChanged(user => {
