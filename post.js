@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function generateTypeDropdown(category) {
         let options = [];
         if (category === 'বিক্রয়') {
-            options = ['জমি', 'প্লট', 'বাড়ি', 'ফ্ল্যাট', 'دোকান', 'অফিস']; 
+            options = ['জমি', 'প্লট', 'বাড়ি', 'ফ্ল্যাট', 'দোকান', 'অফিস']; 
         } else if (category === 'ভাড়া') {
             options = ['বাড়ি', 'ফ্ল্যাট', 'অফিস', 'দোকান']; 
         }
@@ -1233,8 +1233,9 @@ if (editPostId) {
              window.location.href = 'profile.html'; 
         });
     }
-// ==========================================
-// 🎯 সংশোধিত ও সম্পূর্ণ ফিক্সড এডিট মুড কোড:
+
+    // ==========================================
+// 🎯 ছবিসহ সম্পূর্ণ ফিক্সড এডিট মুড কোড:
 // ==========================================
 const urlParams = new URLSearchParams(window.location.search);
 editPostId = urlParams.get('edit');
@@ -1263,19 +1264,19 @@ if (editPostId) {
                 const catEl = document.getElementById('post-category');
                 if (catEl && postData.category) {
                     catEl.value = postData.category;
-                    catEl.dispatchEvent(new Event('change', { bubbles: true })); // এর ফলে টাইপ ড্রপডাউন অটো জেনারেট হবে
+                    catEl.dispatchEvent(new Event('change', { bubbles: true }));
                 }
 
-                // ৩. একটু সময় দিয়ে টাইপ ড্রপডাউন সিলেক্ট করা এবং ফিল্ড জেনারেট করা
+                // ৩. টাইপ ড্রপডাউন সিলেক্ট করা এবং ফিল্ড জেনারেট করা
                 setTimeout(() => {
                     const typeEl = document.getElementById('property-type');
                     if (typeEl && postData.type) {
                         typeEl.value = postData.type;
-                        typeEl.dispatchEvent(new Event('change', { bubbles: true })); // এর ফলে ডাইনামিক ফিল্ডগুলো তৈরি হবে
+                        typeEl.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 }, 50);
 
-                // ৪. সবশেষে ডাইনামিক ফিল্ড তৈরি হওয়ার পর সব ইনপুট বক্সে ভ্যালু পুশ করা
+                // ৪. সব ইনপুট বক্সে ভ্যালু পুশ করা এবং ইমেজের প্রিভিউ তৈরি করা
                 setTimeout(() => {
                     if (document.getElementById('property-title')) document.getElementById('property-title').value = postData.title || '';
                     if (document.getElementById('property-desc')) document.getElementById('property-desc').value = postData.description || '';
@@ -1285,7 +1286,7 @@ if (editPostId) {
                     if (document.getElementById('whatsapp-phone')) document.getElementById('whatsapp-phone').value = postData.whatsapp || '';
                     if (document.getElementById('video-link')) document.getElementById('video-link').value = postData.videoUrl || '';
                     
-                    // ডাইনামিকালি তৈরি হওয়া স্পেসিফিক ফিল্ডগুলোর আইডি চেক করে ভ্যালু বসানো
+                    // ডাইনামিক ফিল্ডগুলোর ভ্যালু অ্যাসাইন
                     if (document.getElementById('property-size')) document.getElementById('property-size').value = postData.size || '';
                     if (document.getElementById('property-floor')) document.getElementById('property-floor').value = postData.floor || '';
                     if (document.getElementById('property-facing')) document.getElementById('property-facing').value = postData.facing || '';
@@ -1295,6 +1296,27 @@ if (editPostId) {
                     if (document.getElementById('property-condition')) document.getElementById('property-condition').value = postData.condition || '';
                     if (document.getElementById('property-completion')) document.getElementById('property-completion').value = postData.completion || '';
                     if (document.getElementById('road-size')) document.getElementById('road-size').value = postData.roadSize || '';
+
+                    // 🖼️ 🌟 বিদ্যমান ছবিগুলো স্ক্রিনে দেখানোর লজিক
+                    const imagePreviewGrid = document.getElementById('image-preview-grid'); // আপনার HTML এর প্রিভিউ কন্টেইনার আইডি
+                    if (imagePreviewGrid && postData.images && postData.images.length > 0) {
+                        imagePreviewGrid.innerHTML = ''; // আগের কোনো ডিফল্ট ভিউ থাকলে ক্লিয়ার করবে
+                        
+                        postData.images.forEach((imgUrl, index) => {
+                            const previewWrapper = document.createElement('div');
+                            previewWrapper.className = 'preview-wrapper';
+                            previewWrapper.style.position = 'relative';
+                            previewWrapper.style.display = 'inline-block';
+                            previewWrapper.style.margin = '5px';
+
+                            previewWrapper.innerHTML = `
+                                <img src="${imgUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
+                                <span class="remove-btn" style="position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer;" onclick="this.parentElement.remove()">×</span>
+                            `;
+                            imagePreviewGrid.appendChild(previewWrapper);
+                        });
+                    }
+
                 }, 150);
 
             } else {
@@ -1304,5 +1326,6 @@ if (editPostId) {
         .catch((error) => {
             console.error("ফায়ারস্টোর থেকে ডেটা লোড করতে সমস্যা হয়েছে:", error);
         });
-                           }
+}
+    
 });
