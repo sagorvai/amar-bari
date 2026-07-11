@@ -1267,52 +1267,66 @@ if (previewContainer && postData.images && postData.images.length > 0) {
     });
 }
 
-// 🎯 (খ) খতিয়ান ছবি ফিক্স (সঠিক পাথ: postData.documents?.khotian):
+// ==========================================
+// 🎯 খতিয়ান ছবি এডিট রেন্ডারিং ফিক্স
+// ==========================================
 const khotianContainer = document.getElementById('khotian-preview-area'); 
-const rawKhotian = postData.documents?.khotian || postData.owner?.khotianPic || postData.khotian;
-
-if (khotianContainer && rawKhotian) {
-    const khotianUrl = (typeof rawKhotian === 'string') ? rawKhotian : (rawKhotian && rawKhotian.url ? rawKhotian.url : '');
+if (khotianContainer) {
+    // ডাটাবেজের সম্ভাব্য সব স্ট্রাকচার চেক করা হচ্ছে
+    const rawKhotian = postData.documents?.khotian || postData.khotian || postData.owner?.khotianPic;
     
-    if (khotianUrl) {
-        khotianContainer.innerHTML = `
-            <div class="image-preview-wrapper" id="box-existing_khotian">
-                <img src="${khotianUrl}" class="preview-image" alt="Khotian Image">
-                <button class="remove-image-btn">&times;</button>
-            </div>
-        `;
-        khotianContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            khotianContainer.innerHTML = '';
-            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-            delete currentMeta.khotian;
-            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
-        });
+    if (rawKhotian) {
+        const khotianUrl = (typeof rawKhotian === 'string') ? rawKhotian : (rawKhotian.url || '');
+        
+        if (khotianUrl) {
+            khotianContainer.innerHTML = `
+                <div class="image-preview-wrapper" id="box-existing_khotian" style="position: relative; display: inline-block;">
+                    <img src="${khotianUrl}" class="preview-image" alt="Khotian Image" style="max-width: 150px; height: auto; borderRadius: 8px;">
+                    <button class="remove-image-btn" style="position: absolute; top: -5px; right: -5px; background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">&times;</button>
+                </div>
+            `;
+            
+            // রিমুভ বাটনের লজিক
+            khotianContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                khotianContainer.innerHTML = '';
+                let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+                currentMeta.khotianDeleted = true; // সার্ভারে ডিলিট রিকোয়েস্ট পাঠানোর জন্য ফ্ল্যাগ
+                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+            });
+        }
     }
 }
 
-// 🎯 (গ) স্কেচ ছবি ফিক্স (সঠিক পাথ: postData.documents?.sketch):
+// ==========================================
+// 🎯 স্কেচ ছবি এডিট রেন্ডারিং ফিক্স
+// ==========================================
 const sketchContainer = document.getElementById('sketch-preview-area'); 
-const rawSketch = postData.documents?.sketch || postData.owner?.sketchPic || postData.sketch;
-
-if (sketchContainer && rawSketch) {
-    const sketchUrl = (typeof rawSketch === 'string') ? rawSketch : (rawSketch && rawSketch.url ? rawSketch.url : '');
+if (sketchContainer) {
+    // ডাটাবেজের সম্ভাব্য সব স্ট্রাকচার চেক করা হচ্ছে
+    const rawSketch = postData.documents?.sketch || postData.sketch || postData.owner?.sketchPic;
     
-    if (sketchUrl) {
-        sketchContainer.innerHTML = `
-            <div class="image-preview-wrapper" id="box-existing_sketch">
-                <img src="${sketchUrl}" class="preview-image" alt="Sketch Image">
-                <button class="remove-image-btn">&times;</button>
-            </div>
-        `;
-        sketchContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            sketchContainer.innerHTML = '';
-            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-            delete currentMeta.sketch;
-            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
-        });
+    if (rawSketch) {
+        const sketchUrl = (typeof rawSketch === 'string') ? rawSketch : (rawSketch.url || '');
+        
+        if (sketchUrl) {
+            sketchContainer.innerHTML = `
+                <div class="image-preview-wrapper" id="box-existing_sketch" style="position: relative; display: inline-block;">
+                    <img src="${sketchUrl}" class="preview-image" alt="Sketch Image" style="max-width: 150px; height: auto; borderRadius: 8px;">
+                    <button class="remove-image-btn" style="position: absolute; top: -5px; right: -5px; background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">&times;</button>
+                </div>
+            `;
+            
+            // রিমুভ বাটনের লজিক
+            sketchContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                sketchContainer.innerHTML = '';
+                let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+                currentMeta.sketchDeleted = true;
+                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+            });
+        }
     }
-                                                                             }
+    }
     
 });
