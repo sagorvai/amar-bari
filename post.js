@@ -1266,110 +1266,112 @@ if (editPostId) {
                 }
 
                 setTimeout(() => {
-                    const typeEl = document.getElementById('property-type');
+                    const typeEl = document.getElementById('post-type'); // ফিক্সড: আপনার আইডি 'post-type'
                     if (typeEl && postData.type) {
                         typeEl.value = postData.type;
                         typeEl.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 }, 100);
 
-                // ৩. টেক্সট ইনপুট ফিল্ডগুলোতে ভ্যালু বসানো
+                // ৩. টেক্সট ইনপুট ফিল্ডগুলোতে ভ্যালু বসানো (একটু পর্যাপ্ত সময় দিয়ে যাতে DOM তৈরি হয়)
                 setTimeout(() => {
                     if (document.getElementById('property-title')) document.getElementById('property-title').value = postData.title || '';
-                    if (document.getElementById('property-desc')) document.getElementById('property-desc').value = postData.description || '';
+                    if (document.getElementById('description')) document.getElementById('description').value = postData.description || '';
                     if (document.getElementById('price')) document.getElementById('price').value = postData.price || '';
-                    if (document.getElementById('area-size')) document.getElementById('area-size').value = postData.area || '';
-                    if (document.getElementById('location-input')) document.getElementById('location-input').value = postData.location || '';
-                    if (document.getElementById('whatsapp-phone')) document.getElementById('whatsapp-phone').value = postData.whatsapp || '';
-                    if (document.getElementById('video-link')) document.getElementById('video-link').value = postData.videoUrl || '';
-                    
-                    // ডাইনামিক ফিল্ডসমূহ
-                    if (document.getElementById('property-size')) document.getElementById('property-size').value = postData.size || '';
-                    if (document.getElementById('property-floor')) document.getElementById('property-floor').value = postData.floor || '';
-                    if (document.getElementById('property-facing')) document.getElementById('property-facing').value = postData.facing || '';
-                    if (document.getElementById('property-beds')) document.getElementById('property-beds').value = postData.beds || '';
-                    if (document.getElementById('property-baths')) document.getElementById('property-baths').value = postData.baths || '';
-                    if (document.getElementById('property-balconies')) document.getElementById('property-balconies').value = postData.balconies || '';
-                    if (document.getElementById('property-condition')) document.getElementById('property-condition').value = postData.condition || '';
-                    if (document.getElementById('property-completion')) document.getElementById('property-completion').value = postData.completion || '';
-                    if (document.getElementById('road-size')) document.getElementById('road-size').value = postData.roadSize || '';
+                    if (document.getElementById('donor-name')) document.getElementById('donor-name').value = postData.owner?.donorName || '';
+                    if (document.getElementById('khotian-no-type-select')) document.getElementById('khotian-no-type-select').value = postData.owner?.khotianNoType || '';
+                    if (document.getElementById('khotian-no-input')) document.getElementById('khotian-no-input').value = postData.owner?.khotianNo || '';
+                    if (document.getElementById('dag-no-input')) document.getElementById('dag-no-input').value = postData.owner?.dagNo || '';
+                    if (document.getElementById('mouja-owner')) document.getElementById('mouja-owner').value = postData.owner?.mouja || '';
+                    if (document.getElementById('road-width')) document.getElementById('road-width').value = postData.roadWidth || '';
+                    if (document.getElementById('land-area')) document.getElementById('land-area').value = postData.landArea || '';
+                    if (document.getElementById('land-area-unit')) document.getElementById('land-area-unit').value = postData.landAreaUnit || '';
+                    if (document.getElementById('price-unit')) document.getElementById('price-unit').value = postData.priceUnit || '';
 
                     // ====================================================
-                    // 🖼️ 🌟 ছবি, খতিয়ান ও স্কেচ আপনার কোডের গ্লোবাল নিয়মে পুশ করার ম্যাজিক:
+                    // 🖼️ 🌟 ছবি, খতিয়ান ও স্কেচ রেন্ডারিং (সঠিক HTML আইডি সহ):
                     // ====================================================
                     
                     // (ক) মূল প্রপার্টির ছবি ফিক্স:
-                    if (postData.images && postData.images.length > 0 && typeof selectedFiles !== 'undefined') {
-                        // আগের ছবিগুলোকে selectedFiles অ্যারেতে অবজেক্ট বানিয়ে পুশ করা (যাতে আপনার updateImagePreview() এটি রিড করতে পারে)
-                        selectedFiles = postData.images.map(imgUrl => ({
-                            isExisting: true,
-                            url: imgUrl,
-                            name: "আগের ছবি"
-                        }));
-                        
-                        // আপনার কোডের নিজস্ব ইমেজ প্রিভিউ জেনারেটরকে কাস্টমাইজড করে রান করা
-                        const previewContainer = document.getElementById('preview-container');
-                        if (previewContainer) {
-                            previewContainer.innerHTML = '';
-                            selectedFiles.forEach((file, index) => {
-                                const card = document.createElement('div');
-                                card.className = 'preview-card';
-                                card.innerHTML = `
-                                    <img src="${file.url}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
-                                    <span class="remove-btn" style="position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; cursor:pointer;">×</span>
-                                `;
-                                card.querySelector('.remove-btn').addEventListener('click', () => {
-                                    card.remove();
-                                    selectedFiles.splice(index, 1);
-                                    // সেশন আপডেট
-                                    let currentStaged = JSON.parse(sessionStorage.getItem('stagedPropertyData')) || {};
-                                    if (currentStaged.images) {
-                                        currentStaged.images.splice(index, 1);
-                                        sessionStorage.setItem('stagedPropertyData', JSON.stringify(currentStaged));
-                                    }
-                                });
-                                previewContainer.appendChild(card);
+                    const previewContainer = document.getElementById('image-preview-area'); // ফিক্সড আইডি
+                    if (previewContainer && postData.images && postData.images.length > 0) {
+                        previewContainer.innerHTML = '';
+                        postData.images.forEach((imgUrl, index) => {
+                            const fileId = `existing_main_${index}`;
+                            const card = document.createElement('div');
+                            card.className = 'image-preview-wrapper';
+                            card.id = `box-${fileId}`;
+                            card.innerHTML = `
+                                <img src="${imgUrl}" class="preview-image">
+                                <button class="remove-image-btn">&times;</button>
+                            `;
+                            card.querySelector('.remove-image-btn').addEventListener('click', (e) => {
+                                e.preventDefault();
+                                card.remove();
+                                let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+                                currentMeta.images = (currentMeta.images || []).filter(m => m.url !== imgUrl);
+                                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
                             });
-                        }
+                            previewContainer.appendChild(card);
+                        });
                     }
 
                     // (খ) খতিয়ান ছবি ফিক্স:
-                    const khotianContainer = document.getElementById('khotian-preview');
-                    if (khotianContainer && postData.khotian) {
+                    const khotianContainer = document.getElementById('khotian-preview-area'); // ফিক্সড আইডি
+                    if (khotianContainer && postData.owner?.khotianPic || postData.khotian) {
+                        const khotianUrl = postData.owner?.khotianPic || postData.khotian;
                         khotianContainer.innerHTML = `
-                            <div class="preview-card" style="position:relative;">
-                                <img src="${postData.khotian}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
-                                <span class="remove-btn" style="position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="this.parentElement.remove()">×</span>
+                            <div class="image-preview-wrapper" id="box-existing_khotian">
+                                <img src="${khotianUrl}" class="preview-image">
+                                <button class="remove-image-btn">&times;</button>
                             </div>
                         `;
+                        khotianContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
+                            e.preventDefault();
+                            khotianContainer.innerHTML = '';
+                            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+                            delete currentMeta.khotian;
+                            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+                        });
                     }
 
                     // (গ) স্কেচ ছবি ফিক্স:
-                    const sketchContainer = document.getElementById('sketch-preview');
-                    if (sketchContainer && postData.sketch) {
+                    const sketchContainer = document.getElementById('sketch-preview-area'); // ফিক্সড আইডি
+                    if (sketchContainer && postData.owner?.sketchPic || postData.sketch) {
+                        const sketchUrl = postData.owner?.sketchPic || postData.sketch;
                         sketchContainer.innerHTML = `
-                            <div class="preview-card" style="position:relative;">
-                                <img src="${postData.sketch}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
-                                <span class="remove-btn" style="position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="this.parentElement.remove()">×</span>
+                            <div class="image-preview-wrapper" id="box-existing_sketch">
+                                <img src="${sketchUrl}" class="preview-image">
+                                <button class="remove-image-btn">&times;</button>
                             </div>
                         `;
+                        sketchContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
+                            e.preventDefault();
+                            sketchContainer.innerHTML = '';
+                            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+                            delete currentMeta.sketch;
+                            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+                        });
                     }
 
-                    // (ঘ) ইমেজ মেটাডেটা সেশন সিঙ্ক (সাবমিট সাকসেসের জন্য সবচেয়ে গুরুত্বপূর্ণ)
+                    // (ঘ) ইমেজ মেটাডেটা সেশন সিঙ্ক (যাতে সাবমিট করার সময় ইমেজ ভ্যালিডেশন পাস করে)
                     const formattedImages = (postData.images || []).map((imgUrl, idx) => ({
-                        id: `existing_${idx}`,
+                        id: `existing_main_${idx}`,
                         fileName: `image_${idx}.jpg`,
                         fileMimeType: "image/jpeg",
                         url: imgUrl
                     }));
                     
+                    const khotianUrlFinal = postData.owner?.khotianPic || postData.khotian || null;
+                    const sketchUrlFinal = postData.owner?.sketchPic || postData.sketch || null;
+
                     sessionStorage.setItem('stagedImageMetadata', JSON.stringify({
                         images: formattedImages,
-                        khotian: postData.khotian || null,
-                        sketch: postData.sketch || null
+                        khotian: khotianUrlFinal ? { id: 'existing_khotian', url: khotianUrlFinal } : null,
+                        sketch: sketchUrlFinal ? { id: 'existing_sketch', url: sketchUrlFinal } : null
                     }));
 
-                }, 400);
+                }, 500); // ফিল্ড জেনারেশনের জন্য ৫০০ms সময় দেওয়া হলো
 
             } else {
                 alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
@@ -1378,6 +1380,6 @@ if (editPostId) {
         .catch((error) => {
             console.error("ফায়ারস্টোর থেকে ডেটা লোড করতে সমস্যা হয়েছে:", error);
         });
-                }
+                                              }
     
 });
