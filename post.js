@@ -1267,66 +1267,77 @@ if (previewContainer && postData.images && postData.images.length > 0) {
     });
 }
 
-// ==========================================
-// 🎯 খতিয়ান ছবি এডিট রেন্ডারিং ফিক্স
-// ==========================================
-const khotianContainer = document.getElementById('khotian-preview-area'); 
-if (khotianContainer) {
-    // ডাটাবেজের সম্ভাব্য সব স্ট্রাকচার চেক করা হচ্ছে
+// ====================================================
+// 🎯 খতিয়ান ও স্কেচ ছবি এডিট রেন্ডারিং (ডাইনামিক ও নিরাপদ মেথড)
+// ====================================================
+
+// ১. খতিয়ান ছবি রেন্ডারিং
+const khotianInput = document.querySelector('input[type="file"][id*="khotian"]') || document.querySelector('input[id*="khotian"]');
+if (khotianInput) {
     const rawKhotian = postData.documents?.khotian || postData.khotian || postData.owner?.khotianPic;
-    
-    if (rawKhotian) {
-        const khotianUrl = (typeof rawKhotian === 'string') ? rawKhotian : (rawKhotian.url || '');
+    const khotianUrl = (typeof rawKhotian === 'string') ? rawKhotian : (rawKhotian?.url || '');
+
+    if (khotianUrl) {
+        // ইনপুটের প্যারেন্ট কন্টেইনার (কার্ড বক্স) খুঁজে বের করা
+        const cardContainer = khotianInput.closest('div') || khotianInput.parentElement;
         
-        if (khotianUrl) {
-            khotianContainer.innerHTML = `
-                <div class="image-preview-wrapper" id="box-existing_khotian" style="position: relative; display: inline-block;">
-                    <img src="${khotianUrl}" class="preview-image" alt="Khotian Image" style="max-width: 150px; height: auto; borderRadius: 8px;">
-                    <button class="remove-image-btn" style="position: absolute; top: -5px; right: -5px; background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">&times;</button>
-                </div>
-            `;
-            
-            // রিমুভ বাটনের লজিক
-            khotianContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
-                e.preventDefault();
-                khotianContainer.innerHTML = '';
-                let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-                currentMeta.khotianDeleted = true; // সার্ভারে ডিলিট রিকোয়েস্ট পাঠানোর জন্য ফ্ল্যাগ
-                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
-            });
-        }
+        // আগের কোনো প্রিভিউ থাকলে তা মুছে ফেলা
+        const oldPreview = cardContainer.querySelector('.edit-preview-wrapper');
+        if (oldPreview) oldPreview.remove();
+
+        // নতুন প্রিভিউ এলিমেন্ট তৈরি
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'edit-preview-wrapper';
+        previewDiv.style.cssText = "margin-top: 15px; text-align: center; position: relative; display: inline-block;";
+        previewDiv.innerHTML = `
+            <img src="${khotianUrl}" alt="Khotian Preview" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid #ddd; padding: 5px; background: #fff;">
+            <button class="remove-edit-img" style="position: absolute; top: -5px; right: -5px; background: #ff4d4d; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; line-height: 18px; text-align: center;">&times;</button>
+        `;
+
+        // কার্ডের ভেতরে ইনপুটের ঠিক নিচে ছবি যুক্ত করা
+        cardContainer.appendChild(previewDiv);
+
+        // রিমুভ বাটন লজিক
+        previewDiv.querySelector('.remove-edit-img').addEventListener('click', (e) => {
+            e.preventDefault();
+            previewDiv.remove();
+            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+            currentMeta.khotianDeleted = true;
+            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+        });
     }
 }
 
-// ==========================================
-// 🎯 স্কেচ ছবি এডিট রেন্ডারিং ফিক্স
-// ==========================================
-const sketchContainer = document.getElementById('sketch-preview-area'); 
-if (sketchContainer) {
-    // ডাটাবেজের সম্ভাব্য সব স্ট্রাকচার চেক করা হচ্ছে
+// ২. স্কেচ ছবি রেন্ডারিং
+const sketchInput = document.querySelector('input[type="file"][id*="sketch"]') || document.querySelector('input[id*="sketch"]') || document.querySelector('input[id*="sketchPic"]');
+if (sketchInput) {
     const rawSketch = postData.documents?.sketch || postData.sketch || postData.owner?.sketchPic;
-    
-    if (rawSketch) {
-        const sketchUrl = (typeof rawSketch === 'string') ? rawSketch : (rawSketch.url || '');
+    const sketchUrl = (typeof rawSketch === 'string') ? rawSketch : (rawSketch?.url || '');
+
+    if (sketchUrl) {
+        const cardContainer = sketchInput.closest('div') || sketchInput.parentElement;
         
-        if (sketchUrl) {
-            sketchContainer.innerHTML = `
-                <div class="image-preview-wrapper" id="box-existing_sketch" style="position: relative; display: inline-block;">
-                    <img src="${sketchUrl}" class="preview-image" alt="Sketch Image" style="max-width: 150px; height: auto; borderRadius: 8px;">
-                    <button class="remove-image-btn" style="position: absolute; top: -5px; right: -5px; background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">&times;</button>
-                </div>
-            `;
-            
-            // রিমুভ বাটনের লজিক
-            sketchContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
-                e.preventDefault();
-                sketchContainer.innerHTML = '';
-                let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-                currentMeta.sketchDeleted = true;
-                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
-            });
-        }
+        const oldPreview = cardContainer.querySelector('.edit-preview-wrapper');
+        if (oldPreview) oldPreview.remove();
+
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'edit-preview-wrapper';
+        previewDiv.style.cssText = "margin-top: 15px; text-align: center; position: relative; display: inline-block;";
+        previewDiv.innerHTML = `
+            <img src="${sketchUrl}" alt="Sketch Preview" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid #ddd; padding: 5px; background: #fff;">
+            <button class="remove-edit-img" style="position: absolute; top: -5px; right: -5px; background: #ff4d4d; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; line-height: 18px; text-align: center;">&times;</button>
+        `;
+
+        cardContainer.appendChild(previewDiv);
+
+        previewDiv.querySelector('.remove-edit-img').addEventListener('click', (e) => {
+            e.preventDefault();
+            previewDiv.remove();
+            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+            currentMeta.sketchDeleted = true;
+            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+        });
     }
-    }
+            }
     
 });
