@@ -1324,42 +1324,54 @@ if (previewContainer && postData.images && postData.images.length > 0) {
 }
 
                     // (খ) খতিয়ান ছবি ফিক্স:
-                    const khotianContainer = document.getElementById('khotian-preview-area'); // ফিক্সড আইডি
-                    if (khotianContainer && postData.owner?.khotianPic || postData.khotian) {
-                        const khotianUrl = postData.owner?.khotianPic || postData.khotian;
-                        khotianContainer.innerHTML = `
-                            <div class="image-preview-wrapper" id="box-existing_khotian">
-                                <img src="${khotianUrl}" class="preview-image">
-                                <button class="remove-image-btn">&times;</button>
-                            </div>
-                        `;
-                        khotianContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
-                            e.preventDefault();
-                            khotianContainer.innerHTML = '';
-                            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-                            delete currentMeta.khotian;
-                            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
-                        });
-                    }
+const khotianContainer = document.getElementById('khotian-preview-area'); // ফিক্সড আইডি
+const rawKhotian = postData.owner?.khotianPic || postData.khotian;
 
-                    // (গ) স্কেচ ছবি ফিক্স:
-                    const sketchContainer = document.getElementById('sketch-preview-area'); // ফিক্সড আইডি
-                    if (sketchContainer && postData.owner?.sketchPic || postData.sketch) {
-                        const sketchUrl = postData.owner?.sketchPic || postData.sketch;
-                        sketchContainer.innerHTML = `
-                            <div class="image-preview-wrapper" id="box-existing_sketch">
-                                <img src="${sketchUrl}" class="preview-image">
-                                <button class="remove-image-btn">&times;</button>
-                            </div>
-                        `;
-                        sketchContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
-                            e.preventDefault();
-                            sketchContainer.innerHTML = '';
-                            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-                            delete currentMeta.sketch;
-                            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
-                        });
-                    }
+if (khotianContainer && rawKhotian) {
+    // ফিক্স: যদি অবজেক্ট হয় তবে .url নিবে, স্ট্রিং হলে সরাসরি নিবে
+    const khotianUrl = (typeof rawKhotian === 'string') ? rawKhotian : (rawKhotian && rawKhotian.url ? rawKhotian.url : '');
+    
+    if (khotianUrl) {
+        khotianContainer.innerHTML = `
+            <div class="image-preview-wrapper" id="box-existing_khotian">
+                <img src="${khotianUrl}" class="preview-image" alt="Khotian Image">
+                <button class="remove-image-btn">&times;</button>
+            </div>
+        `;
+        khotianContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            khotianContainer.innerHTML = '';
+            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+            delete currentMeta.khotian;
+            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+        });
+    }
+}
+
+// (গ) স্কেচ ছবি ফিক্স:
+const sketchContainer = document.getElementById('sketch-preview-area'); // ফিক্সড আইডি
+const rawSketch = postData.owner?.sketchPic || postData.sketch;
+
+if (sketchContainer && rawSketch) {
+    // ফিক্স: যদি অবজেক্ট হয় তবে .url নিবে, স্ট্রিং হলে সরাসরি নিবে
+    const sketchUrl = (typeof rawSketch === 'string') ? rawSketch : (rawSketch && rawSketch.url ? rawSketch.url : '');
+    
+    if (sketchUrl) {
+        sketchContainer.innerHTML = `
+            <div class="image-preview-wrapper" id="box-existing_sketch">
+                <img src="${sketchUrl}" class="preview-image" alt="Sketch Image">
+                <button class="remove-image-btn">&times;</button>
+            </div>
+        `;
+        sketchContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            sketchContainer.innerHTML = '';
+            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+            delete currentMeta.sketch;
+            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+        });
+    }
+                        }
 
                     // (ঘ) ইমেজ মেটাডেটা সেশন সিঙ্ক
 const formattedImages = (postData.images || []).map((imgItem, idx) => {
@@ -1372,14 +1384,15 @@ const formattedImages = (postData.images || []).map((imgItem, idx) => {
     };
 }).filter(item => item.url !== ''); // খালি ইউআরএল বাদ দেওয়ার জন্য
                     
-                    const khotianUrlFinal = postData.owner?.khotianPic || postData.khotian || null;
-                    const sketchUrlFinal = postData.owner?.sketchPic || postData.sketch || null;
+                    
+const khotianUrlFinal = (typeof rawKhotian === 'string') ? rawKhotian : (rawKhotian && rawKhotian.url ? rawKhotian.url : null);
+const sketchUrlFinal = (typeof rawSketch === 'string') ? rawSketch : (rawSketch && rawSketch.url ? rawSketch.url : null);
 
-                    sessionStorage.setItem('stagedImageMetadata', JSON.stringify({
-                        images: formattedImages,
-                        khotian: khotianUrlFinal ? { id: 'existing_khotian', url: khotianUrlFinal } : null,
-                        sketch: sketchUrlFinal ? { id: 'existing_sketch', url: sketchUrlFinal } : null
-                    }));
+sessionStorage.setItem('stagedImageMetadata', JSON.stringify({
+    images: formattedImages,
+    khotian: khotianUrlFinal ? { id: 'existing_khotian', url: khotianUrlFinal } : null,
+    sketch: sketchUrlFinal ? { id: 'existing_sketch', url: sketchUrlFinal } : null
+}));
 
                 }, 500); // ফিল্ড জেনারেশনের জন্য ৫০০ms সময় দেওয়া হলো
 
