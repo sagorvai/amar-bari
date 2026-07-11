@@ -1235,7 +1235,7 @@ if (editPostId) {
     }
 
    // ==========================================================
-// 🎯 প্রপার্টি ছবি, খতিয়ান ও স্কেচ লোড হওয়ার ১০০% চূড়ান্ত ফিক্সড কোড (UPDATED):
+// 🎯 খতিয়ান ও স্কেচ ছবি লোড হওয়ার শতভাগ গ্যারান্টিড ফিক্সড কোড (MutationObserver যুক্ত):
 // ==========================================================
 const urlParams = new URLSearchParams(window.location.search);
 editPostId = urlParams.get('edit');
@@ -1255,7 +1255,7 @@ if (editPostId) {
                 const postData = doc.data();
                 console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
 
-                // ১. ইমেজ ডাটা আগে প্রসেস করে সেশনে পুশ করে রাখা, যাতে dynamic fields ওটা পড়তে পারে
+                // ১. ইমেজ ডাটা ও সেশন ক্যাশ সেটআপ
                 const rawKhotian = postData.owner?.khotianPic || postData.khotian;
                 const rawSketch = postData.owner?.sketchPic || postData.sketch;
 
@@ -1272,17 +1272,15 @@ if (editPostId) {
                 const khotianUrlFinal = (typeof rawKhotian === 'string') ? rawKhotian : (rawKhotian && rawKhotian.url ? rawKhotian.url : null);
                 const sketchUrlFinal = (typeof rawSketch === 'string') ? rawSketch : (rawSketch && rawSketch.url ? rawSketch.url : null);
 
-                // সেশন স্টোরেজে ইমেজ মেটাডেটা সিঙ্ক (dynamic fields জেনারেট হওয়ার আগেই)
                 sessionStorage.setItem('stagedImageMetadata', JSON.stringify({
                     images: formattedImages,
                     khotian: khotianUrlFinal ? { id: 'existing_khotian', url: khotianUrlFinal } : null,
                     sketch: sketchUrlFinal ? { id: 'existing_sketch', url: sketchUrlFinal } : null
                 }));
 
-                // ২. মূল ডেটা সেশন স্টোরেজে ব্যাকআপ রাখা
                 sessionStorage.setItem('stagedPropertyData', JSON.stringify(postData));
 
-                // ৩. ক্যাটাগরি ও টাইপ ড্রপডাউন সিলেক্ট করা ও ইভেন্ট ফায়ার করা
+                // ২. ক্যাটাগরি ও টাইপ ড্রপডাউন ট্রিগার করা
                 const catEl = document.getElementById('post-category');
                 if (catEl && postData.category) {
                     catEl.value = postData.category;
@@ -1295,9 +1293,9 @@ if (editPostId) {
                         typeEl.value = postData.type;
                         typeEl.dispatchEvent(new Event('change', { bubbles: true }));
                     }
-                }, 150); // টাইমিং গ্যাপ সামান্য বাড়ানো হলো নিরাপদে DOM তৈরির জন্য
+                }, 150);
 
-                // ৪. টেক্সট ইনপুট ফিল্ডগুলোতে ভ্যালু বসানো এবং ছবি সরাসরি ডমে রেন্ডার নিশ্চিত করা
+                // ৩. সাধারণ টেক্সট ইনপুট ফিল্ডগুলো পূরণ করা
                 setTimeout(() => {
                     if (document.getElementById('property-title')) document.getElementById('property-title').value = postData.title || '';
                     if (document.getElementById('description')) document.getElementById('description').value = postData.description || '';
@@ -1312,7 +1310,7 @@ if (editPostId) {
                     if (document.getElementById('land-area-unit')) document.getElementById('land-area-unit').value = postData.landAreaUnit || '';
                     if (document.getElementById('price-unit')) document.getElementById('price-unit').value = postData.priceUnit || '';
 
-                    // 🖼️ (ক) মূল প্রপার্টির ছবি সরাসরি রেন্ডার ফিক্স:
+                    // (ক) মূল প্রপার্টির ছবি রেন্ডার
                     const previewContainer = document.getElementById('image-preview-area');
                     if (previewContainer && formattedImages.length > 0) {
                         previewContainer.innerHTML = '';
@@ -1334,10 +1332,18 @@ if (editPostId) {
                             previewContainer.appendChild(card);
                         });
                     }
+                }, 500);
 
-                    // 📜 (খ) খতিয়ান ছবি সরাসরি রেন্ডার ফিক্স:
+                // ৪. 🚀 MutationObserver: ডমে খতিয়ান ও স্কেচ কন্টেইনার তৈরি হওয়া মাত্রই ছবি পুশ করবে
+                const observerTarget = document.body; 
+                const observerOptions = { childList: true, subtree: true };
+
+                const domObserver = new MutationObserver((mutations, obs) => {
                     const khotianContainer = document.getElementById('khotian-preview-area');
-                    if (khotianContainer && khotianUrlFinal) {
+                    const sketchContainer = document.getElementById('sketch-preview-area');
+
+                    // যদি খতিয়ান এরিয়া পাওয়া যায় এবং ওটাতে এখনও ইমেজ লোড না হয়ে থাকে
+                    if (khotianContainer && khotianUrlFinal && !khotianContainer.querySelector('img')) {
                         khotianContainer.innerHTML = `
                             <div class="image-preview-wrapper" id="box-existing_khotian">
                                 <img src="${khotianUrlFinal}" class="preview-image" alt="Khotian Image">
@@ -1351,11 +1357,11 @@ if (editPostId) {
                             delete currentMeta.khotian;
                             sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
                         });
+                        console.log("Observer: খতিয়ান ছবি সফলভাবে রেন্ডার হয়েছে।");
                     }
 
-                    // 🗺️ (গ) স্কেচ ছবি সরাসরি রেন্ডার ফিক্স:
-                    const sketchContainer = document.getElementById('sketch-preview-area');
-                    if (sketchContainer && sketchUrlFinal) {
+                    // যদি স্কেচ এরিয়া পাওয়া যায় এবং ওটাতে এখনও ইমেজ লোড না হয়ে থাকে
+                    if (sketchContainer && sketchUrlFinal && !sketchContainer.querySelector('img')) {
                         sketchContainer.innerHTML = `
                             <div class="image-preview-wrapper" id="box-existing_sketch">
                                 <img src="${sketchUrlFinal}" class="preview-image" alt="Sketch Image">
@@ -1369,9 +1375,34 @@ if (editPostId) {
                             delete currentMeta.sketch;
                             sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
                         });
+                        console.log("Observer: স্কেচ ছবি সফলভাবে রেন্ডার হয়েছে।");
                     }
 
-                }, 600); // DOM সম্পূর্ণ তৈরি হতে ৬০০ms নিরাপদ সময় দেওয়া হলো
+                    // দুটি ছবিই ডমে বসে গেলে অবজার্ভার বন্ধ করে দেবো পারফরম্যান্সের জন্য
+                    if (
+                        (!khotianUrlFinal || (khotianContainer && khotianContainer.querySelector('img'))) &&
+                        (!sketchUrlFinal || (sketchContainer && sketchContainer.querySelector('img')))
+                    ) {
+                        obs.disconnect();
+                        console.log("Observer Disconnected: সব ছবি সফলভাবে রেন্ডার সম্পূর্ণ।");
+                    }
+                });
+
+                // অবজার্ভার চালু করা হলো
+                domObserver.observe(observerTarget, observerOptions);
+
+                // ব্যাকআপ সেফটি: যদি ১.৫ সেকেন্ডের মধ্যেও কোনো কারণে অবজার্ভার মিস করে, তবে জোরপূর্বক আরেকবার ট্রাই করবে
+                setTimeout(() => {
+                    domObserver.disconnect();
+                    const kArea = document.getElementById('khotian-preview-area');
+                    if (kArea && khotianUrlFinal && !kArea.querySelector('img')) {
+                        kArea.innerHTML = `<div class="image-preview-wrapper"><img src="${khotianUrlFinal}" class="preview-image"><button class="remove-image-btn">&times;</button></div>`;
+                    }
+                    const sArea = document.getElementById('sketch-preview-area');
+                    if (sArea && sketchUrlFinal && !sArea.querySelector('img')) {
+                        sArea.innerHTML = `<div class="image-preview-wrapper"><img src="${sketchUrlFinal}" class="preview-image"><button class="remove-image-btn">&times;</button></div>`;
+                    }
+                }, 1500);
 
             } else {
                 alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
@@ -1380,6 +1411,7 @@ if (editPostId) {
         .catch((error) => {
             console.error("ফায়ারস্টোর থেকে ডেটা লোড করতে সমস্যা হয়েছে:", error);
         });
-        }
+                        }
+
     
 });
