@@ -1293,28 +1293,35 @@ if (editPostId) {
                     // ====================================================
                     
                     // (ক) মূল প্রপার্টির ছবি ফিক্স:
-                    const previewContainer = document.getElementById('image-preview-area'); // ফিক্সড আইডি
-                    if (previewContainer && postData.images && postData.images.length > 0) {
-                        previewContainer.innerHTML = '';
-                        postData.images.forEach((imgUrl, index) => {
-                            const fileId = `existing_main_${index}`;
-                            const card = document.createElement('div');
-                            card.className = 'image-preview-wrapper';
-                            card.id = `box-${fileId}`;
-                            card.innerHTML = `
-                                <img src="${imgUrl}" class="preview-image">
-                                <button class="remove-image-btn">&times;</button>
-                            `;
-                            card.querySelector('.remove-image-btn').addEventListener('click', (e) => {
-                                e.preventDefault();
-                                card.remove();
-                                let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-                                currentMeta.images = (currentMeta.images || []).filter(m => m.url !== imgUrl);
-                                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
-                            });
-                            previewContainer.appendChild(card);
-                        });
-                    }
+const previewContainer = document.getElementById('image-preview-area'); // ফিক্সড আইডি
+if (previewContainer && postData.images && postData.images.length > 0) {
+    previewContainer.innerHTML = '';
+    
+    postData.images.forEach((imgItem, index) => {
+        // ফিক্স: যদি imgItem সরাসরি স্ট্রিং হয় তবে তাই ব্যবহার করবে, আর অবজেক্ট হলে .url প্রপার্টি নিবে
+        const imgUrl = (typeof imgItem === 'string') ? imgItem : (imgItem && imgItem.url ? imgItem.url : '');
+        
+        if (!imgUrl) return; // ইউআরএল না থাকলে স্কিপ করবে
+
+        const fileId = `existing_main_${index}`;
+        const card = document.createElement('div');
+        card.className = 'image-preview-wrapper';
+        card.id = `box-${fileId}`;
+        card.innerHTML = `
+            <img src="${imgUrl}" class="preview-image" alt="Property Image">
+            <button class="remove-image-btn">&times;</button>
+        `;
+        
+        card.querySelector('.remove-image-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            card.remove();
+            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+            currentMeta.images = (currentMeta.images || []).filter(m => m.url !== imgUrl);
+            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+        });
+        previewContainer.appendChild(card);
+    });
+}
 
                     // (খ) খতিয়ান ছবি ফিক্স:
                     const khotianContainer = document.getElementById('khotian-preview-area'); // ফিক্সড আইডি
@@ -1354,13 +1361,16 @@ if (editPostId) {
                         });
                     }
 
-                    // (ঘ) ইমেজ মেটাডেটা সেশন সিঙ্ক (যাতে সাবমিট করার সময় ইমেজ ভ্যালিডেশন পাস করে)
-                    const formattedImages = (postData.images || []).map((imgUrl, idx) => ({
-                        id: `existing_main_${idx}`,
-                        fileName: `image_${idx}.jpg`,
-                        fileMimeType: "image/jpeg",
-                        url: imgUrl
-                    }));
+                    // (ঘ) ইমেজ মেটাডেটা সেশন সিঙ্ক
+const formattedImages = (postData.images || []).map((imgItem, idx) => {
+    const imgUrl = (typeof imgItem === 'string') ? imgItem : (imgItem && imgItem.url ? imgItem.url : '');
+    return {
+        id: `existing_main_${idx}`,
+        fileName: `image_${idx}.jpg`,
+        fileMimeType: "image/jpeg",
+        url: imgUrl
+    };
+}).filter(item => item.url !== ''); // খালি ইউআরএল বাদ দেওয়ার জন্য
                     
                     const khotianUrlFinal = postData.owner?.khotianPic || postData.khotian || null;
                     const sketchUrlFinal = postData.owner?.sketchPic || postData.sketch || null;
