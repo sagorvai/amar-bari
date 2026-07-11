@@ -1235,7 +1235,7 @@ if (editPostId) {
     }
 
    // ==========================================================
-// 🎯 প্রপার্টি ছবি, খতিয়ান ও স্কেচ লোড হওয়ার ১০০% চূড়ান্ত ফিক্সড কোড:
+// 🎯 প্রপার্টি ছবি, খতিয়ান ও স্কেচ লোড হওয়ার ১০০% চূড়ান্ত ফিক্সড কোড (UPDATED):
 // ==========================================================
 const urlParams = new URLSearchParams(window.location.search);
 editPostId = urlParams.get('edit');
@@ -1255,10 +1255,34 @@ if (editPostId) {
                 const postData = doc.data();
                 console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
 
-                // ১. মূল ডেটা সেশন স্টোরেজে ব্যাকআপ রাখা (প্রিভিউ পেজের জন্য)
+                // ১. ইমেজ ডাটা আগে প্রসেস করে সেশনে পুশ করে রাখা, যাতে dynamic fields ওটা পড়তে পারে
+                const rawKhotian = postData.owner?.khotianPic || postData.khotian;
+                const rawSketch = postData.owner?.sketchPic || postData.sketch;
+
+                const formattedImages = (postData.images || []).map((imgItem, idx) => {
+                    const imgUrl = (typeof imgItem === 'string') ? imgItem : (imgItem && imgItem.url ? imgItem.url : '');
+                    return {
+                        id: `existing_main_${idx}`,
+                        fileName: `image_${idx}.jpg`,
+                        fileMimeType: "image/jpeg",
+                        url: imgUrl
+                    };
+                }).filter(item => item.url !== '');
+
+                const khotianUrlFinal = (typeof rawKhotian === 'string') ? rawKhotian : (rawKhotian && rawKhotian.url ? rawKhotian.url : null);
+                const sketchUrlFinal = (typeof rawSketch === 'string') ? rawSketch : (rawSketch && rawSketch.url ? rawSketch.url : null);
+
+                // সেশন স্টোরেজে ইমেজ মেটাডেটা সিঙ্ক (dynamic fields জেনারেট হওয়ার আগেই)
+                sessionStorage.setItem('stagedImageMetadata', JSON.stringify({
+                    images: formattedImages,
+                    khotian: khotianUrlFinal ? { id: 'existing_khotian', url: khotianUrlFinal } : null,
+                    sketch: sketchUrlFinal ? { id: 'existing_sketch', url: sketchUrlFinal } : null
+                }));
+
+                // ২. মূল ডেটা সেশন স্টোরেজে ব্যাকআপ রাখা
                 sessionStorage.setItem('stagedPropertyData', JSON.stringify(postData));
 
-                // ২. ক্যাটাগরি ও টাইপ ড্রপডাউন সিলেক্ট করা এবং ইভেন্ট ফায়ার করা
+                // ৩. ক্যাটাগরি ও টাইপ ড্রপডাউন সিলেক্ট করা ও ইভেন্ট ফায়ার করা
                 const catEl = document.getElementById('post-category');
                 if (catEl && postData.category) {
                     catEl.value = postData.category;
@@ -1266,14 +1290,14 @@ if (editPostId) {
                 }
 
                 setTimeout(() => {
-                    const typeEl = document.getElementById('post-type'); // ফিক্সড: আপনার আইডি 'post-type'
+                    const typeEl = document.getElementById('post-type');
                     if (typeEl && postData.type) {
                         typeEl.value = postData.type;
                         typeEl.dispatchEvent(new Event('change', { bubbles: true }));
                     }
-                }, 100);
+                }, 150); // টাইমিং গ্যাপ সামান্য বাড়ানো হলো নিরাপদে DOM তৈরির জন্য
 
-                // ৩. টেক্সট ইনপুট ফিল্ডগুলোতে ভ্যালু বসানো (একটু পর্যাপ্ত সময় দিয়ে যাতে DOM তৈরি হয়)
+                // ৪. টেক্সট ইনপুট ফিল্ডগুলোতে ভ্যালু বসানো এবং ছবি সরাসরি ডমে রেন্ডার নিশ্চিত করা
                 setTimeout(() => {
                     if (document.getElementById('property-title')) document.getElementById('property-title').value = postData.title || '';
                     if (document.getElementById('description')) document.getElementById('description').value = postData.description || '';
@@ -1288,113 +1312,66 @@ if (editPostId) {
                     if (document.getElementById('land-area-unit')) document.getElementById('land-area-unit').value = postData.landAreaUnit || '';
                     if (document.getElementById('price-unit')) document.getElementById('price-unit').value = postData.priceUnit || '';
 
-                    // ====================================================
-                    // 🖼️ 🌟 ছবি, খতিয়ান ও স্কেচ রেন্ডারিং (সঠিক HTML আইডি সহ):
-                    // ====================================================
-                    
-                    // (ক) মূল প্রপার্টির ছবি ফিক্স:
-const previewContainer = document.getElementById('image-preview-area'); // ফিক্সড আইডি
-if (previewContainer && postData.images && postData.images.length > 0) {
-    previewContainer.innerHTML = '';
-    
-    postData.images.forEach((imgItem, index) => {
-        // ফিক্স: যদি imgItem সরাসরি স্ট্রিং হয় তবে তাই ব্যবহার করবে, আর অবজেক্ট হলে .url প্রপার্টি নিবে
-        const imgUrl = (typeof imgItem === 'string') ? imgItem : (imgItem && imgItem.url ? imgItem.url : '');
-        
-        if (!imgUrl) return; // ইউআরএল না থাকলে স্কিপ করবে
+                    // 🖼️ (ক) মূল প্রপার্টির ছবি সরাসরি রেন্ডার ফিক্স:
+                    const previewContainer = document.getElementById('image-preview-area');
+                    if (previewContainer && formattedImages.length > 0) {
+                        previewContainer.innerHTML = '';
+                        formattedImages.forEach((imgItem) => {
+                            const card = document.createElement('div');
+                            card.className = 'image-preview-wrapper';
+                            card.id = `box-${imgItem.id}`;
+                            card.innerHTML = `
+                                <img src="${imgItem.url}" class="preview-image" alt="Property Image">
+                                <button class="remove-image-btn">&times;</button>
+                            `;
+                            card.querySelector('.remove-image-btn').addEventListener('click', (e) => {
+                                e.preventDefault();
+                                card.remove();
+                                let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+                                currentMeta.images = (currentMeta.images || []).filter(m => m.url !== imgItem.url);
+                                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+                            });
+                            previewContainer.appendChild(card);
+                        });
+                    }
 
-        const fileId = `existing_main_${index}`;
-        const card = document.createElement('div');
-        card.className = 'image-preview-wrapper';
-        card.id = `box-${fileId}`;
-        card.innerHTML = `
-            <img src="${imgUrl}" class="preview-image" alt="Property Image">
-            <button class="remove-image-btn">&times;</button>
-        `;
-        
-        card.querySelector('.remove-image-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            card.remove();
-            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-            currentMeta.images = (currentMeta.images || []).filter(m => m.url !== imgUrl);
-            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
-        });
-        previewContainer.appendChild(card);
-    });
-}
+                    // 📜 (খ) খতিয়ান ছবি সরাসরি রেন্ডার ফিক্স:
+                    const khotianContainer = document.getElementById('khotian-preview-area');
+                    if (khotianContainer && khotianUrlFinal) {
+                        khotianContainer.innerHTML = `
+                            <div class="image-preview-wrapper" id="box-existing_khotian">
+                                <img src="${khotianUrlFinal}" class="preview-image" alt="Khotian Image">
+                                <button class="remove-image-btn">&times;</button>
+                            </div>
+                        `;
+                        khotianContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
+                            e.preventDefault();
+                            khotianContainer.innerHTML = '';
+                            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+                            delete currentMeta.khotian;
+                            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+                        });
+                    }
 
-                    // (খ) খতিয়ান ছবি ফিক্স:
-const khotianContainer = document.getElementById('khotian-preview-area'); // ফিক্সড আইডি
-const rawKhotian = postData.owner?.khotianPic || postData.khotian;
+                    // 🗺️ (গ) স্কেচ ছবি সরাসরি রেন্ডার ফিক্স:
+                    const sketchContainer = document.getElementById('sketch-preview-area');
+                    if (sketchContainer && sketchUrlFinal) {
+                        sketchContainer.innerHTML = `
+                            <div class="image-preview-wrapper" id="box-existing_sketch">
+                                <img src="${sketchUrlFinal}" class="preview-image" alt="Sketch Image">
+                                <button class="remove-image-btn">&times;</button>
+                            </div>
+                        `;
+                        sketchContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
+                            e.preventDefault();
+                            sketchContainer.innerHTML = '';
+                            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
+                            delete currentMeta.sketch;
+                            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
+                        });
+                    }
 
-if (khotianContainer && rawKhotian) {
-    // ফিক্স: যদি অবজেক্ট হয় তবে .url নিবে, স্ট্রিং হলে সরাসরি নিবে
-    const khotianUrl = (typeof rawKhotian === 'string') ? rawKhotian : (rawKhotian && rawKhotian.url ? rawKhotian.url : '');
-    
-    if (khotianUrl) {
-        khotianContainer.innerHTML = `
-            <div class="image-preview-wrapper" id="box-existing_khotian">
-                <img src="${khotianUrl}" class="preview-image" alt="Khotian Image">
-                <button class="remove-image-btn">&times;</button>
-            </div>
-        `;
-        khotianContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            khotianContainer.innerHTML = '';
-            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-            delete currentMeta.khotian;
-            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
-        });
-    }
-}
-
-// (গ) স্কেচ ছবি ফিক্স:
-const sketchContainer = document.getElementById('sketch-preview-area'); // ফিক্সড আইডি
-const rawSketch = postData.owner?.sketchPic || postData.sketch;
-
-if (sketchContainer && rawSketch) {
-    // ফিক্স: যদি অবজেক্ট হয় তবে .url নিবে, স্ট্রিং হলে সরাসরি নিবে
-    const sketchUrl = (typeof rawSketch === 'string') ? rawSketch : (rawSketch && rawSketch.url ? rawSketch.url : '');
-    
-    if (sketchUrl) {
-        sketchContainer.innerHTML = `
-            <div class="image-preview-wrapper" id="box-existing_sketch">
-                <img src="${sketchUrl}" class="preview-image" alt="Sketch Image">
-                <button class="remove-image-btn">&times;</button>
-            </div>
-        `;
-        sketchContainer.querySelector('.remove-image-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            sketchContainer.innerHTML = '';
-            let currentMeta = JSON.parse(sessionStorage.getItem('stagedImageMetadata') || '{}');
-            delete currentMeta.sketch;
-            sessionStorage.setItem('stagedImageMetadata', JSON.stringify(currentMeta));
-        });
-    }
-                        }
-
-                    // (ঘ) ইমেজ মেটাডেটা সেশন সিঙ্ক
-const formattedImages = (postData.images || []).map((imgItem, idx) => {
-    const imgUrl = (typeof imgItem === 'string') ? imgItem : (imgItem && imgItem.url ? imgItem.url : '');
-    return {
-        id: `existing_main_${idx}`,
-        fileName: `image_${idx}.jpg`,
-        fileMimeType: "image/jpeg",
-        url: imgUrl
-    };
-}).filter(item => item.url !== ''); // খালি ইউআরএল বাদ দেওয়ার জন্য
-                    
-                    
-const khotianUrlFinal = (typeof rawKhotian === 'string') ? rawKhotian : (rawKhotian && rawKhotian.url ? rawKhotian.url : null);
-const sketchUrlFinal = (typeof rawSketch === 'string') ? rawSketch : (rawSketch && rawSketch.url ? rawSketch.url : null);
-
-sessionStorage.setItem('stagedImageMetadata', JSON.stringify({
-    images: formattedImages,
-    khotian: khotianUrlFinal ? { id: 'existing_khotian', url: khotianUrlFinal } : null,
-    sketch: sketchUrlFinal ? { id: 'existing_sketch', url: sketchUrlFinal } : null
-}));
-
-                }, 500); // ফিল্ড জেনারেশনের জন্য ৫০০ms সময় দেওয়া হলো
+                }, 600); // DOM সম্পূর্ণ তৈরি হতে ৬০০ms নিরাপদ সময় দেওয়া হলো
 
             } else {
                 alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
@@ -1403,6 +1380,6 @@ sessionStorage.setItem('stagedImageMetadata', JSON.stringify({
         .catch((error) => {
             console.error("ফায়ারস্টোর থেকে ডেটা লোড করতে সমস্যা হয়েছে:", error);
         });
-                                              }
+        }
     
 });
