@@ -157,12 +157,24 @@ row(contact, 'অতিরিক্ত ফোন নম্বর', postData.seco
 
 /* ---------------- Actions Button Logic ---------------- */
 function goBack() {
-  location.href = 'post.html';
+  // এডিট মোড চালু থাকলে এডিটিং আইডিসহ ফেরত যাবে
+  const originalPostId = postData.id || postData.postId;
+  if (originalPostId) {
+    location.href = `post.html?edit=${originalPostId}`;
+  } else {
+    location.href = 'post.html';
+  }
 }
 
 // একটি ইউআরএল থেকে ফাইল অবজেক্ট বা ব্লব তৈরি করে নতুন লোকেশনে আপলোড করার হেল্পার ফাংশন
 async function moveImageToPermanentStorage(url, userId, docType = 'images') {
   if (!url) return null;
+  
+  // ফিক্স: যদি ছবি বা ফাইলটি ইতিমধ্যে স্থায়ী ফোল্ডারে (properties/) আপলোড করা থাকে (যেমন এডিটিং মুডে), তবে পুনরায় ডাউনলোড করার প্রয়োজন নেই
+  if (url.includes('properties/images') || url.includes('properties/documents')) {
+    return url; 
+  }
+  
   try {
     // ১. স্টোরেজের বর্তমান ইউআরএল থেকে ফাইলটি ডাউনলোড (fetch) করা হচ্ছে
     const response = await fetch(url);
@@ -194,7 +206,7 @@ async function publishPost() {
     return;
   }
 
-  // লোডিং অ্যালার্ট বা স্পিনার দেখানো ভালো, কারণ রি-আপলোডে সামান্য সময় লাগতে পারে
+  // বোতাম নিষ্ক্রিয় এবং স্পিনার দেখানো হলো
   const originalBtn = document.querySelector('.btn-publish');
   if(originalBtn) {
      originalBtn.disabled = true;
@@ -231,8 +243,8 @@ async function publishPost() {
       finalSketch = imageData.sketch.url ? { ...imageData.sketch, url: permanentSketchUrl } : permanentSketchUrl;
     }
 
-    // ৪. এবার ডেটাবেজে সম্পূর্ণ স্থায়ী ইউআরএল সহ ডেটা সেভ করা হচ্ছে
-    await db.collection('properties').add({
+    // প্রিপেয়ার করা ডেটা অবজেক্ট
+    const preparedData = {
       ...postData,
       images: finalImages,
       documents: {
@@ -241,12 +253,42 @@ async function publishPost() {
       },
       status: 'published',
       userId: userId,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp() // আপডেট ট্র্যাকিংয়ের জন্য
+    };
 
-    sessionStorage.clear();
-    alert('🎉 অভিনন্দন বন্ধু! আপনার পোস্টটি সফলভাবে লাইভ হয়েছে।');
-    location.href = 'index.html';
+    // এডিট পোস্টের ক্ষেত্রে প্রোপার্টির মূল আইডিটি খুঁজে বের করা
+    const originalPostId = postData.id || postData.postId;
+
+    if (originalPostId) {
+      // 🔄 ৪.১: এডিট মুড চালু থাকলে বিদ্যমান আইডি-তে 'Update' করা হবে
+      delete preparedData.id; 
+      delete preparedData.postId;
+
+      await db.collection('properties').doc(originalPostId).update(preparedData);
+      
+      sessionStorage.clear();
+      alert('🎉 অভিনন্দন বন্ধু! আপনার পোস্টটি সফলভাবে সংশোধন করা হয়েছে।');
+      
+      // 🔙 ইউজার যে পেজ থেকে এসেছিলেন (যেমন: ড্যাশবোর্ড বা প্রোপার্টি ডিটেইলস পেজ) সেখানে ফেরত পাঠানো হচ্ছে
+      if (document.referrer && !document.referrer.includes('post.html') && !document.referrer.includes('preview.html')) {
+        location.href = document.referrer;
+      } else {
+        location.href = 'index.html'; // কোনো রেফারার না থাকলে হোমপেজে পাঠাবে
+      }
+
+    } else {
+      // ➕ ৪.২: নতুন পোস্ট তৈরির জন্য 'Add' করা হবে
+      // ফায়ারবেস সার্ভার টাইমস্ট্যাম্প দিয়ে ডেটা অ্যাড করা হচ্ছে
+      preparedData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      
+      await db.collection('properties').add(preparedData);
+      
+      sessionStorage.clear();
+      alert('🎉 অভিনন্দন বন্ধু! আপনার পোস্টটি সফলভাবে লাইভ হয়েছে।');
+      
+      // নতুন পোস্ট পাবলিশ হওয়ার পর index.html-এ রিডাইরেক্ট হবে
+      location.href = 'index.html';
+    }
 
   } catch (e) {
     console.error(e);
@@ -254,26 +296,23 @@ async function publishPost() {
     if(originalBtn) {
       originalBtn.disabled = false;
       originalBtn.innerText = '✅ চূড়ান্ত পোস্ট করুন';
-   }
+    }
   }
 }
- // 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
+
+// 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
 firebase.auth().onAuthStateChanged(async (user) => {
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
     
     if (user && headerProfileImg) {
         try {
-            // ফায়ারবেস 'users' কালেকশন থেকে ইউজারের ডাটা আনা হচ্ছে
             const userDoc = await db.collection('users').doc(user.uid).get();
             if (userDoc.exists && userDoc.data().profilePic) {
-                // ডাটাবেজে প্রোফাইল পিকচার থাকলে সেটি হেডারে সেট হবে
                 headerProfileImg.src = userDoc.data().profilePic;
             } else if (user.photoURL) {
-                // গুগল লগইন করা থাকলে গুগল প্রোফাইল পিকচার সেট হবে
                 headerProfileImg.src = user.photoURL;
             } else {
-                // কোনো ছবি না থাকলে একটি ডিফল্ট অ্যাভাটার সেট হবে
-                headerProfileImg.src = 'assets/images/default-avatar.png'; // আপনার প্রজেক্টের ডিফল্ট ছবির পাথ দিন
+                headerProfileImg.src = 'assets/images/default-avatar.png'; 
             }
         } catch (error) {
             console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
