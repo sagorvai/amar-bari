@@ -214,7 +214,7 @@ function renderDetails(data) {
             }
             if (boostBtn) {
                 boostBtn.onclick = () => {
-                    window.location.href = #;
+                    window.location.href = `boost.html?edit=${postId}`;
                 };
             }
             if (deleteBtn) {
