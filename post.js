@@ -7,7 +7,7 @@ const auth = firebase.auth();
 let isEditMode = false;
 let editPostId = null;
 
-// ⚡ ম্যাজিক ফাংশন: ক্যানভাস (Canvas API) দিয়ে ক্লায়েন্ট-সাইডেই ছবি কম্প্রেস করে KB সাইজে আনা
+// ⚡ ম্যাজিক ফাংশน: ক্যানভাস (Canvas API) দিয়ে ক্লায়েন্ট-সাইডেই ছবি কম্প্রেস করে KB সাইজে আনা
 const compressImage = (file, maxWidth = 1200, quality = 0.7) => {
     return new Promise((resolve, reject) => {
         if (!file.type.startsWith('image/')) {
@@ -88,10 +88,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.querySelector('#property-form button[type="submit"]');
     
     const messageButton = document.getElementById('messageButton');
-    const notificationButton = document.getElementById('notificationButton'); // ফিক্সড: ডিক্লেয়ার করা হলো
+    const notificationButton = document.getElementById('notificationButton'); 
     const profileImageWrapper = document.getElementById('profileImageWrapper');
 
-    
     // ভৌগোলিক অবজেক্ট
     const BD_GEOGRAPHY = {
         "ঢাকা বিভাগ": {
@@ -107,13 +106,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 "সিটি কর্পোরেশন": ["নারায়ণগঞ্জ সদর", "সিদ্ধিরগঞ্জ", "বন্দর"],
                 "উপজেলা": ["আড়াইহাজার", "রূপগঞ্জ", "সোনারগাঁও"]
             },
-            "টাঙ্গাইল": { "উপজেলা": ["টাঙ্গাইল সদর", "কালিহাতী", "घाटাইল", "মির্জাপুর", "মধুপুর", "গোপালপুর", "সখিপুর", "ভূঞাপুর", "বাসাইল", "দেলদুয়ার", "নাগরপুর", "ধনবাড়ী"] },
+            "টাঙ্গাইল": { "উপজেলা": ["টাঙ্গাইল সদর", "কালিহাতী", "ঘাটাইল", "মির্জাপুর", "মধুপুর", "গোপালপুর", "সখিপুর", "ভূঞাপুর", "বাসাইল", "দেলদুয়ার", "নাগরপুর", "ধনবাড়ী"] },
             "ফریدপুর": { "উপজেলা": ["ফریدপুর সদর", "কমলগঞ্জ", "বোয়ালমারী", "আলফাডাঙ্গা", "নগরকান্দা", "ভাঙ্গা", "সদরপুর", "চরভদ্রাসন", "সালথা"] },
             "মানিকগঞ্জ": { "উপজেলা": ["মানিকগঞ্জ সদর", "সিংগাইর", "শিবালয়", "ঘিওর", "হরিরামপুর", "সাটুরিয়া", "দৌলতপুর"] },
             "মুন্সীগঞ্জ": { "উপজেলা": ["মুন্সীগঞ্জ সদর", "টংগিবাড়ী", "শ্রীনগর", "লৌহজং", "গজারিয়া", "সিরাজদিখান"] },
             "নরসিংদী": { "উপজেলা": ["নরসিংদী সদর", "পলাশ", "শিবপুর", "মনোহরদী", "বেলাবো", "রায়পুরা"] },
-            "مাদারীপুর": { "উপজেলা": ["مাদারীপুর সদর", "শিবচর", "কালকিনি", "রাজৈর", "ডাসার"] },
-            "গোপালগঞ্জ": { "উপজেলা": ["গোপালগঞ্জ সদর", "টুঙ্গিপাড়া", "কোটালীপাড়া", "কাশিয়ানী", "মুকসুদপুর"] },
+            "মাদারীপুর": { "উপজেলা": ["মাদারীপুর সদর", "শিবচর", "কালকিনি", "রাজৈর", "ডাসার"] },
+            "গোপালগঞ্জ": { "উপজেলা": ["গোপালগঞ্জ সদর", "টুঙ্গিপাড়া", "কোটালীপাড়া", "কাশিয়ানী", "مুকসুদপুর"] },
             "রাজবাড়ী": { "উপজেলা": ["রাজবাড়ী সদর", "গোয়ালন্দ", "পাংশা", "বালিয়াকান্দি", "কালুখালী"] },
             "শরীয়তপুর": { "উপজেলা": ["শরীয়তপুর সদর", "ডামুড্যা", "নড়িয়া", "জাজিরা", "ভেদরগঞ্জ", "গোসাইরহাট"] },
             "কিশোরগঞ্জ": { "উপজেলা": ["কিশোরগঞ্জ সদর", "করিমগঞ্জ", "তাড়াইল", "হোসেনপুর", "পাকুন্দিয়া", "কটিয়াদী", "বাজিতপুর", "কুলিয়ারচর", "ভৈরব", "নিকলী", "মিঠামইন", "ইটনা", "অষ্টগ্রাম"] }
@@ -132,37 +131,37 @@ document.addEventListener('DOMContentLoaded', function() {
             "ব্রাহ্মণবাড়িয়া": { "উপজেলা": ["ব্রাহ্মণবাড়িয়া সদর", "আশুগঞ্জ", "সরাইল", "নাসিরনগর", "নবীনগর", "বাঞ্ছারামপুর", "কসবা", "আখাউড়া", "বিজয়নগর"] },
             "নোয়াখালী": { "উপজেলা": ["নোয়াখালী সদর", "কোম্পানীগঞ্জ", "বেগমগঞ্জ", "চাটখিল", "সেনবাগ", "হাতিয়া", "চৌমুহনী", "subarnachar", "कबीरহাট"] },
             "লক্ষ্মীপুর": { "উপজেলা": ["লক্ষ্মীপুর সদর", "রায়পুর", "রামগঞ্জ", "রামগতি", "কমলনগর"] },
-            "চাঁদপুর": { "উপজেলা": ["চাঁদপুর সদর", "হাজীগঞ্জ", "কচুয়া", "ফরিদগঞ্জ", "মতলব উত্তর", "মতলব দক্ষিণ", "হাইমচর", "শাহরাস্তি"] },
+            "চাঁদপুর": { "উপজেলা": ["চাঁদপুর সদর", "হাজীগঞ্জ", "কচুয়া", "ফরিদগঞ্জ", "মতলব উত্তর", "মতলব দক্ষিণ", "হাইমচর", "شاہراস্তি"] },
             "খাগড়াছড়ি": { "উপজেলা": ["খাগড়াছড়ি সদর", "দীঘিনালা", "পানছড়ি", "মাটিরাঙ্গা", "মহালছড়ি", "মানিকছড়ি", "রামগড়", "গুইমারা", "লক্ষ্মীছড়ি"] },
-            "রাঙ্গামাটি": { "উপজেলা": ["রাঙ্গামাটি সদর", "কাপ্তাই", "কাউখালী", "বাঘাইছড়ি", "লংগদু", "রাজস্থলী", "জুরাছড়ি", "বলাইছড়ি", "নানিয়ারচর", "বরকল"] },
+            "রাঙ্গামাটি": { "উপজেলা": ["রাঙ্গামাটি সদর", "কাপ্তাই", "কাউখালী", "বাঘাইছড়ি", "লংগদু", "রাজস্থলী", "জুরাছড়ি", "বলাইছড়ি", "نانিয়ারচর", "বরকল"] },
             "বান্দরবান": { "উপজেলা": ["বান্দরবান সদর", "লামা", "আলীকদম", "নাইক্ষ্যংছড়ি", "রুমা", "থানচি", "রোয়াংছড়ি"] }
         },
         "খুলনা বিভাগ": {
             "খুলনা": {
-                "সিটি কর্পোরেশন": ["খুলনা সদর", "দৌলতপুর", "খালিশপুর", "خانজাহান আলী", "লবণচরা", "হরিণটানা", "আড়ংঘাটা", "সোনাডাঙ্গা"],
-                "উপজেলা": ["বটিয়াঘাটা", "দাকোপ", "ডুমুরিয়া", "دیغلیয়া", "কয়রা", "পাইকগাছা", "ফুলতলা", "রূপসা", "তেরখাদা"]
+                "সিটি কর্পোরেশন": ["খুলনা সদর", "দৌলতপুর", "খালিশপুর", "খানজাহান আলী", "লবণচরা", "হরিণটানা", "আড়ংঘাটা", "সোনাডাঙ্গা"],
+                "উপজেলা": ["বটিয়াঘাটা", "দাকোপ", "ডুমুরিয়া", "দীঘলিয়া", "কয়রা", "পাইকগাছা", "ফুলতলা", "রূপসা", "তেরখাদা"]
             },
-            "যশোর": { "উপজেলা": ["যশোর সদর", "অভয়নগর", "বাঘেরপাড়া", "চৌগাছা", "ঝিকরগাছা", "কেশবপুর", "مণিরামপুর", "শার্শা"] },
+            "যশোর": { "উপজেলা": ["যশোর সদর", "অভয়নগর", "বাঘেরপাড়া", "চৌগাছা", "ঝিকরগাছা", "কেশবপুর", "মণিরামপুর", "শার্শা"] },
             "কুষ্টিয়া": { "উপজেলা": ["কুষ্টিয়া সদর", "কুমারখালী", "খোকসা", "মিরপুর", "ভেড়ামারা", "দৌলতপুর"] },
-            "বাগেরহাট": { "উপজেলা": ["বাগেরহাট সদর", "চিতলমারী", "ফকিরহাট", "কচুয়া", "مোল্লাহাট", "মংলা", "মোরেলগঞ্জ", "রামপাল", "শরণখোলা"] },
+            "বাগেরহাট": { "উপজেলা": ["বাগেরহাট সদর", "চিতলমারী", "ফকিরহাট", "কচুয়া", "মোল্লাহাট", "মংলা", "মোরেলগঞ্জ", "রামপাল", "শরণখোলা"] },
             "সাতক্ষীরা": { "উপজেলা": ["সাতক্ষীরা সদর", "কলারোয়া", "তালা", "দেবহাটা", "কালীগঞ্জ", "শ্যামনগর", "আশাশুনি"] },
             "ঝিনাইদহ": { "উপজেলা": ["ঝিনাইদহ সদর", "শৈলকুপা", "হরিণাকুণ্ডু", "কালীগঞ্জ", "কোটচাঁদপুর", "মহেশপুর"] },
             "মাগুরা": { "উপজেলা": ["মাগুরা সদর", "শ্রীপুর", "মহম্মদপুর", "শালিখা"] },
-            "নড়াইল": { "उपजেলা": ["নড়াইল সদর", "লোহাগড়া", "কালিয়া"] },
+            "নড়াইল": { "উপজেলা": ["নড়াইল সদর", "লোহাগড়া", "কালিয়া"] },
             "মেহেরপুর": { "উপজেলা": ["মেহেরপুর সদর", "গাংনী", "মুজিবনগর"] },
             "চুয়াডাঙ্গা": { "উপজেলা": ["চুয়াডাঙ্গা সদর", "আলমডাঙ্গা", "দামুড়হুদা", "জীবননগর"] }
         },
         "রাজশাহী বিভাগ": {
             "রাজশাহী": {
-                "সিটি কর্পোরেশন": ["বোয়ালিয়া", "রাজপাড়া", "মতিহার", "শাহ মখদুম", "চন্দ্রিমা", "কাটাখালী"],
+                "সিটি কর্পোরেশন": ["বোয়ালিয়া", "রাজপাড়া", "মতিহার", "شاہ মখদুম", "চন্দ্রিমা", "কাটাখালী"],
                 "উপজেলা": ["পবা", "গোদাগাড়ী", "তানোর", "মোহনপুর", "বাগমারা", "দুর্গাপুর", "পুট্টিয়া", "চারঘাট", "বাঘা"]
             },
-            "বগুড়া": { "উপজেলা": ["বগুড়া সদর", "শাজাহানপুর", "শেরপুর", "ধুনট", "গাবতলী", "সারিয়াকান্দি", "নন্দীগ্রাম", "কাহালু", "আदमদিঘী", "দুপচাঁচিয়া", "শিবগঞ্জ", "সোনাতলা"] },
+            "বগুড়া": { "উপজেলা": ["বগুড়া সদর", "শাজাহানপুর", "শেরপুর", "ধুনট", "গাবতলী", "সারিয়াকান্দি", "নন্দীগ্রাম", "কাহালু", "আদমদিঘী", "দুপচাঁচিয়া", "শিবগঞ্জ", "সোনাতলা"] },
             "পাবনা": { "উপজেলা": ["পাবনা সদর", "ঈশ্বরদী", "আটঘরিয়া", "চাটমোহর", "ভাঙ্গুড়া", "ফریدপুর", "সুজানগর", "বেড়া", "সাঁথিয়া"] },
             "নাটোর": { "উপজেলা": ["নাটোর সদর", "সিংড়া", "বড়াইগ্রাম", "গুরুদাসপুর", "লালপুর", "বাগাতিপাড়া", "নলডাঙ্গা"] },
-            "নওগাঁ": { "উপজেলা": ["নওগাঁ সদর", "রানীনগর", "আত্রাই", "মহাদেবপুর", "बদলগাছী", "পত্নীতলা", "ধামইরহাট", "নিয়ামতপুর", "পোরশা", "সাপাহার", "মান্দা"] },
+            "নওগাঁ": { "উপজেলা": ["নওগাঁ সদর", "রানীনগর", "আত্রাই", "মহাদেবপুর", "বদলগাছী", "পত্নীতলা", "ধামইরহাট", "নিয়ামতপুর", "পোরশা", "সাপাহার", "মান্দা"] },
             "জয়পুরহাট": { "উপজেলা": ["জয়পুরহাট সদর", "পাঁচবিবি", "আক্কেলপুর", "ক্ষেতলাল", "কালাই"] },
-            "সিরাজগঞ্জ": { "উপজেলা": ["সিরাজগঞ্জ সদর", "বেলকুచి", "চৌহালী", "কামারখন্দ", "কাজীপুর", "রায়গঞ্জ", "শাহজাদপুর", "তাড়াশ", "উল্লাপাড়া"] },
+            "সিরাজগঞ্জ": { "উপজেলা": ["সিরাজগঞ্জ সদর", "বেলকুচি", "চৌহালী", "কামারখন্দ", "কাজীপুর", "রায়গঞ্জ", "শাহজাদপুর", "তাড়াশ", "উল্লাপাড়া"] },
             "চাঁপাইনবাবগঞ্জ": { "উপজেলা": ["চাঁপাইনবাবগঞ্জ সদর", "শিবগঞ্জ", "গোমস্তাপুর", "নাচোল", "ভোলাহাট"] }
         },
         "বরিশাল বিভাগ": {
@@ -170,20 +169,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 "সিটি কর্পোরেশন": ["কোতোয়ালী মেট্রো", "কাউনিয়া", "বন্দর মেট্রো", "এয়ারপোর্ট মেট্রো"],
                 "উপজেলা": ["বরিশাল সদর", "বাকেরগঞ্জ", "বাবুগঞ্জ", "উজিরপুর", "বানারীপাড়া", "গৌরনদী", "আগৈলঝারা", "মেহেন্দিগঞ্জ", "মুলাদী", "হিজলা"]
             },
-            "পটুয়াখালী": { "উপজেলা": ["পটুয়াখালী সদর", "বাউফল", "গলাচিপা", "দশমিনা", "কলাপাড়া", "মির্জাগঞ্জ", "দুমকী", "রঙ্গাবালী"] },
+            "পটুয়াখালী": { "উপজেলা": ["পটুয়াখালী সদর", "বাউফল", "গлаচিপা", "দশমিনা", "কলাপাড়া", "মির্জাগঞ্জ", "দুমকী", "রঙ্গাবালী"] },
             "ভোলা": { "উপজেলা": ["ভোলা সদর", "দৌলতখান", "বোরহানউদ্দিন", "তজুমদ্দিন", "লালমোহন", "চরফ্যাশন", "মনপুরা"] },
-            "পিরোজপুর": { "উপজেলা": ["পিরোজপুর সদর", "নাজিরপুর", "নেছারাবাদ", "কাউখালী", "ভাণ্ডারিয়া", "مঠবাড়িয়া", "ইন্দুরকানী"] },
+            "পিরোজপুর": { "উপজেলা": ["পিরোজপুর সদর", "নাজিরপুর", "নেছারাবাদ", "কাউখালী", "ভাণ্ডারিয়া", "মঠবাড়িয়া", "ইন্দুরকানী"] },
             "বরগুনা": { "উপজেলা": ["বরগুনা সদর", "আমতলী", "তালতলী", "বামনা", "পাথরঘাটা", "বেতাগী"] },
             "ঝালকাঠি": { "উপজেলা": ["ঝালকাঠি সদর", "নলছিটি", "রাজাপুর", "কাঠালিয়া"] }
         },
         "সিলেট বিভাগ": {
             "সিলেট": {
-                "সিটি কর্পোরেশন": ["কোতোয়ালী", "শাহপরান", "এয়ারপোর্ট", "মোগলাবাজার", "দক্ষিণ সুরমা"],
+                "সিটি কর্পোরেশন": ["কোতোয়ালী", "شاہপরান", "এয়ারপোর্ট", "মোগলাবাজার", "দক্ষিণ সুরমা"],
                 "উপজেলা": ["সিলেট সদর", "গোলাপগঞ্জ", "বিয়ানীবাজার", "জৈنتাপুর", "গোয়াইনঘাট", "কানাইঘাট", "কোম্পানীগঞ্জ", "বালাগঞ্জ", "বিশ্বনাথ", "ফেঞ্চুগঞ্জ", "জকিগঞ্জ", "ওসমানীনগর"]
             },
             "সুনামগঞ্জ": { "উপজেলা": ["সুনামগঞ্জ সদর", "দক্ষিণ সুনামগঞ্জ", "দোয়ারাবাজার", "ছাতক", "জগন্নাথপুর", "দিরাই", "শালল্লা", "ধর্মপাশা", "তাহিরপুর", "বিশ্বম্ভরপুর", "মধ্যনগর"] },
             "হবিগঞ্জ": { "উপজেলা": ["হবিগঞ্জ সদর", "শায়েস্তাগঞ্জ", "নবীগঞ্জ", "বাহুবল", "আজমিরীগঞ্জ", "বানিয়াচং", "লাখাই", "চুনারুঘাট", "মাধবপুর"] },
-            "مৌলভীবাজার": { "উপজেলা": ["مৌলভীবাজার সদর", "শ্রীমঙ্গল", "কমলগঞ্জ", "রাজনগর", "কুলাউড়া", "জুড়ী", "বড়লেখা"] }
+            "মৌলভীবাজার": { "উপজেলা": ["মৌলভীবাজার সদর", "শ্রীমঙ্গল", "কমলগঞ্জ", "রাজনগর", "কুলাউড়া", "জুড়ী", "বড়লেখা"] }
         },
         "রংপুর বিভাগ": {
             "রংপুর": {
@@ -203,8 +202,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 "সিটি কর্পোরেশন": ["ময়মনসিংহ সদর মেট্রো", "কোতোয়ালী"],
                 "উপজেলা": ["ময়মনসিংহ সদর", "মুক্তাগাছা", "ফুলবাড়ীয়া", "ত্রিশাল", "ভালুকা", "গফরগাঁও", "নন্দাইল", "ঈশ্বরগঞ্জ", "গৌরীপুর", "হালুয়াঘাট", "ধোবাউড়া", "ফুলপুর", "তারাকান্দা"]
             },
-            "নেত্রকোনা": { "উপজেলা": ["নেত্রকোনা সদর", "বারহাট্টা", "কলমাকান্দা", "দুগাপুর", "পূর্বধলা", "মোহনগঞ্জ", "আটপাড়া", "মদন", "খালিয়াজুরী", "কেন্দুয়া"] },
-            "জামালপুর": { "উপজেলা": ["জামালপুর সদর", "মেলান্দহ", "ইসলামপুর", "দেওয়ানগঞ্জ", "বকশীগঞ্জ", "মাদারগঞ্জ", "সরিষাবাড়ী"] },
+            "নেত্রকোনা": { "উপজেলা": ["নেত্রকোনা সদর", "বারহাট্টা", "কলমাকান্দা", "দুগাপুর", "পূর্বধলা", "মোহনগঞ্জ", "আটপাড়া", "مদন", "খালিয়াজুরী", "কেন্দুয়া"] },
+            "জামালপুর": { "উপজেলা": ["জামালপুর সদর", "মেলান্দহ", "ইসলামপুর", "দেওয়ানগঞ্জ", "বকশীগঞ্জ", "مাদারগঞ্জ", "সরিষাবাড়ী"] },
             "শেরপুর": { "উপজেলা": ["শেরপুর সদর", "নালিতাবাড়ী", "শ্রীবরদী", "ঝিনাইগাতী", "নকলা"] }
         }
     };
@@ -330,11 +329,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="input-group">
                     <label>অন্যান্য সুবিধা:</label>
                     <div class="radio-group utility-checkbox-group" style="display: flex; flex-wrap: wrap; gap: 15px;">
-                        ${(type === 'ফ্লাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="লিফট" ${stagedData?.utilities?.includes('লিফট') ? 'checked' : ''}> লিফট</label>` : ''}
-                        ${(type === 'ফ্লাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="পার্কিং সুবিধা" ${stagedData?.utilities?.includes('পার্কিং সুবিধা') ? 'checked' : ''}> পার্কিং সুবিধা</label>` : ''}
+                        ${(type === 'ফ্ল্যাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="লিফট" ${stagedData?.utilities?.includes('লিফট') ? 'checked' : ''}> লিফট</label>` : ''}
+                        ${(type === 'ফ্ল্যাট' || type === 'অফিস' || type === 'বাড়ি') ? `<label><input type="checkbox" name="utility" value="পার্কিং সুবিধা" ${stagedData?.utilities?.includes('পার্কিং সুবিধা') ? 'checked' : ''}> পার্কিং সুবিধা</label>` : ''}
                         <label><input type="checkbox" name="utility" value="সিকিউরিটি গার্ড" ${stagedData?.utilities?.includes('সিকিউরিটি গার্ড') ? 'checked' : ''}> সিকিউরিটি গার্ড</label>
                         <label><input type="checkbox" name="utility" value="সিসিটিভি" ${stagedData?.utilities?.includes('সিসিটিভি') ? 'checked' : ''}> সিসিটিভি</label>
-                        <label><input type="checkbox" name="utility" value="গ্যাস সংযোগ" ${stagedData?.utilities?.includes('গ্যাস সংযোগ') ? 'checked' : ''}>ガス সংযোগ</label>
+                        <label><input type="checkbox" name="utility" value="গ্যাস সংযোগ" ${stagedData?.utilities?.includes('গ্যাস সংযোগ') ? 'checked' : ''}> গ্যাস সংযোগ</label>
                         <label><input type="checkbox" name="utility" value="জেনারেটর" ${stagedData?.utilities?.includes('জেনারেটর') ? 'checked' : ''}> জেনারেটর</label>
                         <label><input type="checkbox" name="utility" value="ওয়াসা পানি" ${stagedData?.utilities?.includes('ওয়াসা পানি') ? 'checked' : ''}> ওয়াসা পানি</label>
                     </div>
@@ -357,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="বাস্ত" ${stagedData?.landType === 'বাস্ত' ? 'selected' : ''}>বাস্ত</option>
                         <option value="ভিটা" ${stagedData?.landType === 'ভিটা' ? 'selected' : ''}>ভিটা</option>
                         <option value="ডোবা" ${stagedData?.landType === 'ডোবা' ? 'selected' : ''}>ডোবা</option>
-                        <option value="পुकুর" ${stagedData?.landType === 'পুকুর' ? 'selected' : ''}>পুকুর</option>
+                        <option value="পুকুর" ${stagedData?.landType === 'পুকুর' ? 'selected' : ''}>পুকুর</option>
                     </select>
                 </div>
             `;
@@ -365,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
                  descriptionHTML += `<div class="input-group"><label for="plot-no">প্লট নং (ঐচ্ছিক):</label><input type="text" id="plot-no" value="${stagedData?.plotNo || ''}"></div>`;
             }
         } else {
-            if (type === 'বাড়ি' || type === 'ফ্লাট') {
+            if (type === 'বাড়ি' || type === 'ফ্ল্যাট') {
                 descriptionHTML += `
                     <div class="input-group">
                         <label for="property-age">প্রপার্টির বয়স (বছর):</label>
@@ -382,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (type === 'বাড়ি') {
                  descriptionHTML += `<div class="input-group"><label for="floors">তলা সংখ্যা (ঐচ্ছিক):</label><input type="number" id="floors" value="${stagedData?.floors || ''}"></div>`;
-            } else if (type === 'ফ্লাট' || type === 'অফিস') {
+            } else if (type === 'ফ্ল্যাট' || type === 'অফিস') {
                 descriptionHTML += `<div class="input-group"><label for="floor-no">ফ্লোর নং:</label><input type="number" id="floor-no" required value="${stagedData?.floorNo || ''}"></div>`;
             }
 
@@ -391,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="input-inline-group">
                         <div class="input-group"><label for="rooms">রুম সংখ্যা:</label><input type="number" id="rooms" required value="${stagedData?.rooms || ''}"></div>
                         <div class="input-group"><label for="bathrooms">বাথরুম সংখ্যা:</label><input type="number" id="bathrooms" required value="${stagedData?.bathrooms || ''}"></div>
-                        ${(type === 'বাড়ি' || type === 'ফ্লাট') ? `<div class="input-group"><label for="kitchen">কিচেন সংখ্যা:</label><input type="number" id="kitchen" required value="${stagedData?.kitchen || ''}"></div>` : ''}
+                        ${(type === 'বাড়ি' || type === 'ফ্ল্যাট') ? `<div class="input-group"><label for="kitchen">কিচেন সংখ্যা:</label><input type="number" id="kitchen" required value="${stagedData?.kitchen || ''}"></div>` : ''}
                     </div>
                 `;
             } else {
@@ -405,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (category === 'বিক্রয়') {
             let ownershipHTML = `
                 <div class="form-section ownership-section">
-                    <h3>مালিকানা বিবরণ</h3>
+                    <h3>মালিকানা বিবরণ</h3>
                     <div class="input-group"><label for="donor-name">দাতার নাম:</label><input type="text" id="donor-name" required value="${stagedData?.owner?.donorName || ''}"></div>
                     
                     <div class="input-inline-group">
@@ -481,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </select>
                 </div>
             `;
-        } else if (type === 'ফ্লাট') {
+        } else if (type === 'ফ্ল্যাট') {
             priceRentHTML += `
                 <div class="input-group">
                     <label for="flat-area-sqft">পরিমাণ (স্কয়ার ফিট):</label>
@@ -531,7 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="number" id="advance" required value="${stagedData?.advance || ''}">
                 </div>
             `;
-            if (type === 'বাড়ি' || type === 'ফ্লাট') {
+            if (type === 'বাড়ি' || type === 'ফ্ল্যাট') {
                 priceRentHTML += `
                     <div class="input-group">
                         <label for="rent-type">ভাড়ার ধরন:</label>
@@ -696,16 +695,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         }, 200);
 
-        // ওপেনস্ট্রিটম্যাপ রেন্ডারিং (লাইভ লোকেশন ও লাইভ কোঅর্ডিনেট ডিসপ্লে সহ)
+        // ওপেনস্ট্রিটম্যাপ রেন্ডারিং
         setTimeout(() => {
             const mapElement = document.getElementById('map-container');
             if (mapElement) {
-                // ১. ম্যাপের ওপরে Lat/Lng দেখানোর জন্য একটি সুন্দর ছোট বক্স বাবল তৈরি করা
                 let coordinateDisplay = document.getElementById('map-coordinate-badge');
                 if (!coordinateDisplay) {
                     coordinateDisplay = document.createElement('div');
                     coordinateDisplay.id = 'map-coordinate-badge';
-                    // সিএসএস স্টাইল (ইনলাইন) যাতে ম্যাপের ঠিক ওপরে সুন্দর করে ভাসে
                     coordinateDisplay.style.cssText = `
                         position: absolute;
                         top: 10px;
@@ -720,7 +717,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         z-index: 1000;
                         pointer-events: none;
                     `;
-                    mapElement.style.position = 'relative'; // প্যারেন্ট পজিশন ঠিক করা
+                    mapElement.style.position = 'relative'; 
                     mapElement.appendChild(coordinateDisplay);
                 }
 
@@ -734,33 +731,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 var marker;
 
-                // ফাংশন: ইনপুট ও ডিসপ্লে আপডেট করা
                 function updateLocationInputs(lat, lng) {
                     document.getElementById('lat').value = lat;
                     document.getElementById('lng').value = lng;
                     coordinateDisplay.textContent = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
                 }
 
-                // ৩. ব্যবহারকারীর ব্রাউজার থেকে লাইভ লোকেশন (Geolocation API) নেওয়া
                 if (navigator.geolocation && !document.getElementById('lat').value) {
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
                             const liveLat = position.coords.latitude;
                             const liveLng = position.coords.longitude;
-                            
-                            // ম্যাপকে লাইভ লোকেশনে ফোকাস করা
                             map.setView([liveLat, liveLng], 15);
-                            
-                            // পিন বসানো
                             if (marker) map.removeLayer(marker);
                             marker = L.marker([liveLat, liveLng]).addTo(map);
-                            
-                            // ডাটা আপডেট
                             updateLocationInputs(liveLat, liveLng);
                         },
                         (error) => {
                             console.log("লাইভ লোকেশন অ্যাক্সেস পাওয়া যায়নি, ডিফল্ট লোকেশন দেখানো হচ্ছে।");
-                            // আগের জমানো বা ডিফল্ট পিন রেন্ডার
                             if (document.getElementById('lat').value && document.getElementById('lng').value) {
                                 marker = L.marker([defaultLat, defaultLng]).addTo(map);
                                 updateLocationInputs(defaultLat, defaultLng);
@@ -768,19 +756,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     );
                 } else if (document.getElementById('lat').value && document.getElementById('lng').value) {
-                    // যদি অলরেডি সেশন/স্টেজড ডাটা থাকে তবে সেটাই দেখাবে
                     marker = L.marker([defaultLat, defaultLng]).addTo(map);
                     updateLocationInputs(defaultLat, defaultLng);
                 }
 
-                // ২. ম্যাপে ক্লিক করে পিন পরিবর্তনের সাথে সাথে আপডেট
                 map.on('click', function(e) {
                     const lat = e.latlng.lat;
                     const lng = e.latlng.lng;
                     if (marker) map.removeLayer(marker);
                     marker = L.marker([lat, lng]).addTo(map);
-                    
-                    // ডাটা ও ডিসপ্লে আপডেট
                     updateLocationInputs(lat, lng);
                 });
             }
@@ -789,14 +773,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (stagedMetadata) {
             const imgArea = document.getElementById('image-preview-area');
             if (imgArea && (stagedMetadata.images || []).length > 0) {
+                imgArea.innerHTML = '';
                 stagedMetadata.images.forEach(meta => renderExistingPreview(imgArea, meta.id, meta.url, 'main'));
             }
             const khotianArea = document.getElementById('khotian-preview-area');
             if (khotianArea && stagedMetadata.khotian) {
+                khotianArea.innerHTML = '';
                 renderExistingPreview(khotianArea, stagedMetadata.khotian.id, stagedMetadata.khotian.url, 'khotian');
             }
             const sketchArea = document.getElementById('sketch-preview-area');
             if (sketchArea && stagedMetadata.sketch) {
+                sketchArea.innerHTML = '';
                 renderExistingPreview(sketchArea, stagedMetadata.sketch.id, stagedMetadata.sketch.url, 'sketch');
             }
         }
@@ -806,7 +793,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('sketch-image')?.addEventListener('change', (e) => handleImageUploadAndPreview(e, 'sketch-preview-area', 1, 'sketch'));
     } 
 
-    // লিখিত এড্রেস ফিল্ড জেনারেটর (ফিক্সড)
     function renderTextInputs(areaType, stagedData = null) {
         const container = document.getElementById('sub-address-fields');
         let inputHTML = '';
@@ -1039,8 +1025,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 userId: user.uid,
                 status: 'pending',
                 listerType: getValue('lister-type'),
-                isEditMode: isEditMode,   // ফিক্সড: অবজেক্টের অংশ করা হলো
-                editPostId: editPostId,   // ফিক্সড: অবজেক্টের অংশ করা হলো
+                isEditMode: isEditMode,   
+                editPostId: editPostId,   
                 location: {
                     division: document.getElementById('division-select')?.value || '',
                     district: document.getElementById('district-select')?.value || '',
@@ -1071,18 +1057,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.landType = getValue('land-type');
                 if (type === 'প্লট') propertyData.plotNo = getValue('plot-no');
             } else {
-                if (type === 'বাড়ি' || type === 'ফ্লাট') {
+                if (type === 'বাড়ি' || type === 'ফ্ল্যাট') {
                     propertyData.propertyAge = getValue('property-age');
                     propertyData.roadWidth = getValue('road-width');
                     propertyData.dining = getValue('dining');
                     propertyData.balcony = getValue('balcony');
                 }
                 if (type === 'বাড়ি') propertyData.floors = getValue('floors');
-                if (type === 'ফ্লাট' || type === 'অফিস') propertyData.floorNo = getValue('floor-no');
+                if (type === 'ফ্ল্যাট' || type === 'অফিস') propertyData.floorNo = getValue('floor-no');
                 if (type !== 'দোকান') {
                     propertyData.rooms = getValue('rooms');
                     propertyData.bathrooms = getValue('bathrooms');
-                    if (type === 'বাড়ি' || type === 'ফ্লাট') propertyData.kitchen = getValue('kitchen');
+                    if (type === 'বাড়ি' || type === 'ফ্ল্যাট') propertyData.kitchen = getValue('kitchen');
                 } else {
                     propertyData.shopCount = getValue('shop-count');
                 }
@@ -1091,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (type === 'বাড়ি') {
                 propertyData.houseArea = getValue('house-area');
                 propertyData.houseAreaUnit = getValue('house-area-unit');
-            } else if (type === 'ফ্লাট') {
+            } else if (type === 'ফ্ল্যাট') {
                 propertyData.areaSqft = getValue('flat-area-sqft');
                 propertyData.areaSqftUnit = getValue('area-sqft-unit');
             } else if (type === 'দোকান' || type === 'অফিস') {
@@ -1104,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     donorName: getValue('donor-name'),
                     khotianNoType: getValue('khotian-no-type-select'),
                     khotianNo: getValue('khotian-no-input'),
-                    dagNoType: getValue('dag-no-type-select'),
+                    dagNoType: getValue('dag-no-type-select') || 'N/A',
                     dagNo: getValue('dag-no-input'),
                     mouja: getValue('mouja-owner')
                 };
@@ -1115,12 +1101,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.monthlyRent = getValue('monthly-rent');
                 propertyData.priceUnit = getValue('price-unit');
                 propertyData.advance = getValue('advance');
-                if (type === 'বাড়ি' || type === 'ফ্লাট') {
+                if (type === 'বাড়ি' || type === 'ফ্ল্যাট') {
                     propertyData.rentType = getValue('rent-type');
                 }
                 propertyData.moveInDate = getValue('move-in-date');
             }
 
+            // সেশন স্টোরেজে ডেটা স্টেজ করা (প্রিভিউ পেজে রিড করার জন্য)
             sessionStorage.setItem('stagedPropertyData', JSON.stringify(propertyData));
             window.location.href = 'preview.html';
 
@@ -1131,55 +1118,60 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    
     if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
+        // ইউআরএল (URL) থেকে এডিট আইডি চেক করা (ডুপ্লিকেট রিমুভ করে মার্জ করা হয়েছে)
+        const urlParams = new URLSearchParams(window.location.search);
+        editPostId = urlParams.get('edit');
 
-        // ইউআরএল (URL) থেকে এডিট আইডি চেক করা
-const urlParams = new URLSearchParams(window.location.search);
-editPostId = urlParams.get('edit');
+        if (editPostId) {
+            isEditMode = true;
+            sessionStorage.setItem('editingPostId', editPostId); // 🎯 ফিক্স: সেশন স্টোরেজে এডিটিং আইডি সেভ করে প্রিভিউর জন্য ট্র্যাকিং সহজ করা
+            
+            const pageTitle = document.getElementById('page-title') || document.querySelector('.post-form-container h2'); 
+            const localSubmitBtn = document.getElementById('submit-btn') || document.querySelector('.submit-button'); 
+            
+            if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
+            if (localSubmitBtn) localSubmitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
 
-if (editPostId) {
-    isEditMode = true;
-    
-    const pageTitle = document.getElementById('page-title') || document.querySelector('.post-form-container h2'); // ফিক্সড: আপনার HTML এ ক্লাস '.post-form-container h2'[cite: 11]
-    const localSubmitBtn = document.getElementById('submit-btn') || document.querySelector('.submit-button'); // ফিক্সড: আপনার HTML এ ক্লাস '.submit-button'[cite: 11]
-    
-    if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
-    if (localSubmitBtn) localSubmitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
+            // সঠিক কালেকশন 'properties' থেকে ডেটা রিড করা
+            db.collection('properties').doc(editPostId).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const postData = doc.data();
+                        console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
 
-    // ফায়ারস্টোর থেকে ওই নির্দিষ্ট পোস্টের ডেটা আনা
-    firebase.firestore().collection('posts').doc(editPostId).get()
-        .then((doc) => {
-            if (doc.exists) {
-                const postData = doc.data();
-                console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
+                        const docMap = postData.documents || {};
+                        const khotianObj = docMap.khotian || null;
+                        const sketchObj = docMap.sketch || null;
 
-                // ম্যাজিক ট্রিক: ফায়ারস্টোরের ডেটা সরাসরি সেশন স্টোরেজে স্টেজড ডেটা হিসেবে সেভ করা
-                sessionStorage.setItem('stagedPropertyData', JSON.stringify(postData));
-                
-                // যদি পোস্টে আগে থেকে ইমেজ থাকে, সেগুলোর মেটাডেটাও সেশনে পুশ করে রাখা (ঐচ্ছিক কিন্তু নিরাপদ)
-                if (postData.images || postData.owner) {
-                    const existingMeta = {
-                        images: postData.images || [],
-                        khotian: postData.khotian || null,
-                        sketch: postData.sketch || null
-                    };
-                    sessionStorage.setItem('stagedImageMetadata', JSON.stringify(existingMeta));
-                }
+                        const khotianUrlFinal = (khotianObj && typeof khotianObj === 'object') ? khotianObj.url : (typeof khotianObj === 'string' ? khotianObj : null);
+                        const sketchUrlFinal = (sketchObj && typeof sketchObj === 'object') ? sketchObj.url : (typeof sketchObj === 'string' ? sketchObj : null);
 
-                // এবার স্টেজড ডেটা লোড করার মেইন ফাংশনটি কল করুন, যা অটোমেটিক সব ডাইনামিক ফিল্ড তৈরি করে ভ্যালু বসিয়ে দেবে
-                loadStagedData();
+                        const formattedImages = (postData.images || []).map((imgItem, idx) => {
+                            const imgUrl = (typeof imgItem === 'string') ? imgItem : (imgItem && imgItem.url ? imgItem.url : '');
+                            return { id: `existing_main_${idx}`, fileName: `image_${idx}.jpg`, fileMimeType: "image/jpeg", url: imgUrl };
+                        }).filter(item => item.url !== '');
 
-            } else {
-                alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
-            }
-        })
-        .catch((error) => {
-            console.error("ডেটা লোড করতে সমস্যা হয়েছে:", error);
-        });
-                        }
+                        const stagedMetadata = {
+                            images: formattedImages,
+                            khotian: khotianUrlFinal ? { id: 'existing_khotian', url: khotianUrlFinal, fileName: khotianObj?.fileName || 'khotian.jpg' } : null,
+                            sketch: sketchUrlFinal ? { id: 'existing_sketch', url: sketchUrlFinal, fileName: sketchObj?.fileName || 'sketch.jpg' } : null
+                        };
 
-        
+                        sessionStorage.setItem('stagedPropertyData', JSON.stringify(postData));
+                        sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
+
+                        loadStagedData();
+
+                    } else {
+                        alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
+                    }
+                })
+                .catch((error) => {
+                    console.error("ডেটা লোড করতে সমস্যা হয়েছে:", error);
+                });
+        }
+
         auth.onAuthStateChanged(user => {
             const authWarningMessage = document.getElementById('auth-warning-message');
             const propertyFormDisplay = document.getElementById('property-form');
@@ -1199,8 +1191,10 @@ if (editPostId) {
                     if (headerProfileImg && userData) {
                         headerProfileImg.src = userData.profilePic || user.photoURL || 'assets/images/default-avatar.png';
                     }
-                    loadStagedData();
-                }).catch(() => loadStagedData());
+                    if (!editPostId) loadStagedData(); // শুধুমাত্র ক্রিয়েট মুডেই ডিফল্ট স্টেজড লোড হবে
+                }).catch(() => {
+                    if (!editPostId) loadStagedData();
+                });
             } else {
                 if (propertyFormDisplay) propertyFormDisplay.style.display = 'none';
                 if (authWarningMessage) authWarningMessage.style.display = 'block';
@@ -1226,121 +1220,4 @@ if (editPostId) {
              window.location.href = 'profile.html'; 
         });
     }
-
-    // ... আপনার আগের বিদ্যমান কোড (DOMContentLoaded এর শেষ দিক)
-    if (profileImageWrapper) {
-        profileImageWrapper.addEventListener('click', () => {
-             window.location.href = 'profile.html'; 
-        });
-    }
-
-   // ==========================================================
-// 🎯 ফায়ারস্টোর 'documents' ম্যাপ অনুযায়ী খতিয়ান ও স্কেচ লোডের চূড়ান্ত ফিক্স
-// ==========================================================
-const urlParams = new URLSearchParams(window.location.search);
-editPostId = urlParams.get('edit');
-
-if (editPostId) {
-    isEditMode = true;
-    
-    const pageTitle = document.getElementById('page-title') || document.querySelector('.post-form-container h2');
-    const localSubmitBtn = document.getElementById('submit-btn') || document.querySelector('.submit-button');
-    
-    if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
-    if (localSubmitBtn) localSubmitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
-
-    db.collection('properties').doc(editPostId).get()
-        .then((doc) => {
-            if (doc.exists) {
-                const postData = doc.data();
-                console.log("ডাটাবেজ থেকে পাওয়া মূল ডেটা:", postData);
-
-                // ১. ডাটাবেজের 'documents' ম্যাপ থেকে সঠিক পাথ এক্সট্রাক্ট করা
-                const docMap = postData.documents || {};
-                
-                const khotianObj = docMap.khotian || null;
-                const sketchObj = docMap.sketch || null;
-
-                const khotianUrlFinal = (khotianObj && typeof khotianObj === 'object') ? khotianObj.url : (typeof khotianObj === 'string' ? khotianObj : null);
-                const sketchUrlFinal = (sketchObj && typeof sketchObj === 'object') ? sketchObj.url : (typeof sketchObj === 'string' ? sketchObj : null);
-
-                // মূল প্রপার্টি ছবিগুলো ফরম্যাট করা
-                const formattedImages = (postData.images || []).map((imgItem, idx) => {
-                    const imgUrl = (typeof imgItem === 'string') ? imgItem : (imgItem && imgItem.url ? imgItem.url : '');
-                    return { id: `existing_main_${idx}`, fileName: `image_${idx}.jpg`, fileMimeType: "image/jpeg", url: imgUrl };
-                }).filter(item => item.url !== '');
-
-                // স্টেজড মেটাডেটা অবজেক্ট তৈরি (যা ফরম সাবমিটের সময়ও কাজে লাগবে)
-                const stagedMetadata = {
-                    images: formattedImages,
-                    khotian: khotianUrlFinal ? { id: 'existing_khotian', url: khotianUrlFinal, fileName: khotianObj?.fileName || 'khotian.jpg' } : null,
-                    sketch: sketchUrlFinal ? { id: 'existing_sketch', url: sketchUrlFinal, fileName: sketchObj?.fileName || 'sketch.jpg' } : null
-                };
-
-                sessionStorage.setItem('stagedPropertyData', JSON.stringify(postData));
-                sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
-
-                // ২. ক্যাটাগরি ও টাইপ অনুযায়ী ডাইনামিক ফিল্ড জেনারেট করা
-                if (postData.category && postData.type) {
-                    if (typeof generateTypeDropdown === "function") {
-                        generateTypeDropdown(postData.category);
-                    }
-                    if (typeof generateSpecificFields === "function") {
-                        generateSpecificFields(postData.category, postData.type, postData, stagedMetadata);
-                    }
-                }
-
-                // ৩. ⚡ DOM এবং এলিমেন্ট পুরোপুরি তৈরি হওয়ার জন্য ৩০০ms অপেক্ষা করা
-                setTimeout(() => {
-                    // সাধারণ টেক্সট ফিল্ডগুলো পূরণ করা
-                    if (document.getElementById('post-category')) document.getElementById('post-category').value = postData.category || '';
-                    if (document.getElementById('post-type')) document.getElementById('post-type').value = postData.type || '';
-                    if (document.getElementById('property-title')) document.getElementById('property-title').value = postData.title || '';
-                    if (document.getElementById('description')) document.getElementById('description').value = postData.description || '';
-                    if (document.getElementById('price')) document.getElementById('price').value = postData.price || '';
-                    if (document.getElementById('road-width')) document.getElementById('road-width').value = postData.roadWidth || '';
-                    if (document.getElementById('land-area')) document.getElementById('land-area').value = postData.landArea || '';
-                    if (document.getElementById('land-area-unit')) document.getElementById('land-area-unit').value = postData.landAreaUnit || '';
-                    if (document.getElementById('price-unit')) document.getElementById('price-unit').value = postData.priceUnit || '';
-
-                    // ওনার/দলিল সংক্রান্ত তথ্য (যদি অবজেক্টে থাকে)
-                    if (postData.owner) {
-                        if (document.getElementById('donor-name')) document.getElementById('donor-name').value = postData.owner.donorName || '';
-                        if (document.getElementById('khotian-no-type-select')) document.getElementById('khotian-no-type-select').value = postData.owner.khotianNoType || '';
-                        if (document.getElementById('khotian-no-input')) document.getElementById('khotian-no-input').value = postData.owner.khotianNo || '';
-                        if (document.getElementById('dag-no-input')) document.getElementById('dag-no-input').value = postData.owner.dagNo || '';
-                        if (document.getElementById('mouja-owner')) document.getElementById('mouja-owner').value = postData.owner.mouja || '';
-                    }
-
-                    // ৪. 🖼️ খতিয়ান ও স্কেচ ছবির প্রিভিউ স্ক্রিনে রেন্ডার করা
-                    if (postData.category === 'বিক্রয়') {
-                        // খতিয়ান প্রিভিউ
-                        const khotianArea = document.getElementById('khotian-preview-area');
-                        if (khotianArea && stagedMetadata.khotian) {
-                            khotianArea.innerHTML = ''; 
-                            if (typeof renderExistingPreview === 'function') {
-                                renderExistingPreview(khotianArea, stagedMetadata.khotian.id, stagedMetadata.khotian.url, 'khotian');
-                            }
-                        }
-                        
-                        // স্কেচ প্রিভিউ
-                        const sketchArea = document.getElementById('sketch-preview-area');
-                        if (sketchArea && stagedMetadata.sketch) {
-                            sketchArea.innerHTML = ''; 
-                            if (typeof renderExistingPreview === 'function') {
-                                renderExistingPreview(sketchArea, stagedMetadata.sketch.id, stagedMetadata.sketch.url, 'sketch');
-                            }
-                        }
-                    }
-                }, 300);
-
-            } else {
-                alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
-            }
-        })
-        .catch((error) => {
-            console.error("ফায়ারস্টোর থেকে ডেটা লোড করতে সমস্যা হয়েছে:", error);
-        });
-                        }
-    
 });
