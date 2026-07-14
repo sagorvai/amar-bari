@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
- <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -44,7 +44,6 @@
       margin: 0;
       padding: 0;
     }
-
     
     .preview-wrapper {
       max-width: 800px;
@@ -63,7 +62,6 @@
       font-weight: 700;
     }
 
-    /* 🖼️ প্রোপার্টি ইমেজ গ্যালারি ও ফ্রেম স্টাইল */
     .gallery-title {
       font-size: 16px;
       font-weight: 600;
@@ -98,219 +96,147 @@
 
     /* 📑 খতিয়ান ও নকশার জন্য বিশেষ ডকুমেন্ট সেকশন */
     .document-section {
-      background: #fffbeb;
-      border: 1px dashed #f59e0b;
-    }
-
-    /* 📂 কার্ড এবং সেকশন ডিজাইন */
-    .preview-section {
-      background: #ffffff;
+      background: var(--gray-bg);
       border: 1px solid var(--card-border);
       border-radius: 12px;
-      padding: 18px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      padding: 15px;
+      margin-top: 20px;
+    }
+
+    .document-box-container {
+      display: none;
+      margin-bottom: 15px;
+    }
+
+    .document-preview-box {
+      width: 100%;
+      max-width: 300px;
+      height: 200px;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 8px;
+    }
+
+    .document-preview-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .preview-section {
+      margin-bottom: 25px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 15px;
     }
 
     .preview-section h3 {
-      margin-top: 0;
-      margin-bottom: 16px;
-      color: var(--primary);
-      font-size: 16px;
-      border-bottom: 2px solid #e2e8f0;
-      padding-bottom: 8px;
+      color: var(--secondary);
+      border-left: 4px solid var(--secondary);
+      padding-left: 10px;
+      margin-bottom: 15px;
     }
 
-    /* 📊 গ্রিড লেআউট (দুই কলামে তথ্য সাজানো) */
     .section-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 12px;
     }
 
     .preview-row {
-      display: flex;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid #f1f5f9;
-      font-size: 14px;
+      font-size: 15px;
+      line-height: 1.6;
     }
 
-    .preview-row strong {
-      color: #64748b;
-      min-width: 130px;
-      display: inline-block;
-    }
-
-    .preview-row span {
-      color: var(--dark);
-      font-weight: 500;
-    }
-
-    /* 💰 দামের জন্য স্পেশাল হাইলাইট */
     .price-tag {
-      color: var(--success) !important;
-      font-weight: 700 !important;
-      font-size: 16px;
+      color: #e11d48;
+      font-weight: bold;
     }
 
-    /* 🔘 বোতামের আকর্ষণীয় ডিজাইন */
-    .preview-actions {
+    /* বোতাম ডিজাইন */
+    .action-buttons {
       display: flex;
-      gap: 12px;
-      margin-top: 24px;
+      gap: 15px;
+      margin-top: 30px;
     }
 
-    .preview-actions button {
+    .btn-preview {
       flex: 1;
       padding: 14px;
       border: none;
       border-radius: 8px;
-      font-size: 15px;
-      font-weight: bold;
+      font-size: 16px;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background 0.3s;
     }
 
-    .btn-edit {
-      background-color: #e2e8f0;
+    .btn-back-preview {
+      background: #e2e8f0;
       color: #475569;
     }
 
-    .btn-edit:hover { background-color: #cbd5e1; }
+    .btn-back-preview:hover {
+      background: #cbd5e1;
+    }
 
     .btn-publish {
-      background-color: var(--secondary);
+      background: var(--success);
       color: white;
     }
 
-    .btn-publish:hover { background-color: #026ca3; }
+    .btn-publish:hover {
+      background: #15803d;
+    }
   </style>
 </head>
 <body>
 
-  <header class="main-header">
-        <div class="header-top">
-            
-            <div class="header-left">
-                <i class="material-icons menu-icon" id="menuButton">menu</i>
-                
-                <a href="index.html" class="logo-title">
-                   <i class="material-icons logo-icon">home</i>  
-                    <span>আমার বাড়ি.কম</span>
-                </a>
-            </div>
-            
-            <div class="header-actions">
-                
-                <div class="icon-wrapper" id="notificationButton"> 
-                    <i class="material-icons notification-icon">notifications</i>
-                    <span class="notification-count" id="notification-count"></span>
-                </div>
-                
-                <div class="icon-wrapper" id="headerPostButton">
-                    <i class="material-icons post-icon-header">add_circle_outline</i>
-                    <span class="notification-count" id="post-count" style="background-color: #28a745;"></span>
-                </div>
-                
-                <div class="icon-wrapper" id="messageButton">
-                    <i class="material-icons message-icon">message</i>
-                    <span class="notification-count" id="message-count"></span>
-                </div>
-                
-                <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <img src="https://www.w3schools.com/howto/img_avatar.png" alt="Profile" id="profileImage">
-                </div>
-
-<div class="notification-dropdown" id="notification-dropdown"></div>
-            </div>
-        </div>
-        
-    </header>
-    
-    <div class="sidebar" id="sidebar">
-        <nav>
-            <a href="index.html" class="sidebar-logo">
-                <i class="material-icons">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
-            
-            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
-            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            
-            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
-            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
-            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            
-            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
-        </nav>
+  <!-- সাধারণ হেডার প্রিভিউ পেজের জন্য -->
+  <header style="background: white; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <i class="material-icons" style="color: var(--secondary); font-size: 28px;">home</i>
+      <span style="font-size: 20px; font-weight: bold; color: var(--primary);">আমার বাড়ি.কম</span>
     </div>
-
-    <div class="overlay" id="overlay"></div>
-
+    <div class="profile-image-wrapper" id="profileImageWrapper" style="width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--secondary);">
+      <img src="assets/images/default-avatar.png" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+    </div>
+  </header>
 
   <div class="preview-wrapper">
-    <div class="page-title">✨ আপনার বিজ্ঞাপনের প্রিভিউ</div>
-    
-    <div class="gallery-title">📸 প্রোপার্টির ছবিসমূহ:</div>
-    <div id="previewImages" class="preview-images"></div>
+    <h2 class="page-title">🔍 পোস্টের চূড়ান্ত প্রিভিউ</h2>
+    <p style="text-align: center; color: #64748b; margin-top: -10px; margin-bottom: 30px;">আপনার পোস্টটি লাইভ করার আগে তথ্যগুলো ভালোভাবে মিলিয়ে নিন।</p>
 
-    <div id="khotianBoxContainer" style="display: none;">
-      <div class="gallery-title">📄 আপলোডকৃত খতিয়ান:</div>
-      <div id="previewKhotian" class="preview-images document-section"></div>
-    </div>
+    <!-- প্রোপার্টি সাধারণ ছবি গ্যালারি -->
+    <h4 class="gallery-title">🖼️ আপলোডকৃত ছবিসমূহ:</h4>
+    <div class="preview-images" id="previewImages"></div>
 
-    <div id="sketchBoxContainer" style="display: none;">
-      <div class="gallery-title">📐 আপলোডকৃত স্কেচ/নকশা:</div>
-      <div id="previewSketch" class="preview-images document-section"></div>
-    </div>
-
+    <!-- ডাইনামিক ফিল্ড কন্টেইনার -->
     <div id="previewContent"></div>
 
-    <div class="preview-actions">
-      <button class="btn-edit" onclick="goBack()">✏️ এডিট করুন</button>
-      <button class="btn-publish" onclick="publishPost()">✅ চূড়ান্ত পোস্ট করুন</button>
+    <!-- লিগ্যাল ডকুমেন্টস সেকশন (শুধুমাত্র ক্যাটাগরি বিক্রয় হলে দেখাবে) -->
+    <div class="document-section" id="legalDocumentSection">
+      
+      <div class="document-box-container" id="khotianBoxContainer">
+        <h4 style="margin: 0; color: var(--primary);">📑 খতিয়ানের ছবি:</h4>
+        <div class="document-preview-box" id="previewKhotian"></div>
+      </div>
+
+      <div class="document-box-container" id="sketchBoxContainer">
+        <h4 style="margin: 0 0 5px 0; color: var(--primary);">🗺️ স্কেচ বা নকশার ছবি:</h4>
+        <div class="document-preview-box" id="previewSketch"></div>
+      </div>
+
+    </div>
+
+    <!-- কন্ট্রোল বাটন -->
+    <div class="action-buttons">
+      <button class="btn-preview btn-back-preview" onclick="goBack()"><i class="material-icons" style="vertical-align: middle; font-size: 18px;">edit</i> তথ্য সংশোধন করুন</button>
+      <button class="btn-preview btn-publish" onclick="publishPost()"><i class="material-icons" style="vertical-align: middle; font-size: 18px;">check_circle</i> চূড়ান্ত পোস্ট করুন</button>
     </div>
   </div>
 
-  <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
-        </div>
-  </footer>
-  
   <script src="preview.js"></script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-            const menuButton = document.getElementById('menuButton');
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            const notificationButton = document.getElementById('notificationButton');
-            const headerPostButton = document.getElementById('headerPostButton');
-            const messageButton = document.getElementById('messageButton');
-            const profileImageWrapper = document.getElementById('profileImageWrapper');
-
-            // 🛠️ নিখুঁত সাইডবার টগল স্ক্রিপ্ট
-            if (menuButton && sidebar && overlay) {
-                menuButton.addEventListener('click', () => {
-                    sidebar.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                });
-                overlay.addEventListener('click', () => {
-                    sidebar.classList.remove('active');
-                    overlay.classList.remove('active');
-                });
-            }
-
-            if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
-            if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
-            if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
-            if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
-        });
-
-                                         </script>
 </body>
-</html>
+      </html>
