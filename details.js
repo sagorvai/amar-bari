@@ -344,7 +344,7 @@ function renderDetails(data) {
             "address": {
                 "@type": "PostalAddress",
                 "streetAddress": village,       
-                "addressLocality": thana,      
+                "addressLocality": thana || upazila,      
                 "addressRegion": district,     
                 "addressCountry": "BD"
             }
