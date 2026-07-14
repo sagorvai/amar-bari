@@ -295,16 +295,18 @@ function renderDetails(data) {
     // 🎯 আমার বাড়ি.কম - এক্সপার্ট ডাইনামিক এসইও ইঞ্জিন
     // =======================================================
     const currentUrl = window.location.href;
-
-    const village = data.location?.village || "তথ্য নেই";
-    const thana = data.location?.thana || "তথ্য নেই";
-    const district = data.location?.district || "তথ্য নেই";
+    const village = data.location?.village || " can't load";
+    const thana = data.location?.thana || " can't load";
+    const district = data.location?.district || " can't load";
     const fullLocation = `${village}, ${thana}, ${district}`;
 
     const seoTitle = `${data.title || "আমার বাড়ি.কম প্রপার্টি"} - ${thana}, ${district} | আমার বাড়ি.কম`;
     const seoDescription = `${fullLocation}-এ আকর্ষনীয় মূল্যে প্রপার্টি। মূল্য: ৳${data.category === 'বিক্রয়' ? (data.price || "আলোচনা সাপেক্ষ") : (data.monthlyRent || "আলোচনা সাপেক্ষ")} টাকা। বিস্তারিত তথ্য ও ছবির জন্য ভিজিট করুন আমার বাড়ি ডট কম।`;
     
+    // ডিফল্ট ইমেজ (যদি পোস্টে কোনো ইমেজ না থাকে)
     let firstImg = "https://i.postimg.cc/YSbRvftN/FB-IMG-1781692297303.jpg"; 
+    
+    // পোস্টের প্রথম ইমেজটি ডাইনামিক্যালি নেওয়া হচ্ছে
     if (data.images && data.images.length > 0) {
         firstImg = data.images[0].url || data.images[0];
     }
@@ -319,44 +321,15 @@ function renderDetails(data) {
     document.getElementById('seo-desc')?.setAttribute('content', seoDescription);
     document.getElementById('seo-canonical')?.setAttribute('href', currentUrl);
 
+    // মেটা ট্যাগ ডাইনামিক আপডেট (আইডি ম্যাচিং ফিক্সড)
     document.getElementById('og-url')?.setAttribute('content', currentUrl);
     document.getElementById('og-title')?.setAttribute('content', seoTitle);
     document.getElementById('og-desc')?.setAttribute('content', seoDescription);
-    document.getElementById('og-image')?.setAttribute('content', firstImg);
-
-    const schemaData = {
-        "@context": "https://schema.org",
-        "@type": "RealEstateListing",
-        "name": data.title || "আমার বাড়ি.কম প্রপার্টি", 
-        "description": data.description ? data.description.substring(0, 200) : seoDescription,
-        "url": currentUrl,
-        "image": firstImg, 
-        "offers": {
-            "@type": "Offer",
-            "price": data.category === 'বিক্রয়' ? (data.price || 0) : (data.monthlyRent || 0), 
-            "priceCurrency": "BDT",
-            "availability": "https://schema.org/InStock"
-        },
-        "location": {
-            "@type": "Place",
-            "name": fullLocation,
-            "address": {
-                "@type": "PostalAddress",
-                "streetAddress": village,       
-                "addressLocality": thana,      
-                "addressRegion": district,     
-                "addressCountry": "BD"
-            }
-        }
-    };
     
-    const schemaTag = document.getElementById('seo-schema');
-    if (schemaTag) {
-        schemaTag.text = JSON.stringify(schemaData);
-    }
+    // এই লাইনটি তোমার og-img আইডির মেটা ট্যাগকে ডাইনামিক্যালি পোস্টের ছবিতে পরিবর্তন করবে
+    document.getElementById('og-img')?.setAttribute('content', firstImg);
 
-    setupSaveAndShareSystem(data);
-} // <--- renderDetails ফাংশনটি এখানে সুরক্ষিতভাবে শেষ হয়েছে।
+    
 
 function initSinglePropertyMap(data) {
     const mapContainer = document.getElementById('map-container');
