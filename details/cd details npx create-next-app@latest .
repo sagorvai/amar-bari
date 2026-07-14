@@ -1,0 +1,2 @@
+cd details
+npx create-next-app@latest .
