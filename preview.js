@@ -158,7 +158,7 @@ row(contact, 'অতিরিক্ত ফোন নম্বর', postData.seco
 /* ---------------- Actions Button Logic ---------------- */
 function goBack() {
   // এডিট মোড চালু থাকলে এডিটিং আইডিসহ ফেরত যাবে
-  const originalPostId = postData.id || postData.postId;
+  const originalPostId = postData.id || postData.postId || sessionStorage.getItem('editingPostId');
   if (originalPostId) {
     location.href = `post.html?edit=${originalPostId}`;
   } else {
@@ -170,7 +170,7 @@ function goBack() {
 async function moveImageToPermanentStorage(url, userId, docType = 'images') {
   if (!url) return null;
   
-  // ফিক্স: যদি ছবি বা ফাইলটি ইতিমধ্যে স্থায়ী ফোল্ডারে (properties/) আপলোড করা থাকে (যেমন এডিটিং মুডে), তবে পুনরায় ডাউনলোড করার প্রয়োজন নেই
+  // ফিক্স: যদি ছবি বা ফাইলটি ইতিমধ্যে স্থায়ী ফোল্ডারে (properties/) আপলোড করা থাকে (যেমন এডিটিং মুডে), তবে পুনরায় আপলোড করবে না
   if (url.includes('properties/images') || url.includes('properties/documents')) {
     return url; 
   }
@@ -253,14 +253,15 @@ async function publishPost() {
       },
       status: 'published',
       userId: userId,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp() // আপডেট ট্র্যাকিংয়ের জন্য
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp() // আপডেট ট্র্যাকিং
     };
 
-    // এডিট পোস্টের ক্ষেত্রে প্রোপার্টির মূল আইডিটি খুঁজে বের করা
-    const originalPostId = postData.id || postData.postId;
+    // 🔍 এডিট পোস্টের ক্ষেত্রে প্রোপার্টির মূল আইডিটি খুঁজে বের করার ৩ স্তরের শক্তিশালী চেক
+    const originalPostId = postData.id || postData.postId || sessionStorage.getItem('editingPostId');
 
     if (originalPostId) {
-      // 🔄 ৪.১: এডিট মুড চালু থাকলে বিদ্যমান আইডি-তে 'Update' করা হবে
+      // 🔄 ৪.১: এডিট মুড চালু থাকলে বিদ্যমান আইডি-তে 'Update' করা হবে (নতুন পোস্ট তৈরি হবে না)
+      // ডাটাবেজ ফিল্ড থেকে আইডি রিমুভ করছি যেন ফিল্ড ডুপ্লিকেট না হয়
       delete preparedData.id; 
       delete preparedData.postId;
 
@@ -269,24 +270,21 @@ async function publishPost() {
       sessionStorage.clear();
       alert('🎉 অভিনন্দন বন্ধু! আপনার পোস্টটি সফলভাবে সংশোধন করা হয়েছে।');
       
-      // 🔙 ইউজার যে পেজ থেকে এসেছিলেন (যেমন: ড্যাশবোর্ড বা প্রোপার্টি ডিটেইলস পেজ) সেখানে ফেরত পাঠানো হচ্ছে
+      // পূর্বের পেজে ফেরত পাঠানো হচ্ছে
       if (document.referrer && !document.referrer.includes('post.html') && !document.referrer.includes('preview.html')) {
         location.href = document.referrer;
       } else {
-        location.href = 'index.html'; // কোনো রেফারার না থাকলে হোমপেজে পাঠাবে
+        location.href = 'index.html';
       }
 
     } else {
       // ➕ ৪.২: নতুন পোস্ট তৈরির জন্য 'Add' করা হবে
-      // ফায়ারবেস সার্ভার টাইমস্ট্যাম্প দিয়ে ডেটা অ্যাড করা হচ্ছে
       preparedData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
       
       await db.collection('properties').add(preparedData);
       
       sessionStorage.clear();
       alert('🎉 অভিনন্দন বন্ধু! আপনার পোস্টটি সফলভাবে লাইভ হয়েছে।');
-      
-      // নতুন পোস্ট পাবলিশ হওয়ার পর index.html-এ রিডাইরেক্ট হবে
       location.href = 'index.html';
     }
 
