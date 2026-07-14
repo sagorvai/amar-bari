@@ -38,8 +38,6 @@ function row(parent, label, value) {
 }
 
 /* ---------------- 🖼️ সকল ছবি লোড করার লজিক ---------------- */
-
-// ১. সাধারণ প্রোপার্টি ছবি গ্যালারি
 const imgBox = document.getElementById('previewImages');
 if (imgBox) {
   imgBox.innerHTML = ''; 
@@ -55,28 +53,25 @@ if (imgBox) {
   }
 }
 
-// ২. খতিয়ান ছবি প্রিভিউ
 const khotianContainer = document.getElementById('khotianBoxContainer');
 const khotianBox = document.getElementById('previewKhotian');
 if (khotianBox && imageData.khotian) {
   khotianBox.innerHTML = '';
-  khotianContainer.style.display = 'block'; // বক্সটি সচল করা হলো
+  khotianContainer.style.display = 'block'; 
   const i = document.createElement('img');
   i.src = imageData.khotian.url || imageData.khotian;
   khotianBox.appendChild(i);
 }
 
-// ৩. স্কেচ বা নকশা ছবি প্রিভিউ
 const sketchContainer = document.getElementById('sketchBoxContainer');
 const sketchBox = document.getElementById('previewSketch');
 if (sketchBox && imageData.sketch) {
   sketchBox.innerHTML = '';
-  sketchContainer.style.display = 'block'; // বক্সটি সচল করা হলো
+  sketchContainer.style.display = 'block'; 
   const i = document.createElement('img');
   i.src = imageData.sketch.url || imageData.sketch;
   sketchBox.appendChild(i);
 }
-
 
 /* ---------------- ১. প্রপার্টির সাধারণ তথ্য ---------------- */
 const basic = section('🏠 প্রপার্টির তথ্য');
@@ -109,7 +104,6 @@ row(basic, 'প্লট নম্বর', postData.plotNo);
 
 /* ---------------- ৩. পরিমাণ ও মূল্য সংক্রান্ত ---------------- */
 const price = section('💰 পরিমাণ ও মূল্য সংক্রান্ত');
-
 row(price, 'ফ্ল্যাটের সাইজ (স্কয়ার ফিট)', postData.areaSqft);
 row(price, 'জমির পরিমাণ', postData.landArea);
 row(price, 'জমির ইউনিট', postData.landAreaUnit);
@@ -134,7 +128,7 @@ if (postData.location) {
   row(loc, 'বিভাগ', postData.location.division);
   row(loc, 'জেলা', postData.location.district);
   row(loc, 'এলাকার ধরন', postData.location.areaType);
-  row(loc, 'উপজেলা/থানা', postData.location.upazila);
+  row(loc, 'উপজেলা/থানা', postData.location.upazila || postData.location.thana);
   row(loc, 'ইউনিয়ন', postData.location.union);
   row(loc, 'ওয়ার্ড নম্বর', postData.location.wardNo);
   row(loc, 'গ্রাম/এলাকা', postData.location.village);
@@ -147,6 +141,8 @@ if (postData.category === 'বিক্রয়' && postData.owner) {
   row(own, 'দাতার নাম', postData.owner.donorName);
   row(own, 'দাগ নম্বর', postData.owner.dagNo);
   row(own, 'দাগের ধরন', postData.owner.dagNoType);
+  row(own, 'খতিয়ান টাইপ', postData.owner.khotianNoType);
+  row(own, 'খতিয়ান নং', postData.owner.khotianNo);
   row(own, 'মৌজা', postData.owner.mouja);
 }
 
@@ -157,8 +153,7 @@ row(contact, 'অতিরিক্ত ফোন নম্বর', postData.seco
 
 /* ---------------- Actions Button Logic ---------------- */
 function goBack() {
-  // এডিট মোড চালু থাকলে এডিটিং আইডিসহ ফেরত যাবে
-  const originalPostId = postData.id || postData.postId || sessionStorage.getItem('editingPostId');
+  const originalPostId = sessionStorage.getItem('editingPostId');
   if (originalPostId) {
     location.href = `post.html?edit=${originalPostId}`;
   } else {
@@ -166,36 +161,28 @@ function goBack() {
   }
 }
 
-// একটি ইউআরএল থেকে ফাইল অবজেক্ট বা ব্লব তৈরি করে নতুন লোকেশনে আপলোড করার হেল্পার ফাংশন
 async function moveImageToPermanentStorage(url, userId, docType = 'images') {
   if (!url) return null;
   
-  // ফিক্স: যদি ছবি বা ফাইলটি ইতিমধ্যে স্থায়ী ফোল্ডারে (properties/) আপলোড করা থাকে (যেমন এডিটিং মুডে), তবে পুনরায় আপলোড করবে না
   if (url.includes('properties/images') || url.includes('properties/documents')) {
     return url; 
   }
   
   try {
-    // ১. স্টোরেজের বর্তমান ইউআরএল থেকে ফাইলটি ডাউনলোড (fetch) করা হচ্ছে
     const response = await fetch(url);
     const blob = await response.blob();
 
-    // ২. স্থায়ী ফোল্ডারের পাথ নির্ধারণ (staging/ থেকে সরিয়ে সরাসরি properties/-এ)
     const storageRef = firebase.storage().ref();
     const baseDir = docType === 'images' ? 'properties/images' : `properties/documents/${docType}`;
     
-    // ফাইলের একটি ইউনিক নাম তৈরি করা
     const filename = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const permanentFileRef = storageRef.child(`${baseDir}/${userId}/${filename}`);
 
-    // ৩. স্থায়ী ফোল্ডারে নতুন করে আপলোড করা
-    const uploadTask = await permanentFileRef.put(blob);
-    
-    // ৪. নতুন স্থায়ী ডাউনলোড ইউআরএল রিটার্ন করা
+    await permanentFileRef.put(blob);
     return await permanentFileRef.getDownloadURL();
   } catch (error) {
     console.error("ফাইল স্থায়ী স্টোরেজে স্থানান্তর করতে ব্যর্থ:", error);
-    return url; // কোনো কারণে ব্যর্থ হলে আগের ইউআরএলটিই ব্যাকআপ হিসেবে রাখা
+    return url; 
   }
 }
 
@@ -206,7 +193,6 @@ async function publishPost() {
     return;
   }
 
-  // বোতাম নিষ্ক্রিয় এবং স্পিনার দেখানো হলো
   const originalBtn = document.querySelector('.btn-publish');
   if(originalBtn) {
      originalBtn.disabled = true;
@@ -216,7 +202,6 @@ async function publishPost() {
   try {
     const userId = user.uid;
 
-    // ১. সাধারণ প্রোপার্টি ছবিগুলো একে একে স্থায়ী ফোল্ডারে মুভ করা
     const finalImages = [];
     const propertyImages = imageData.images || [];
     for (let img of propertyImages) {
@@ -227,7 +212,6 @@ async function publishPost() {
       }
     }
 
-    // ২. খতিয়ান ইমেজ স্থায়ী ফোল্ডারে মুভ করা
     let finalKhotian = null;
     if (imageData.khotian) {
       const khotianUrl = imageData.khotian.url || imageData.khotian;
@@ -235,7 +219,6 @@ async function publishPost() {
       finalKhotian = imageData.khotian.url ? { ...imageData.khotian, url: permanentKhotianUrl } : permanentKhotianUrl;
     }
 
-    // ৩. নকশা/স্কেচ ইমেজ স্থায়ী ফোল্ডারে মুভ করা
     let finalSketch = null;
     if (imageData.sketch) {
       const sketchUrl = imageData.sketch.url || imageData.sketch;
@@ -243,7 +226,6 @@ async function publishPost() {
       finalSketch = imageData.sketch.url ? { ...imageData.sketch, url: permanentSketchUrl } : permanentSketchUrl;
     }
 
-    // প্রিপেয়ার করা ডেটা অবজেক্ট
     const preparedData = {
       ...postData,
       images: finalImages,
@@ -253,24 +235,24 @@ async function publishPost() {
       },
       status: 'published',
       userId: userId,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp() // আপডেট ট্র্যাকিং
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    // 🔍 এডিট পোস্টের ক্ষেত্রে প্রোপার্টির মূল আইডিটি খুঁজে বের করার ৩ স্তরের শক্তিশালী চেক
-    const originalPostId = postData.id || postData.postId || sessionStorage.getItem('editingPostId');
+    // 🎯 ৩-লেভেল সেফটি চেক আইডি রিকভারির জন্য
+    const originalPostId = sessionStorage.getItem('editingPostId') || postData.editPostId || postData.id;
 
     if (originalPostId) {
-      // 🔄 ৪.১: এডিট মুড চালু থাকলে বিদ্যমান আইডি-তে 'Update' করা হবে (নতুন পোস্ট তৈরি হবে না)
-      // ডাটাবেজ ফিল্ড থেকে আইডি রিমুভ করছি যেন ফিল্ড ডুপ্লিকেট না হয়
+      // ডুপ্লিকেট কি রিমুভ করা হচ্ছে
       delete preparedData.id; 
       delete preparedData.postId;
+      delete preparedData.editPostId;
+      delete preparedData.isEditMode;
 
       await db.collection('properties').doc(originalPostId).update(preparedData);
       
       sessionStorage.clear();
       alert('🎉 অভিনন্দন বন্ধু! আপনার পোস্টটি সফলভাবে সংশোধন করা হয়েছে।');
       
-      // পূর্বের পেজে ফেরত পাঠানো হচ্ছে
       if (document.referrer && !document.referrer.includes('post.html') && !document.referrer.includes('preview.html')) {
         location.href = document.referrer;
       } else {
@@ -278,7 +260,6 @@ async function publishPost() {
       }
 
     } else {
-      // ➕ ৪.২: নতুন পোস্ট তৈরির জন্য 'Add' করা হবে
       preparedData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
       
       await db.collection('properties').add(preparedData);
@@ -298,10 +279,8 @@ async function publishPost() {
   }
 }
 
-// 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
 firebase.auth().onAuthStateChanged(async (user) => {
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
-    
     if (user && headerProfileImg) {
         try {
             const userDoc = await db.collection('users').doc(user.uid).get();
