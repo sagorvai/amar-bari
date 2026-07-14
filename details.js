@@ -297,7 +297,7 @@ function renderDetails(data) {
     const currentUrl = window.location.href;
 
     const village = data.location?.village || "তথ্য নেই";
-    const thana = data.location?.thana || "তথ্য নেই";
+    const thana = data.location?.thana || data.location?.upazila || "তথ্য নেই";
     const upazila = data.location?.upazila || "তথ্য নেই";
     const district = data.location?.district || "তথ্য নেই";
     const fullLocation = `${village}, ${thana || upazila}, ${district}`;
