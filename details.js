@@ -612,3 +612,28 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
     }
 });
+
+//////// সাময়িক ভাবে বুস্ট বাটন ও খতিয়ান যাচাই করুন বাটন বন্দ রাকা হলো/////
+
+// --- নতুন ফিচার মেসেজ এলার্ট কোড ---
+
+// HTML থেকে বুস্ট এবং খতিয়ান বাটন দুটি সিলেক্ট করা
+const boostButton = document.getElementById('p-boost');
+const khotiyanButton = document.getElementById('btn-verify-khotian');
+
+// মেসেজ দেখানোর কমন ফাংশন
+function handleComingSoon(event) {
+  event.preventDefault(); // বাটনের অরিজিনাল কাজ বা লিংক ভিজিট করা বন্ধ করবে
+  alert("ফিচারটি অতিশিগ্রই আসছে, সাইটের কাজ চলমান।");
+}
+
+// বুস্ট বাটনে ক্লিক করলে মেসেজ দেখাবে
+if (boostButton) {
+  boostButton.addEventListener('click', handleComingSoon);
+}
+
+// খতিয়ান যাচাই বাটনে ক্লিক করলে মেসেজ দেখাবে
+if (khotiyanButton) {
+  khotiyanButton.addEventListener('click', handleComingSoon);
+}
+
