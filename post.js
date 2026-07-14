@@ -1235,7 +1235,7 @@ if (editPostId) {
     }
 
    // ==========================================================
-// 🎯 প্রপার্টি ছবি, খতিয়ান ও স্কেচ লোড হওয়ার ১০০% চূড়ান্ত ফিক্সড কোড
+// 🎯 প্রপার্টি ছবি, খতিয়ান ও স্কেচ লোড হওয়ার ১০০% চূড়ান্ত ফিক্সড কোড (FULLY REVISED)
 // ==========================================================
 const urlParams = new URLSearchParams(window.location.search);
 editPostId = urlParams.get('edit');
@@ -1249,16 +1249,16 @@ if (editPostId) {
     if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
     if (localSubmitBtn) localSubmitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
 
-    // সঠিক কালেকশন থেকে ডেটা কল করা হচ্ছে (আপনার ডাটাবেজ অনুযায়ী কালেকশন নাম নিশ্চিত করুন)
+    // সঠিক কালেকশন থেকে ডেটা কল করা হচ্ছে
     db.collection('properties').doc(editPostId).get()
         .then((doc) => {
             if (doc.exists) {
                 const postData = doc.data();
                 console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
 
-                // ১. ইমেজ মেটাডেটা ফরম্যাট করে সেশন স্টোরেজে সিঙ্ক করা
-                const rawKhotian = postData.owner?.khotianPic || postData.khotian;
-                const rawSketch = postData.owner?.sketchPic || postData.sketch;
+                // ১. ইমেজ মেটাডেটা সঠিকভাবে এক্সট্রাক্ট করা (আপনার ডাটাবেজের ফিল্ড অনুযায়ীFallback রাখা হলো)
+                const rawKhotian = postData.owner?.khotianPic || postData.khotian || postData.owner?.khotian;
+                const rawSketch = postData.owner?.sketchPic || postData.sketch || postData.owner?.sketch;
 
                 const formattedImages = (postData.images || []).map((imgItem, idx) => {
                     const imgUrl = (typeof imgItem === 'string') ? imgItem : (imgItem && imgItem.url ? imgItem.url : '');
@@ -1277,7 +1277,7 @@ if (editPostId) {
                 sessionStorage.setItem('stagedPropertyData', JSON.stringify(postData));
                 sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
 
-                // ২. ডাইনামিক ফিল্ড সরাসরি জেনারেট করা (dispatchEvent এর ঝামেলা ছাড়া)
+                // ২. প্রথমে ডাইনামিক ড্রপডাউন ও ফরমের বেসিক ফিল্ডগুলো জেনারেট করি
                 if (postData.category && postData.type) {
                     if (typeof generateTypeDropdown === "function") {
                         generateTypeDropdown(postData.category);
@@ -1287,8 +1287,9 @@ if (editPostId) {
                     }
                 }
 
-                // ৩. টেক্সট ফিল্ডগুলোতে ভ্যালু পুশ করা
+                // ৩. ⚡ [ম্যাজিক ফিক্স] DOM পুরোপুরি রেন্ডার হওয়ার জন্য সামান্য সময় দিয়ে প্রিভিউ ও টেক্সট ফিল্ড সিঙ্ক করা
                 setTimeout(() => {
+                    // ডাইনামিক ফিল্ডে মান বসানো
                     if (document.getElementById('post-category')) document.getElementById('post-category').value = postData.category || '';
                     if (document.getElementById('post-type')) document.getElementById('post-type').value = postData.type || '';
                     if (document.getElementById('property-title')) document.getElementById('property-title').value = postData.title || '';
@@ -1303,7 +1304,21 @@ if (editPostId) {
                     if (document.getElementById('land-area')) document.getElementById('land-area').value = postData.landArea || '';
                     if (document.getElementById('land-area-unit')) document.getElementById('land-area-unit').value = postData.landAreaUnit || '';
                     if (document.getElementById('price-unit')) document.getElementById('price-unit').value = postData.priceUnit || '';
-                }, 200);
+
+                    // ৪. খতিয়ান ও স্কেচের প্রিভিউ নিখুঁতভাবে রেন্ডার করার ম্যানুয়াল ট্রিগার
+                    if (postData.category === 'বিক্রয়') {
+                        const khotianArea = document.getElementById('khotian-preview-area');
+                        if (khotianArea && stagedMetadata.khotian) {
+                            khotianArea.innerHTML = ''; // পূর্বের আবর্জনা পরিষ্কার করা
+                            renderExistingPreview(khotianArea, stagedMetadata.khotian.id, stagedMetadata.khotian.url, 'khotian');
+                        }
+                        const sketchArea = document.getElementById('sketch-preview-area');
+                        if (sketchArea && stagedMetadata.sketch) {
+                            sketchArea.innerHTML = ''; // পূর্বের আবর্জনা পরিষ্কার করা
+                            renderExistingPreview(sketchArea, stagedMetadata.sketch.id, stagedMetadata.sketch.url, 'sketch');
+                        }
+                    }
+                }, 300); // ৩০০ মিলি-সেকেন্ডের সেফ ডিলে (Delay) যাতে DOM রেডি হতে পারে
 
             } else {
                 alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
@@ -1312,6 +1327,6 @@ if (editPostId) {
         .catch((error) => {
             console.error("ফায়ারস্টোর থেকে ডেটা লোড করতে সমস্যা হয়েছে:", error);
         });
-                    }
+                        }
     
 });
