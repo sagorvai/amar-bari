@@ -300,10 +300,10 @@ function renderDetails(data) {
     const thana = data.location?.thana || "তথ্য নেই";
     const upazila = data.location?.upazila || "তথ্য নেই";
     const district = data.location?.district || "তথ্য নেই";
-    const fullLocation = `${village}, ${thana}, ${district}`;
+    const fullLocation = `${village}, ${thana || upazila}, ${district}`;
 
-    const seoTitle = `${data.title || "আমার বাড়ি.কম প্রপার্টি"} - ${thana || upazila}, ${district} | আমার বাড়ি.কম`;
-    const seoDescription = `${fullLocation}-এ আকর্ষনীয় মূল্যে প্রপার্টি। মূল্য: ৳${data.category === 'বিক্রয়' ? (data.price || "আলোচনা সাপেক্ষ") : (data.monthlyRent || "আলোচনা সাপেক্ষ")} টাকা। বিস্তারিত তথ্য ও ছবির জন্য ভিজিট করুন আমার বাড়ি ডট কম।`;
+    const seoTitle = `${data.title || "আমার বাড়ি.কম প্রপার্টি"} - ${thana || upazila}, ${district} | আমার বাড়ি.অনলাইন`;
+    const seoDescription = `${fullLocation}-এ আকর্ষনীয় মূল্যে প্রপার্টি। মূল্য: ৳${data.category === 'বিক্রয়' ? (data.price || "আলোচনা সাপেক্ষ") : (data.monthlyRent || "আলোচনা সাপেক্ষ")} টাকা। বিস্তারিত তথ্য ও ছবির জন্য ভিজিট করুন amarbari.online।`;
     
     let firstImg = "https://i.postimg.cc/YSbRvftN/FB-IMG-1781692297303.jpg"; 
     if (data.images && data.images.length > 0) {
