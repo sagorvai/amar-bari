@@ -1235,7 +1235,7 @@ if (editPostId) {
     }
 
    // ==========================================================
-// 🎯 প্রপার্টি ছবি, খতিয়ান ও স্কেচ লোড হওয়ার ১০০% চূড়ান্ত ফিক্সড কোড (FULLY REVISED)
+// 🎯 ফায়ারস্টোর 'documents' ম্যাপ অনুযায়ী খতিয়ান ও স্কেচ লোডের চূড়ান্ত ফিক্স
 // ==========================================================
 const urlParams = new URLSearchParams(window.location.search);
 editPostId = urlParams.get('edit');
@@ -1249,35 +1249,38 @@ if (editPostId) {
     if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
     if (localSubmitBtn) localSubmitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
 
-    // সঠিক কালেকশন থেকে ডেটা কল করা হচ্ছে
     db.collection('properties').doc(editPostId).get()
         .then((doc) => {
             if (doc.exists) {
                 const postData = doc.data();
-                console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
+                console.log("ডাটাবেজ থেকে পাওয়া মূল ডেটা:", postData);
 
-                // ১. ইমেজ মেটাডেটা সঠিকভাবে এক্সট্রাক্ট করা (আপনার ডাটাবেজের ফিল্ড অনুযায়ীFallback রাখা হলো)
-                const rawKhotian = postData.owner?.khotianPic || postData.khotian || postData.owner?.khotian;
-                const rawSketch = postData.owner?.sketchPic || postData.sketch || postData.owner?.sketch;
+                // ১. ডাটাবেজের 'documents' ম্যাপ থেকে সঠিক পাথ এক্সট্রাক্ট করা
+                const docMap = postData.documents || {};
+                
+                const khotianObj = docMap.khotian || null;
+                const sketchObj = docMap.sketch || null;
 
+                const khotianUrlFinal = (khotianObj && typeof khotianObj === 'object') ? khotianObj.url : (typeof khotianObj === 'string' ? khotianObj : null);
+                const sketchUrlFinal = (sketchObj && typeof sketchObj === 'object') ? sketchObj.url : (typeof sketchObj === 'string' ? sketchObj : null);
+
+                // মূল প্রপার্টি ছবিগুলো ফরম্যাট করা
                 const formattedImages = (postData.images || []).map((imgItem, idx) => {
                     const imgUrl = (typeof imgItem === 'string') ? imgItem : (imgItem && imgItem.url ? imgItem.url : '');
                     return { id: `existing_main_${idx}`, fileName: `image_${idx}.jpg`, fileMimeType: "image/jpeg", url: imgUrl };
                 }).filter(item => item.url !== '');
 
-                const khotianUrlFinal = (typeof rawKhotian === 'string') ? rawKhotian : (rawKhotian && rawKhotian.url ? rawKhotian.url : null);
-                const sketchUrlFinal = (typeof rawSketch === 'string') ? rawSketch : (rawSketch && rawSketch.url ? rawSketch.url : null);
-
+                // স্টেজড মেটাডেটা অবজেক্ট তৈরি (যা ফরম সাবমিটের সময়ও কাজে লাগবে)
                 const stagedMetadata = {
                     images: formattedImages,
-                    khotian: khotianUrlFinal ? { id: 'existing_khotian', url: khotianUrlFinal } : null,
-                    sketch: sketchUrlFinal ? { id: 'existing_sketch', url: sketchUrlFinal } : null
+                    khotian: khotianUrlFinal ? { id: 'existing_khotian', url: khotianUrlFinal, fileName: khotianObj?.fileName || 'khotian.jpg' } : null,
+                    sketch: sketchUrlFinal ? { id: 'existing_sketch', url: sketchUrlFinal, fileName: sketchObj?.fileName || 'sketch.jpg' } : null
                 };
 
                 sessionStorage.setItem('stagedPropertyData', JSON.stringify(postData));
                 sessionStorage.setItem('stagedImageMetadata', JSON.stringify(stagedMetadata));
 
-                // ২. প্রথমে ডাইনামিক ড্রপডাউন ও ফরমের বেসিক ফিল্ডগুলো জেনারেট করি
+                // ২. ক্যাটাগরি ও টাইপ অনুযায়ী ডাইনামিক ফিল্ড জেনারেট করা
                 if (postData.category && postData.type) {
                     if (typeof generateTypeDropdown === "function") {
                         generateTypeDropdown(postData.category);
@@ -1287,38 +1290,49 @@ if (editPostId) {
                     }
                 }
 
-                // ৩. ⚡ [ম্যাজিক ফিক্স] DOM পুরোপুরি রেন্ডার হওয়ার জন্য সামান্য সময় দিয়ে প্রিভিউ ও টেক্সট ফিল্ড সিঙ্ক করা
+                // ৩. ⚡ DOM এবং এলিমেন্ট পুরোপুরি তৈরি হওয়ার জন্য ৩০০ms অপেক্ষা করা
                 setTimeout(() => {
-                    // ডাইনামিক ফিল্ডে মান বসানো
+                    // সাধারণ টেক্সট ফিল্ডগুলো পূরণ করা
                     if (document.getElementById('post-category')) document.getElementById('post-category').value = postData.category || '';
                     if (document.getElementById('post-type')) document.getElementById('post-type').value = postData.type || '';
                     if (document.getElementById('property-title')) document.getElementById('property-title').value = postData.title || '';
                     if (document.getElementById('description')) document.getElementById('description').value = postData.description || '';
                     if (document.getElementById('price')) document.getElementById('price').value = postData.price || '';
-                    if (document.getElementById('donor-name')) document.getElementById('donor-name').value = postData.owner?.donorName || '';
-                    if (document.getElementById('khotian-no-type-select')) document.getElementById('khotian-no-type-select').value = postData.owner?.khotianNoType || '';
-                    if (document.getElementById('khotian-no-input')) document.getElementById('khotian-no-input').value = postData.owner?.khotianNo || '';
-                    if (document.getElementById('dag-no-input')) document.getElementById('dag-no-input').value = postData.owner?.dagNo || '';
-                    if (document.getElementById('mouja-owner')) document.getElementById('mouja-owner').value = postData.owner?.mouja || '';
                     if (document.getElementById('road-width')) document.getElementById('road-width').value = postData.roadWidth || '';
                     if (document.getElementById('land-area')) document.getElementById('land-area').value = postData.landArea || '';
                     if (document.getElementById('land-area-unit')) document.getElementById('land-area-unit').value = postData.landAreaUnit || '';
                     if (document.getElementById('price-unit')) document.getElementById('price-unit').value = postData.priceUnit || '';
 
-                    // ৪. খতিয়ান ও স্কেচের প্রিভিউ নিখুঁতভাবে রেন্ডার করার ম্যানুয়াল ট্রিগার
+                    // ওনার/দলিল সংক্রান্ত তথ্য (যদি অবজেক্টে থাকে)
+                    if (postData.owner) {
+                        if (document.getElementById('donor-name')) document.getElementById('donor-name').value = postData.owner.donorName || '';
+                        if (document.getElementById('khotian-no-type-select')) document.getElementById('khotian-no-type-select').value = postData.owner.khotianNoType || '';
+                        if (document.getElementById('khotian-no-input')) document.getElementById('khotian-no-input').value = postData.owner.khotianNo || '';
+                        if (document.getElementById('dag-no-input')) document.getElementById('dag-no-input').value = postData.owner.dagNo || '';
+                        if (document.getElementById('mouja-owner')) document.getElementById('mouja-owner').value = postData.owner.mouja || '';
+                    }
+
+                    // ৪. 🖼️ খতিয়ান ও স্কেচ ছবির প্রিভিউ স্ক্রিনে রেন্ডার করা
                     if (postData.category === 'বিক্রয়') {
+                        // খতিয়ান প্রিভিউ
                         const khotianArea = document.getElementById('khotian-preview-area');
                         if (khotianArea && stagedMetadata.khotian) {
-                            khotianArea.innerHTML = ''; // পূর্বের আবর্জনা পরিষ্কার করা
-                            renderExistingPreview(khotianArea, stagedMetadata.khotian.id, stagedMetadata.khotian.url, 'khotian');
+                            khotianArea.innerHTML = ''; 
+                            if (typeof renderExistingPreview === 'function') {
+                                renderExistingPreview(khotianArea, stagedMetadata.khotian.id, stagedMetadata.khotian.url, 'khotian');
+                            }
                         }
+                        
+                        // স্কেচ প্রিভিউ
                         const sketchArea = document.getElementById('sketch-preview-area');
                         if (sketchArea && stagedMetadata.sketch) {
-                            sketchArea.innerHTML = ''; // পূর্বের আবর্জনা পরিষ্কার করা
-                            renderExistingPreview(sketchArea, stagedMetadata.sketch.id, stagedMetadata.sketch.url, 'sketch');
+                            sketchArea.innerHTML = ''; 
+                            if (typeof renderExistingPreview === 'function') {
+                                renderExistingPreview(sketchArea, stagedMetadata.sketch.id, stagedMetadata.sketch.url, 'sketch');
+                            }
                         }
                     }
-                }, 300); // ৩০০ মিলি-সেকেন্ডের সেফ ডিলে (Delay) যাতে DOM রেডি হতে পারে
+                }, 300);
 
             } else {
                 alert("দুঃখিত! এই পোস্টটি খুঁজে পাওয়া যায়নি।");
