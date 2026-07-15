@@ -258,6 +258,95 @@
         .widget-card h5 { margin: 0 0 12px 0; font-size: 16px; color: var(--text-sub); }
         .widget-link { display: flex; align-items: center; gap: 10px; padding: 8px; text-decoration: none; color: var(--text-main); font-weight: 500; border-radius: 6px; }
         .widget-link:hover { background: #e4e6eb; }
+
+
+<!-- কাস্টম পপআপের CSS স্টাইল -->
+<style>
+#custom-notification-popup {
+    position: fixed;
+    bottom: -200px;
+    right: 20px;
+    width: 380px;
+    background: #ffffff;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+    z-index: 99999;
+    transition: bottom 0.5s ease-in-out;
+    border-left: 5px solid #007bff;
+    font-family: 'Hind Siliguri', sans-serif;
+}
+#custom-notification-popup.fcm-popup-show {
+    bottom: 20px;
+}
+.fcm-popup-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.fcm-popup-icon {
+    font-size: 30px;
+    animation: wiggle 2s infinite;
+    width: max-content;
+}
+.fcm-popup-text h4 {
+    margin: 0 0 6px 0;
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+}
+.fcm-popup-text p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.4;
+}
+.fcm-popup-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 5px;
+}
+.fcm-btn-primary {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+}
+.fcm-btn-secondary {
+    background: #f1f1f1;
+    color: #555;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+@keyframes wiggle {
+    0% { transform: rotate(0); }
+    15% { transform: rotate(10deg); }
+    30% { transform: rotate(-10deg); }
+    45% { transform: rotate(5deg); }
+    60% { transform: rotate(-5deg); }
+    75% { transform: rotate(0); }
+    100% { transform: rotate(0); }
+}
+/* মোবাইলের জন্য রেসপনসিভ রেডি */
+@media (max-width: 480px) {
+    #custom-notification-popup {
+        width: calc(100% - 40px);
+        right: 20px;
+        left: 20px;
+    }
+}
+
+        
+</style>
+   
     </style>
 </head>
 <body>
@@ -392,5 +481,21 @@
     </footer>
 
     <script src="index.js"></script>
+
+    <!-- কাস্টম নোটিফিকেশন ব্যানার/পপআপ -->
+<div id="custom-notification-popup" class="fcm-popup-hidden">
+    <div class="fcm-popup-content">
+        <div class="fcm-popup-icon">🔔</div>
+        <div class="fcm-popup-text">
+            <h4 id="fcm-popup-title">মেসেজের উত্তর মিস করতে চান না?</h4>
+            <p id="fcm-popup-body">প্রপার্টি মালিক বা ক্রেতার পাঠানো মেসেজের তাৎক্ষণিক আপডেট এবং আপনার কাঙ্ক্ষিত প্রপার্টির নতুন অফারগুলো সরাসরি পেতে নোটিফিকেশনটি চালু করে রাখুন।</p>
+        </div>
+        <div class="fcm-popup-actions">
+            <button id="fcm-btn-allow" class="fcm-btn-primary">হ্যাঁ, চালু করুন</button>
+            <button id="fcm-btn-deny" class="fcm-btn-secondary">পরে দেখব</button>
+        </div>
+    </div>
+</div>
+    
 </body>
                     </html>
