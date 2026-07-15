@@ -243,33 +243,49 @@ async function openChatBox(chatId, postId) {
     const currentItem = document.getElementById(`item_${chatId}`);
     if (currentItem) currentItem.classList.add('active');
 
+    // ডাটাবেজে চ্যাট ডকুমেন্টটি না থাকলে তা তৈরি করা (সেফগার্ড)
     const chatRef = db.collection('chats').doc(chatId);
+    let chatDocData = null;
     try {
         const chatDoc = await chatRef.get();
         if (!chatDoc.exists) {
             const parts = chatId.split('_');
-            await chatRef.set({
-                participants: [parts[0], parts[1]],
+            const userA = parts[0];
+            const userB = parts[1];
+            
+            chatDocData = {
+                participants: [userA, userB],
                 postId: postId || currentPostId || "",
                 lastMessage: "",
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            };
+            await chatRef.set(chatDocData);
+        } else {
+            chatDocData = chatDoc.data();
         }
     } catch (e) {
-        console.error(e);
+        console.error("চ্যাট ইনিশিয়ালিং এরর:", e);
     }
 
-    loadPropertyContext(postId || currentPostId);
+    // প্রপার্টির মিনি কার্ড লোড করা
+    loadPropertyContext(postId || currentPostId || (chatDocData ? chatDocData.postId : ""));
 
+    // আগের কোনো লিসেনার সচল থাকলে তা রিমুভ করা
     if (activeChatListener) activeChatListener();
 
+    // রিয়েল-টাইม মেসেজ লোড ও রেন্ডারিং
     const messagesDisplay = document.getElementById('messagesDisplay');
+    const quickRepliesContainer = document.querySelector('.quick-replies');
+
     activeChatListener = db.collection('chats').doc(chatId).collection('messages')
         .orderBy('timestamp', 'asc')
         .onSnapshot((snapshot) => {
             if (!messagesDisplay) return;
             messagesDisplay.innerHTML = "";
             
+            // চ্যাটে কোন মেসেজ আছে কিনা ট্র্যাক করার ভেরিয়েবল
+            const hasMessages = !snapshot.empty;
+
             snapshot.forEach(doc => {
                 const msg = doc.data();
                 const bubble = document.createElement('div');
@@ -286,9 +302,40 @@ async function openChatBox(chatId, postId) {
                 bubble.innerHTML = `${msg.text} <span class="msg-time">${timeString}</span>`;
                 messagesDisplay.appendChild(bubble);
             });
-            messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
-        }, (err) => console.error(err));
 
+            // অটোমেটিক স্ক্রল ডাউন
+            messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
+
+            // 🎯 কুইক রিপ্লাই শো/হাইড লজিক (শুধুমাত্র ভিজিটর এবং ফাকা চ্যাটের জন্য)
+            const targetPostId = postId || currentPostId || (chatDocData ? chatDocData.postId : "");
+            if (quickRepliesContainer) {
+                if (hasMessages || !targetPostId) {
+                    // চ্যাটে মেসেজ থাকলে অথবা পোস্ট আইডি না থাকলে হাইড হবে
+                    quickRepliesContainer.style.display = 'none';
+                } else {
+                    // প্রপার্টি ডকুমেন্ট থেকে পোস্ট দাতা কে তা খুঁজে বের করা
+                    db.collection('properties').doc(targetPostId).get().then(pDoc => {
+                        if (pDoc.exists) {
+                            const propertyData = pDoc.data();
+                            // যদি কারেন্ট ইউজার পোস্ট দাতা (owner/seller) হন, তবে কুইক রিপ্লাই লুকানো থাকবে
+                            if (propertyData.userId === currentUser.uid) {
+                                quickRepliesContainer.style.display = 'none';
+                            } else {
+                                // যদি কারেন্ট ইউজার ভিজিটর (ক্রেতা) হন, এবং চ্যাটে কোনো মেসেজ না থাকে
+                                quickRepliesContainer.style.display = 'flex';
+                            }
+                        } else {
+                            quickRepliesContainer.style.display = 'none';
+                        }
+                    }).catch(() => {
+                        quickRepliesContainer.style.display = 'none';
+                    });
+                }
+            }
+
+        }, (err) => console.error("মেসেজ লোড এরর:", err));
+
+    // চ্যাট হেডারে অপরপক্ষের নাম সেট করা
     const parts = chatId.split('_');
     const otherUserId = parts.find(id => id !== currentUser.uid && id !== postId && id !== currentPostId);
     if (otherUserId) {
@@ -297,9 +344,9 @@ async function openChatBox(chatId, postId) {
             if (uDoc.exists && headerName) {
                 headerName.textContent = uDoc.data().fullName || uDoc.data().name || "ব্যবহারকারী";
             }
-        });
+        }).catch(err => console.error(err));
     }
-}
+                                                    }
 
 // ৪. মেসেজ পাঠানো লজিক
 async function sendMessage(text) {
