@@ -123,9 +123,8 @@
         .profile-image-wrapper { cursor: pointer; width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; }
         .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
 
-        /* 📱 মোবাইলের জন্য বডি প্যাডিং ফিক্স */
         body { 
-            padding-top: 60px; /* হেডার হাইটের সাথে সামঞ্জস্যপূর্ণ */
+            padding-top: 60px; 
         }
         
         @media (max-width: 600px) {
@@ -133,7 +132,7 @@
             .header-actions { gap: 8px; }
         }
 
-        /* 🔙 ব্যাক বাটন ও সেকশন এরিয়া রি-ডিজাইন */
+        /* 🔙 ব্যাক বাটন ও সেকশন এরিয়া */
         .back-bar-container {
             background-color: white;
             padding: 10px 15px;
@@ -166,7 +165,6 @@
             transform: translateY(-1px);
         }
         
-        /* 📦 মেইন লেআউট ফিক্স (অপ্রয়োজনীয় গ্যাপ দূর করা) */
         .main-content-area {
             flex: 1;
             display: flex;
@@ -185,7 +183,7 @@
             height: 100%;
         }
         
-        /* 👥 বামপাশ: প্রিমিয়াম চ্যাট লিস্ট */
+        /* 👥 বামপাশ: চ্যাট লিস্ট */
         .chat-sidebar { 
             width: 350px; 
             border-right: 1px solid #edf2f7; 
@@ -208,7 +206,6 @@
             overflow-y: auto; 
         }
         
-        /* চ্যাট আইটেম ডিজাইন প্রিমিয়াম লুক */
         .chat-item { 
             display: flex; 
             align-items: center; 
@@ -398,10 +395,9 @@
         .quick-replies { 
             padding: 10px 20px; 
             display: flex; 
-            gap: 10px; 
+            gap: 8px; 
             overflow-x: auto; 
             background: #fafbfc; 
-            white-space: nowrap; 
             border-top: 1px solid #edf2f7;
         }
         
@@ -471,19 +467,6 @@
             transform: scale(1.05);
         }
 
-        /* সেফ এরিয়া কিবোর্ড ফিক্স */
-        .input-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: #ffffff;
-            padding: 10px;
-            box-sizing: border-box;
-            z-index: 1000;
-            bottom: env(safe-area-inset-bottom, 0px); 
-        }
-
         /* ফুটার */
         .footer {
             background: white;
@@ -494,13 +477,75 @@
             color: var(--gray);
         }
 
-        /* মোবাইল রেসপন্সিভনেস আপডেট */
+        /* ========================================================
+           📱 মোবাইল রেসপন্সিভনেস, কিবোর্ড ফিক্স এবং বাটন হাইড লজিক 
+        ======================================================== */
         @media (max-width: 768px) {
-            .chat-sidebar { width: 100%; display: block; }
-            .chat-main { display: none; position: fixed; top: 112px; left: 0; right: 0; bottom: 0; z-index: 100; height: calc(100vh - 112px); }
-            .chat-main.active { display: flex; }
-            .chat-sidebar.hidden { display: none; }
-            .back-to-list { display: block !important; margin-right: 10px; cursor: pointer; color: var(--dark); }
+            body {
+                height: 100vh;
+                height: -webkit-fill-available; /* ক্রোম ভিউপোর্ট ওভারফ্লো ফিক্স */
+            }
+
+            .main-content-area {
+                height: calc(100vh - 60px);
+                position: relative;
+            }
+
+            /* 🎯 চ্যাট ওপেন থাকলে ডবল ব্যাক বাটন কনফিউশন দূর করতে মেইন বাটন হাইড */
+            body.chat-open .back-bar-container {
+                display: none !important;
+            }
+
+            /* 🎯 ক্রোমে কিবোর্ড অন হলে ইনপুট বক্স ওপরে রাখার জন্য svh ও ভিউপোর্ট এডজাস্টমেন্ট */
+            .chat-main { 
+                display: none; 
+                position: fixed; 
+                top: 60px; 
+                left: 0; 
+                right: 0; 
+                bottom: 0; 
+                z-index: 100; 
+                height: calc(100vh - 60px); 
+                height: calc(100svh - 60px); /* ডাইনামিক কিবোর্ড হাইট রেসপন্স */
+                background: #f4f7f9; 
+            }
+            
+            .chat-main.active { 
+                display: flex; 
+            }
+            
+            .chat-sidebar.hidden { 
+                display: none; 
+            }
+            
+            .back-to-list { 
+                display: block !important; 
+                margin-right: 10px; 
+                cursor: pointer; 
+                color: var(--dark); 
+            }
+
+            /* 🎯 ৩টি প্রশ্ন পাশাপাশি স্ক্রোল না হয়ে উপর-নিচ (Vertical Column) দেখাবে */
+            .quick-replies {
+                flex-direction: column;
+                white-space: normal;
+                overflow-x: visible;
+                padding: 10px 15px;
+                gap: 6px;
+            }
+
+            .quick-btn {
+                width: 100%;
+                text-align: left;
+                padding: 10px 14px;
+                font-size: 13px;
+                border-radius: 12px; /* লম্বা বাটনে এই রেডিয়াসটি দেখতে ভালো লাগে */
+            }
+            
+            .chat-input-area {
+                padding: 10px 15px;
+                background: white;
+            }
         }
     </style>
 </head>
@@ -551,7 +596,7 @@
     </div>
     <div class="overlay" id="overlay"></div>
 
-    <!-- 🎯 ব্যাক বাটন কন্টেইনার জোনিং (Zonal Layout) -->
+    <!-- 🔙 প্রধান মেইন ব্যাক বাটন কন্টেইনার -->
     <div class="back-bar-container">
         <button class="btn-back" onclick="window.history.back()">
             <i class="material-icons">arrow_back</i> ফিরে যান
@@ -564,11 +609,18 @@
             <div class="chat-sidebar" id="chatSidebar">
                 <div class="sidebar-header">মেসেজ সমূহ</div>
                 <div class="chat-list" id="chatListContainer">
-                    <div style="padding:20px; text-align:center; color:var(--gray);">চ্যাট লোড হচ্ছে...</div>
+                    <!-- ডেমো চ্যাট আইটেম (টেস্ট করার সুবিধার জন্য ক্লিক লজিক সহ রাখা হলো) -->
+                    <div class="chat-item" onclick="openChatDemo('মো: সাগর আহমেদ')">
+                        <img src="https://www.w3schools.com/howto/img_avatar.png" alt="User">
+                        <div class="chat-item-info">
+                            <h4>মো: সাগর আহমেদ</h4>
+                            <p>আসসালামু আলাইকুম, প্রপার্টিটি কি আছে?</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- ডানপাশ: চ্যাট বক্স -->
+            <!-- ডানপাশ: চ্যাট বক্স স্ক্রিন -->
             <div class="chat-main" id="chatMainBox">
                 <!-- ডিফল্ট এম্পটি স্টেট -->
                 <div class="chat-empty-state" id="emptyState">
@@ -580,27 +632,31 @@
                 <div id="activeChatContent" style="display:none; flex-direction:column; flex:1; height:100%;">
                     <div class="chat-box-header">
                         <div class="active-user-details">
+                            <!-- মোবাইলের ভেতরের ব্যাক বাটন -->
                             <i class="material-icons back-to-list" id="backToListBtn" style="display:none;">arrow_back</i>
                             <h3 id="activeChatUserName">ইউজার</h3>
                         </div>
-                        <!-- প্রপার্টি কনটেক্সট মিনি কার্ড -->
+                        <!-- প্রপার্টি মিনি কার্ড -->
                         <a href="#" id="activePropertyCard" class="property-mini-card" target="_blank">
-                            <img id="activePropertyImg" src="placeholder.jpg" alt="Property">
+                            <img id="activePropertyImg" src="https://www.w3schools.com/howto/img_avatar.png" alt="Property">
                             <div class="property-mini-info">
-                                <h5 id="activePropertyTitle">লোড হচ্ছে...</h5>
-                                <span id="activePropertyPrice">৳ 0</span>
+                                <h5 id="activePropertyTitle">জমি বিক্রয় হবে</h5>
+                                <span id="activePropertyPrice">৳ 30000</span>
                             </div>
                         </a>
                     </div>
 
                     <!-- মেসেজ ডিসপ্লে স্ক্রিন -->
-                    <div class="messages-display" id="messagesDisplay"></div>
+                    <div class="messages-display" id="messagesDisplay">
+                        <div class="msg-bubble incoming">আসসালামু আলাইকুম, প্রপার্টিটি কি এখনো এভেইলেবল আছে?<span class="msg-time">০৫:১৪ PM</span></div>
+                        <div class="msg-bubble outgoing">হ্যাঁ, আছে। দাম নিয়ে কথা বলা যাবে।<span class="msg-time">০৫:১৫ PM</span></div>
+                    </div>
 
-                    <!-- কুইক রিপ্লাই টেমপ্লেট বাটন -->
+                    <!-- 🎯 কুইক রিপ্লাই টেমপ্লেট বাটন (যা মোবাইলে উপর-নিচ দেখাবে) -->
                     <div class="quick-replies">
-                        <button class="quick-btn" onclick="sendQuickReply('আসসালামু আলাইকুম, প্রপার্টিটি কি এখনো এভেইলেবল আছে?')">এখনো কি আছে?</button>
-                        <button class="quick-btn" onclick="sendQuickReply('আমি এটি সরাসরি দেখতে আগ্রহী। কবে সময় দেওয়া যাবে?')">সরাসরি দেখতে চাই</button>
-                        <button class="quick-btn" onclick="sendQuickReply('দাম কি কিছুটা আলোচনা সাপেক্ষ?')">দাম কি কম হবে?</button>
+                        <button class="quick-btn">এখনো কি আছে?</button>
+                        <button class="quick-btn">সরাসরি দেখতে চাই</button>
+                        <button class="quick-btn">দাম কি কম হবে?</button>
                     </div>
 
                     <!-- টেক্সট ইনপুট এরিয়া -->
@@ -621,16 +677,38 @@
         </div>
     </footer>
     
-    <script src="messages.js"></script>
+    <!-- ⚠️ তোমার নিজের messages.js ফাইলটি নিচে লিংক করা থাকবে, স্ক্রিপ্টটি ডেমো কন্ট্রোলের জন্য নিচে দেওয়া হলো -->
     <script>
+        // ডেমো চ্যাট ওপেন ফাংশন (তোমার আসল JS দিয়ে এটি রিপ্লেস/মডিফাই করে নিও)
+        function openChatDemo(userName) {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('activeChatContent').style.display = 'flex';
+            document.getElementById('activeChatUserName').innerText = userName;
+            
+            // মোবাইল ভিউ এর জন্য একটিভ ক্লাস ট্র্রিগার
+            if(window.innerWidth <= 768) {
+                document.getElementById('chatMainBox').classList.add('active');
+                document.getElementById('chatSidebar').classList.add('hidden');
+                
+                // 🎯 ট্রিক: বডিতে ক্লাস অ্যাড করায় মেইন ব্যাক বাটনটি হাইড হয়ে যাবে
+                document.body.classList.add('chat-open');
+            }
+        }
+
+        // চ্যাটের ভেতরের ব্যাক বাটনে ক্লিক করলে লিস্টে ফেরত আসার লজিক
+        document.getElementById('backToListBtn').addEventListener('click', () => {
+            document.getElementById('chatMainBox').classList.remove('active');
+            document.getElementById('chatSidebar').classList.remove('hidden');
+            
+            // 🎯 ট্রিক: বডি থেকে ক্লাস রিমুভ করায় মেইন ব্যাক বাটন আবার দৃশ্যমান হবে
+            document.body.classList.remove('chat-open');
+        });
+
+        // রেগুলার হেডার মেনু স্ক্রিপ্ট
         document.addEventListener('DOMContentLoaded', () => {
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
-            const notificationButton = document.getElementById('notificationButton');
-            const headerPostButton = document.getElementById('headerPostButton');
-            const messageButton = document.getElementById('messageButton');
-            const profileImageWrapper = document.getElementById('profileImageWrapper');
 
             if (menuButton && sidebar && overlay) {
                 menuButton.addEventListener('click', () => {
@@ -642,11 +720,6 @@
                     overlay.classList.remove('active');
                 });
             }
-
-            if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
-            if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
-            if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
-            if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
         });
     </script>
 </body>
