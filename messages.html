@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (সিনক্রোনাইজড লোডিং) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -483,7 +483,7 @@
         @media (max-width: 768px) {
             body {
                 height: 100vh;
-                height: -webkit-fill-available; /* ক্রোম ভিউপোর্ট ওভারফ্লো ফিক্স */
+                height: -webkit-fill-available;
             }
 
             .main-content-area {
@@ -491,12 +491,12 @@
                 position: relative;
             }
 
-            /* 🎯 চ্যাট ওপেন থাকলে ডবল ব্যাক বাটন কনফিউশন দূর করতে মেইন বাটন হাইড */
+            /* মোবাইলে চ্যাট ওপেন থাকলে প্রধান ব্যাক বাটন গায়েব */
             body.chat-open .back-bar-container {
                 display: none !important;
             }
 
-            /* 🎯 ক্রোমে কিবোর্ড অন হলে ইনপুট বক্স ওপরে রাখার জন্য svh ও ভিউপোর্ট এডজাস্টমেন্ট */
+            /* ক্রোমে কিবোর্ডের জন্য পারফেক্ট svh ভিউপোর্ট ফিক্স */
             .chat-main { 
                 display: none; 
                 position: fixed; 
@@ -506,7 +506,7 @@
                 bottom: 0; 
                 z-index: 100; 
                 height: calc(100vh - 60px); 
-                height: calc(100svh - 60px); /* ডাইনামিক কিবোর্ড হাইট রেসপন্স */
+                height: calc(100svh - 60px); 
                 background: #f4f7f9; 
             }
             
@@ -525,7 +525,7 @@
                 color: var(--dark); 
             }
 
-            /* 🎯 ৩টি প্রশ্ন পাশাপাশি স্ক্রোল না হয়ে উপর-নিচ (Vertical Column) দেখাবে */
+            /* ৩টি প্রশ্ন পাশাপাশি স্ক্রোল না হয়ে উপর-নিচ হবে */
             .quick-replies {
                 flex-direction: column;
                 white-space: normal;
@@ -539,7 +539,7 @@
                 text-align: left;
                 padding: 10px 14px;
                 font-size: 13px;
-                border-radius: 12px; /* লম্বা বাটনে এই রেডিয়াসটি দেখতে ভালো লাগে */
+                border-radius: 12px;
             }
             
             .chat-input-area {
@@ -596,7 +596,7 @@
     </div>
     <div class="overlay" id="overlay"></div>
 
-    <!-- 🔙 প্রধান মেইন ব্যাক বাটন কন্টেইনার -->
+    <!-- 🔙 প্রধান ব্যাক বাটন -->
     <div class="back-bar-container">
         <button class="btn-back" onclick="window.history.back()">
             <i class="material-icons">arrow_back</i> ফিরে যান
@@ -609,57 +609,41 @@
             <div class="chat-sidebar" id="chatSidebar">
                 <div class="sidebar-header">মেসেজ সমূহ</div>
                 <div class="chat-list" id="chatListContainer">
-                    <!-- ডেমো চ্যাট আইটেম (টেস্ট করার সুবিধার জন্য ক্লিক লজিক সহ রাখা হলো) -->
-                    <div class="chat-item" onclick="openChatDemo('মো: সাগর আহমেদ')">
-                        <img src="https://www.w3schools.com/howto/img_avatar.png" alt="User">
-                        <div class="chat-item-info">
-                            <h4>মো: সাগর আহমেদ</h4>
-                            <p>আসসালামু আলাইকুম, প্রপার্টিটি কি আছে?</p>
-                        </div>
-                    </div>
+                    <div style="padding:20px; text-align:center; color:var(--gray);">চ্যাট লোড হচ্ছে...</div>
                 </div>
             </div>
 
-            <!-- ডানপাশ: চ্যাট বক্স স্ক্রিন -->
+            <!-- ডানপাশ: চ্যাট বক্স -->
             <div class="chat-main" id="chatMainBox">
-                <!-- ডিফল্ট এম্পটি স্টেট -->
                 <div class="chat-empty-state" id="emptyState">
                     <i class="material-icons">chat_bubble_outline</i>
                     <p>বামপাশের লিস্ট থেকে যেকোনো একটি চ্যাট সিলেক্ট করুন।</p>
                 </div>
 
-                <!-- একটিভ চ্যাট ইন্টারফেস -->
                 <div id="activeChatContent" style="display:none; flex-direction:column; flex:1; height:100%;">
                     <div class="chat-box-header">
                         <div class="active-user-details">
-                            <!-- মোবাইলের ভেতরের ব্যাক বাটন -->
                             <i class="material-icons back-to-list" id="backToListBtn" style="display:none;">arrow_back</i>
                             <h3 id="activeChatUserName">ইউজার</h3>
                         </div>
-                        <!-- প্রপার্টি মিনি কার্ড -->
                         <a href="#" id="activePropertyCard" class="property-mini-card" target="_blank">
-                            <img id="activePropertyImg" src="https://www.w3schools.com/howto/img_avatar.png" alt="Property">
+                            <img id="activePropertyImg" src="https://via.placeholder.com/38" alt="Property">
                             <div class="property-mini-info">
-                                <h5 id="activePropertyTitle">জমি বিক্রয় হবে</h5>
-                                <span id="activePropertyPrice">৳ 30000</span>
+                                <h5 id="activePropertyTitle">লোড হচ্ছে...</h5>
+                                <span id="activePropertyPrice">৳ 0</span>
                             </div>
                         </a>
                     </div>
 
-                    <!-- মেসেজ ডিসপ্লে স্ক্রিন -->
-                    <div class="messages-display" id="messagesDisplay">
-                        <div class="msg-bubble incoming">আসসালামু আলাইকুম, প্রপার্টিটি কি এখনো এভেইলেবল আছে?<span class="msg-time">০৫:১৪ PM</span></div>
-                        <div class="msg-bubble outgoing">হ্যাঁ, আছে। দাম নিয়ে কথা বলা যাবে।<span class="msg-time">০৫:১৫ PM</span></div>
-                    </div>
+                    <div class="messages-display" id="messagesDisplay"></div>
 
-                    <!-- 🎯 কুইক রিপ্লাই টেমপ্লেট বাটন (যা মোবাইলে উপর-নিচ দেখাবে) -->
+                    <!-- ৩টি প্রশ্ন টেমপ্লেট বাটন -->
                     <div class="quick-replies">
                         <button class="quick-btn">এখনো কি আছে?</button>
                         <button class="quick-btn">সরাসরি দেখতে চাই</button>
                         <button class="quick-btn">দাম কি কম হবে?</button>
                     </div>
 
-                    <!-- টেক্সট ইনপুট এরিয়া -->
                     <div class="chat-input-area">
                         <input type="text" id="messageInputField" placeholder="আপনার মেসেজটি লিখুন...">
                         <button class="btn-send" id="sendMessageBtn">
@@ -677,39 +661,13 @@
         </div>
     </footer>
     
-    <!-- ⚠️ তোমার নিজের messages.js ফাইলটি নিচে লিংক করা থাকবে, স্ক্রিপ্টটি ডেমো কন্ট্রোলের জন্য নিচে দেওয়া হলো -->
+    <!-- জাভাস্ক্রিপ্ট ফাইল লোডিং -->
+    <script src="messages.js"></script>
     <script>
-        // ডেমো চ্যাট ওপেন ফাংশন (তোমার আসল JS দিয়ে এটি রিপ্লেস/মডিফাই করে নিও)
-        function openChatDemo(userName) {
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('activeChatContent').style.display = 'flex';
-            document.getElementById('activeChatUserName').innerText = userName;
-            
-            // মোবাইল ভিউ এর জন্য একটিভ ক্লাস ট্র্রিগার
-            if(window.innerWidth <= 768) {
-                document.getElementById('chatMainBox').classList.add('active');
-                document.getElementById('chatSidebar').classList.add('hidden');
-                
-                // 🎯 ট্রিক: বডিতে ক্লাস অ্যাড করায় মেইন ব্যাক বাটনটি হাইড হয়ে যাবে
-                document.body.classList.add('chat-open');
-            }
-        }
-
-        // চ্যাটের ভেতরের ব্যাক বাটনে ক্লিক করলে লিস্টে ফেরত আসার লজিক
-        document.getElementById('backToListBtn').addEventListener('click', () => {
-            document.getElementById('chatMainBox').classList.remove('active');
-            document.getElementById('chatSidebar').classList.remove('hidden');
-            
-            // 🎯 ট্রিক: বডি থেকে ক্লাস রিমুভ করায় মেইন ব্যাক বাটন আবার দৃশ্যমান হবে
-            document.body.classList.remove('chat-open');
-        });
-
-        // রেগুলার হেডার মেনু স্ক্রিপ্ট
         document.addEventListener('DOMContentLoaded', () => {
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
-
             if (menuButton && sidebar && overlay) {
                 menuButton.addEventListener('click', () => {
                     sidebar.classList.toggle('active');
