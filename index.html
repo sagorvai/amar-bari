@@ -497,5 +497,20 @@
     </div>
 </div>
     
+<!-- ১. প্রথমে ফায়ারবেসের মেইন কোড ও ডাটাবেজ লাইব্রেরি (যদি আগে থেকেই থাকে) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- ২. ⚠️ ফায়ারবেস মেসেজিং লাইব্রেরি (এটি নোটিফিকেশনের জন্য একদম বাধ্যতামূলক) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
+
+    <!-- ৩. তোমার ফায়ারবেস ইনিশিয়ালাইজেশন কোড (যেখানে Firebase config রান করেছ) -->
+    <script src="js/firebase-init.js"></script> 
+
+    <!-- 🎯 ৪. সবার শেষে আমাদের স্মার্ট লজিক ইঞ্জিনের ফাইলটি লিংক করো -->
+    <script src="js/fcm-setup.js"></script>
 </body>
-                    </html>
+</html>
+
+
