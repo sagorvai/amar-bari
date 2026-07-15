@@ -565,6 +565,40 @@ async function loadRelatedPosts(currentData) {
         // কার্ড রেন্ডার করার হেল্পার ফাংশন
         const renderPostCards = (start, end) => {
             const slice = allPosts.slice(start, end);
+async function loadRelatedPosts(currentData) {
+    const list = document.getElementById('related-list');
+    const seeMoreBox = document.getElementById('see-more-box');
+    const seeMoreBtn = document.getElementById('btn-see-more');
+    if (!list) return;
+
+    try {
+        const snapshot = await db.collection('properties')
+            .where('category', '==', currentData.category)
+            .limit(50) 
+            .get();
+
+        let allPosts = [];
+        snapshot.forEach(doc => {
+            if (doc.id !== postId) allPosts.push({ id: doc.id, ...doc.data() });
+        });
+
+        // গ্রাম এবং থানা অনুযায়ী সর্টিং
+        allPosts.sort((a, b) => {
+            const aVillage = (a.location?.village === currentData.location?.village) ? 1 : 0;
+            const bVillage = (b.location?.village === currentData.location?.village) ? 1 : 0;
+            if (aVillage !== bVillage) return bVillage - aVillage;
+            const aThana = (a.location?.thana === currentData.location?.thana) ? 1 : 0;
+            const bThana = (b.location?.thana === currentData.location?.thana) ? 1 : 0;
+            return bThana - aThana;
+        });
+
+        list.innerHTML = "";
+        let displayedCount = 0;
+        const limitIncrement = 10; // প্রতি ক্লিকে ১০টি করে নতুন পোস্ট দেখাবে
+
+        // কার্ড রেন্ডার করার হেল্পার ফাংশন
+        const renderPostCards = (start, end) => {
+            const slice = allPosts.slice(start, end);
             slice.forEach(post => {
                 let pAmt = post.category === 'বিক্রয়' ? post.price : post.monthlyRent;
                 let pUnit = post.priceUnit || post.rentUnit || "";
@@ -607,6 +641,8 @@ async function loadRelatedPosts(currentData) {
         console.error("সম্পর্কিত পোস্ট লোড করতে সমস্যা:", e); 
     }
     }
+
+            
 document.addEventListener('DOMContentLoaded', () => {
     const menuButton = document.getElementById('menuButton');
     const sidebar = document.getElementById('sidebar');
