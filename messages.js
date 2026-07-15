@@ -348,7 +348,7 @@ async function openChatBox(chatId, postId) {
     }
                                                     }
 
-// ৪. মেসেজ পাঠানো লজিক
+// ৪. মেসেজ পাঠানো লজিক (লাস্ট সেন্ডার আইডি ট্র্যাকিং সহ আপডেট করা হলো)
 async function sendMessage(text) {
     if (!text.trim() || !currentChatId) return;
 
@@ -360,13 +360,18 @@ async function sendMessage(text) {
     };
 
     try {
+        // ১. মেসেজ সাব-কালেকশনে নতুন মেসেজ অ্যাড করা
         await db.collection('chats').doc(currentChatId).collection('messages').add(messageData);
+        
+        // ২. মূল চ্যাট ডকুমেন্টে লাইভ কাউন্টের জন্য ট্র্যাকিং ডাটা আপডেট করা
         await db.collection('chats').doc(currentChatId).update({
             lastMessage: cleanText,
+            lastSenderId: currentUser.uid,             // 🎯 কারেন্ট ইউজারের আইডি ট্র্যাক করবে
+            isUnread: true,                           // 🎯 চ্যাটটি আনরিড হিসেবে চিহ্নিত করবে
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch (error) {
-        console.error(error);
+        console.error("মেসেজ পাঠাতে সমস্যা হয়েছে:", error);
     }
 }
 
