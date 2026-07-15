@@ -535,7 +535,9 @@ function formatPostTime(date) {
 async function loadRelatedPosts(currentData) {
     const list = document.getElementById('related-list');
     const seeMoreBox = document.getElementById('see-more-box');
+    const seeMoreBtn = document.getElementById('btn-see-more');
     if (!list) return;
+
     try {
         const snapshot = await db.collection('properties')
             .where('category', '==', currentData.category)
@@ -547,6 +549,7 @@ async function loadRelatedPosts(currentData) {
             if (doc.id !== postId) allPosts.push({ id: doc.id, ...doc.data() });
         });
 
+        // গ্রাম এবং থানা অনুযায়ী সর্টিং
         allPosts.sort((a, b) => {
             const aVillage = (a.location?.village === currentData.location?.village) ? 1 : 0;
             const bVillage = (b.location?.village === currentData.location?.village) ? 1 : 0;
@@ -557,22 +560,54 @@ async function loadRelatedPosts(currentData) {
         });
 
         list.innerHTML = "";
-        allPosts.slice(0, 10).forEach(post => {
-            let pAmt = post.category === 'বিক্রয়' ? post.price : post.monthlyRent;
-            let pUnit = post.priceUnit || post.rentUnit || "";
-            list.innerHTML += `
-                <div class="rel-card" onclick="location.href='details.html?id=${post.id}'">
-                    <img src="${post.images?.[0]?.url || post.images?.[0] || 'placeholder.jpg'}">
-                    <div class="rel-info">
-                        <h4 class="rel-title">${post.title}</h4>
-                        <p class="rel-price">৳ ${pAmt} (${pUnit})</p>
-                        <p class="rel-loc">${post.location?.village || ''}, ${post.location?.thana || post.location?.upazila|| ''}, ${post.location?.district || ''}</p>
-                    </div>
-                </div>`;
-        });
-        if (allPosts.length > 10 && seeMoreBox) seeMoreBox.style.display = 'block';
-    } catch (e) { console.error(e); }
-}
+        let displayedCount = 0;
+        const limitIncrement = 10; // প্রতি ক্লিকে ১০টি করে নতুন পোস্ট দেখাবে
+
+        // কার্ড রেন্ডার করার হেল্পার ফাংশন
+        const renderPostCards = (start, end) => {
+            const slice = allPosts.slice(start, end);
+            slice.forEach(post => {
+                let pAmt = post.category === 'বিক্রয়' ? post.price : post.monthlyRent;
+                let pUnit = post.priceUnit || post.rentUnit || "";
+                list.innerHTML += `
+                    <div class="rel-card" onclick="location.href='details.html?id=${post.id}'">
+                        <img src="${post.images?.[0]?.url || post.images?.[0] || 'placeholder.jpg'}" alt="Related Property">
+                        <div class="rel-info">
+                            <h4 class="rel-title">${post.title}</h4>
+                            <p class="rel-price">৳ ${pAmt} (${pUnit})</p>
+                            <p class="rel-loc">${post.location?.village || ''}, ${post.location?.thana || post.location?.upazila || ''}, ${post.location?.district || ''}</p>
+                        </div>
+                    </div>`;
+            });
+            displayedCount = end;
+        };
+
+        // শুরুতে প্রথম ১০টি পোস্ট দেখাবো
+        renderPostCards(0, Math.min(10, allPosts.length));
+
+        // যদি মোট প্রপার্টি ১০টির বেশি থাকে, তবেই বাটন দেখাবো
+        if (allPosts.length > 10 && seeMoreBox) {
+            seeMoreBox.style.display = 'block';
+            
+            // সিমোর বাটনের ক্লিক লজিক
+            if (seeMoreBtn) {
+                seeMoreBtn.onclick = () => {
+                    const nextLimit = Math.min(displayedCount + limitIncrement, allPosts.length);
+                    renderPostCards(displayedCount, nextLimit);
+
+                    // যদি আর কোনো প্রপার্টি দেখানোর না থাকে, বাটনটি হাইড করে দেবো
+                    if (displayedCount >= allPosts.length) {
+                        seeMoreBox.style.display = 'none';
+                    }
+                };
+            }
+        } else if (seeMoreBox) {
+            seeMoreBox.style.display = 'none';
+        }
+    } catch (e) { 
+        console.error("সম্পর্কিত পোস্ট লোড করতে সমস্যা:", e); 
+    }
+                                               }
 
 function openLightbox(url) {
     const lbImg = document.getElementById('lb-img');
