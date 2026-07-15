@@ -1,5 +1,5 @@
 // =======================================================
-// 🎯 আমার বাড়ি.কম - আলটিমেট রিয়েল-টাইম চ্যাট ইঞ্জিন (ডাইরেক্ট চ্যাট মোড সহ)
+// 🎯 আমার বাড়ি.কম - আলটিমেট রিয়েল-টাইম চ্যাট ইঞ্জিন (অপ্টিমাইজড মোড)
 // =======================================================
 
 const firebaseConfig = {
@@ -19,16 +19,34 @@ const db = firebase.firestore();
 const urlParams = new URLSearchParams(window.location.search);
 let currentChatId = urlParams.get('chatId');
 let currentPostId = urlParams.get('postId');
-let currentAction = urlParams.get('action'); // 🎯 ডিটেইলস পেজ থেকে ডাইরেক্ট মোড ট্র্যাকিং
+let currentAction = urlParams.get('action'); 
 
 let currentUser = null;
 let activeChatListener = null;
 
-// ১. ইউজার লগইন স্টেট পর্যবেক্ষণ
-firebase.auth().onAuthStateChanged((user) => {
+// ১. ইউজার লগইন স্টেট পর্যবেক্ষণ ও হেডার প্রোফাইল পিকচার ইন্টিগ্রেশন
+firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
         console.log("লগইন করা ইউজার UID:", currentUser.uid);
+        
+        // হেডার প্রোফাইল পিকচার লোড
+        const headerProfileImg = document.getElementById('profileImage');
+        if (headerProfileImg) {
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists && userDoc.data().profilePic) {
+                    headerProfileImg.src = userDoc.data().profilePic;
+                } else if (user.photoURL) {
+                    headerProfileImg.src = user.photoURL;
+                } else {
+                    headerProfileImg.src = 'https://www.w3schools.com/howto/img_avatar.png';
+                }
+            } catch (error) {
+                console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
+            }
+        }
+        
         initChatSystem();
     } else {
         alert("মেসেজ দেখতে প্রথমে লগইন করুন।");
@@ -42,12 +60,14 @@ function initChatSystem() {
 
     // যদি details.html থেকে সরাসরি চ্যাট আইডি পাঠানো হয়ে থাকে
     if (currentChatId) {
-        // 🎯 ডাইরেক্ট মোড বা মোবাইল স্ক্রিনের জন্য লেআউট ম্যানেজমেন্ট
         if (currentAction === 'direct' || window.innerWidth <= 768) {
             const sidebar = document.getElementById('chatSidebar');
             const mainBox = document.getElementById('chatMainBox');
             if (sidebar) sidebar.classList.add('hidden');
             if (mainBox) mainBox.classList.add('active');
+            
+            // 🎯 মোবাইলে চ্যাট ডাইরেক্ট ওপেন হলে মেইন ব্যাক বাটন হাইড করার জন্য ক্লাস যুক্ত
+            document.body.classList.add('chat-open');
         }
         openChatBox(currentChatId, currentPostId);
     }
@@ -73,7 +93,6 @@ function loadChatList() {
                 const chatData = doc.data();
                 const chatId = doc.id;
                 
-                // নিজের আইডি বাদে অপর পক্ষের ইউজার আইডি বের করা
                 const otherUserId = chatData.participants ? chatData.participants.find(id => id !== currentUser.uid) : null;
                 
                 const chatItemDiv = document.createElement('div');
@@ -94,13 +113,17 @@ function loadChatList() {
                 chatItemDiv.onclick = () => {
                     const sidebar = document.getElementById('chatSidebar');
                     const mainBox = document.getElementById('chatMainBox');
-                    if (sidebar) sidebar.classList.add('hidden');
-                    if (mainBox) mainBox.classList.add('active');
+                    
+                    if (window.innerWidth <= 768) {
+                        if (sidebar) sidebar.classList.add('hidden');
+                        if (mainBox) mainBox.classList.add('active');
+                        // 🎯 মোবাইলে চ্যাট ওপেন হলে মেইন ব্যাক বাটন হাইড করার জন্য ক্লাস যুক্ত
+                        document.body.classList.add('chat-open');
+                    }
                     
                     openChatBox(chatId, chatData.postId);
                 };
 
-                // অপর পক্ষের প্রোফাইল ইনফো (নাম ও ছবি) ফায়ারস্টোর থেকে আনা
                 if (otherUserId) {
                     db.collection('users').doc(otherUserId).get().then(uDoc => {
                         if (uDoc.exists) {
@@ -136,7 +159,7 @@ async function openChatBox(chatId, postId) {
     const currentItem = document.getElementById(`item_${chatId}`);
     if (currentItem) currentItem.classList.add('active');
 
-    // ডাটাবেজে চ্যাট ডকুমেন্টটি না থাকলে তা তৈরি করা (সেফগার্ড)
+    // সেফগার্ড লজিক
     const chatRef = db.collection('chats').doc(chatId);
     try {
         const chatDoc = await chatRef.get();
@@ -156,13 +179,10 @@ async function openChatBox(chatId, postId) {
         console.error("চ্যাট ইনিশিয়ালিং এরর:", e);
     }
 
-    // প্রপার্টির মিনিカード লোড করা
     loadPropertyContext(postId || currentPostId);
 
-    // আগের কোনো লিসেনার সচল থাকলে তা রিমুভ করা
     if (activeChatListener) activeChatListener();
 
-    // রিয়েল-টাইম মেসেজ লোড ও রেন্ডারিং
     const messagesDisplay = document.getElementById('messagesDisplay');
     activeChatListener = db.collection('chats').doc(chatId).collection('messages')
         .orderBy('timestamp', 'asc')
@@ -186,11 +206,9 @@ async function openChatBox(chatId, postId) {
                 bubble.innerHTML = `${msg.text} <span class="msg-time">${timeString}</span>`;
                 messagesDisplay.appendChild(bubble);
             });
-            // অটোমেটিক স্ক্রল ডাউন
             messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
         }, (err) => console.error("মেসেজ লোড এরর:", err));
 
-    // চ্যাট হেডারে অপরপক্ষের নাম সেট করা
     const parts = chatId.split('_');
     const otherUserId = parts.find(id => id !== currentUser.uid && id !== postId && id !== currentPostId);
     if (otherUserId) {
@@ -252,7 +270,7 @@ function loadPropertyContext(postId) {
     }).catch(() => card.style.display = 'none');
 }
 
-// DOM ইভেন্ট লিসেনার
+// DOM ইভেন্ট লিসেনার ও কিবোর্ড ভিউপোর্ট ফিক্সিং
 document.addEventListener('DOMContentLoaded', () => {
     const sendBtn = document.getElementById('sendMessageBtn');
     const inputField = document.getElementById('messageInputField');
@@ -269,77 +287,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputField.value = "";
             }
         };
+
+        // 🎯 অ্যান্ড্রয়েড ক্রোম কিবোর্ড ওপেন ট্র্যাকিং ও স্মুথ স্ক্রোল আপ ফিক্স
+        inputField.addEventListener('focus', () => {
+            setTimeout(() => {
+                inputField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        });
+    }
+
+    // কুইক রিপ্লাই বাটনগুলোর জন্য ক্লিক ইভেন্ট ডেলিগেশন
+    const quickRepliesContainer = document.querySelector('.quick-replies');
+    if (quickRepliesContainer) {
+        quickRepliesContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('quick-btn')) {
+                const replyText = e.target.textContent;
+                sendMessage(replyText);
+            }
+        });
+    }
+
+    // 🎯 অ্যান্ড্রয়েড ক্রোমে কিবোর্ড অন/অফ হলে ভিজ্যুয়াল ভিউপোর্ট এডজাস্টমেন্ট
+    if (window.visualViewport) {
+        const chatMain = document.getElementById('chatMainBox');
+        window.visualViewport.addEventListener('resize', () => {
+            if (window.innerWidth <= 768 && chatMain && chatMain.classList.contains('active')) {
+                // ভিউপোর্টের হাইট পরিবর্তন অনুযায়ী স্ক্রিন এরিয়া সেট করা
+                chatMain.style.height = `${window.visualViewport.height - 60}px`;
+                
+                const messagesDisplay = document.getElementById('messagesDisplay');
+                if (messagesDisplay) {
+                    messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
+                }
+            }
+        });
     }
 });
 
-// কুইক রিপ্লাই ফাংশন
+// কুইক রিপ্লাই ফাংশন (অন-ক্লিক সাপোর্টের জন্য সেফগার্ড)
 function sendQuickReply(text) {
     sendMessage(text);
 }
 
-// 🎯 ডাইরেক্ট চ্যাট মোড এবং মোবাইল রেসপনসিভ ব্যাক বাটন ফিক্স
+// 🎯 মোবাইলের ভেতরের ব্যাক বাটন ক্লিকের মাধ্যমে চ্যাট লিস্টে ফিরে আসার লজিক
 const backBtn = document.getElementById('backToListBtn');
 if (backBtn) {
     backBtn.onclick = () => {
-        // চ্যাট বক্স হাইড করে মূল চ্যাট লিস্ট ওপেন করা
         document.getElementById('chatMainBox').classList.remove('active');
         document.getElementById('chatSidebar').classList.remove('hidden');
         
-        // ইউআরএল থেকে ডাইরেক্ট প্যারামিটার রিসেট করে দেওয়া যাতে পুনরায় পেজ লোড হলে পুরো লিস্ট দেখায়
+        // 🎯 চ্যাট লিস্টে ফিরে এলে মেইন ব্যাক বাটন আবার দৃশ্যমান করার জন্য ক্লাস রিমুভ
+        document.body.classList.remove('chat-open');
+        
         if (currentAction === 'direct') {
             window.history.pushState({}, document.title, "messages.html");
             currentAction = null;
         }
     };
-}
-
-const messageInput = document.querySelector('.input-container input'); // আপনার ইনপুট বক্সের ট্যাগ বা ক্লাস দিন
-const inputContainer = document.querySelector('.input-container');   // আপনার পুরো ইনপুট বক্স ও সেন্ড বাটনের মেইন কন্টেইনার
-
-if (messageInput && inputContainer) {
-    // যখন ইউজার ইনপুট বক্সে ক্লিক করবে (কিবোর্ড ওপেন হবে)
-    messageInput.addEventListener('focus', () => {
-        setTimeout(() => {
-            // ইনপুট বক্সটিকে স্ক্রল করে স্ক্রিনের মাঝখানে বা কিবোর্ডের ঠিক উপরে নিয়ে আসবে
-            messageInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 300); // কিবোর্ড খোলার জন্য সামান্য সময় দেওয়া হয়েছে
-    });
-
-    // এছাড়া ভিজ্যুয়াল ভিউপোর্ট এপিআই ব্যবহার করে কিবোর্ডের হাইট ট্র্যাক করা (অ্যান্ড্রয়েডের জন্য বেস্ট)
-    if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', () => {
-            const offset = window.innerHeight - window.visualViewport.height;
-            if (offset > 0) {
-                // কিবোর্ড ওপেন থাকলে কন্টেইনারটিকে কিবোর্ডের সমপরিমাণ উপরে তুলবে
-                inputContainer.style.bottom = `${offset}px`;
-            } else {
-                // কিবোর্ড বন্ধ হলে আবার নিচে নেমে যাবে
-                inputContainer.style.bottom = '0px';
             }
-        });
-    }
-}
-
-// 🆕 লগইন করা ইউজারের প্রোফাইল পিকচার হেডারে দেখানোর লজিক
-firebase.auth().onAuthStateChanged(async (user) => {
-    const headerProfileImg = document.querySelector('#profileImageWrapper img');
-    
-    if (user && headerProfileImg) {
-        try {
-            // ফায়ারবেস 'users' কালেকশন থেকে ইউজারের ডাটা আনা হচ্ছে
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().profilePic) {
-                // ডাটাবেজে প্রোফাইল পিকচার থাকলে সেটি হেডারে সেট হবে
-                headerProfileImg.src = userDoc.data().profilePic;
-            } else if (user.photoURL) {
-                // গুগল লগইন করা থাকলে গুগল প্রোফাইল পিকচার সেট হবে
-                headerProfileImg.src = user.photoURL;
-            } else {
-                // কোনো ছবি না থাকলে একটি ডিফল্ট অ্যাভাটার সেট হবে
-                headerProfileImg.src = 'assets/images/default-avatar.png'; // আপনার প্রজেক্টের ডিফল্ট ছবির পাথ দিন
-            }
-        } catch (error) {
-            console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
-        }
-    }
-});
