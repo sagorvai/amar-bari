@@ -539,7 +539,7 @@ async function loadRelatedPosts(currentData) {
     try {
         const snapshot = await db.collection('properties')
             .where('category', '==', currentData.category)
-            .limit(50) 
+            .limit(20) 
             .get();
 
         let allPosts = [];
@@ -551,10 +551,10 @@ async function loadRelatedPosts(currentData) {
             const aVillage = (a.location?.village === currentData.location?.village) ? 1 : 0;
             const bVillage = (b.location?.village === currentData.location?.village) ? 1 : 0;
             if (aVillage !== bVillage) return bVillage - aVillage;
-            const aThana = (a.location?.thana === currentData.location?.thana) ? 1 : 0;
-            const bThana = (b.location?.thana === currentData.location?.thana) ? 1 : 0;
-            return bThana - aThana;
-        });
+            const aThana = (a.location?.thana === currentData.location?.thana || a.location?.upazila === currentData.location?.upazila) ? 1 : 0;
+        const bThana = (b.location?.thana === currentData.location?.thana || b.location?.upazila === currentData.location?.upazila) ? 1 : 0;
+        return bThana - aThana;
+    });
 
         list.innerHTML = "";
         allPosts.slice(0, 10).forEach(post => {
