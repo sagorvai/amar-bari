@@ -32,6 +32,9 @@
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Fancybox CSS (ইমেজ গ্যালারি স্টাইলিংয়ের জন্য) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -107,6 +110,21 @@
             .profile-image-wrapper { width: 30px; height: 30px; }
         }
 
+
+        .gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+  margin-top: 15px;
+}
+.gallery-thumb {
+  transition: transform 0.2s ease;
+}
+.gallery-thumb:hover {
+  transform: scale(1.05); /* মাউস নিলে ছবি সামান্য বড় হবে */
+}
+
+        
         .action-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
         .btn-act { padding: 10px; border: 1px solid #ddd; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; text-decoration: none; font-size: 12px; font-weight: bold; background: white; color: var(--dark); }
         .btn-call { color: var(--success); border-color: var(--success); }
@@ -791,7 +809,9 @@
 
     <div id="lightbox" onclick="this.style.display='none'"><img id="lb-img"></div>
 
-    <script src="details.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+<script src="details.js"></script>
+ 
 
     <footer class="footer">
     <div class="container">
