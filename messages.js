@@ -71,7 +71,7 @@ function initChatSystem() {
     }
 }
 
-// ২. বামপাশের চ্যাট লিস্ট লোড করা
+// ২. বামপাশের চ্যাট লিস্ট লোড করা (থ্রি-ডট মেনু ও ডিলিট অপশন সহ)
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer) return;
@@ -97,29 +97,110 @@ function loadChatList() {
                 chatItemDiv.className = `chat-item ${chatId === currentChatId ? 'active' : ''}`;
                 chatItemDiv.id = `item_${chatId}`;
                 
+                // ডাইনামিক ড্রপডাউন ও থ্রি-ডট সহ চ্যাট আইটেম HTML গঠন
                 chatItemDiv.innerHTML = `
                     <img src="https://via.placeholder.com/45/007bff/ffffff?text=U" id="avatar_${chatId}">
                     <div class="chat-item-info">
                         <h4 id="name_${chatId}">ব্যবহারকারী...</h4>
                         <p id="msg_preview_${chatId}">${chatData.lastMessage || "নতুন চ্যাট শুরু হয়েছে..."}</p>
                     </div>
+                    
+                    <!-- 🎯 থ্রি-ডট মেনু বাটন -->
+                    <button class="chat-item-menu-btn" id="menu_btn_${chatId}">
+                        <i class="material-icons" style="font-size: 20px;">more_vert</i>
+                    </button>
+                    
+                    <!-- 🎯 ড্রপডাউন কন্টেইনার -->
+                    <div class="chat-dropdown" id="dropdown_${chatId}">
+                        <button class="chat-dropdown-item" id="delete_btn_${chatId}">
+                            <i class="material-icons">delete</i> ডিলিট করুন
+                        </button>
+                    </div>
                 `;
                 
                 chatListContainer.appendChild(chatItemDiv);
 
-                chatItemDiv.onclick = () => {
+                // চ্যাট আইটেমে ক্লিক করলে চ্যাট বক্স ওপেন হবে (তবে থ্রি-ডট বাটনে ক্লিক করলে যেন চ্যাট ওপেন না হয়)
+                chatItemDiv.onclick = (e) => {
+                    // যদি ইউজার থ্রি-ডট বা ডিলিট বাটনে ক্লিক করে, তবে চ্যাট বক্স ওপেন হবে না
+                    if (e.target.closest('.chat-item-menu-btn') || e.target.closest('.chat-dropdown')) {
+                        return; 
+                    }
+
                     const sidebar = document.getElementById('chatSidebar');
                     const mainBox = document.getElementById('chatMainBox');
                     
                     if (window.innerWidth <= 768) {
                         if (sidebar) sidebar.classList.add('hidden');
                         if (mainBox) mainBox.classList.add('active');
-                        // 🎯 মেইন ব্যাক বাটন হাইড করার ক্লাস যুক্ত
                         document.body.classList.add('chat-open');
                     }
                     
                     openChatBox(chatId, chatData.postId);
                 };
+
+                // থ্রি-ডট মেনু টগল করার লজিক
+                const menuBtn = chatItemDiv.querySelector(`#menu_btn_${chatId}`);
+                const dropdown = chatItemDiv.querySelector(`#dropdown_${chatId}`);
+                
+                if (menuBtn && dropdown) {
+                    menuBtn.onclick = (e) => {
+                        e.stopPropagation(); // যাতে চ্যাট ওপেন ট্রিগার না হয়
+                        
+                        // অন্য সব খোলা ড্রপডাউন বন্ধ করা
+                        document.querySelectorAll('.chat-dropdown').forEach(dd => {
+                            if (dd.id !== `dropdown_${chatId}`) dd.classList.remove('show');
+                        });
+                        
+                        // বর্তমান ড্রপডাউন টগল করা
+                        dropdown.classList.toggle('show');
+                    };
+                }
+
+                // চ্যাট ডিলিট করার লজিক
+                const deleteBtn = chatItemDiv.querySelector(`#delete_btn_${chatId}`);
+                if (deleteBtn) {
+                    deleteBtn.onclick = async (e) => {
+                        e.stopPropagation(); // স্টপ প্রোপাগেশন
+                        dropdown.classList.remove('show');
+
+                        const confirmDelete = confirm("আপনি কি নিশ্চিতভাবে এই চ্যাটটি ডিলিট করতে চান? (আপনার সব মেসেজ মুছে যাবে)");
+                        if (confirmDelete) {
+                            try {
+                                // ১. চ্যাটের ভেতরের সব মেসেজ ডিলিট করা
+                                const messagesSnapshot = await db.collection('chats').doc(chatId).collection('messages').get();
+                                const batch = db.batch();
+                                messagesSnapshot.forEach(mDoc => {
+                                    batch.delete(mDoc.ref);
+                                });
+                                await batch.commit();
+
+                                // ২. মূল চ্যাট ডকুমেন্টটি ডিলিট করা
+                                await db.collection('chats').doc(chatId).delete();
+                                
+                                alert("চ্যাটটি সফলভাবে ডিলিট করা হয়েছে।");
+                                
+                                // যদি ডিলিট করা চ্যাটটি বর্তমানে স্ক্রিনে ওপেন থাকে, তবে স্ক্রিন খালি করা
+                                if (currentChatId === chatId) {
+                                    currentChatId = null;
+                                    const emptyState = document.getElementById('emptyState');
+                                    const activeChatContent = document.getElementById('activeChatContent');
+                                    if (emptyState) emptyState.style.display = 'flex';
+                                    if (activeChatContent) activeChatContent.style.display = 'none';
+                                    
+                                    // মোবাইলে চ্যাট ডিলিট হলে ব্যাক নিয়ে যাওয়া
+                                    if (window.innerWidth <= 768) {
+                                        const backBtn = document.getElementById('backToListBtn');
+                                        if (backBtn) backBtn.click();
+                                    }
+                                }
+                            } catch (error) {
+                                console.error("চ্যাট ডিলিট করতে ত্রুটি:", error);
+                                alert("দুঃখিত, চ্যাটটি ডিলিট করা যায়নি। আবার চেষ্টা করুন।");
+                            }
+                        }
+                    };
+                }
 
                 if (otherUserId) {
                     db.collection('users').doc(otherUserId).get().then(uDoc => {
@@ -140,6 +221,13 @@ function loadChatList() {
             console.error("চ্যাট লিস্ট স্ন্যাপশট এরর:", error);
         });
 }
+
+// স্ক্রিনের অন্য কোথাও ক্লিক করলে যেন খোলা ড্রপডাউন মেনুগুলো বন্ধ হয়ে যায়
+document.addEventListener('click', () => {
+    document.querySelectorAll('.chat-dropdown').forEach(dd => {
+        dd.classList.remove('show');
+    });
+});
 
 // ৩. ডানপাশের নির্দিষ্ট চ্যাট বক্স ওপেন করা
 async function openChatBox(chatId, postId) {
