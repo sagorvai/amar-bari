@@ -544,6 +544,11 @@ async function loadRelatedPosts(currentData) {
             .limit(25) 
             .get();
 
+        let allPosts = [];
+        snapshot.forEach(doc => {
+            if (doc.id !== postId) allPosts.push({ id: doc.id, ...doc.data() });
+        });
+
         
         // প্রপার্টি টাইপ, গ্রাম এবং থানা/উপজেলা অনুযায়ী সর্টিং
         allPosts.sort((a, b) => {
