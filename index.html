@@ -480,6 +480,46 @@
         </div>
     </footer>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const notificationButton = document.getElementById('notificationButton');
+            const headerPostButton = document.getElementById('headerPostButton');
+            const messageButton = document.getElementById('messageButton');
+            const profileImageWrapper = document.getElementById('profileImageWrapper');
+
+            if (menuButton && sidebar && overlay) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
+            if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
+            if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
+            if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
+        });
+
+        function openTab(evt, tabName) {
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) { tabcontent[i].classList.remove("active"); }
+            tablinks = document.getElementsByClassName("tab-btn");
+            for (i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        
+    </script>
+    
     <script src="index.js"></script>
 
     <!-- কাস্টম নোটিফিকেশন ব্যানার/পপআপ -->
