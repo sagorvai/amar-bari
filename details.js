@@ -44,16 +44,33 @@ function renderDetails(data) {
     if (data.documents?.sketch) images.push(data.documents.sketch.url || data.documents.sketch);
 
     const gallery = document.getElementById('p-gallery');
-    if (gallery) {
-        gallery.innerHTML = '';
-        images.slice(0, 5).forEach(url => {
-            const div = document.createElement('div');
-            div.className = 'gal-item';
-            div.innerHTML = `<img src="${url}" onclick="openLightbox('${url}')">`;
-            gallery.appendChild(div);
+if (gallery) {
+    gallery.innerHTML = '';
+    images.slice(0, 5).forEach(url => {
+        const div = document.createElement('div');
+        div.className = 'gal-item';
+        // এখানে আমরা সাধারণ ইমেজ ট্যাগের বদলে Fancybox-এর অ্যাঙ্কর ট্যাগ <a> ব্যবহার করছি
+        div.innerHTML = `
+            <a href="${url}" data-fancybox="gallery" data-caption="আমার বাড়ি.কম - প্রপার্টি ছবি">
+                <img src="${url}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;">
+            </a>
+        `;
+        gallery.appendChild(div);
+    });
+
+    // ফ্যান্সি-বক্স অ্যাক্টিভ করার কোড
+    if (typeof Fancybox !== 'undefined') {
+        Fancybox.bind("[data-fancybox='gallery']", {
+            Images: {
+                Panzoom: {
+                    maxScale: 3, // সর্বোচ্চ ৩ গুণ জুম করা যাবে
+                },
+            },
         });
     }
+            }
 
+    
     // পোস্টদাতার ডাটা লোড ও প্রোফাইল পেইজ রিডাইরেক্ট লজিক
     if (data.userId) {
         db.collection('users').doc(data.userId).get().then(userDoc => {
