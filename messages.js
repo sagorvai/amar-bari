@@ -30,7 +30,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
         currentUser = user;
         console.log("লগইন করা ইউজার UID:", currentUser.uid);
         
-        // হেডার প্রোফাইল পিকচার লোড
+        // হেডার প্রোফাইল পিকচার অটো-লোড
         const headerProfileImg = document.getElementById('profileImage');
         if (headerProfileImg) {
             try {
@@ -39,8 +39,6 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     headerProfileImg.src = userDoc.data().profilePic;
                 } else if (user.photoURL) {
                     headerProfileImg.src = user.photoURL;
-                } else {
-                    headerProfileImg.src = 'https://www.w3schools.com/howto/img_avatar.png';
                 }
             } catch (error) {
                 console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
@@ -58,7 +56,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
 function initChatSystem() {
     loadChatList();
 
-    // যদি details.html থেকে সরাসরি চ্যাট আইডি পাঠানো হয়ে থাকে
+    // details.html থেকে ডাইরেক্ট আসা মোড চেক
     if (currentChatId) {
         if (currentAction === 'direct' || window.innerWidth <= 768) {
             const sidebar = document.getElementById('chatSidebar');
@@ -66,7 +64,7 @@ function initChatSystem() {
             if (sidebar) sidebar.classList.add('hidden');
             if (mainBox) mainBox.classList.add('active');
             
-            // 🎯 মোবাইলে চ্যাট ডাইরেক্ট ওপেন হলে মেইন ব্যাক বাটন হাইড করার জন্য ক্লাস যুক্ত
+            // 🎯 মোবাইলে চ্যাট ডাইরেক্ট ওপেন হলে মেইন ব্যাক বাটন হাইড
             document.body.classList.add('chat-open');
         }
         openChatBox(currentChatId, currentPostId);
@@ -109,7 +107,6 @@ function loadChatList() {
                 
                 chatListContainer.appendChild(chatItemDiv);
 
-                // আইটেমে ক্লিক করলে চ্যাট বক্স ওপেন হবে
                 chatItemDiv.onclick = () => {
                     const sidebar = document.getElementById('chatSidebar');
                     const mainBox = document.getElementById('chatMainBox');
@@ -117,7 +114,7 @@ function loadChatList() {
                     if (window.innerWidth <= 768) {
                         if (sidebar) sidebar.classList.add('hidden');
                         if (mainBox) mainBox.classList.add('active');
-                        // 🎯 মোবাইলে চ্যাট ওপেন হলে মেইন ব্যাক বাটন হাইড করার জন্য ক্লাস যুক্ত
+                        // 🎯 মেইন ব্যাক বাটন হাইড করার ক্লাস যুক্ত
                         document.body.classList.add('chat-open');
                     }
                     
@@ -141,7 +138,6 @@ function loadChatList() {
             });
         }, (error) => {
             console.error("চ্যাট লিস্ট স্ন্যাপশট এরর:", error);
-            chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:red;">চ্যাট লিস্ট লোড করতে সমস্যা হচ্ছে।</div>`;
         });
 }
 
@@ -159,24 +155,20 @@ async function openChatBox(chatId, postId) {
     const currentItem = document.getElementById(`item_${chatId}`);
     if (currentItem) currentItem.classList.add('active');
 
-    // সেফগার্ড লজিক
     const chatRef = db.collection('chats').doc(chatId);
     try {
         const chatDoc = await chatRef.get();
         if (!chatDoc.exists) {
             const parts = chatId.split('_');
-            const userA = parts[0];
-            const userB = parts[1];
-            
             await chatRef.set({
-                participants: [userA, userB],
+                participants: [parts[0], parts[1]],
                 postId: postId || currentPostId || "",
                 lastMessage: "",
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
     } catch (e) {
-        console.error("চ্যাট ইনিশিয়ালিং এরর:", e);
+        console.error(e);
     }
 
     loadPropertyContext(postId || currentPostId);
@@ -207,7 +199,7 @@ async function openChatBox(chatId, postId) {
                 messagesDisplay.appendChild(bubble);
             });
             messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
-        }, (err) => console.error("মেসেজ লোড এরর:", err));
+        }, (err) => console.error(err));
 
     const parts = chatId.split('_');
     const otherUserId = parts.find(id => id !== currentUser.uid && id !== postId && id !== currentPostId);
@@ -217,7 +209,7 @@ async function openChatBox(chatId, postId) {
             if (uDoc.exists && headerName) {
                 headerName.textContent = uDoc.data().fullName || uDoc.data().name || "ব্যবহারকারী";
             }
-        }).catch(err => console.error(err));
+        });
     }
 }
 
@@ -239,7 +231,7 @@ async function sendMessage(text) {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch (error) {
-        console.error("মেসেজ সেন্ডিং এরর:", error);
+        console.error(error);
     }
 }
 
@@ -288,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // 🎯 অ্যান্ড্রয়েড ক্রোম কিবোর্ড ওপেন ট্র্যাকিং ও স্মুথ স্ক্রোল আপ ফিক্স
+        // 🎯 অ্যান্ড্রয়েড ক্রোম কিবোর্ড অন হলে স্ক্রোল ফিক্স
         inputField.addEventListener('focus', () => {
             setTimeout(() => {
                 inputField.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -296,52 +288,44 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // কুইক রিপ্লাই বাটনগুলোর জন্য ক্লিক ইভেন্ট ডেলিগেশন
+    // ৩টি কুইক রিপ্লাই কোয়েরি একশন লিসেনার
     const quickRepliesContainer = document.querySelector('.quick-replies');
     if (quickRepliesContainer) {
         quickRepliesContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('quick-btn')) {
-                const replyText = e.target.textContent;
-                sendMessage(replyText);
+                sendMessage(e.target.textContent);
             }
         });
     }
 
-    // 🎯 অ্যান্ড্রয়েড ক্রোমে কিবোর্ড অন/অফ হলে ভিজ্যুয়াল ভিউপোর্ট এডজাস্টমেন্ট
+    // 🎯 ক্রোম ব্রাউজারে কিবোর্ড অন/অফ ট্র্যাকিং ও স্ক্রিন রিসাইজ ফিক্স
     if (window.visualViewport) {
         const chatMain = document.getElementById('chatMainBox');
         window.visualViewport.addEventListener('resize', () => {
             if (window.innerWidth <= 768 && chatMain && chatMain.classList.contains('active')) {
-                // ভিউপোর্টের হাইট পরিবর্তন অনুযায়ী স্ক্রিন এরিয়া সেট করা
                 chatMain.style.height = `${window.visualViewport.height - 60}px`;
-                
                 const messagesDisplay = document.getElementById('messagesDisplay');
-                if (messagesDisplay) {
-                    messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
-                }
+                if (messagesDisplay) messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
             }
         });
     }
+    
+    // মোবাইলের ভেতরের ব্যাক বাটন লজিক (লিস্টে ফিরলে মেইন বাটন আবার শো করবে)
+    const backBtn = document.getElementById('backToListBtn');
+    if (backBtn) {
+        backBtn.onclick = () => {
+            document.getElementById('chatMainBox').classList.remove('active');
+            document.getElementById('chatSidebar').classList.remove('hidden');
+            document.body.classList.remove('chat-open');
+            
+            if (currentAction === 'direct') {
+                window.history.pushState({}, document.title, "messages.html");
+                currentAction = null;
+            }
+        };
+    }
 });
 
-// কুইক রিপ্লাই ফাংশন (অন-ক্লিক সাপোর্টের জন্য সেফগার্ড)
 function sendQuickReply(text) {
     sendMessage(text);
-}
-
-// 🎯 মোবাইলের ভেতরের ব্যাক বাটন ক্লিকের মাধ্যমে চ্যাট লিস্টে ফিরে আসার লজিক
-const backBtn = document.getElementById('backToListBtn');
-if (backBtn) {
-    backBtn.onclick = () => {
-        document.getElementById('chatMainBox').classList.remove('active');
-        document.getElementById('chatSidebar').classList.remove('hidden');
-        
-        // 🎯 চ্যাট লিস্টে ফিরে এলে মেইন ব্যাক বাটন আবার দৃশ্যমান করার জন্য ক্লাস রিমুভ
-        document.body.classList.remove('chat-open');
-        
-        if (currentAction === 'direct') {
-            window.history.pushState({}, document.title, "messages.html");
-            currentAction = null;
-        }
-    };
-            }
+    }
