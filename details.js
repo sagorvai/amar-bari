@@ -544,20 +544,24 @@ async function loadRelatedPosts(currentData) {
             .limit(25) 
             .get();
 
-        let allPosts = [];
-        snapshot.forEach(doc => {
-            if (doc.id !== postId) allPosts.push({ id: doc.id, ...doc.data() });
-        });
-
-        // গ্রাম এবং থানা অনুযায়ী সর্টিং
+        
+        // প্রপার্টি টাইপ, গ্রাম এবং থানা/উপজেলা অনুযায়ী সর্টিং
         allPosts.sort((a, b) => {
+            // ১. টাইপ ম্যাচিং (একই টাইপ হলে অগ্রাধিকার পাবে)
+            const aType = (a.type === currentData.type) ? 1 : 0;
+            const bType = (b.type === currentData.type) ? 1 : 0;
+            if (aType !== bType) return bType - aType;
+
+            // ২. গ্রাম ম্যাচিং (টাইপ মেলার পর যদি গ্রামও মেলে)
             const aVillage = (a.location?.village === currentData.location?.village) ? 1 : 0;
             const bVillage = (b.location?.village === currentData.location?.village) ? 1 : 0;
             if (aVillage !== bVillage) return bVillage - aVillage;
+
+            // ৩. থানা/উপজেলা ম্যাচিং (গ্রাম না মিললে থানা/উপজেলা দেখবে)
             const aThana = (a.location?.thana === currentData.location?.thana || a.location?.upazila === currentData.location?.upazila) ? 1 : 0;
             const bThana = (b.location?.thana === currentData.location?.thana || b.location?.upazila === currentData.location?.upazila) ? 1 : 0;
-        return bThana - aThana;
-    });
+            return bThana - aThana;
+        });
 
         list.innerHTML = "";
         let displayedCount = 0;
