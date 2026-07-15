@@ -14,26 +14,45 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
-        :root { --primary: #007bff; --success: #28a745; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f4f7f6; }
-        body { background-color: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; }
+        :root { 
+            --primary: #007bff; 
+            --primary-light: #ebf5ff;
+            --success: #28a745; 
+            --dark: #2c3e50; 
+            --gray: #7f8c8d; 
+            --bg: #f4f7f6; 
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        
+        body { 
+            background-color: var(--bg); 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
 
-
+        /* হেডার ফিক্সড পজিশনিং */
         .main-header {
              position: fixed; 
              top: 0; left: 0; right: 0;
              background-color: white; 
-             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+             box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
              z-index: 1000; 
         }
         
-        /* --- ⭐ FIX 2: সাইডবার পজিশনিং, ট্রানজিশন ও রঙ যোগ করা হলো ⭐ --- */
+        /* সাইডবার */
         .sidebar {
             position: fixed; 
             top: 0;
             left: -250px; 
             width: 250px; 
             height: 100%;
-            background-color: #34495e; /* গাঢ় নীল/ধূসর রঙ */
+            background-color: #34495e; 
             transition: left 0.3s ease; 
             box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
             z-index: 1050; 
@@ -60,7 +79,6 @@
             display: block; 
         }
         
-        /* সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা */
         .sidebar a {
             color: #ffffff; 
             padding: 12px 15px; 
@@ -79,7 +97,6 @@
             background-color: #3e5369; 
         }
         
-        /* সাইডবারের লোগো লিঙ্ক */
         .sidebar-logo {
             padding: 15px;
             font-size: 1.5em;
@@ -91,7 +108,7 @@
         
         .header-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; }
         .header-left { display: flex; align-items: center; flex-shrink: 0; }
-        .menu-icon { cursor: pointer; color: dark; font-size: 28px; }
+        .menu-icon { cursor: pointer; color: var(--dark); font-size: 28px; }
         
         .logo-title { display: flex; align-items: center; font-size: 1.5em; font-weight: bold; color: var(--primary); text-decoration: none; white-space: nowrap; margin-left: 10px; }
         .logo-icon { margin-right: 5px; }
@@ -106,84 +123,381 @@
         .profile-image-wrapper { cursor: pointer; width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; }
         .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
 
+        /* 📱 মোবাইলের জন্য বডি প্যাডিং ফিক্স */
+        body { 
+            padding-top: 60px; /* হেডার হাইটের সাথে সামঞ্জস্যপূর্ণ */
+        }
         
         @media (max-width: 600px) {
-            body { padding-top: 55px; }
             .logo-title { font-size: 1.2em; }
             .header-actions { gap: 8px; }
         }
 
-        .btn-back { background: white; border: 1px solid #ddd; color: var(--dark); padding: 8px 16px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 14px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: fit-content; transition: 0.2s; }
-        .btn-back:hover { background: var(--primary); color: white; border-color: var(--primary); }
-        
-        
-        /* Main Layout */
-        .chat-container { display: flex; flex: 1; max-width: 1200px; width: 100%; margin: 60px auto 0 auto; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; height: calc(100vh - 60px); }
-        
-        /* Left Side: Chat List */
-        .chat-sidebar { width: 320px; border-right: 1px solid #eee; display: flex; flex-direction: column; background: #fff; }
-        .sidebar-header { padding: 15px; font-size: 18px; font-weight: bold; color: var(--dark); border-bottom: 1px solid #eee; }
-        .chat-list { flex: 1; overflow-y: auto; }
-        .chat-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f8f9fa; transition: background 0.2s; }
-        .chat-item:hover, .chat-item.active { background: #f0f7ff; }
-        .chat-item img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #eee; }
-        .chat-item-info { flex: 1; overflow: hidden; }
-        .chat-item-info h4 { margin: 0 0 4px 0; font-size: 14px; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .chat-item-info p { margin: 0; font-size: 12px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        /* Right Side: Chat Box */
-        .chat-main { flex: 1; display: flex; flex-direction: column; background: #f9fbff; position: relative; }
-        .chat-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: var(--gray); }
-        .chat-empty-state i { font-size: 48px; margin-bottom: 10px; }
-
-        /* Chat Header & Property Context Card */
-        .chat-box-header { padding: 10px 15px; background: white; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
-        .active-user-details { display: flex; align-items: center; gap: 10px; }
-        .active-user-details h3 { margin: 0; font-size: 16px; color: var(--dark); }
-        
-        .property-mini-card { display: flex; align-items: center; gap: 8px; background: #f1f3f5; padding: 6px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; max-width: 250px; }
-        .property-mini-card img { width: 35px; height: 35px; border-radius: 4px; object-fit: cover; }
-        .property-mini-info h5 { margin: 0; font-size: 12px; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .property-mini-info span { font-size: 11px; color: var(--success); font-weight: bold; }
-
-        /* Messages Area */
-        .messages-display { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg-bubble { max-width: 70%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; position: relative; }
-        .msg-bubble.incoming { background: white; align-self: flex-start; border-bottom-left-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); color: #333; }
-        .msg-bubble.outgoing { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .msg-time { font-size: 9px; display: block; margin-top: 4px; text-align: right; opacity: 0.7; }
-
-        /* Quick Replies Templates */
-        .quick-replies { padding: 8px 15px; display: flex; gap: 8px; overflow-x: auto; background: transparent; white-space: nowrap; }
-        .quick-btn { padding: 6px 12px; background: white; border: 1px solid #ddd; border-radius: 20px; font-size: 12px; cursor: pointer; color: var(--dark); transition: all 0.2s; }
-        .quick-btn:hover { border-color: var(--primary); color: var(--primary); }
-
-        /* Input Area */
-        .chat-input-area { padding: 12px 15px; background: white; border-top: 1px solid #eee; display: flex; align-items: center; gap: 10px; }
-        .chat-input-area input { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 24px; outline: none; font-size: 14px; }
-        .chat-input-area input:focus { border-color: var(--primary); }
-        .btn-send { background: var(--primary); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn-send:hover { background: #0056b3; }
-
-        /* আপনার মেসেজ ইনপুট কন্টেইনারের ক্লাস বা আইডি (ধরে নিলাম নাম .input-container) */
-.input-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: #ffffff;
-    padding: 10px;
-    box-sizing: border-box;
-    z-index: 1000;
-    
-    /* 🎯 এই লাইনটি কিবোর্ডের উপরে ইনপুট বক্স ধরে রাখতে সাহায্য করবে */
-    bottom: env(safe-area-inset-bottom, 0px); 
+        /* 🔙 ব্যাক বাটন ও সেকশন এরিয়া রি-ডিজাইন */
+        .back-bar-container {
+            background-color: white;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eef2f5;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            z-index: 99;
         }
 
-        /* Mobile Responsive */
+        .btn-back { 
+            background: #fff; 
+            border: 1.5px solid var(--primary); 
+            color: var(--primary); 
+            padding: 8px 18px; 
+            border-radius: 30px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            font-weight: 700; 
+            font-size: 13px; 
+            box-shadow: var(--card-shadow); 
+            transition: all 0.3s ease; 
+        }
+        
+        .btn-back:hover { 
+            background: var(--primary); 
+            color: white; 
+            transform: translateY(-1px);
+        }
+        
+        /* 📦 মেইন লেআউট ফিক্স (অপ্রয়োজনীয় গ্যাপ দূর করা) */
+        .main-content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-container { 
+            display: flex; 
+            flex: 1; 
+            max-width: 1200px; 
+            width: 100%; 
+            margin: 0 auto; 
+            background: white; 
+            overflow: hidden; 
+            height: 100%;
+        }
+        
+        /* 👥 বামপাশ: প্রিমিয়াম চ্যাট লিস্ট */
+        .chat-sidebar { 
+            width: 350px; 
+            border-right: 1px solid #edf2f7; 
+            display: flex; 
+            flex-direction: column; 
+            background: #fff; 
+        }
+        
+        .sidebar-header { 
+            padding: 18px 20px; 
+            font-size: 18px; 
+            font-weight: bold; 
+            color: var(--dark); 
+            border-bottom: 1px solid #edf2f7; 
+            background: #fafbfc;
+        }
+        
+        .chat-list { 
+            flex: 1; 
+            overflow-y: auto; 
+        }
+        
+        /* চ্যাট আইটেম ডিজাইন প্রিমিয়াম লুক */
+        .chat-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            padding: 15px 20px; 
+            cursor: pointer; 
+            border-bottom: 1px solid #f7fafc; 
+            transition: all 0.25s ease; 
+        }
+        
+        .chat-item:hover { 
+            background: #f8faff; 
+        }
+        
+        .chat-item.active { 
+            background: var(--primary-light); 
+            border-left: 4px solid var(--primary);
+        }
+        
+        .chat-item img { 
+            width: 48px; 
+            height: 48px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            background: #edf2f7; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .chat-item-info { 
+            flex: 1; 
+            overflow: hidden; 
+        }
+        
+        .chat-item-info h4 { 
+            margin: 0 0 5px 0; 
+            font-size: 15px; 
+            font-weight: 600;
+            color: var(--dark); 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+        
+        .chat-item-info p { 
+            margin: 0; 
+            font-size: 13px; 
+            color: var(--gray); 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+
+        /* 💬 ডানপাশ: চ্যাট বক্স */
+        .chat-main { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            background: #f4f7f9; 
+            position: relative; 
+        }
+        
+        .chat-empty-state { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            flex: 1; 
+            color: var(--gray); 
+        }
+        
+        .chat-empty-state i { 
+            font-size: 56px; 
+            color: #cbd5e1;
+            margin-bottom: 15px; 
+        }
+
+        /* চ্যাট হেডার */
+        .chat-box-header { 
+            padding: 12px 20px; 
+            background: white; 
+            border-bottom: 1px solid #edf2f7; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+        }
+        
+        .active-user-details { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+        }
+        
+        .active-user-details h3 { 
+            margin: 0; 
+            font-size: 16px; 
+            font-weight: bold;
+            color: var(--dark); 
+        }
+        
+        /* মিনি প্রপার্টি কার্ড */
+        .property-mini-card { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            background: #f8fafc; 
+            padding: 8px 14px; 
+            border-radius: 10px; 
+            border: 1px solid #e2e8f0;
+            cursor: pointer; 
+            text-decoration: none; 
+            max-width: 280px; 
+            transition: all 0.2s;
+        }
+        
+        .property-mini-card:hover {
+            border-color: var(--primary);
+            background: white;
+        }
+        
+        .property-mini-card img { 
+            width: 38px; 
+            height: 38px; 
+            border-radius: 6px; 
+            object-fit: cover; 
+        }
+        
+        .property-mini-info h5 { 
+            margin: 0; 
+            font-size: 12px; 
+            color: var(--dark); 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+        
+        .property-mini-info span { 
+            font-size: 11px; 
+            color: var(--success); 
+            font-weight: bold; 
+        }
+
+        /* মেসেজ বাবল ও এরিয়া */
+        .messages-display { 
+            flex: 1; 
+            padding: 20px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+        }
+        
+        .msg-bubble { 
+            max-width: 70%; 
+            padding: 12px 16px; 
+            border-radius: 16px; 
+            font-size: 14px; 
+            line-height: 1.5; 
+            word-wrap: break-word; 
+            position: relative; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .msg-bubble.incoming { 
+            background: white; 
+            align-self: flex-start; 
+            border-top-left-radius: 4px; 
+            color: #333; 
+        }
+        
+        .msg-bubble.outgoing { 
+            background: var(--primary); 
+            color: white; 
+            align-self: flex-end; 
+            border-top-right-radius: 4px; 
+        }
+        
+        .msg-time { 
+            font-size: 9px; 
+            display: block; 
+            margin-top: 5px; 
+            text-align: right; 
+            opacity: 0.7; 
+        }
+
+        /* কুইক রিপ্লাই */
+        .quick-replies { 
+            padding: 10px 20px; 
+            display: flex; 
+            gap: 10px; 
+            overflow-x: auto; 
+            background: #fafbfc; 
+            white-space: nowrap; 
+            border-top: 1px solid #edf2f7;
+        }
+        
+        .quick-btn { 
+            padding: 8px 16px; 
+            background: white; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 20px; 
+            font-size: 13px; 
+            font-weight: 500;
+            cursor: pointer; 
+            color: var(--dark); 
+            transition: all 0.25s; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        
+        .quick-btn:hover { 
+            border-color: var(--primary); 
+            color: var(--primary); 
+            background: var(--primary-light);
+        }
+
+        /* ইনপুট এরিয়া */
+        .chat-input-area { 
+            padding: 15px 20px; 
+            background: white; 
+            border-top: 1px solid #edf2f7; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+        }
+        
+        .chat-input-area input { 
+            flex: 1; 
+            padding: 12px 18px; 
+            border: 1.5px solid #e2e8f0; 
+            border-radius: 30px; 
+            outline: none; 
+            font-size: 14px; 
+            transition: all 0.25s;
+            background: #f8fafc;
+        }
+        
+        .chat-input-area input:focus { 
+            border-color: var(--primary); 
+            background: white;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        
+        .btn-send { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            width: 44px; 
+            height: 44px; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 0 3px 8px rgba(0, 123, 255, 0.3);
+            transition: all 0.2s;
+        }
+        
+        .btn-send:hover { 
+            background: #0056b3; 
+            transform: scale(1.05);
+        }
+
+        /* সেফ এরিয়া কিবোর্ড ফিক্স */
+        .input-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ffffff;
+            padding: 10px;
+            box-sizing: border-box;
+            z-index: 1000;
+            bottom: env(safe-area-inset-bottom, 0px); 
+        }
+
+        /* ফুটার */
+        .footer {
+            background: white;
+            border-top: 1px solid #edf2f7;
+            padding: 15px 0;
+            text-align: center;
+            font-size: 13px;
+            color: var(--gray);
+        }
+
+        /* মোবাইল রেসপন্সিভনেস আপডেট */
         @media (max-width: 768px) {
             .chat-sidebar { width: 100%; display: block; }
-            .chat-main { display: none; position: fixed; top: 60px; left: 0; right: 0; bottom: 0; z-index: 100; height: calc(100vh - 60px); }
+            .chat-main { display: none; position: fixed; top: 112px; left: 0; right: 0; bottom: 0; z-index: 100; height: calc(100vh - 112px); }
             .chat-main.active { display: flex; }
             .chat-sidebar.hidden { display: none; }
             .back-to-list { display: block !important; margin-right: 10px; cursor: pointer; color: var(--dark); }
@@ -217,104 +531,99 @@
                     <img src="https://www.w3schools.com/howto/img_avatar.png" alt="Profile" id="profileImage">
                 </div>
             </div>
-            
         </div>
     </header>
 
-    
-    
     <div class="sidebar" id="sidebar">
         <nav style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
             <a href="index.html" class="sidebar-logo">
                 <i class="material-icons">home</i> 
                 <span>আমার বাড়ি.কম</span>
             </a>
-            
             <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
             <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            
             <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
             <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
             <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            
             <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
         </nav>
     </div>
     <div class="overlay" id="overlay"></div>
 
-    <div class="container">
-        <button class="btn-back" onclick="window.history.back()"><i class="material-icons">arrow_back</i> ফিরে যান</button>
+    <!-- 🎯 ব্যাক বাটন কন্টেইনার জোনিং (Zonal Layout) -->
+    <div class="back-bar-container">
+        <button class="btn-back" onclick="window.history.back()">
+            <i class="material-icons">arrow_back</i> ফিরে যান
+        </button>
     </div> 
     
     <div class="main-content-area">
-    
-    <div class="chat-container">
-        <!-- বামপাশ: চ্যাট লিস্ট -->
-        <div class="chat-sidebar" id="chatSidebar">
-            <div class="sidebar-header">মেসেজ সমূহ</div>
-            <div class="chat-list" id="chatListContainer">
-                <div style="padding:20px; text-align:center; color:var(--gray);">চ্যাট লোড হচ্ছে...</div>
-            </div>
-        </div>
-
-        <!-- ডানপাশ: চ্যাট বক্স -->
-        <div class="chat-main" id="chatMainBox">
-            <!-- ডিফল্ট এম্পটি স্টেট -->
-            <div class="chat-empty-state" id="emptyState">
-                <i class="material-icons">chat_bubble_outline</i>
-                <p>বামপাশের লিস্ট থেকে যেকোনো একটি চ্যাট সিলেক্ট করুন।</p>
+        <div class="chat-container">
+            <!-- বামপাশ: চ্যাট লিস্ট -->
+            <div class="chat-sidebar" id="chatSidebar">
+                <div class="sidebar-header">মেসেজ সমূহ</div>
+                <div class="chat-list" id="chatListContainer">
+                    <div style="padding:20px; text-align:center; color:var(--gray);">চ্যাট লোড হচ্ছে...</div>
+                </div>
             </div>
 
-            <!-- একটিভ চ্যাট ইন্টারফেস (লুকানো থাকবে প্রথমে) -->
-            <div id="activeChatContent" style="display:none; flex-direction:column; flex:1; height:100%;">
-                <div class="chat-box-header">
-                    <div class="active-user-details">
-                        <i class="material-icons back-to-list" id="backToListBtn" style="display:none;">arrow_back</i>
-                        <h3 id="activeChatUserName">ইউজার</h3>
-                    </div>
-                    <!-- প্রপার্টি কনটেক্সট মিনি কার্ড -->
-                    <a href="#" id="activePropertyCard" class="property-mini-card" target="_blank">
-                        <img id="activePropertyImg" src="placeholder.jpg" alt="Property">
-                        <div class="property-mini-info">
-                            <h5 id="activePropertyTitle">লোড হচ্ছে...</h5>
-                            <span id="activePropertyPrice">৳ 0</span>
+            <!-- ডানপাশ: চ্যাট বক্স -->
+            <div class="chat-main" id="chatMainBox">
+                <!-- ডিফল্ট এম্পটি স্টেট -->
+                <div class="chat-empty-state" id="emptyState">
+                    <i class="material-icons">chat_bubble_outline</i>
+                    <p>বামপাশের লিস্ট থেকে যেকোনো একটি চ্যাট সিলেক্ট করুন।</p>
+                </div>
+
+                <!-- একটিভ চ্যাট ইন্টারফেস -->
+                <div id="activeChatContent" style="display:none; flex-direction:column; flex:1; height:100%;">
+                    <div class="chat-box-header">
+                        <div class="active-user-details">
+                            <i class="material-icons back-to-list" id="backToListBtn" style="display:none;">arrow_back</i>
+                            <h3 id="activeChatUserName">ইউজার</h3>
                         </div>
-                    </a>
-                </div>
+                        <!-- প্রপার্টি কনটেক্সট মিনি কার্ড -->
+                        <a href="#" id="activePropertyCard" class="property-mini-card" target="_blank">
+                            <img id="activePropertyImg" src="placeholder.jpg" alt="Property">
+                            <div class="property-mini-info">
+                                <h5 id="activePropertyTitle">লোড হচ্ছে...</h5>
+                                <span id="activePropertyPrice">৳ 0</span>
+                            </div>
+                        </a>
+                    </div>
 
-                <!-- মেসেজ ডিসপ্লে স্ক্রিন -->
-                <div class="messages-display" id="messagesDisplay"></div>
+                    <!-- মেসেজ ডিসপ্লে স্ক্রিন -->
+                    <div class="messages-display" id="messagesDisplay"></div>
 
-                <!-- কুইক রিপ্লাই টেমপ্লেট বাটন -->
-                <div class="quick-replies">
-                    <button class="quick-btn" onclick="sendQuickReply('আসসালামু আলাইকুম, প্রপার্টিটি কি এখনো এভেইলেবল আছে?')">এখনো কি আছে?</button>
-                    <button class="quick-btn" onclick="sendQuickReply('আমি এটি সরাসরি দেখতে আগ্রহী। কবে সময় দেওয়া যাবে?')|">সরাসরি দেখতে চাই</button>
-                    <button class="quick-btn" onclick="sendQuickReply('দাম কি কিছুটা আলোচনা সাপেক্ষ?')">দাম কি কম হবে?</button>
-                </div>
+                    <!-- কুইক রিপ্লাই টেমপ্লেট বাটন -->
+                    <div class="quick-replies">
+                        <button class="quick-btn" onclick="sendQuickReply('আসসালামু আলাইকুম, প্রপার্টিটি কি এখনো এভেইলেবল আছে?')">এখনো কি আছে?</button>
+                        <button class="quick-btn" onclick="sendQuickReply('আমি এটি সরাসরি দেখতে আগ্রহী। কবে সময় দেওয়া যাবে?')">সরাসরি দেখতে চাই</button>
+                        <button class="quick-btn" onclick="sendQuickReply('দাম কি কিছুটা আলোচনা সাপেক্ষ?')">দাম কি কম হবে?</button>
+                    </div>
 
-                <!-- টেক্সট ইনপুট এরিয়া -->
-                <div class="chat-input-area">
-                    <input type="text" id="messageInputField" placeholder="আপনার মেসেজটি লিখুন...">
-                    <button class="btn-send" id="sendMessageBtn">
-                        <i class="material-icons">send</i>
-                    </button>
+                    <!-- টেক্সট ইনপুট এরিয়া -->
+                    <div class="chat-input-area">
+                        <input type="text" id="messageInputField" placeholder="আপনার মেসেজটি লিখুন...">
+                        <button class="btn-send" id="sendMessageBtn">
+                            <i class="material-icons">send</i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     </div>
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+            <p>&copy; 2026 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
     
     <script src="messages.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
@@ -339,6 +648,6 @@
             if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
             if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
         });
-</script>
+    </script>
 </body>
-            </html>
+    </html>
