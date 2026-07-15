@@ -547,6 +547,81 @@
                 background: white;
             }
         }
+
+        /* চ্যাট আইটেমকে রিলেটিভ করা যাতে থ্রি-ডট ডানপাশে সেট করা যায় */
+.chat-item {
+    position: relative;
+    padding-right: 45px; /* থ্রি-ডটের জন্য ডানপাশে কিছুটা জায়গা খালি রাখা */
+}
+
+/* থ্রি-ডট বাটন স্টাইল */
+.chat-item-menu-btn {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--gray);
+    cursor: pointer;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+    z-index: 10; /* যাতে চ্যাট আইটেমের ক্লিকে সমস্যা না করে */
+}
+
+.chat-item-menu-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--dark);
+}
+
+/* ড্রপডাউন মেনু কন্টেইনার */
+.chat-dropdown {
+    display: none;
+    position: absolute;
+    right: 15px;
+    top: 75%;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 20;
+    min-width: 120px;
+    overflow: hidden;
+}
+
+.chat-dropdown.show {
+    display: block;
+}
+
+/* ড্রপডাউনের ভেতরের বাটন (ডিলিট বাটন) */
+.chat-dropdown-item {
+    width: 100%;
+    padding: 10px 15px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 13px;
+    color: #e53e3e; /* লাল রঙ ডিলিটের জন্য */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.chat-dropdown-item:hover {
+    background: #fff5f5;
+}
+
+.chat-dropdown-item i {
+    font-size: 16px;
+                }
+        
     </style>
 </head>
 <body>
