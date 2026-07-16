@@ -5,28 +5,28 @@
 importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
 
-// ⚠️ তোমার ফায়ারবেস প্রজেক্ট কনফিগারেশন দিয়ে এটি পরিবর্তন করো
+// ⚠️ ফিক্সড কনফিগারেশন
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
+    authDomain: "amar-bari-website.firebaseapp.com",
+    projectId: "amar-bari-website",
+    storageBucket: "amar-bari-website.firebasestorage.app",
+    messagingSenderId: "719084789035",
+    appId: "1:719084789035:web:f4da765290b3519d0e82fe"
 };
 
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// ব্যাকগ্রাউন্ডে (ট্যাব বন্ধ থাকলে) নোটিফিকেশন রিসিভ করার লজিক
+// ব্যাকগ্রাউন্ডে নোটিফিকেশন রিসিভ করার লজিক
 messaging.onBackgroundMessage((payload) => {
     console.log('[SW] ব্যাকগ্রাউন্ড মেসেজ রিসিভড: ', payload);
 
     const notificationTitle = payload.notification.title || 'আমার বাড়ি.কম';
     const notificationOptions = {
         body: payload.notification.body || 'আপনার একটি নতুন নোটিফিকেশন আছে।',
-        icon: '/assets/images/logo.png', // তোমার লোগো পাথ
-        badge: '/assets/images/badge.png', // ছোট আইকন পাথ
+        icon: '/assets/images/logo.png',
+        badge: '/assets/images/badge.png',
         data: {
             click_action: payload.data.click_action || '/notifications.html'
         }
