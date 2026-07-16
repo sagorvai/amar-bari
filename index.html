@@ -235,22 +235,23 @@
 
         /* 🔔 কাস্টম নোটিফিকেশন পপআপের আধুনিক CSS স্টাইল */
         #custom-notification-popup {
-            position: fixed;
-            bottom: -200px;
-            right: 20px;
-            width: 380px;
-            background: #ffffff;
-            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.15);
-            border-radius: 12px;
-            padding: 20px;
-            z-index: 99999;
-            transition: bottom 0.5s ease-in-out;
-            border-left: 5px solid #1877f2;
-            font-family: 'Hind Siliguri', sans-serif;
-        }
-        #custom-notification-popup.fcm-popup-show {
-            bottom: 20px;
-        }
+    position: fixed;
+    bottom: -300px; /* ডিফল্টভাবে স্ক্রিনের নিচে থাকবে */
+    right: 20px;
+    width: 380px;
+    background: #ffffff;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+    z-index: 99999;
+    transition: bottom 0.5s ease-in-out;
+    border-left: 5px solid #1877f2;
+    font-family: 'Hind Siliguri', sans-serif;
+    display: block !important; /* এটি যেন কোনোভাবে হাইড না থাকে */
+}
+#custom-notification-popup.fcm-popup-show {
+    bottom: 20px; /* যখন শো করবে তখন ওপরে উঠে আসবে */
+}
         .fcm-popup-content {
             display: flex;
             flex-direction: column;
@@ -477,7 +478,7 @@
     </footer>
 
     <!-- 🔔 কাস্টম নোটিফিকেশন ব্যানার/পপআপ HTML স্ট্রাকচার -->
-    <div id="custom-notification-popup" class="fcm-popup-hidden">
+    <div id="custom-notification-popup">
         <div class="fcm-popup-content">
             <div class="fcm-popup-icon">🔔</div>
             <div class="fcm-popup-text">
@@ -513,7 +514,23 @@
                 });
             }
 
-            if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
+            if (notificationButton) {
+    notificationButton.addEventListener('click', (e) => {
+        // যদি ইউজার লগইন ছাড়া থাকে (গেস্ট), তবে পেজ চেঞ্জ না করে আমাদের পপআপ দেখাবে
+        if (!firebase.auth().currentUser) {
+            e.preventDefault();
+            if (typeof triggerCustomPopup === "function") {
+                triggerCustomPopup("badge");
+            } else if (window.triggerFCM) {
+                window.triggerFCM("badge");
+            }
+        } else {
+            // লগইন করা থাকলে সরাসরি নোটিফিকেশন পেজে নিয়ে যাবে
+            window.location.href = 'notifications.html';
+        }
+    });
+            }
+            
             if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
             if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
             if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
