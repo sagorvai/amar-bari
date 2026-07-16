@@ -197,3 +197,8 @@ window.triggerFCM = function(type) {
         triggerCustomPopup(type);
     }
   }
+
+// ফাংশনগুলোকে ব্রাউজারের গ্লোবাল উইন্ডো স্কোপে উন্মুক্ত করা হলো
+window.triggerCustomPopup = triggerCustomPopup;
+window.triggerFCM = triggerCustomPopup;
+
