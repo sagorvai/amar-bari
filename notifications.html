@@ -8,7 +8,7 @@
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
     
-    <!-- Firebase SDKs (সিনক্রোনাইজড লোডিং) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -195,7 +195,7 @@
                 <i class="material-icons menu-icon" id="menuButton">menu</i>
                 <a href="index.html" class="logo-title">
                    <i class="material-icons logo-icon">home</i>  
-                    <span>আমার বাড়ি.কম</span>
+                    <span>আমার বাড়ি.কম</span>
                 </a>
             </div>
             
@@ -225,7 +225,7 @@
         <nav>
             <a href="index.html" class="sidebar-logo">
                 <i class="material-icons">home</i> 
-                <span>আমার বাড়ি.কম</span>
+                <span>আমার বাড়ি.কম</span>
             </a>
             <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
             <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
@@ -242,7 +242,7 @@
     <main class="main-content">
         <div class="notification-page-container">
             <h2><i class="material-icons" style="vertical-align: middle;">notifications</i> আপনার সকল নোটিফিকেশনস</h2>
-            <p id="auth-message" style="text-align: center; color: red; display: none;">নোটিফিকেশন দেখতে অনুগ্রহ করে লগইন করুন।</p>
+            <!-- লগইন মেসেজের আর কোনো প্রয়োজন নেই, পেজটি পুরোপুরি উন্মুক্ত -->
             <ul id="notifications-list" class="notification-list">
                 <p style="text-align: center; color: #555;">নোটিফিকেশন লোড হচ্ছে...</p>
             </ul>
@@ -251,23 +251,11 @@
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2026 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+            <p>&copy; 2026 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
     
     <script>
-        // হেডার ও সাইডবার কন্ট্রোল লজিক
-        const handleLogout = async (e) => {
-            e.preventDefault();
-            try {
-                await firebase.auth().signOut(); 
-                alert('সফলভাবে লগআউট করা হয়েছে!');
-                window.location.href = 'index.html'; 
-            } catch (error) {
-                console.error("লগআউট ব্যর্থ হয়েছে:", error);
-            }
-        };
-
         document.addEventListener('DOMContentLoaded', function() {
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
@@ -276,10 +264,7 @@
             const headerPostButton = document.getElementById('headerPostButton');
             const messageButton = document.getElementById('messageButton');
             const profileImageWrapper = document.getElementById('profileImageWrapper'); 
-            const postLinkSidebar = document.getElementById('post-link-sidebar-menu');
-            const loginLinkSidebar = document.getElementById('login-link-sidebar');
 
-            // মেনু বাটন এবং সাইডবার টগল
             if (menuButton) {
                 menuButton.addEventListener('click', () => {
                     sidebar.classList.toggle('active');
@@ -300,10 +285,8 @@
         });
     </script>
 
+    <!-- জাভাস্ক্রিপ্ট লোডিং (একদম সঠিক ক্রমানুসারে) -->
     <script src="notifications.js"></script> 
-    
-    <!-- 🎯 আমাদের নতুন লাইভ হেডার সিঙ্ক স্ক্রিপ্ট -->
     <script src="header-sync.js"></script>
-    
 </body>
-        </html>
+                    </html>
