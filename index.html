@@ -516,20 +516,26 @@
 
             if (notificationButton) {
     notificationButton.addEventListener('click', (e) => {
-        // যদি ইউজার লগইন ছাড়া থাকে (গেস্ট), তবে পেজ চেঞ্জ না করে আমাদের পপআপ দেখাবে
+        // যদি ইউজার লগইন ছাড়া থাকে (গেস্ট)
         if (!firebase.auth().currentUser) {
             e.preventDefault();
-            if (typeof triggerCustomPopup === "function") {
-                triggerCustomPopup("badge");
-            } else if (window.triggerFCM) {
+            
+            // উইন্ডো অবজেক্ট থেকে সরাসরি ফাংশন কল নিশ্চিত করা
+            if (typeof window.triggerCustomPopup === "function") {
+                window.triggerCustomPopup("badge");
+            } else if (typeof window.triggerFCM === "function") {
                 window.triggerFCM("badge");
+            } else {
+                // কোনো কারণে স্ক্রিপ্ট ডিলে হলে পপআপের ক্লাস সরাসরি টগল করার ব্যাকআপ লজিক
+                const popup = document.getElementById('custom-notification-popup');
+                if (popup) popup.classList.add('fcm-popup-show');
             }
         } else {
-            // লগইন করা থাকলে সরাসরি নোটিফিকেশন পেজে নিয়ে যাবে
+            // লগইন করা থাকলে নোটিফিকেশন পেজে যাবে
             window.location.href = 'notifications.html';
         }
     });
-            }
+                                         }
             
             if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
             if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
