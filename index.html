@@ -501,7 +501,6 @@
             const notificationButton = document.getElementById('notificationButton');
             const headerPostButton = document.getElementById('headerPostButton');
             const messageButton = document.getElementById('messageButton');
-            const profileImageWrapper = document.getElementById('profileImageWrapper');
 
             if (menuButton && sidebar && overlay) {
                 menuButton.addEventListener('click', () => {
@@ -515,49 +514,29 @@
             }
 
             if (notificationButton) {
-    notificationButton.addEventListener('click', (e) => {
-        // ১. শুরুতেই পেজের ডিফল্ট রিডাইরেক্ট অ্যাকশন সম্পূর্ণ বন্ধ করা হলো
-        e.preventDefault(); 
-        e.stopPropagation();
+                notificationButton.addEventListener('click', (e) => {
+                    const user = firebase.auth().currentUser;
+                    const hasPermission = Notification.permission === 'granted';
 
-        // ২. ইউজারের লগইন অবস্থা চেক করা হচ্ছে
-        const user = firebase.auth().currentUser;
-
-        if (!user) {
-            console.log("গেস্ট ভিজিটর ক্লিক করেছেন। কাস্টম পপআপ লোড করা হচ্ছে...");
-            
-            // ৩. পপআপ এলিমেন্টটি সরাসরি খুঁজে নিয়ে ক্লাস যুক্ত করার ফেইল-সেফ লজিক
-            const popup = document.getElementById('custom-notification-popup');
-            if (popup) {
-                // পপআপের ভেতরের টেক্সট গেস্ট মোডের জন্য ডাইনামিক করা হলো
-                const titleElement = document.getElementById('fcm-popup-title');
-                const bodyElement = document.getElementById('fcm-popup-body');
-                if (titleElement) titleElement.innerText = "🔔 নোটিফিকেশন পেজটি দেখতে অনুমতি দিন!";
-                if (bodyElement) bodyElement.innerText = "'আমার বাড়ি.কম'-এর সেরা সব প্রপার্টি ডিল, নতুন বাসা ভাড়া এবং ক্রেতা-বিক্রেতার চ্যাট মেসেজের লাইভ আপডেট সরাসরি আপনার ডিভাইসের স্ক্রিনে পেতে নোটিফিকেশনটি চালু করুন।";
-                
-                // পপআপ স্ক্রিনে স্লাইড করে তুলে আনা হলো
-                popup.classList.add('fcm-popup-show');
-            } else {
-                console.error("কাস্টম পপআপের HTML এলিমেন্টটি খুঁজে পাওয়া যায়নি!");
+                    if (!user && !hasPermission) {
+                        e.preventDefault(); 
+                        e.stopPropagation();
+                        console.log("গেস্ট ভিজিটর ক্লিক করেছেন। কাস্টম পপআপ লোড করা হচ্ছে...");
+                        window.triggerFCM("badge");
+                    } else {
+                        // ইউজার লগইন করা থাকলে বা নোটিফিকেশন পারমিশন অলরেডি দেওয়া থাকলে রিডাইরেক্ট হবে
+                        window.location.href = 'notifications.html';
+                    }
+                });
             }
-        } else {
-            // ৪. ইউজার লগইন করা থাকলে তাকে সরাসরি নোটিফিকেশন পেজে পাঠানো হবে
-            window.location.href = 'notifications.html';
-        }
-    });
-        }
-            
-            if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
-            if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
-            if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
         });
     </script>
     
     <script src="index.js"></script>
-    <script src="notifications.js"></script> 
     <script src="header-sync.js"></script>
-
     <!-- 🎯 আমাদের মেইন স্মার্ট লজিক ইঞ্জিন সবার শেষে এক্সিকিউট হবে -->
     <script src="fcm-setup.js"></script>
 </body>
-    </html>
+</html>
+
+
