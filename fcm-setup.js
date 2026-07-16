@@ -166,13 +166,40 @@ async function migrateVisitorTokenToUser(userId) {
     }
 }
 
-firebase.auth().onAuthStateChanged(user => {
+// 🔄 অথেনটিকেশন স্টেট মনিটর করা (সাইনআপ/লগইন করা ইউজারদের জন্য ফেইল-সেফ ফিক্স)
+firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
-        migrateVisitorTokenToUser(user.uid);
+        console.log("ইউজার লগইন/সাইনআপ অবস্থায় আছেন। UID:", user.uid);
+        
+        // ১. হেডার থেকে ডামী ব্যাজ রিমুভ করা
         const notificationBadge = document.getElementById('notification-badge');
         if (notificationBadge) notificationBadge.style.display = "none";
+
+        // ২. যদি আগে গেস্ট অবস্থায় টোকেন সেভ করা থাকে, তবে সেটি ইউজারের অ্যাকাউন্টে ট্রান্সফার হবে
+        await migrateVisitorTokenToUser(user.uid);
+
+        // 🎯 ৩. ফেইল-সেফ চেক: ইউজার যদি নোটিফিকেশন এলাউ না করে সাইনআপ করে থাকে
+        if (Notification.permission === 'default') {
+            console.log("সাইনআপ করা ইউজারের পারমিশন এখনও নেওয়া হয়নি। স্বয়ংক্রিয়ভাবে নোটিফিকেশন চাওয়া হচ্ছে...");
+            try {
+                // কোনো পপআপ ছাড়া সরাসরি ব্রাউজারের নোটিফিকেশন বক্স আসবে
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    await getAndSaveToken(); // টোকেন জেনারেট হয়ে সরাসরি users/{uid} এ সেভ হবে
+                    triggerWelcomeNotification();
+                }
+            } catch (error) {
+                console.error("লগইন পরবর্তী পারমিশন রিকোয়েস্ট এরর:", error);
+            }
+        } 
+        // ৪. ইউজার যদি আগে এলাউ করে থাকে কিন্তু কোনো কারণে ডাটাবেজে টোকেন মিসিং থাকে
+        else if (Notification.permission === 'granted') {
+            console.log("পারমিশন অলরেডি গ্রান্টেড, টোকেন সিঙ্ক করা হচ্ছে...");
+            await getAndSaveToken();
+        }
     }
 });
+
 
 // 🎉 ৮. স্বাগত নোটিফিকেশন
 function triggerWelcomeNotification() {
