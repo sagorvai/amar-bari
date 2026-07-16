@@ -5,7 +5,7 @@
 const messaging = firebase.messaging();
 
 // ⚠️ ফায়ারবেস কনসোলের Cloud Messaging সেটিংস থেকে জেনারেট করা VAPID Key এখানে বসাও
-const VAPID_KEY = "YOUR_VAPID_KEY_FROM_FIREBASE_CONSOLE"; 
+const VAPID_KEY = "BIWyqUvtwx7iH6nKiZRVCNl7ihTsFn40IJ1LVp58RYIFDEbHrWBSYnVVQ2iA5m9d7tmbNngRPvAhPDEW34SBoLg"; 
 
 let currentTriggerType = "delayed"; // ৪টি ভিন্ন ট্রিগার ট্র্যাক করার জন্য ভেরিয়েবল
 
