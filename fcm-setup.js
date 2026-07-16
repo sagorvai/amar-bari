@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // সার্ভিস ওয়ার্কার রেজিস্টার করা ও ৩-মিনিট ডিলে টাইমার শুরু
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        navigator.serviceWorker.register('./firebase-messaging-sw.js')
         .then((registration) => {
             messaging.useServiceWorker(registration);
             
