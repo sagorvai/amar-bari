@@ -166,68 +166,70 @@ async function migrateVisitorTokenToUser(userId) {
     }
 }
 
-// 🔄 অথেনটিকেশন স্টেট মনিটর করা (সাইনআপ/লগইন করার সাথে সাথে ফায়ারস্টোর ইউজার ডক ও টোকেন নিশ্চিত করার ফিক্স)
-firebase.auth().onAuthStateChanged(async (user) => {
+// 🔄 অথেনটিকেশন স্টেট মনিটর করা (১০০% সচল ও সহজ সংস্করণ)
+firebase.auth().onAuthStateChanged((user) => {
     if (user) {
         console.log("ইউজার লগইন/সাইনআপ অবস্থায় আছেন। UID:", user.uid);
         
-        // ১. হেডার থেকে ডামী ব্যাজ রিমুভ করা
+        // ১. ডামি ব্যাজ মুছে ফেলা
         const notificationBadge = document.getElementById('notification-badge');
         if (notificationBadge) notificationBadge.style.display = "none";
 
         const db = firebase.firestore();
-        
-        // 🛠️ ২. ফেইল-সেফ চেক: ফায়ারস্টোরে এই ইউজারের ডকটি আগে থেকে আছে কি না যাচাই করা
-        try {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            
-            if (!userDoc.exists) {
-                console.log("ফায়ারস্টোরে ইউজার কালেকশন পাওয়া যায়নি। নতুন ডকুমেন্ট তৈরি করা হচ্ছে...");
-                // সাইনআপের সাথে সাথে ইউজার কালেকশনে প্রাথমিক ডেটা অবজেক্ট তৈরি করে দেওয়া হলো
-                await db.collection('users').doc(user.uid).set({
-                    uid: user.uid,
-                    email: user.email || "",
-                    phoneNumber: user.phoneNumber || "",
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    fcmToken: "" // আপাতত খালি, নিচে পারমিশন অনুযায়ী আপডেট হবে
-                }, { merge: true });
-            }
-        } catch (err) {
-            console.error("ইউজার ডক চেক/তৈরি করার সময় ত্রুটি:", err);
-        }
 
-        // 🔍 ৩. চেক করা হচ্ছে আগে থেকে লোকাল স্টোরেজে টোকেন সংগ্রহ আছে কি না
-        const savedToken = localStorage.getItem('my_fcm_token');
-
-        if (savedToken) {
-            // টোকেন অলরেডি আছে! সরাসরি টোকেনটি নতুন তৈরি হওয়া ইউজার আইডিতে সিঙ্ক ও স্থানান্তরিত করবে
-            console.log("আগে থেকেই টোকেন সংগ্রহ করা আছে। সিঙ্ক করা হচ্ছে...");
-            await migrateVisitorTokenToUser(user.uid);
-            await getAndSaveToken(); // ফায়ারস্টোর ইউজার ডকে টোকেনটি নিশ্চিত করার জন্য ব্যাকআপ সিঙ্ক
-        } 
-        else {
-            // টোকেন নেই! এবার চেক করবে ব্রাউজারের পারমিশন ডিフォルト কি না, থাকলে পারমিশন চাইবে
-            console.log("পূর্বে কোনো টোকেন সংগ্রহ করা হয়নি।");
+        // ২. সরাসরি ফায়ারস্টোরে একটি 'ফেইল-সেফ' প্রাথমিক রাইট (Write) অপারেশন রান করা
+        // এটি ইউজার কালেকশনে ডেটা না থাকলেও সাথে সাথে ডকুমেন্টটি তৈরি করে দেবে
+        db.collection('users').doc(user.uid).set({
+            uid: user.uid,
+            email: user.email || "",
+            phoneNumber: user.phoneNumber || "",
+            lastActive: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true })
+        .then(() => {
+            console.log("ফায়ারস্টোরে ইউজারের বেসিক প্রোফাইল ও কালেকশন নিশ্চিত করা হয়েছে।");
             
-            if (Notification.permission === 'default') {
-                console.log("স্বয়ংক্রিয়ভাবে নোটিফিকেশন পারমিশন চাওয়া হচ্ছে...");
-                try {
-                    // কোনো পপআপ ছাড়াই সরাসরি ব্রাউজারের অফিশিয়াল নোটিফিকেশন বক্স আসবে
-                    const permission = await Notification.requestPermission();
-                    if (permission === 'granted') {
-                        await getAndSaveToken(); // নতুন টোকেন জেনারেট হয়ে সরাসরি নতুন তৈরি হওয়া users/{uid} এ সেভ হবে
-                        triggerWelcomeNotification();
-                    }
-                } catch (error) {
-                    console.error("লগইন পরবর্তী পারমিশন রিকোয়েস্ট এরর:", error);
+            // ৩. এবার টোকেন চেকিং শুরু
+            const savedToken = localStorage.getItem('my_fcm_token');
+
+            if (savedToken) {
+                console.log("পূর্বে টোকেন জেনারেট করা আছে, সরাসরি স্থানান্তরিত করা হচ্ছে...");
+                // আগের গেস্ট টোকেনটি ইউজারের ডকে সেভ করবে এবং অ্যানোনিমাস থেকে ডিলিট করবে
+                migrateVisitorTokenToUser(user.uid);
+            } else {
+                console.log("পূর্বে কোনো টোকেন জেনারেট করা হয়নি।");
+                
+                // ৪. ব্রাউজারের পারমিশন চেক করে পারমিশন চাওয়া
+                if (Notification.permission === 'default') {
+                    console.log("ইউজারের কাছে সরাসরি নোটিফিকেশন পারমিশন চাওয়া হচ্ছে...");
+                    
+                    Notification.requestPermission()
+                    .then((permission) => {
+                        if (permission === 'granted') {
+                            // এলাউ করলে টোকেন নিয়ে সরাসরি ইউজার কালেকশনে আপডেট করবে
+                            getAndSaveToken();
+                            triggerWelcomeNotification();
+                        }
+                    })
+                    .catch(err => console.error("পারমিশন চাওয়ার সময় ভুল:", err));
+                } 
+                else if (Notification.permission === 'granted') {
+                    console.log("পারমিশন আগেই দেওয়া আছে, টোকেন রিস্টোর করা হচ্ছে...");
+                    getAndSaveToken();
                 }
-            } 
-            else if (Notification.permission === 'granted') {
-                // ব্রাউজারে গ্রান্টেড কিন্তু লোকাল স্টোরেজ ও ডাটাবেজ খালি, তাই টোকেন জেনারেট করে সেভ করবে
-                console.log("ব্রাউজার পারমিশন গ্রান্টেড কিন্তু টোকেন মিসিং ছিল। নতুন টোকেন তৈরি করা হচ্ছে...");
-                await getAndSaveToken();
             }
-        }
+        })
+        .catch((error) => {
+            console.error("ইউজার ডক স্যাটআপ করতে ব্যর্থ হয়েছে: ", error);
+            
+            // ব্যাকআপ ট্রিগার: ফায়ারস্টোরে কোনো এরর আসলেও যাতে টোকেন সেভ করার চেষ্টা ব্যাহত না হয়
+            if (Notification.permission === 'default') {
+                Notification.requestPermission().then(p => {
+                    if (p === 'granted') getAndSaveToken();
+                });
+            } else if (Notification.permission === 'granted') {
+                getAndSaveToken();
+            }
+        });
     }
 });
 
