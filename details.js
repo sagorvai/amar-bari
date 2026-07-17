@@ -455,6 +455,23 @@ async function setupLikeSystem() {
     });
 }
 
+// তোমার লাইক সাকসেস লজিকের ভেতর যেখানে লাইক স্ট্যাটাস ডাটাবেজে আপডেট হয়:
+if (isLiked) { // যদি ইউজার লাইক দিয়ে থাকে
+    const currentUser = firebase.auth().currentUser;
+    if (currentUser) {
+        // সাইনআপড ইউজার লাইক দিলে বিক্রেতার কাছে নোটিফিকেশন যাবে
+        writeNotificationToFirestore(
+            postData.sellerId,              // বিক্রেতার আইডি (পোস্ট ডাটা থেকে প্রাপ্ত)
+            currentUser.uid,                // লাইক প্রদানকারীর আইডি
+            postId,                         // এই প্রপার্টির আইডি
+            "লাইক পেয়েছেন! 👍",
+            `একজন ইউজার আপনার '${postData.title}' প্রপার্টিটি লাইক করেছেন! আপনার বিজ্ঞাপনের জনপ্রিয়তা বাড়ছে।`,
+            "like"
+        );
+    }
+    // গেস্ট ইউজারের লাইকের ক্ষেত্রে বিক্রেতার আইডি পাওয়া যায় না বলে আমরা এটি বিক্রেতাকে পাঠাই না, তবে চাইলে লোকাল স্টোরেজে রাখা যায়।
+} 
+
 function setupSaveAndShareSystem(data) {
     const saveBtn = document.getElementById('p-save');
     const shareBtn = document.getElementById('p-share');
@@ -507,6 +524,28 @@ function setupSaveAndShareSystem(data) {
             }
         };
     }
+}
+
+const currentUser = firebase.auth().currentUser;
+
+if (currentUser) {
+    // সাইনআপড ইউজার প্রপার্টি সেভ করলে বিক্রেতার কাছে নোটিফিকেশন যাবে
+    writeNotificationToFirestore(
+        postData.sellerId,
+        currentUser.uid,
+        postId,
+        "বুকমার্ক অ্যালার্ট! ❤️",
+        `একজন সম্ভাব্য ক্রেতা আপনার '${postData.title}' প্রপার্টিটি বুকমার্ক করে সেভ রেখেছেন। দ্রুত চ্যাট শুরু করতে পারেন!`,
+        "save"
+    );
+} else {
+    // গেস্ট ইউজার সেভ করলে তার নিজের লোকাল স্টোরেজে নোটিফিকেশন জমা হবে (যাতে পরে সে দেখতে পারে)
+    writeNotificationToLocalStorage(
+        postId,
+        "বিজ্ঞাপনটি সফলভাবে সেভ হয়েছে! 📌",
+        `এই বাড়িটির মালিক যদি কখনো দাম কমান বা নতুন কোনো তথ্য আপডেট করেন, আমরা আপনাকে সরাসরি এখানে জানিয়ে দেব।`,
+        "save"
+    );
 }
 
 function formatPostTime(date) {
@@ -693,8 +732,51 @@ if (boostButton) {
   boostButton.addEventListener('click', handleComingSoon);
 }
 
-// খতিয়ান যাচাই বাটনে ক্লিক করলে মেসেজ দেখাবে
-if (khotiyanButton) {
-  khotiyanButton.addEventListener('click', handleComingSoon);
+
+/**
+ * ফায়ারস্টোরে নোটিফিকেশন লেখার কমন ফাংশন (সাইনআপড ইউজারের জন্য)
+ */
+async function writeNotificationToFirestore(recipientId, senderId, postId, title, message, type) {
+    try {
+        const notifData = {
+            userId: recipientId,      // প্রপার্টি বিক্রেতা (Seller) এর UID
+            senderId: senderId,        // যে অ্যাকশনটি করেছে (Buyer/Visitor) তার UID
+            postId: postId,            // প্রপার্টির আইডি
+            title: title,
+            message: message,
+            type: type,                // 'like', 'save', 'khotian'
+            isRead: false,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // ফায়ারস্টোরের 'notifications' কালেকশনে নোটিফিকেশনটি রাইট করা হবে
+        await db.collection("notifications").add(notifData);
+        console.log("ফায়ারস্টোরে নোটিফিকেশন সফলভাবে লেখা হয়েছে।");
+    } catch (error) {
+        console.error("ফায়ারস্টোরে নোটিফিকেশন লিখতে ত্রুটি: ", error);
+    }
 }
+
+/**
+ * গেস্ট ইউজারের লোকাল স্টোরেজে নোটিফিকেশন লেখার ফাংশন
+ */
+function writeNotificationToLocalStorage(postId, title, message, type) {
+    let guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
+
+    const newNotification = {
+        postId: postId,
+        title: title,
+        message: message,
+        type: type,
+        isRead: false,
+        timestamp: { seconds: Math.floor(Date.now() / 1000) } // ফায়ারস্টোর ফরম্যাটের সাথে সামঞ্জস্য রেখে
+    };
+
+    // নতুন নোটিফিকেশনটি লিস্টের প্রথমে যুক্ত করা
+    guestNotifications.unshift(newNotification);
+
+    localStorage.setItem("guest_notifications", JSON.stringify(guestNotifications));
+    console.log("গেস্ট নোটিফিকেশন লোকাল স্টোরেজে লেখা হয়েছে।");
+                    }
+
 
