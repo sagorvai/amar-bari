@@ -35,28 +35,33 @@ function initNotificationPage() {
 }
 
 /**
- * ১. সাইনআপ করা ইউজারের ডিভাইস টোকেন সংগ্রহ ও ফায়ারস্টোরে সেভ করার লজিক[cite: 6]
+ * ১. সাইনআপ করা ইউজারের ডিভাইস টোকেন সংগ্রহ ও ফায়ারস্টোরে সেভ করার আপডেটেড লজিক
  */
 async function handleUserTokenSetup(uid) {
     try {
-        // ব্রাউজারে নোটিফিকেশন পারমিশন চেক করা
+        // ইউজার যদি আগে পারমিশন না দিয়ে থাকে (default), তবে তাকে পারমিশন চাওয়ার প্রম্পট দেখাবে
+        if (Notification.permission === "default") {
+            console.log("নতুন সাইনআপ ইউজার, নোটিফিকেশন পারমিশন চাওয়া হচ্ছে...");
+            await Notification.requestPermission();
+        }
+
+        // ইউজার যদি পারমিশন এলাউ করে (আগে থেকে করা থাকলে বা এখন করলে)
         if (Notification.permission === "granted") {
-            // FCM থেকে ইউনিক ডিভাইস টোকেন জেনারেট করা[cite: 6]
-            const currentToken = await messaging.getToken({
-                vapidKey: "YOUR_PUBLIC_VAPID_KEY_HERE" // তোমার ফায়ারবেস পুশ কি এখানে বসবে
-            });
+            const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
 
             if (currentToken) {
-                // ইউজারের প্রোফাইলে টোকেনটি সেভ বা আপডেট করা[cite: 6]
+                // ইউজারের প্রোফাইলে টোকেনটি সেভ বা আপডেট করা
                 await db.collection("users").doc(uid).set({
-                    fcm_tokens: firebase.firestore.FieldValue.arrayUnion(currentToken),
+                    fcmToken: currentToken,
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
-                console.log("সাইনআপ ইউজারের পুশ টোকেন সফলভাবে সিঙ্ক হয়েছে।[cite: 6]");
+                console.log("সাইনআপ ইউজারের পুশ টোকেন সফলভাবে সিঙ্ক হয়েছে।");
             }
+        } else {
+            console.log("ইউজার নোটিফিকেশন পারমিশন ডিনাই (Block) করে রেখেছেন।");
         }
     } catch (error) {
-        console.error("টোকেন সংগ্রহ করতে সমস্যা হয়েছে: ", error);
+        console.error("সাইনআপ ইউজারের টোকেন সংগ্রহ করতে সমস্যা হয়েছে: ", error);
     }
 }
 
