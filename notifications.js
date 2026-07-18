@@ -26,26 +26,21 @@ function initNotificationPage() {
             listenForUserNotifications(user.uid);
         } else {
             console.log("গেস্ট ইউজার পেজ ব্রাউজ করছেন।");
-            // ৩. গেস্ট নোটিফিকেশন লোড করা
             loadGuestNotifications();
-            // ৪. গেস্ট টোকেন ব্যাকগ্রাউন্ডে সেটআপ করা
             await handleGuestTokenSetup();
         }
     });
 }
 
 /**
- * ১. নতুন সাইনআপ করা ইউজারের জন্য স্বাগত নোটিফিকেশন তৈরি করার লজিক (ইন্ডেক্স এরর মুক্ত)
+ * ১. নতুন সাইনআপ করা ইউজারের জন্য স্বাগত নোটিফিকেশন তৈরি করার লজিক (সম্পূর্ণ ইনডেক্স এরর মুক্ত)
  */
 async function checkAndCreateWelcomeNotification(uid) {
     try {
         const notifRef = db.collection("notifications");
-        // সিকিউরিটি রুলস ও ইন্ডেক্স ফ্রেন্ডলি সাধারণ কুয়েরি
-        const snapshot = await notifRef
-            .where("userId", "==", uid)
-            .get();
+        // শুধুমাত্র userId দিয়ে চেক করছি যাতে কোনো অতিরিক্ত ইনডেক্স না লাগে
+        const snapshot = await notifRef.where("userId", "==", uid).get();
 
-        // চেক করা হচ্ছে আগে কোনো স্বাগত নোটিফিকেশন তৈরি হয়েছে কিনা
         let hasWelcome = false;
         snapshot.forEach((doc) => {
             if (doc.data().type === "welcome") {
@@ -71,15 +66,15 @@ async function checkAndCreateWelcomeNotification(uid) {
 }
 
 /**
- * ২. সাইনআপ করা ইউজারের জন্য ফায়ারস্টোর থেকে রিয়েল-টাইমে ইন-অ্যাপ নোটিফিকেশন লোড
+ * ২. সাইনআপ করা ইউজারের জন্য ফায়ারস্টোর থেকে রিয়েল-টাইমে ইন-অ্যাপ নোটিফিকেশন লোড (বাগ-মুক্ত সংস্করণ)
  */
 function listenForUserNotifications(uid) {
     const notificationContainer = document.getElementById("notifications-list");
     if (!notificationContainer) return;
 
+    // ফায়ারস্টোর ইনডেক্স এরর এড়াতে orderBy কুয়েরি বাদ দিয়ে ক্লায়েন্ট সাইডে সর্ট করা হচ্ছে
     db.collection("notifications")
         .where("userId", "==", uid)
-        .orderBy("timestamp", "desc")
         .onSnapshot((snapshot) => {
             notificationContainer.innerHTML = ""; 
 
@@ -90,13 +85,26 @@ function listenForUserNotifications(uid) {
             }
 
             let unreadCount = 0;
+            let documents = [];
 
+            // ডেটা সংগ্রহ করা
             snapshot.forEach((doc) => {
-                const notif = doc.data();
+                documents.push({ id: doc.id, data: doc.data() });
+            });
+
+            // 🎯 ক্লায়েন্ট সাইডে টাইমস্ট্যাম্প অনুযায়ী অবরোহী (descending) সর্টিং করা
+            documents.sort((a, b) => {
+                const timeA = a.data.timestamp ? (a.data.timestamp.seconds || new Date(a.data.timestamp).getTime()) : 0;
+                const timeB = b.data.timestamp ? (b.data.timestamp.seconds || new Date(b.data.timestamp).getTime()) : 0;
+                return timeB - timeA;
+            });
+
+            // সর্ট করা ডেটা স্ক্রিনে রেন্ডার করা
+            documents.forEach((item) => {
+                const notif = item.data;
                 if (!notif.isRead) unreadCount++;
 
-                // সঠিক প্যারামিটার সিকোয়েন্স সহ কার্ড তৈরি
-                const notifItem = createNotificationCard(doc.id, notif, uid, false);
+                const notifItem = createNotificationCard(item.id, notif, uid, false);
                 notificationContainer.appendChild(notifItem);
             });
 
@@ -108,39 +116,12 @@ function listenForUserNotifications(uid) {
 }
 
 /**
- * ৩. গেস্ট ইউজারের নোটিফিকেশন (লোকাল স্টোরেজ) লোড করা
- */
-function loadGuestNotifications() {
-    const notificationContainer = document.getElementById("notifications-list");
-    if (!notificationContainer) return;
-
-    const guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
-    notificationContainer.innerHTML = "";
-
-    if (guestNotifications.length === 0) {
-        notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">আপনার নোটিফিকেশন বক্স এখন খালি।</p>`;
-        updateNotificationBadge(0);
-        return;
-    }
-
-    guestNotifications.forEach((notif, index) => {
-        // গেস্ট ইউজারের জন্য uid=null এবং isGuest=true
-        const notifItem = createNotificationCard(`guest_${index}`, notif, null, true);
-        notificationContainer.appendChild(notifItem);
-    });
-
-    const unreadCount = guestNotifications.filter(n => !n.isRead).length;
-    updateNotificationBadge(unreadCount);
-}
-
-/**
  * নোটিফিকেশন কার্ডের HTML লেআউট এবং স্মার্ট ক্লিক হ্যান্ডলার
  */
 function createNotificationCard(docId, notif, uid, isGuest = false) {
     const li = document.createElement("li");
     li.className = `notification-item ${notif.isRead ? 'read' : 'unread'}`;
     
-    // টাইপ অনুযায়ী আইকন সেট করা
     let iconName = "notifications";
     if (notif.type === "welcome") iconName = "celebration"; 
     else if (notif.type === "like") iconName = "thumb_up";
@@ -179,7 +160,6 @@ function createNotificationCard(docId, notif, uid, isGuest = false) {
         
         if (!isGuest && uid) {
             try {
-                // ডাটাবেজে ইউজারের আইডি চেক করা হচ্ছে টোকেন আছে কি না
                 const userDoc = await db.collection("users").doc(uid).get();
                 const userData = userDoc.data();
 
@@ -205,7 +185,7 @@ function createNotificationCard(docId, notif, uid, isGuest = false) {
                 console.error("টোকেন চেক বা সংরক্ষণে সমস্যা: ", err);
             }
 
-            // নোটিফিকেশনের টাইপ অনুযায়ী রিডাইরেক্ট করা
+            // নোটিফিকেশনের টাইপ অনুযায়ী রিডাইরেক্ট
             if (notif.type === "chat" && notif.chatId) {
                 window.location.href = `messages.html?chatId=${notif.chatId}&postId=${notif.postId || ''}&action=direct`;
             } else if (notif.postId) {
@@ -239,7 +219,32 @@ async function markAsRead(docId, isGuest) {
 }
 
 /**
- * ৪. গেস্ট টোকেন সেটআপ
+ * গেস্ট ইউজারের নোটিফিকেশন (লোকাল স্টোরেজ) লোড করা
+ */
+function loadGuestNotifications() {
+    const notificationContainer = document.getElementById("notifications-list");
+    if (!notificationContainer) return;
+
+    const guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
+    notificationContainer.innerHTML = "";
+
+    if (guestNotifications.length === 0) {
+        notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">আপনার নোটিফিকেশন বক্স এখন খালি।</p>`;
+        updateNotificationBadge(0);
+        return;
+    }
+
+    guestNotifications.forEach((notif, index) => {
+        const notifItem = createNotificationCard(`guest_${index}`, notif, null, true);
+        notificationContainer.appendChild(notifItem);
+    });
+
+    const unreadCount = guestNotifications.filter(n => !n.isRead).length;
+    updateNotificationBadge(unreadCount);
+}
+
+/**
+ * গেস্ট টোকেন সেটআপ
  */
 async function handleGuestTokenSetup() {
     try {
@@ -271,4 +276,4 @@ function updateNotificationBadge(count) {
     } else {
         badge.style.display = "none";  
     }
-                         }
+                                              }
