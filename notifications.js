@@ -35,32 +35,49 @@ function initNotificationPage() {
 }
 
 /**
- * ১. সাইনআপ করা ইউজারের ডিভাইস টোকেন সংগ্রহ ও ফায়ারস্টোরে সেভ করার লজিক[cite: 6]
+/**
+ * ১. সাইনআপ করা ইউজারের ডিভাইস টোকেন সংগ্রহ, ভেরিফিকেশন ও নতুন পারমিশন প্রম্পট লজিক (আপনার পরিকল্পনা অনুযায়ী)
  */
 async function handleUserTokenSetup(uid) {
     try {
-        // ব্রাউজারে নোটিফিকেশন পারমিশন চেক করা
+        // যদি পারমিশন আগে থেকেই দেওয়া থাকে
         if (Notification.permission === "granted") {
-            // FCM থেকে ইউনিক ডিভাইস টোকেন জেনারেট করা[cite: 6]
             const currentToken = await messaging.getToken({
-                vapidKey: "BIWyqUvtwx7iH6nKiZRVCNl7ihTsFn40IJ1LVp58RYIFDEbHrWBSYnVVQ2iA5m9d7tmbNngRPvAhPDEW34SBoLg" // তোমার ফায়ারবেস পুশ কি এখানে বসবে
+                vapidKey: "BIWyqUvtwx7iH6nKiZRVCNl7ihTsFn40IJ1LVp58RYIFDEbHrWBSYnVVQ2iA5m9d7tmbNngRPvAhPDEW34SBoLg"
             });
 
             if (currentToken) {
-                // ইউজারের প্রোফাইলে টোকেনটি সেভ বা আপডেট করা[cite: 6]
                 await db.collection("users").doc(uid).set({
                     fcm_tokens: firebase.firestore.FieldValue.arrayUnion(currentToken),
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
-                console.log("সাইনআপ ইউজারের পুশ টোকেন সফলভাবে সিঙ্ক হয়েছে।[cite: 6]");
+                console.log("সাইনআপ ইউজারের পুশ টোকেন সফলভাবে সিঙ্ক হয়েছে।");
+            }
+        } 
+        // 🎯 আপনার পরিকল্পনা: যদি টোকেন বা পারমিশন কোথাও না থাকে (Default অবস্থায় থাকে), তবে এখানে পারমিশন চাবে
+        else if (Notification.permission === "default") {
+            console.log("ইউজারের কোনো টোকেন বা পারমিশন নেই। নোটিফিকেশন পেজ থেকে পারমিশন চাওয়া হচ্ছে...");
+            
+            const permission = await Notification.requestPermission();
+            if (permission === "granted") {
+                const currentToken = await messaging.getToken({
+                    vapidKey: "BIWyqUvtwx7iH6nKiZRVCNl7ihTsFn40IJ1LVp58RYIFDEbHrWBSYnVVQ2iA5m9d7tmbNngRPvAhPDEW34SBoLg"
+                });
+
+                if (currentToken) {
+                    await db.collection("users").doc(uid).set({
+                        fcm_tokens: firebase.firestore.FieldValue.arrayUnion(currentToken),
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                    console.log("নতুন পারমিশন গ্র্যান্টেড এবং টোকেন ইউজার আইডিতে যুক্ত হয়েছে।");
+                }
             }
         }
     } catch (error) {
-        console.error("টোকেন সংগ্রহ করতে সমস্যা হয়েছে: ", error);
+        console.error("নোটিফিকেশন পেজে টোকেন সংগ্রহ করতে সমস্যা হয়েছে: ", error);
     }
-}
+                        }
 
-/**
  * ২. গেস্ট থেকে সাইনআপে রূপান্তর (Guest to Signup Migration)[cite: 6]
  */
 async function migrateGuestDataToUser(uid) {
