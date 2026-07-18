@@ -167,18 +167,13 @@ async function migrateVisitorTokenToUser(userId) {
 }
 
 // 🔄 অথেনটিকেশন স্টেট মনিটর করা (১০০% সচল ও সহজ সংস্করণ)
+// 🔄 অথেনটিকেশন স্টেট মনিটর করা (আপডেটেড ও কাস্টমাইজড সংস্করণ)
 firebase.auth().onAuthStateChanged((user) => {
     if (user) {
         console.log("ইউজার লগইন/সাইনআপ অবস্থায় আছেন। UID:", user.uid);
-        
-        // ১. ডামি ব্যাজ মুছে ফেলা
-        const notificationBadge = document.getElementById('notification-badge');
-        if (notificationBadge) notificationBadge.style.display = "none";
-
         const db = firebase.firestore();
 
-        // ২. সরাসরি ফায়ারস্টোরে একটি 'ফেইল-সেফ' প্রাথমিক রাইট (Write) অপারেশন রান করা
-        // এটি ইউজার কালেকশনে ডেটা না থাকলেও সাথে সাথে ডকুমেন্টটি তৈরি করে দেবে
+        // ফায়ারস্টোরে ইউজারের বেসিক প্রোফাইল নিশ্চিত করা
         db.collection('users').doc(user.uid).set({
             uid: user.uid,
             email: user.email || "",
@@ -186,50 +181,35 @@ firebase.auth().onAuthStateChanged((user) => {
             lastActive: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true })
         .then(() => {
-            console.log("ফায়ারস্টোরে ইউজারের বেসিক প্রোফাইল ও কালেকশন নিশ্চিত করা হয়েছে।");
+            console.log("ফায়ারস্টোরে ইউজারের বেシック প্রোফাইল আপডেট হয়েছে।");
             
-            // ৩. এবার টোকেন চেকিং শুরু
             const savedToken = localStorage.getItem('my_fcm_token');
 
             if (savedToken) {
-                console.log("পূর্বে টোকেন জেনারেট করা আছে, সরাসরি স্থানান্তরিত করা হচ্ছে...");
-                // আগের গেস্ট টোকেনটি ইউজারের ডকে সেভ করবে এবং অ্যানোনিমাস থেকে ডিলিট করবে
+                console.log("পূর্বে টোকেন জেনারেট করা আছে, মাইগ্রেট করা হচ্ছে...");
+                // গেস্ট টোকেনটি ইউজারের ডকে সেভ করবে এবং অ্যানোনিমাস থেকে ডিলিট করবে
                 migrateVisitorTokenToUser(user.uid);
             } else {
-                console.log("পূর্বে কোনো টোকেন জেনারেট করা হয়নি।");
+                console.log("পূর্বে কোনো টোকেন নেই। সাইন-আপের পর স্বাগত নোটিফিকেশন ব্যাজ সেটআপ করা হচ্ছে...");
                 
-                // ৪. ব্রাউজারের পারমিশন চেক করে পারমিশন চাওয়া
-                if (Notification.permission === 'default') {
-                    console.log("ইউজারের কাছে সরাসরি নোটিফিকেশন পারমিশন চাওয়া হচ্ছে...");
-                    
-                    Notification.requestPermission()
-                    .then((permission) => {
-                        if (permission === 'granted') {
-                            // এলাউ করলে টোকেন নিয়ে সরাসরি ইউজার কালেকশনে আপডেট করবে
-                            getAndSaveToken();
-                            triggerWelcomeNotification();
-                        }
-                    })
-                    .catch(err => console.error("পারমিশন চাওয়ার সময় ভুল:", err));
-                } 
-                else if (Notification.permission === 'granted') {
-                    console.log("পারমিশন আগেই দেওয়া আছে, টোকেন রিস্টোর করা হচ্ছে...");
-                    getAndSaveToken();
+                // 🔔 ইউজার সাইন-আপ করার পর যদি টোকেন না থাকে, তবে হেডারে একটি ডামি স্বাগত নোটিফিকেশন ব্যাজ দেখাবো
+                const notificationBadge = document.getElementById('notification-badge'); // অথবা 'notification-count'
+                const notificationBtn = document.getElementById('notificationButton');
+
+                if (notificationBadge) {
+                    notificationBadge.innerText = "1"; // স্বাগত নোটিফিকেশনের জন্য '১' দেখাবে
+                    notificationBadge.style.display = "block";
+                }
+
+                if (notificationBtn) {
+                    // হেডারের নোটিফিকেশন আইকনে ক্লিক করলে তাকে নোটিফিকেশন পেজে রিডিরেক্ট করবে
+                    notificationBtn.onclick = (e) => {
+                        window.location.href = '/notifications.html';
+                    };
                 }
             }
         })
-        .catch((error) => {
-            console.error("ইউজার ডক স্যাটআপ করতে ব্যর্থ হয়েছে: ", error);
-            
-            // ব্যাকআপ ট্রিগার: ফায়ারস্টোরে কোনো এরর আসলেও যাতে টোকেন সেভ করার চেষ্টা ব্যাহত না হয়
-            if (Notification.permission === 'default') {
-                Notification.requestPermission().then(p => {
-                    if (p === 'granted') getAndSaveToken();
-                });
-            } else if (Notification.permission === 'granted') {
-                getAndSaveToken();
-            }
-        });
+        .catch((error) => console.error("ইউজার ডক স্যাটআপ করতে ব্যর্থ: ", error));
     }
 });
 
