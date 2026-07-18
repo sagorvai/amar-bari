@@ -4,14 +4,14 @@
 
 const messaging = firebase.messaging();
 
-// VAPID Key
+// ⚠️ ফায়ারবেস কনসোলের Cloud Messaging সেটিংস থেকে জেনারেট করা VAPID Key এখানে বসাও
 const VAPID_KEY = "BIWyqUvtwx7iH6nKiZRVCNl7ihTsFn40IJ1LVp58RYIFDEbHrWBSYnVVQ2iA5m9d7tmbNngRPvAhPDEW34SBoLg"; 
 
-let currentTriggerType = "delayed";
+let currentTriggerType = "delayed"; // ৪টি ভিন্ন ট্রিগার ট্র্যাক করার জন্য ভেরিয়েবল
 
 // পেজ লোড হবার সাথে সাথে ইনিশিয়ালাইজেশন শুরু
 document.addEventListener('DOMContentLoaded', () => {
-    // ১. 🪝 হেডারের ডামি ব্যাজ লজিক
+    // ১. 🪝 হেডারের ডামি ব্যাজ লজিক (তোমার আইডিয়া)
     checkAndSetupDummyBadge();
 
     // সার্ভিস ওয়ার্কার রেজিস্টার করা ও ৩-মিনিট ডিলে টাইমার শুরু
@@ -20,8 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
         .then((registration) => {
             messaging.useServiceWorker(registration);
             
+            // ⏳ ৩ মিনিট বিলম্বিত ট্রিগার (১৮০,০০০ মিলিসেকেন্ড)
+            // টেস্ট করার জন্য সাময়িকভাবে ২০০০০ (২০ সেকেন্ড) দিয়ে দেখতে পারো
             const delayTime = 180000; 
             setTimeout(() => {
+                // ইউজার ইতিমধ্যে অ্যাকশন না নিয়ে থাকলে ৩ মিনিট পর স্বয়ংক্রিয়ভাবে দেখাবে
                 if (Notification.permission === 'default' && !localStorage.getItem('fcm_popup_dismissed')) {
                     triggerCustomPopup("delayed");
                 }
@@ -35,28 +38,23 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('fcm-btn-deny').addEventListener('click', handleDenyClick);
 });
 
-// ২. 🪝 ডামি নোটিফিকেশন ব্যাজ কন্ট্রোলার (আইডি সিঙ্ক করা হয়েছে)
+// ২. 🪝 ডামি নোটিফিকেশন ব্যাজ কন্ট্রোলার (লগইন ছাড়া ভিজিটরদের জন্য)
 function checkAndSetupDummyBadge() {
-    const notificationBadge = document.getElementById('notification-badge'); // HTML-এর অরিজিনাল আইডি
-    const notificationBtn = document.getElementById('notificationButton'); // HTML-এর অরিজিনাল আইডি
+    const notificationBadge = document.getElementById('notification-badge'); // তোমার হেডারের লাল ব্যাজ আইডি
+    const notificationBtn = document.getElementById('notification-bell-btn'); // তোমার হেডারের বেল বাটন আইডি
 
     firebase.auth().onAuthStateChanged(user => {
         if (!user) {
-            // যদি আগে থেকে নোটিফিকেশন এলাউ করা থাকে, তবে ডামি ব্যাজ দেখাবে না
-            if (Notification.permission === 'granted') {
-                if (notificationBadge) notificationBadge.style.display = "none";
-                return;
-            }
-
+            // ইউজার লগইন ছাড়া থাকলে ব্যাজে ১ শো করবে
             if (notificationBadge) {
                 notificationBadge.innerText = "1";
                 notificationBadge.style.display = "block";
             }
             
+            // বেল বাটনে ক্লিক করলে কাস্টম পপআপ ট্রিগার হবে
             if (notificationBtn) {
                 notificationBtn.onclick = (e) => {
                     e.preventDefault();
-                    e.stopPropagation();
                     triggerCustomPopup("badge");
                 };
             }
@@ -64,7 +62,7 @@ function checkAndSetupDummyBadge() {
     });
 }
 
-// 📢 ৩. ডাইনামিক মেসেজ সেটআপ
+// 📢 ৩. ডাইনামিক মেসেজ সেটআপ (৪টি ভিন্ন ট্রিগারের জন্য কাস্টম টেক্সট)
 function triggerCustomPopup(triggerType) {
     if (Notification.permission !== 'default') return;
     
@@ -92,12 +90,15 @@ function triggerCustomPopup(triggerType) {
         bodyElement.innerText = "এই বাড়িটি আপনার ডিভাইসে সেভ থাকবে এবং পরবর্তীতে এর দাম কমলে বা প্রপার্টির কোনো আপডেট আসলে আপনাকে সরাসরি স্ক্রিনে নোটিফিকেশন পাঠানো হবে।";
     }
 
+    // পপআপ স্ক্রিনে প্রদর্শন
     document.getElementById('custom-notification-popup').classList.add('fcm-popup-show');
 }
 
 // 🛑 ৪. ইউজার 'পরে দেখব' (Deny) বাটনে ক্লিক করলে লজিক
 function handleDenyClick() {
     document.getElementById('custom-notification-popup').classList.remove('fcm-popup-show');
+    
+    // ইউজার ডিনাই করলে ৩ দিনের জন্য একটি ট্র্যাকিং ফ্ল্যাগ লোকাল স্টোরেজে রাখা হচ্ছে
     const expiryTime = new Date().getTime() + (3 * 24 * 60 * 60 * 1000); 
     localStorage.setItem('fcm_popup_dismissed', expiryTime);
 }
@@ -110,12 +111,9 @@ async function handleAllowClick() {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
             console.log('ব্রাউজার নোটিফিকেশন পারমিশন গ্রান্টেড!');
-            
-            // ডামি ব্যাজ সাথে সাথে লুকিয়ে ফেলা হবে
-            const notificationBadge = document.getElementById('notification-badge');
-            if (notificationBadge) notificationBadge.style.display = "none";
-
             await getAndSaveToken();
+            
+            // 🎉 তাৎক্ষণিক স্বাগত পুশ নোটিফিকেশন ট্রিগার করা (তোমার আইডিয়া)
             triggerWelcomeNotification();
         }
     } catch (error) {
@@ -126,50 +124,33 @@ async function handleAllowClick() {
 // 💾 ৬. টোকেন সংগ্রহ এবং ফায়ারস্টোরে স্মার্ট সংরক্ষণ
 async function getAndSaveToken() {
     try {
-        console.log("FCM টোকেন সংগ্রহের চেষ্টা করা হচ্ছে...");
         const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
-        
-        if (!currentToken) {
-            console.error('কোনো টোকেন পাওয়া যায়নি! পারমিশন বা VAPID কী চেক করুন।');
-            return;
-        }
+        if (!currentToken) return;
 
-        console.log("টোকেন জেনারেট হয়েছে:", currentToken);
         localStorage.setItem('my_fcm_token', currentToken);
-
-        // গ্লোবাল db রেফারেন্স অথবা লোকাল ইনিশিয়ালাইজেশন নিশ্চিত করা
-        const firestoreDb = typeof db !== 'undefined' ? db : firebase.firestore();
         const currentUser = firebase.auth().currentUser;
 
         if (currentUser) {
-            console.log("লগইন করা ইউজারের জন্য টোকেন সেভ হচ্ছে...");
-            await firestoreDb.collection('users').doc(currentUser.uid).set({
-                fcmToken: currentToken,
-                lastActive: firebase.firestore.FieldValue.serverTimestamp()
+            // রেজিস্টার্ড ইউজারের ফায়ারস্টোর ডকে সেভ হবে
+            await firebase.firestore().collection('users').doc(currentUser.uid).set({
+                fcmToken: currentToken
             }, { merge: true });
             
-            // অ্যানোনিমাস কালেকশন থেকে ডিলিট করা (যদি থাকে)
-            try {
-                await firestoreDb.collection('anonymous_tokens').doc(currentToken).delete();
-            } catch(e) { /* ডক না থাকলে এরর স্কিপ করবে */ }
-            
+            // ডুপ্লিকেট এড়াতে গেস্ট তালিকা থেকে মুছে দেওয়া হবে
+            await firebase.firestore().collection('anonymous_tokens').doc(currentToken).delete();
         } else {
-            console.log("গেস্ট (Anonymous) ইউজারের জন্য টোকেন সেভ হচ্ছে...");
-            
-            // আপনার রুলস অনুযায়ী 'create' পারমিশন ট্রিগার করতে সরাসরি .doc(currentToken).set() ব্যবহার
-            await firestoreDb.collection('anonymous_tokens').doc(currentToken).set({
+            // গেস্ট ভিজিটরের জন্য আলাদা কালেকশনে টোকেন সেভ হবে
+            await firebase.firestore().collection('anonymous_tokens').doc(currentToken).set({
                 token: currentToken,
-                deviceType: "web",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            
-            console.log("🎉 গেস্ট টোকেন সফলভাবে anonymous_tokens কালেকশনে জমা হয়েছে!");
         }
     } catch (error) {
-        console.error('টোকেন ডাটাবেজে সেভ করার সময় মূল ত্রুটি:', error);
+        console.error('টোকেন সেভ করার সময় ত্রুটি:', error);
     }
-            }
-// 🔄 ৭. স্মার্ট টোকেন মাইগ্রেশন
+}
+
+// 🔄 ৭. স্মার্ট টোকেন মাইগ্রেশন (ভিজিটর থেকে সাইনআপ/লগইন ইউজার সিঙ্ক)
 async function migrateVisitorTokenToUser(userId) {
     const savedToken = localStorage.getItem('my_fcm_token');
     if (!savedToken) return;
@@ -180,60 +161,23 @@ async function migrateVisitorTokenToUser(userId) {
         }, { merge: true });
 
         await firebase.firestore().collection('anonymous_tokens').doc(savedToken).delete();
-        console.log('টোকেন সফলভাবে রেজিস্টার্ড আইডিতে স্থানান্তরিত হয়েছে।');
+        console.log('ভিজিটর টোকেন সফলভাবে রেজিস্টার্ড আইডিতে স্থানান্তরিত হয়েছে।');
     } catch (error) {
         console.error('টোকেন মাইগ্রেশন এরর:', error);
     }
 }
 
-// 🔄 অথেনটিকেশন স্টেট মনিটর করা (১০০% সচল ও সহজ সংস্করণ)
-// 🔄 অথেনটিকেশন স্টেট মনিটর করা (আপডেটেড ও কাস্টমাইজড সংস্করণ)
-firebase.auth().onAuthStateChanged((user) => {
+// অথেনটিকেশন স্টেট মনিটর করা
+firebase.auth().onAuthStateChanged(user => {
     if (user) {
-        console.log("ইউজার লগইন/সাইনআপ অবস্থায় আছেন। UID:", user.uid);
-        const db = firebase.firestore();
-
-        // ফায়ারস্টোরে ইউজারের বেসিক প্রোফাইল নিশ্চিত করা
-        db.collection('users').doc(user.uid).set({
-            uid: user.uid,
-            email: user.email || "",
-            phoneNumber: user.phoneNumber || "",
-            lastActive: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true })
-        .then(() => {
-            console.log("ফায়ারস্টোরে ইউজারের বেシック প্রোফাইল আপডেট হয়েছে।");
-            
-            const savedToken = localStorage.getItem('my_fcm_token');
-
-            if (savedToken) {
-                console.log("পূর্বে টোকেন জেনারেট করা আছে, মাইগ্রেট করা হচ্ছে...");
-                // গেস্ট টোকেনটি ইউজারের ডকে সেভ করবে এবং অ্যানোনিমাস থেকে ডিলিট করবে
-                migrateVisitorTokenToUser(user.uid);
-            } else {
-                console.log("পূর্বে কোনো টোকেন নেই। সাইন-আপের পর স্বাগত নোটিফিকেশন ব্যাজ সেটআপ করা হচ্ছে...");
-                
-                // 🔔 ইউজার সাইন-আপ করার পর যদি টোকেন না থাকে, তবে হেডারে একটি ডামি স্বাগত নোটিফিকেশন ব্যাজ দেখাবো
-                const notificationBadge = document.getElementById('notification-badge'); // অথবা 'notification-count'
-                const notificationBtn = document.getElementById('notificationButton');
-
-                if (notificationBadge) {
-                    notificationBadge.innerText = "1"; // স্বাগত নোটিফিকেশনের জন্য '১' দেখাবে
-                    notificationBadge.style.display = "block";
-                }
-
-                if (notificationBtn) {
-                    // হেডারের নোটিফিকেশন আইকনে ক্লিক করলে তাকে নোটিফিকেশন পেজে রিডিরেক্ট করবে
-                    notificationBtn.onclick = (e) => {
-                        window.location.href = '/notifications.html';
-                    };
-                }
-            }
-        })
-        .catch((error) => console.error("ইউজার ডক স্যাটআপ করতে ব্যর্থ: ", error));
+        migrateVisitorTokenToUser(user.uid);
+        // লগইন করা থাকলে ডামী ব্যাজ রিমুভ করে ফায়ারস্টোরের অরিজিনাল কাউন্ট চালু করতে পারো
+        const notificationBadge = document.getElementById('notification-badge');
+        if (notificationBadge) notificationBadge.style.display = "none";
     }
 });
 
-// 🎉 ৮. স্বাগত নোটিফিকেশন
+// 🎉 ৮. তাৎক্ষণিক স্বাগত ফোরগ্রাউন্ড নোটিফিকেশন জেনারেটর
 function triggerWelcomeNotification() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(registration => {
@@ -246,8 +190,15 @@ function triggerWelcomeNotification() {
     }
 }
 
+// 🚀 ৯. এক্সটার্নাল ট্রিগার ফাংশন (সার্চ পেজ ও হার্ট বাটনে ব্যবহারের জন্য)
+// অন্য জেএস ফাইল থেকে কল করতে পারবে: window.triggerFCM("alert") অথবা window.triggerFCM("save")
 window.triggerFCM = function(type) {
     if (!localStorage.getItem('fcm_popup_dismissed') || new Date().getTime() > localStorage.getItem('fcm_popup_dismissed')) {
         triggerCustomPopup(type);
     }
-}
+  }
+
+// ফাংশনগুলোকে ব্রাউজারের গ্লোবাল উইন্ডো স্কোপে উন্মুক্ত করা হলো
+window.triggerCustomPopup = triggerCustomPopup;
+window.triggerFCM = triggerCustomPopup;
+
