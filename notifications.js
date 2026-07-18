@@ -290,3 +290,9 @@ async function markAsRead(docId, isGuest) {
         }
     }
                 }
+
+<script src="header-sync.js"></script>
+    <!-- 🎯 আমাদের মেইন স্মার্ট লজিক ইঞ্জিন সবার শেষে এক্সিকিউট হবে -->
+    <script src="fcm-setup.js"></script>
+
+
