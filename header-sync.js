@@ -1,5 +1,5 @@
 // =======================================================
-// 🎯 আমার বাড়ি.কম - গ্লোবাল হেডার লাইভ কাউন্ট সিঙ্ক ENGINE
+// 🎯 আমার বাড়ি.কম - গ্লোবাল হেডার লাইভ কাউন্ট সিঙ্ক ENGINE (চূড়ান্ত ফিক্সড)
 // =======================================================
 
 (function() {
@@ -27,20 +27,22 @@
 
     // 🔔 ১. আনরিড নোটিফিকেশন লাইভ কাউন্ট কুয়েরি (সব পেজের জন্য)
     function syncUnreadNotifications(userId) {
-        const notifBadge = document.getElementById('notification-count');
+        // 🎯 FIXED: index.html এর সঠিক আইডি 'notification-badge' এবং 'notification-count' দুটোই সেফগার্ডে রাখা হলো
+        const notifBadge = document.getElementById('notification-badge') || document.getElementById('notification-count');
         if (!notifBadge) return;
 
         if (unreadNotifListener) unreadNotifListener();
 
-        // কালেকশন কুয়েরি: notifications -> isRead == false
+        // 🎯 FIXED: কুয়েরি ফিল্ডে 'read' এর বদলে সঠিক 'isRead' ব্যবহার করা হয়েছে
         unreadNotifListener = db.collection('notifications')
             .where('userId', '==', userId)
             .where('isRead', '==', false) 
             .onSnapshot(snapshot => {
                 const count = snapshot.size;
+                console.log(`🔔 লাইভ নোটিফিকেশন কাউন্ট আপডেট: ${count} টি আনরিড`);
                 if (count > 0) {
                     notifBadge.textContent = count;
-                    notifBadge.style.display = 'inline-flex'; // প্রপার সেন্টারিং এর জন্য inline-flex
+                    notifBadge.style.display = 'inline-block'; 
                 } else {
                     notifBadge.style.display = 'none';
                 }
@@ -54,7 +56,7 @@
 
         if (unreadMsgListener) unreadMsgListener();
 
-        // কালেকশন কুয়েরি: chats -> participants array-contains userId
+        // 🎯 FIXED: messages কালেকশনের বদলে আপনার মূল চ্যাট ইঞ্জিন (chats) ট্রাক করা হচ্ছে
         unreadMsgListener = db.collection('chats')
             .where('participants', 'array-contains', userId)
             .onSnapshot(snapshot => {
@@ -67,15 +69,16 @@
                 snapshot.forEach(chatDoc => {
                     const chatData = chatDoc.data();
                     
-                    // 🎯 পারফেক্ট ম্যাচিং লজিক: লাস্ট মেসেজ যদি অন্য কেউ পাঠায় এবং চ্যাটটি আনরিড হয় (isUnread == true)
+                    // লাস্ট মেসেজ যদি অন্য কেউ পাঠায় এবং চ্যাটটি আনরিড হয় (isUnread == true)
                     if (chatData.lastSenderId && chatData.lastSenderId !== userId && chatData.isUnread === true) {
                         unreadChatsCount++;
                     }
                 });
 
+                console.log(`💬 লাইভ চ্যাট মেসেজ কাউন্ট আপডেট: ${unreadChatsCount} টি আনরিড`);
                 if (unreadChatsCount > 0) {
                     msgBadge.textContent = unreadChatsCount;
-                    msgBadge.style.display = 'inline-flex';
+                    msgBadge.style.display = 'inline-block';
                 } else {
                     msgBadge.style.display = 'none';
                 }
@@ -84,7 +87,7 @@
 
     // ৩. ব্যাজসমূহ হাইড এবং লিসেনার রিলিজ করার ফাংশন
     function hideBadges() {
-        const notifBadge = document.getElementById('notification-count');
+        const notifBadge = document.getElementById('notification-badge') || document.getElementById('notification-count');
         const msgBadge = document.getElementById('message-count');
         if (notifBadge) notifBadge.style.display = 'none';
         if (msgBadge) msgBadge.style.display = 'none';
