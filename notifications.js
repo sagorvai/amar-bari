@@ -26,26 +26,35 @@ function initNotificationPage() {
             listenForUserNotifications(user.uid);
         } else {
             console.log("গেস্ট ইউজার পেজ ব্রাউজ করছেন।");
+            // ৩. গেস্ট নোটিফিকেশন লোড করা
             loadGuestNotifications();
+            // ৪. গেস্ট টোকেন ব্যাকগ্রাউন্ডে সেটআপ করা
             await handleGuestTokenSetup();
         }
     });
 }
 
 /**
- * ১. নতুন সাইনআপ করা ইউজারের জন্য স্বাগত নোটিফিকেশন তৈরি করার লজিক
+ * ১. নতুন সাইনআপ করা ইউজারের জন্য স্বাগত নোটিফিকেশন তৈরি করার লজিক (ইন্ডেক্স এরর মুক্ত)
  */
 async function checkAndCreateWelcomeNotification(uid) {
     try {
         const notifRef = db.collection("notifications");
-        // চেক করা হচ্ছে এই ইউজারের জন্য ইতিমধ্যে স্বাগত নোটিফিকেশন তৈরি হয়েছে কিনা
+        // সিকিউরিটি রুলস ও ইন্ডেক্স ফ্রেন্ডলি সাধারণ কুয়েরি
         const snapshot = await notifRef
             .where("userId", "==", uid)
-            .where("type", "==", "welcome")
             .get();
 
+        // চেক করা হচ্ছে আগে কোনো স্বাগত নোটিফিকেশন তৈরি হয়েছে কিনা
+        let hasWelcome = false;
+        snapshot.forEach((doc) => {
+            if (doc.data().type === "welcome") {
+                hasWelcome = true;
+            }
+        });
+
         // যদি আগে কোনো স্বাগত নোটিফিকেশন না থাকে, তবে একটি নতুন তৈরি হবে
-        if (snapshot.empty) {
+        if (!hasWelcome) {
             await notifRef.add({
                 userId: uid,
                 title: "👋 আমার বাড়ি.কম-এ আপনাকে স্বাগতম!",
@@ -86,14 +95,42 @@ function listenForUserNotifications(uid) {
                 const notif = doc.data();
                 if (!notif.isRead) unreadCount++;
 
-                const notifItem = createNotificationCard(doc.id, notif, uid);
+                // সঠিক প্যারামিটার সিকোয়েন্স সহ কার্ড তৈরি
+                const notifItem = createNotificationCard(doc.id, notif, uid, false);
                 notificationContainer.appendChild(notifItem);
             });
 
             updateNotificationBadge(unreadCount);
         }, (error) => {
             console.error("নোটিফিকেশন লোড ব্যর্থ: ", error);
+            notificationContainer.innerHTML = `<p style="text-align: center; color: red; padding: 20px;">নোটিফিকেশন লোড করতে সমস্যা হয়েছে।</p>`;
         });
+}
+
+/**
+ * ৩. গেস্ট ইউজারের নোটিফিকেশন (লোকাল স্টোরেজ) লোড করা
+ */
+function loadGuestNotifications() {
+    const notificationContainer = document.getElementById("notifications-list");
+    if (!notificationContainer) return;
+
+    const guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
+    notificationContainer.innerHTML = "";
+
+    if (guestNotifications.length === 0) {
+        notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">আপনার নোটিফিকেশন বক্স এখন খালি।</p>`;
+        updateNotificationBadge(0);
+        return;
+    }
+
+    guestNotifications.forEach((notif, index) => {
+        // গেস্ট ইউজারের জন্য uid=null এবং isGuest=true
+        const notifItem = createNotificationCard(`guest_${index}`, notif, null, true);
+        notificationContainer.appendChild(notifItem);
+    });
+
+    const unreadCount = guestNotifications.filter(n => !n.isRead).length;
+    updateNotificationBadge(unreadCount);
 }
 
 /**
@@ -105,16 +142,26 @@ function createNotificationCard(docId, notif, uid, isGuest = false) {
     
     // টাইপ অনুযায়ী আইকন সেট করা
     let iconName = "notifications";
-    if (notif.type === "welcome") iconName = "celebration"; // স্বাগতমের জন্য স্পেশাল আইকন
+    if (notif.type === "welcome") iconName = "celebration"; 
     else if (notif.type === "like") iconName = "thumb_up";
     else if (notif.type === "save") iconName = "bookmark";
     else if (notif.type === "chat") iconName = "chat";
 
     let dateStr = "এইমাত্র";
     if (notif.timestamp) {
-        const dateObj = notif.timestamp.toDate ? notif.timestamp.toDate() : new Date(notif.timestamp.seconds * 1000);
-        const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        dateStr = dateObj.toLocaleDateString('bn-BD', options);
+        let dateObj;
+        if (notif.timestamp.toDate) {
+            dateObj = notif.timestamp.toDate();
+        } else if (notif.timestamp.seconds) {
+            dateObj = new Date(notif.timestamp.seconds * 1000);
+        } else {
+            dateObj = new Date(notif.timestamp);
+        }
+        
+        if (!isNaN(dateObj.getTime())) {
+            const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            dateStr = dateObj.toLocaleDateString('bn-BD', options);
+        }
     }
 
     li.innerHTML = `
@@ -126,25 +173,22 @@ function createNotificationCard(docId, notif, uid, isGuest = false) {
         <span class="notif-time">${dateStr}</span>
     `;
 
-    // 🎯 ইউজারের ক্লিক হ্যান্ডলার লজিক (আপনার পরিকল্পনা অনুযায়ী)
+    // ইউজারের ক্লিক হ্যান্ডলার লজিক (টোকেন কালেকশন এবং রিডাইরেক্ট)
     li.addEventListener("click", async () => {
-        // প্রথমে নোটিফিকেশনটি Read মার্ক হবে
         await markAsRead(docId, isGuest);
         
-        if (!isGuest) {
-            // ১. ডাটাবেজে ইউজারের আইডি চেক করা হচ্ছে টোকেন আছে কি না
-            const userDoc = await db.collection("users").doc(uid).get();
-            const userData = userDoc.data();
+        if (!isGuest && uid) {
+            try {
+                // ডাটাবেজে ইউজারের আইডি চেক করা হচ্ছে টোকেন আছে কি না
+                const userDoc = await db.collection("users").doc(uid).get();
+                const userData = userDoc.data();
 
-            if (!userData || !userData.fcmToken) {
-                console.log("ইউজারের কোনো টোকেন পাওয়া যায়নি! এবার পারমিশন প্রম্পট দেখানো হবে...");
-                
-                // ২. যদি টোকেন না থাকে তবে নোটিফিকেশন এলাউ করার প্রম্পট দেখাবে
-                const permission = await Notification.requestPermission();
-                
-                // ৩. যদি পারমিশন দেয়, তবে টোকেন সংগ্রহ করে ইউজার আইডিতে যুক্ত করবে
-                if (permission === "granted") {
-                    try {
+                if (!userData || !userData.fcmToken) {
+                    console.log("ইউজারের কোনো টোকেন পাওয়া যায়নি! এবার পারমিশন প্রম্পট দেখানো হবে...");
+                    
+                    const permission = await Notification.requestPermission();
+                    
+                    if (permission === "granted") {
                         const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
                         if (currentToken) {
                             await db.collection("users").doc(uid).set({
@@ -153,17 +197,15 @@ function createNotificationCard(docId, notif, uid, isGuest = false) {
                             }, { merge: true });
                             alert("🎉 ধন্যবাদ! পুশ নোটিফিকেশন সফলভাবে চালু হয়েছে।");
                         }
-                    } catch (err) {
-                        console.error("টোকেন সংগ্রহে সমস্যা: ", err);
+                    } else {
+                        alert("⚠️ আপনি নোটিফিকেশন ব্লক করেছেন। লাইভ আপডেট পেতে ব্রাউজার সেটিংস থেকে এটি এলাউ করুন।");
                     }
-                } else {
-                    alert("⚠️ আপনি নোটিফিকেশন ব্লক করেছেন। লাইভ আপডেট পেতে ব্রাউজার সেটিংস থেকে এটি এলাউ করুন।");
                 }
-            } else {
-                console.log("ইউজারের টোকেন ইতিমধ্যে ডাটাবেজে সচল আছে।");
+            } catch (err) {
+                console.error("টোকেন চেক বা সংরক্ষণে সমস্যা: ", err);
             }
 
-            // ৪. নোটিফিকেশনের টাইপ অনুযায়ী নির্দিষ্ট পেজে পাঠানো
+            // নোটিফিকেশনের টাইপ অনুযায়ী রিডাইরেক্ট করা
             if (notif.type === "chat" && notif.chatId) {
                 window.location.href = `messages.html?chatId=${notif.chatId}&postId=${notif.postId || ''}&action=direct`;
             } else if (notif.postId) {
@@ -197,32 +239,7 @@ async function markAsRead(docId, isGuest) {
 }
 
 /**
- * গেস্ট ইউজারের নোটিফিকেশন (লোকাল স্টোরেজ) লোড করা
- */
-function loadGuestNotifications() {
-    const notificationContainer = document.getElementById("notifications-list");
-    if (!notificationContainer) return;
-
-    const guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
-    notificationContainer.innerHTML = "";
-
-    if (guestNotifications.length === 0) {
-        notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">আপনার নোটিফিকেশন বক্স এখন খালি।</p>`;
-        updateNotificationBadge(0);
-        return;
-    }
-
-    guestNotifications.forEach((notif, index) => {
-        const notifItem = createNotificationCard(`guest_${index}`, notif, null, true);
-        notificationContainer.appendChild(notifItem);
-    });
-
-    const unreadCount = guestNotifications.filter(n => !n.isRead).length;
-    updateNotificationBadge(unreadCount);
-}
-
-/**
- * গেস্ট টোকেন সেটআপ
+ * ৪. গেস্ট টোকেন সেটআপ
  */
 async function handleGuestTokenSetup() {
     try {
@@ -254,4 +271,4 @@ function updateNotificationBadge(count) {
     } else {
         badge.style.display = "none";  
     }
-                   }
+                         }
