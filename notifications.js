@@ -22,7 +22,89 @@ function initGlobalNotificationSystem() {
             console.log("🔓 রেজিস্টার্ড ইউজার একটিভ আছেন।");
             
             // ১. গেস্ট টোকেন থাকলে তা ইউজার আইডিতে ট্রান্সফার/সিঙ্ক করা
-            await syncGuestTokenToUser(user.uid);
+            /**
+ * 🔄 টোকেন সিঙ্ক, অটো রি-প্রম্পট এবং পারমিশন রিকভারি লজিক
+ */
+async function syncGuestTokenToUser(uid) {
+    try {
+        // ১. লোকাল স্টোরেজে গেস্ট টোকেন থাকলে তা সিঙ্ক করা
+        const localToken = localStorage.getItem("my_fcm_token");
+        if (localToken) {
+            await saveTokenToFirestore(uid, localToken);
+            await db.collection("anonymous_tokens").doc(localToken).delete();
+            localStorage.removeItem("my_fcm_token"); // সিঙ্ক শেষে লোকাল স্টোরেজ ক্লিয়ার
+            console.log("🎉 গেস্ট টোকেন সফলভাবে ইউজার অ্যাকাউন্টে স্থানান্তরিত হয়েছে।");
+            return;
+        }
+
+        // ২. 🎯 টোকেন মিসিং ও পারমিশন চেক (রি-প্রম্পট মেকানিজম)
+        if (Notification.permission === "default") {
+            // ইউজার যদি আগে কখনো Allow/Block না করে থাকে (অথবা রিসেট হয়ে থাকে), তবে পুনরায় প্রম্পট দেখাবে
+            console.log("🔔 নোটিফিকেশন পারমিশন এখনো দেওয়া হয়নি। ব্রাউজার প্রম্পট ওপেন হচ্ছে...");
+            const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
+            if (currentToken) {
+                await saveTokenToFirestore(uid, currentToken);
+            }
+        } 
+        else if (Notification.permission === "granted") {
+            // পারমিশন দেওয়া আছে, কিন্তু কোনো কারণে যদি ডাটাবেজ থেকে টোকেন মিস হয় বা আপডেট দরকার হয়
+            const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
+            if (currentToken) {
+                // ফায়ারস্টোরে ক্রস-চেক করে আপডেট করে নেওয়া
+                await saveTokenToFirestore(uid, currentToken);
+            }
+        } 
+        else if (Notification.permission === "denied") {
+            // ইউজার যদি ব্রাউজারে নোটিফিকেশন চিরতরে ব্লক (Block) করে রাখে
+            console.warn("🚫 ইউজার নোটিফিকেশন ব্লক করে রেখেছেন। সেটিংস থেকে অন করতে হবে।");
+            showPermissionDeniedBanner();
+        }
+
+    } catch (error) {
+        console.error("💥 টোকেন সংগ্রহ বা পারমিশন পুনরায় চাওয়ায় সমস্যা: ", error);
+    }
+}
+
+/**
+ * 💾 ফায়ারস্টোরে টোকেন সেভ করার হেল্পার ফাংশন
+ */
+async function saveTokenToFirestore(uid, token) {
+    await db.collection("users").doc(uid).set({
+        fcmToken: token,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    console.log("✅ FCM Token সফলভাবে ফায়ারস্টোরে সুরক্ষিত করা হয়েছে।");
+}
+
+/**
+ * ⚠️ ইউজার ব্লক করে রাখলে নোটিফিকেশন পেজে একটি সহায়তামূলক ব্যানার দেখানো
+ */
+function showPermissionDeniedBanner() {
+    const listContainer = document.getElementById("notifications-list");
+    if (!listContainer) return;
+    
+    // আগের কোনো ব্যানার থাকলে তা রিমুভ করা
+    const existingBanner = document.getElementById("permission-denied-alert");
+    if (existingBanner) return;
+
+    const alertBanner = document.createElement("div");
+    alertBanner.id = "permission-denied-alert";
+    alertBanner.style = `
+        background: #fff3cd; 
+        color: #856404; 
+        padding: 12px; 
+        border: 1px solid #ffeeba; 
+        border-radius: 8px; 
+        margin-bottom: 15px; 
+        font-size: 13px;
+        text-align: center;
+        font-family: 'Hind Siliguri', sans-serif;
+    `;
+    alertBanner.innerHTML = `
+        <strong>বিজ্ঞপ্তি:</strong> আপনার ব্রাউজারে নোটিফিকেশন ব্লক করা আছে। লাইভ চ্যাট ও প্রপার্টি আপডেট পেতে ব্রাউজারের অ্যাড্রেস বারের লক (🔒) আইকনে ক্লিক করে নোটিফিকেশন <strong>Allow</strong> করে দিন।
+    `;
+    listContainer.parentNode.insertBefore(alertBanner, listContainer);
+                }
             
             // ২. নতুন ইউজারের জন্য ডাটাবেজে স্বাগত নোটিফিকেশন নিশ্চিত করা
             await ensureUserWelcomeNotification(user.uid);
