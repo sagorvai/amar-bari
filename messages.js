@@ -1,5 +1,5 @@
 // =======================================================
-// 🎯 আমার বাড়ি.কম - আলটিমেট রিয়েল-টাইম চ্যাট ইঞ্জিন (অপ্টিমাইজড মোড)
+// 🎯 আমার বাড়ি প্ল্যাটফর্ম - আলটিমেট রিয়েল-টাইম চ্যাট ইঞ্জিন (অপ্টিমাইজড মোড)
 // =======================================================
 
 const firebaseConfig = {
@@ -23,6 +23,11 @@ let currentAction = urlParams.get('action');
 
 let currentUser = null;
 let activeChatListener = null;
+
+// চ্যাট আইডির নামকরণের ধারাবাহিকতা বজায় রাখার হেল্পার ফাংশন (Alphabetical Sort)
+function getChatId(uid1, uid2) {
+    return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+}
 
 // ১. ইউজার লগইন স্টেট পর্যবেক্ষণ ও হেডার প্রোফাইল পিকচার ইন্টিগ্রেশন
 firebase.auth().onAuthStateChanged(async (user) => {
@@ -78,6 +83,7 @@ function loadChatList() {
 
     db.collection('chats')
         .where('participants', 'array-contains', currentUser.uid)
+        .orderBy('timestamp', 'desc') // সর্বশেষ চ্যাটটি সবার উপরে দেখানোর জন্য
         .onSnapshot((snapshot) => {
             
             if (snapshot.empty) {
@@ -93,8 +99,12 @@ function loadChatList() {
                 
                 const otherUserId = chatData.participants ? chatData.participants.find(id => id !== currentUser.uid) : null;
                 
+                // আনরিড মেসেজের স্টাইল হ্যান্ডেল করার লজিক
+                const isUnreadMessage = chatData.isUnread && chatData.lastSenderId !== currentUser.uid;
+                const unreadClass = isUnreadMessage ? 'unread-chat' : '';
+
                 const chatItemDiv = document.createElement('div');
-                chatItemDiv.className = `chat-item ${chatId === currentChatId ? 'active' : ''}`;
+                chatItemDiv.className = `chat-item ${chatId === currentChatId ? 'active' : ''} ${unreadClass}`;
                 chatItemDiv.id = `item_${chatId}`;
                 
                 // ডাইনামিক ড্রপডাউন ও থ্রি-ডট সহ চ্যাট আইটেম HTML গঠন
@@ -102,9 +112,12 @@ function loadChatList() {
                     <img src="https://via.placeholder.com/45/007bff/ffffff?text=U" id="avatar_${chatId}">
                     <div class="chat-item-info">
                         <h4 id="name_${chatId}">ব্যবহারকারী...</h4>
-                        <p id="msg_preview_${chatId}">${chatData.lastMessage || "নতুন চ্যাট শুরু হয়েছে..."}</p>
+                        <p id="msg_preview_${chatId}" style="${isUnreadMessage ? 'font-weight: bold; color: #1e293b;' : ''}">${chatData.lastMessage || "নতুন চ্যাট শুরু হয়েছে..."}</p>
                     </div>
                     
+                    <!-- 🎯 আনরিড ইন্ডিকেটর ডট -->
+                    ${isUnreadMessage ? `<span class="unread-dot" style="width: 8px; height: 8px; background-color: #007bff; border-radius: 50%; margin-right: 8px;"></span>` : ''}
+
                     <!-- 🎯 থ্রি-ডট মেনু বাটন -->
                     <button class="chat-item-menu-btn" id="menu_btn_${chatId}">
                         <i class="material-icons" style="font-size: 20px;">more_vert</i>
@@ -120,9 +133,8 @@ function loadChatList() {
                 
                 chatListContainer.appendChild(chatItemDiv);
 
-                // চ্যাট আইটেমে ক্লিক করলে চ্যাট বক্স ওপেন হবে (তবে থ্রি-ডট বাটনে ক্লিক করলে যেন চ্যাট ওপেন না হয়)
+                // চ্যাট আইটেমে ক্লিক করলে চ্যাট বক্স ওপেন হবে
                 chatItemDiv.onclick = (e) => {
-                    // যদি ইউজার থ্রি-ডট বা ডিলিট বাটনে ক্লিক করে, তবে চ্যাট বক্স ওপেন হবে না
                     if (e.target.closest('.chat-item-menu-btn') || e.target.closest('.chat-dropdown')) {
                         return; 
                     }
@@ -145,14 +157,12 @@ function loadChatList() {
                 
                 if (menuBtn && dropdown) {
                     menuBtn.onclick = (e) => {
-                        e.stopPropagation(); // যাতে চ্যাট ওপেন ট্রিগার না হয়
+                        e.stopPropagation(); 
                         
-                        // অন্য সব খোলা ড্রপডাউন বন্ধ করা
                         document.querySelectorAll('.chat-dropdown').forEach(dd => {
                             if (dd.id !== `dropdown_${chatId}`) dd.classList.remove('show');
                         });
                         
-                        // বর্তমান ড্রপডাউন টগল করা
                         dropdown.classList.toggle('show');
                     };
                 }
@@ -161,13 +171,13 @@ function loadChatList() {
                 const deleteBtn = chatItemDiv.querySelector(`#delete_btn_${chatId}`);
                 if (deleteBtn) {
                     deleteBtn.onclick = async (e) => {
-                        e.stopPropagation(); // স্টপ প্রোপাগেশন
+                        e.stopPropagation(); 
                         dropdown.classList.remove('show');
 
                         const confirmDelete = confirm("আপনি কি নিশ্চিতভাবে এই চ্যাটটি ডিলিট করতে চান? (আপনার সব মেসেজ মুছে যাবে)");
                         if (confirmDelete) {
                             try {
-                                // ১. চ্যাটের ভেতরের সব মেসেজ ডিলিট করা
+                                // ১. চ্যাটের ভেতরের সব মেসেজ সাব-কালেকশন থেকে ডিলিট করা
                                 const messagesSnapshot = await db.collection('chats').doc(chatId).collection('messages').get();
                                 const batch = db.batch();
                                 messagesSnapshot.forEach(mDoc => {
@@ -180,7 +190,6 @@ function loadChatList() {
                                 
                                 alert("চ্যাটটি সফলভাবে ডিলিট করা হয়েছে।");
                                 
-                                // যদি ডিলিট করা চ্যাটটি বর্তমানে স্ক্রিনে ওপেন থাকে, তবে স্ক্রিন খালি করা
                                 if (currentChatId === chatId) {
                                     currentChatId = null;
                                     const emptyState = document.getElementById('emptyState');
@@ -188,7 +197,6 @@ function loadChatList() {
                                     if (emptyState) emptyState.style.display = 'flex';
                                     if (activeChatContent) activeChatContent.style.display = 'none';
                                     
-                                    // মোবাইলে চ্যাট ডিলিট হলে ব্যাক নিয়ে যাওয়া
                                     if (window.innerWidth <= 768) {
                                         const backBtn = document.getElementById('backToListBtn');
                                         if (backBtn) backBtn.click();
@@ -262,6 +270,11 @@ async function openChatBox(chatId, postId) {
             await chatRef.set(chatDocData);
         } else {
             chatDocData = chatDoc.data();
+            
+            // 🎯 চ্যাটটি ওপেন করলে এটি যদি আনরিড মেসেজ হয়, তবে এটিকে রিমোটলি 'রিড' (isUnread: false) সেট করবে
+            if (chatDocData.isUnread && chatDocData.lastSenderId !== currentUser.uid) {
+                await chatRef.update({ isUnread: false });
+            }
         }
     } catch (e) {
         console.error("চ্যাট ইনিশিয়ালিং এরর:", e);
@@ -273,7 +286,7 @@ async function openChatBox(chatId, postId) {
     // আগের কোনো লিসেনার সচল থাকলে তা রিমুভ করা
     if (activeChatListener) activeChatListener();
 
-    // রিয়েল-টাইม মেসেজ লোড ও রেন্ডারিং
+    // রিয়েল-টাইম মেসেজ লোড ও রেন্ডারিং
     const messagesDisplay = document.getElementById('messagesDisplay');
     const quickRepliesContainer = document.querySelector('.quick-replies');
 
@@ -283,7 +296,6 @@ async function openChatBox(chatId, postId) {
             if (!messagesDisplay) return;
             messagesDisplay.innerHTML = "";
             
-            // চ্যাটে কোন মেসেজ আছে কিনা ট্র্যাক করার ভেরিয়েবল
             const hasMessages = !snapshot.empty;
 
             snapshot.forEach(doc => {
@@ -293,10 +305,15 @@ async function openChatBox(chatId, postId) {
                 
                 bubble.className = `msg-bubble ${isIncoming ? 'incoming' : 'outgoing'}`;
                 
+                // 🎯 নিখুঁত টাইমস্ট্যাম্প পার্সিং (সার্ভার ডিলে হ্যান্ডেলিং বাগ ফিক্স)
                 let timeString = "এইমাত্র";
-                if (msg.timestamp) {
-                    const date = msg.timestamp.toDate();
-                    timeString = date.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+                if (msg.timestamp && typeof msg.timestamp.toDate === 'function') {
+                    try {
+                        const date = msg.timestamp.toDate();
+                        timeString = date.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+                    } catch(e) {
+                        timeString = "এইমাত্র";
+                    }
                 }
 
                 bubble.innerHTML = `${msg.text} <span class="msg-time">${timeString}</span>`;
@@ -306,22 +323,18 @@ async function openChatBox(chatId, postId) {
             // অটোমেটিক স্ক্রল ডাউন
             messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
 
-            // 🎯 কুইক রিপ্লাই শো/হাইড লজিক (শুধুমাত্র ভিজিটর এবং ফাকা চ্যাটের জন্য)
+            // 🎯 কুইক রিপ্লাই শো/হাইড লজিক
             const targetPostId = postId || currentPostId || (chatDocData ? chatDocData.postId : "");
             if (quickRepliesContainer) {
                 if (hasMessages || !targetPostId) {
-                    // চ্যাটে মেসেজ থাকলে অথবা পোস্ট আইডি না থাকলে হাইড হবে
                     quickRepliesContainer.style.display = 'none';
                 } else {
-                    // প্রপার্টি ডকুমেন্ট থেকে পোস্ট দাতা কে তা খুঁজে বের করা
                     db.collection('properties').doc(targetPostId).get().then(pDoc => {
                         if (pDoc.exists) {
                             const propertyData = pDoc.data();
-                            // যদি কারেন্ট ইউজার পোস্ট দাতা (owner/seller) হন, তবে কুইক রিপ্লাই লুকানো থাকবে
                             if (propertyData.userId === currentUser.uid) {
                                 quickRepliesContainer.style.display = 'none';
                             } else {
-                                // যদি কারেন্ট ইউজার ভিজিটর (ক্রেতা) হন, এবং চ্যাটে কোনো মেসেজ না থাকে
                                 quickRepliesContainer.style.display = 'flex';
                             }
                         } else {
@@ -337,7 +350,7 @@ async function openChatBox(chatId, postId) {
 
     // চ্যাট হেডারে অপরপক্ষের নাম সেট করা
     const parts = chatId.split('_');
-    const otherUserId = parts.find(id => id !== currentUser.uid && id !== postId && id !== currentPostId);
+    const otherUserId = parts.find(id => id !== currentUser.uid);
     if (otherUserId) {
         db.collection('users').doc(otherUserId).get().then(uDoc => {
             const headerName = document.getElementById('activeChatUserName');
@@ -346,9 +359,9 @@ async function openChatBox(chatId, postId) {
             }
         }).catch(err => console.error(err));
     }
-                                                    }
+}
 
-// ৪. মেসেজ পাঠানো লজিক (লাস্ট সেন্ডার আইডি ট্র্যাকিং সহ আপডেট করা হলো)
+// ৪. মেসেজ পাঠানো লজিক (লাস্ট সেন্ডার আইডি ট্র্যাকিং সহ)
 async function sendMessage(text) {
     if (!text.trim() || !currentChatId) return;
 
@@ -366,8 +379,8 @@ async function sendMessage(text) {
         // ২. মূল চ্যাট ডকুমেন্টে লাইভ কাউন্টের জন্য ট্র্যাকিং ডাটা আপডেট করা
         await db.collection('chats').doc(currentChatId).update({
             lastMessage: cleanText,
-            lastSenderId: currentUser.uid,             // 🎯 কারেন্ট ইউজারের আইডি ট্র্যাক করবে
-            isUnread: true,                           // 🎯 চ্যাটটি আনরিড হিসেবে চিহ্নিত করবে
+            lastSenderId: currentUser.uid,             
+            isUnread: true,                           
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch (error) {
@@ -394,7 +407,8 @@ function loadPropertyContext(postId) {
             document.getElementById('activePropertyPrice').textContent = amount ? `৳ ${amount}` : "আলোচনা সাপেক্ষ";
             
             if (data.images && data.images.length > 0) {
-                document.getElementById('activePropertyImg').src = data.images[0].url || data.images[0];
+                const firstImg = data.images[0];
+                document.getElementById('activePropertyImg').src = firstImg.url || firstImg;
             }
         } else {
             card.style.display = 'none';
@@ -420,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // 🎯 অ্যান্ড্রয়েড ক্রোম কিবোর্ড অন হলে স্ক্রোল ফিক্স
+        // 🎯 অ্যান্ড্রেয়ড ও আইওএস মোবাইল কিবোর্ড অন হলে স্ক্রোল ফিক্স
         inputField.addEventListener('focus', () => {
             setTimeout(() => {
                 inputField.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -428,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ৩টি কুইক রিপ্লাই কোয়েরি একশন লিসেনার
+    // কুইক রিপ্লাই কোয়েরি একশন লিসেনার
     const quickRepliesContainer = document.querySelector('.quick-replies');
     if (quickRepliesContainer) {
         quickRepliesContainer.addEventListener('click', (e) => {
@@ -450,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // মোবাইলের ভেতরের ব্যাক বাটন লজিক (লিস্টে ফিরলে মেইন বাটন আবার শো করবে)
+    // মোবাইলের ভেতরের ব্যাক বাটন লজিক
     const backBtn = document.getElementById('backToListBtn');
     if (backBtn) {
         backBtn.onclick = () => {
@@ -468,4 +482,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function sendQuickReply(text) {
     sendMessage(text);
-    }
+}
