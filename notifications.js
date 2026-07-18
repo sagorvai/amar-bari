@@ -1,5 +1,5 @@
 // =======================================================
-// 🎯 আমার বাড়ি.কম - সর্বজনীন স্মার্ট নোটিফিকেশন ও হেডার সিঙ্ক ইঞ্জিন
+// 🎯 আমার বাড়ি.কম - সর্বজনীন স্মার্ট নোটিফিকেশন ও হেডার সিঙ্ক ইঞ্জিন (স্থিরীকৃত সংস্করণ)
 // =======================================================
 
 const db = firebase.firestore();
@@ -31,10 +31,10 @@ function initGlobalNotificationSystem() {
             // ২. নতুন ইউজারের জন্য ডাটাবেজে স্বাগত নোটিফিকেশন নিশ্চিত করা
             await ensureUserWelcomeNotification(user.uid);
             
-            // ৩. রেজিস্টার্ড ইউজারের রিয়েল-টাইম নোটিফিকেশন লিস্ট লোড
+            // ৩. রেজিস্টার্ড ইউজারের রিয়েল-টাইম নোটিফিকেশন লিস্ট লোড (নোটিফিকেশন পেজের জন্য)
             listenForRegisteredUserNotifications(user.uid);
 
-            // ৪. হেডারে লাইভ নোটিফিকেশন ও মেসেজ কাউন্ট সিঙ্ক চালু (From header-sync.js)
+            // ৪. হেডারে লাইভ নোটিফিকেশন ও চ্যাট কাউন্ট রিয়েল-টাইম সিঙ্ক চালু (Fix করা হয়েছে)
             syncUnreadNotifications(user.uid);
             syncUnreadMessages(user.uid);
         } else {
@@ -55,7 +55,6 @@ function initGlobalNotificationSystem() {
 async function syncGuestTokenToUser(uid) {
     try {
         const localToken = localStorage.getItem("my_fcm_token");
-        
         if (localToken) {
             await db.collection("users").doc(uid).set({
                 fcmToken: localToken,
@@ -97,7 +96,7 @@ async function ensureUserWelcomeNotification(uid) {
                 title: "👋 আমার বাড়ি প্ল্যাটফর্মে আপনাকে স্বাগত!",
                 message: "আমাদের সাথে যুক্ত হওয়ার জন্য আপনাকে আন্তরিক ধন্যবাদ। লাইভ আপডেট এবং চ্যাট মেসেজের পুশ নোটিফিকেশন সচল করতে এই নোটিফিকেশনে ক্লিক করুন।",
                 type: "welcome",
-                isRead: false,
+                isRead: false, // 🎯 এখানে স্পষ্টত isRead ব্যবহার করা হয়েছে
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
             console.log("ইউজারের স্বাগত নোটিফিকেশন ডাটাবেজে যুক্ত হয়েছে।");
@@ -108,11 +107,73 @@ async function ensureUserWelcomeNotification(uid) {
 }
 
 /**
- * 🔔 রেজিস্টার্ড ইউজারের নোটিফিকেশন লোড ও ব্যাজ লজিক
+ * 🔔 হেডারে আনরিড নোটিফিকেশন লাইভ কাউন্ট লজিক (FIXED)
+ */
+function syncUnreadNotifications(userId) {
+    const notifBadge = document.getElementById('notification-count');
+    if (!notifBadge) return;
+
+    // পূর্বের কোনো লিসেনার সচল থাকলে তা বন্ধ করা
+    if (unreadNotifListener) unreadNotifListener();
+
+    // 🎯 ফিক্স: notifications কালেকশনে 'isRead' ফিল্ড চেক করা হচ্ছে (read নয়)
+    unreadNotifListener = db.collection('notifications')
+        .where('userId', '==', userId)
+        .where('isRead', '==', false) 
+        .onSnapshot(snapshot => {
+            const count = snapshot.size;
+            console.log(`🔔 লাইভ নোটিফিকেশন কাউন্ট আপডেট: ${count} টি আনরিড`);
+            if (count > 0) {
+                notifBadge.textContent = count;
+                notifBadge.style.display = 'inline-block';
+            } else {
+                notifBadge.style.display = 'none';
+            }
+        }, err => console.error("Notif badge error:", err));
+}
+
+/**
+ * 💬 হেডারে আনরিড চ্যাট মেসেজ লাইভ কাউন্ট লজিক
+ */
+function syncUnreadMessages(userId) {
+    const msgBadge = document.getElementById('message-count');
+    if (!msgBadge) return;
+
+    if (unreadMsgListener) unreadMsgListener();
+
+    unreadMsgListener = db.collection('chats')
+        .where('participants', 'array-contains', userId)
+        .onSnapshot(snapshot => {
+            if (snapshot.empty) {
+                msgBadge.style.display = 'none';
+                return;
+            }
+
+            let unreadChatsCount = 0;
+            snapshot.forEach(chatDoc => {
+                const chatData = chatDoc.data();
+                // লজিক: লাস্ট মেসেজ যদি অন্য কোনো ইউজারের হয় এবং চ্যাটটি আনরিড মার্ক করা থাকে
+                if (chatData.lastSenderId && chatData.lastSenderId !== userId && chatData.isUnread !== false) {
+                    unreadChatsCount++;
+                }
+            });
+
+            console.log(`💬 লাইভ চ্যাট মেসেজ কাউন্ট আপডেট: ${unreadChatsCount} টি আনরিড`);
+            if (unreadChatsCount > 0) {
+                msgBadge.textContent = unreadChatsCount;
+                msgBadge.style.display = 'inline-block';
+            } else {
+                msgBadge.style.display = 'none';
+            }
+        }, err => console.error("Message badge error:", err));
+}
+
+/**
+ * 🔔 রেজিস্টার্ড ইউজারের নোটিফিকেশন লিস্ট লোড (ইন-পেজ ভিউ)
  */
 function listenForRegisteredUserNotifications(uid) {
     const notificationContainer = document.getElementById("notifications-list");
-    if (!notificationContainer) return;
+    if (!notificationContainer) return; // নোটিফিকেশন পেজে না থাকলে এটি স্কিপ হবে
 
     db.collection("notifications")
         .where("userId", "==", uid)
@@ -121,18 +182,15 @@ function listenForRegisteredUserNotifications(uid) {
 
             if (snapshot.empty) {
                 notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">আপনার নোটিফিকেশন বক্স এখন খালি।</p>`;
-                manageBadgesAndHeader(0);
                 return;
             }
 
-            let unreadCount = 0;
             let docsArray = [];
-
             snapshot.forEach((doc) => {
                 docsArray.push({ id: doc.id, data: doc.data() });
             });
 
-            // ক্লায়েন্ট সাইড সর্ٹنگ
+            // সর্টিং (নতুন নোটিফিকেশন উপরে থাকবে)
             docsArray.sort((a, b) => {
                 const tA = a.data.timestamp ? (a.data.timestamp.seconds || new Date(a.data.timestamp).getTime()) : 0;
                 const tB = b.data.timestamp ? (b.data.timestamp.seconds || new Date(b.data.timestamp).getTime()) : 0;
@@ -141,20 +199,16 @@ function listenForRegisteredUserNotifications(uid) {
 
             docsArray.forEach((item) => {
                 const notif = item.data;
-                if (!notif.isRead) unreadCount++;
-
                 const notifItem = createNotificationCard(item.id, notif, uid, false);
                 notificationContainer.appendChild(notifItem);
             });
-
-            manageBadgesAndHeader(unreadCount);
         }, (error) => {
             console.error("নোটিফিকেশন লোড এরর: ", error);
         });
 }
 
 /**
- * 🌐 গেস্ট ইউজারদের নোটিফিকেশন লোড লজিক (উন্মুক্ত পেজ)
+ * 🌐 গেস্ট ইউজারদের নোটিফিকেশন লোড লজিক
  */
 function listenForGuestNotifications() {
     const notificationContainer = document.getElementById("notifications-list");
@@ -165,7 +219,7 @@ function listenForGuestNotifications() {
 
     if (guestNotifications.length === 0) {
         notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">আপনার নোটিফিকেশন বক্স এখন খালি।</p>`;
-        manageBadgesAndHeader(0);
+        manageLocalGuestBadge(0);
         return;
     }
 
@@ -175,11 +229,11 @@ function listenForGuestNotifications() {
     });
 
     const unreadCount = guestNotifications.filter(n => !n.isRead).length;
-    manageBadgesAndHeader(unreadCount);
+    manageLocalGuestBadge(unreadCount);
 }
 
 /**
- * 🎴 সর্বজনীন নোটিফিকেশন কার্ড ও ক্লিক-পারমিশন মেকানিজম
+ * 🎴 সর্বজনীন নোটিফিকেশন কার্ড ও ক্লিক মেকানিজম
  */
 function createNotificationCard(docId, notif, uid, isGuest = false) {
     const li = document.createElement("li");
@@ -216,7 +270,6 @@ function createNotificationCard(docId, notif, uid, isGuest = false) {
                 const userData = userDoc.data();
 
                 if (!userData || !userData.fcmToken) {
-                    console.log("⚠️ ইউজারের টোকেন নেই! নোটিফিকেশন প্রম্পট পাঠানো হচ্ছে...");
                     const permission = await Notification.requestPermission();
                     if (permission === "granted") {
                         const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
@@ -225,7 +278,6 @@ function createNotificationCard(docId, notif, uid, isGuest = false) {
                                 fcmToken: currentToken,
                                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                             }, { merge: true });
-                            alert("🎉 পুশ নোটিফিকেশন সফলভাবে আপনার অ্যাকাউন্টে যুক্ত হয়েছে!");
                         }
                     }
                 }
@@ -245,9 +297,9 @@ function createNotificationCard(docId, notif, uid, isGuest = false) {
 }
 
 /**
- * 🔴 নোটিফিকেশন বক্স ভিত্তিক স্থানীয় ব্যাজ ও ডামি ব্যাজ কন্ট্রোল
+ * 🌐 গেস্ট ইউজারদের লোকাল স্টোরেজ ব্যাজ ও ডামি ব্যাজ কন্ট্রোল
  */
-function manageBadgesAndHeader(count) {
+function manageLocalGuestBadge(count) {
     const headerBadge = document.getElementById("notification-count"); 
     const dummyBadge = document.getElementById("dummy-notification-badge"); 
 
@@ -270,65 +322,7 @@ function manageBadgesAndHeader(count) {
 }
 
 /**
- * 🔔 আনরিড নোটিফিকেশন লাইভ কাউন্ট লজিক (From header-sync.js)
- */
-function syncUnreadNotifications(userId) {
-    const notifBadge = document.getElementById('notification-count');
-    if (!notifBadge) return;
-
-    if (unreadNotifListener) unreadNotifListener();
-
-    unreadNotifListener = db.collection('notifications')
-        .where('userId', '==', userId)
-        .where('isRead', '==', false) // নোটিফিকেশন স্ট্রাকচারের সাথে মিল রেখে 'isRead' ব্যবহার করা হয়েছে
-        .onSnapshot(snapshot => {
-            const count = snapshot.size;
-            if (count > 0) {
-                notifBadge.textContent = count;
-                notifBadge.style.display = 'inline-block';
-            } else {
-                notifBadge.style.display = 'none';
-            }
-        }, err => console.error("Notif badge error:", err));
-}
-
-/**
- * 💬 আনরিড চ্যাট মেসেজ লাইভ কাউন্ট লজিক (From header-sync.js)
- */
-function syncUnreadMessages(userId) {
-    const msgBadge = document.getElementById('message-count');
-    if (!msgBadge) return;
-
-    if (unreadMsgListener) unreadMsgListener();
-
-    unreadMsgListener = db.collection('chats')
-        .where('participants', 'array-contains', userId)
-        .onSnapshot(snapshot => {
-            if (snapshot.empty) {
-                msgBadge.style.display = 'none';
-                return;
-            }
-
-            let unreadChatsCount = 0;
-            snapshot.forEach(chatDoc => {
-                const chatData = chatDoc.data();
-                // যদি চ্যাটের শেষ মেসেজটি অন্য কেউ পাঠিয়ে থাকে এবং চ্যাটটি আনরিড অবস্থায় থাকে
-                if (chatData.lastSenderId && chatData.lastSenderId !== userId && chatData.isUnread !== false) {
-                    unreadChatsCount++;
-                }
-            });
-
-            if (unreadChatsCount > 0) {
-                msgBadge.textContent = unreadChatsCount;
-                msgBadge.style.display = 'inline-block';
-            } else {
-                msgBadge.style.display = 'none';
-            }
-        }, err => console.error("Message badge error:", err));
-}
-
-/**
- * ব্যাজসমূহ হাইড এবং লিসেনার বন্ধ করার ফাংশন
+ * লিসেনার বন্ধ এবং ব্যাজ হাইড করার ফাংশন
  */
 function hideBadges() {
     const notifBadge = document.getElementById('notification-count');
@@ -341,7 +335,7 @@ function hideBadges() {
 }
 
 /**
- * নোটিফিকেশন রিড মার্ক করার সাধারণ ফাংশন
+ * নোটিফিকেশন রিড মার্ক করার ফাংশн
  */
 async function markAsRead(docId, isGuest) {
     if (isGuest) {
