@@ -1,3 +1,4 @@
+// preview.js - Fixed with Production-Ready Storage Moving & Price Drop Alert Sync
 const db = firebase.firestore();
 const auth = firebase.auth();
 
@@ -143,7 +144,7 @@ if (postData.category === 'বিক্রয়' && postData.owner) {
   row(own, 'দাগের ধরন', postData.owner.dagNoType);
   row(own, 'খতিয়ান টাইপ', postData.owner.khotianNoType);
   row(own, 'খতিয়ান নং', postData.owner.khotianNo);
-  row(own, 'মৌজা', postData.owner.mouja);
+  row(own, 'مৌজা', postData.owner.mouja);
 }
 
 /* ---------------- ৬. যোগাযোগ ---------------- */
@@ -248,10 +249,27 @@ async function publishPost() {
       delete preparedData.editPostId;
       delete preparedData.isEditMode;
 
+      // ফায়ারস্টোর আপডেট এক্সিকিউশন
       await db.collection('properties').doc(originalPostId).update(preparedData);
+
+      // 🎯 রিয়েল-টাইম দাম কমার অ্যালার্ট ট্রিগার লজিক
+      const oldPrice = parseFloat(sessionStorage.getItem('preEditPriceBackup') || '0');
+      const newPrice = parseFloat(preparedData.category === 'বিক্রয়' ? preparedData.price : preparedData.monthlyRent);
+
+      if (oldPrice > 0 && newPrice < oldPrice) {
+          const discountAlert = {
+              postId: originalPostId,
+              title: "দাম কমেছে! 📉",
+              message: `আপনার সেভ করা '${preparedData.title}' প্রপার্টির দাম ৳${oldPrice} থেকে কমিয়ে ৳${newPrice} টাকা করা হয়েছে!`,
+              type: "price_drop",
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          };
+          // গ্লোবাল নোটিফিকেশন কালেকশনে অ্যালার্ট ডেটা পাঠানো হলো
+          await db.collection('notifications').add(discountAlert);
+      }
       
       sessionStorage.clear();
-      alert('🎉 অভিনন্দন বন্ধু! আপনার পোস্টটি সফলভাবে সংশোধন করা হয়েছে।');
+      alert('🎉 অভিনন্দন বন্ধু! আমার বাড়ি প্ল্যাটফর্মে আপনার পোস্টটি সফলভাবে সংশোধন করা হয়েছে।');
       
       if (document.referrer && !document.referrer.includes('post.html') && !document.referrer.includes('preview.html')) {
         location.href = document.referrer;
@@ -265,7 +283,7 @@ async function publishPost() {
       await db.collection('properties').add(preparedData);
       
       sessionStorage.clear();
-      alert('🎉 অভিনন্দন বন্ধু! আপনার পোস্টটি সফলভাবে লাইভ হয়েছে।');
+      alert('🎉 অভিনন্দন বন্ধু! আমার বাড়ি প্ল্যাটফর্মে আপনার পোস্টটি সফলভাবে লাইভ হয়েছে।');
       location.href = 'index.html';
     }
 
