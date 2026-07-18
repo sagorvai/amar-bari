@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = doc.data();
             renderDetails(data);
             loadRelatedPosts(data);
-            setupLikeSystem(); 
+            setupLikeSystem(data); // এখানে data পাস করা হয়েছে যাতে ফাংশনটি প্রপার্টির তথ্য পায়
         }
     } catch (e) {
         console.error("ডেটা লোড করতে সমস্যা:", e);
@@ -44,33 +44,31 @@ function renderDetails(data) {
     if (data.documents?.sketch) images.push(data.documents.sketch.url || data.documents.sketch);
 
     const gallery = document.getElementById('p-gallery');
-if (gallery) {
-    gallery.innerHTML = '';
-    images.slice(0, 5).forEach(url => {
-        const div = document.createElement('div');
-        div.className = 'gal-item';
-        // এখানে আমরা সাধারণ ইমেজ ট্যাগের বদলে Fancybox-এর অ্যাঙ্কর ট্যাগ <a> ব্যবহার করছি
-        div.innerHTML = `
-            <a href="${url}" data-fancybox="gallery" data-caption="আমার বাড়ি.কম - প্রপার্টি ছবি">
-                <img src="${url}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;">
-            </a>
-        `;
-        gallery.appendChild(div);
-    });
-
-    // ফ্যান্সি-বক্স অ্যাক্টিভ করার কোড
-    if (typeof Fancybox !== 'undefined') {
-        Fancybox.bind("[data-fancybox='gallery']", {
-            Images: {
-                Panzoom: {
-                    maxScale: 3, // সর্বোচ্চ ৩ গুণ জুম করা যাবে
-                },
-            },
+    if (gallery) {
+        gallery.innerHTML = '';
+        images.slice(0, 5).forEach(url => {
+            const div = document.createElement('div');
+            div.className = 'gal-item';
+            div.innerHTML = `
+                <a href="${url}" data-fancybox="gallery" data-caption="আমার বাড়ি প্ল্যাটফর্ম - প্রপার্টি ছবি">
+                    <img src="${url}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;">
+                </a>
+            `;
+            gallery.appendChild(div);
         });
-    }
-            }
 
-    
+        // ফ্যান্সি-বক্স অ্যাক্টিভ করার কোড
+        if (typeof Fancybox !== 'undefined') {
+            Fancybox.bind("[data-fancybox='gallery']", {
+                Images: {
+                    Panzoom: {
+                        maxScale: 3, 
+                    },
+                },
+            });
+        }
+    }
+
     // পোস্টদাতার ডাটা লোড ও প্রোফাইল পেইজ রিডাইরেক্ট লজিক
     if (data.userId) {
         db.collection('users').doc(data.userId).get().then(userDoc => {
@@ -84,7 +82,7 @@ if (gallery) {
                 document.getElementById('pub-name').textContent = "সাধারণ ইউজার";
             }
         }).catch(() => {
-            document.getElementById('pub-name').textContent = "আমার বাড়ি ইউজার";
+            document.getElementById('pub-name').textContent = "আমার বাড়ি প্ল্যাটফর্ম ইউজার";
         });
 
         const authorTrigger = document.getElementById('authorProfileTrigger');
@@ -114,7 +112,7 @@ if (gallery) {
     const basicT = 'table-basic';
     if (document.getElementById(basicT)) {
         document.getElementById(basicT).innerHTML = ""; 
-        addRow(basicT, "ক্যাটাগরি", data.category);
+        addRow(basicT, "क্যাটাগরি", data.category);
         addRow(basicT, "টাইপ", data.type);
         addRow(basicT, "জমির ধরন", data.landType);
         addRow(basicT, "প্রপার্টির বয়স", data.propertyAge? `${data.propertyAge} বছর` : "");
@@ -156,7 +154,6 @@ if (gallery) {
                 let khotianType = data.owner.khotianNoType || "";
                 addRow(ownT, "খতিয়ান নং", khotian ? `${khotian} (${khotianType})` : "");
                 let dag = data.owner.dagNo;
-                let dagType = data.owner.dagNoType || "";
                 addRow(ownT, "দাগ নং", dag ? `${dag}` : "");
                 addRow(ownT, "মৌজা", data.owner.mouja);
             }
@@ -186,8 +183,6 @@ if (gallery) {
     // =======================================================
     // 📞 ৫. বাটন ও অ্যাকশন কন্ট্রোল (ভিজিটর বনাম পোস্টদাতা)
     // =======================================================
-    
-    // সিএসএস টেবিল ও কল লিংক ডিফল্ট সেটআপ
     const conT = 'table-contact';
     if (document.getElementById(conT)) {
         document.getElementById(conT).innerHTML = "";
@@ -202,7 +197,6 @@ if (gallery) {
     firebase.auth().onAuthStateChanged((currentUser) => {
         const sellerId = data.userId;
         
-        // বাটনগুলোর এলিমেন্ট রেফারেন্স
         const callBtn = document.getElementById('p-call');
         const msgBtn = document.getElementById('p-message');
         const saveBtn = document.getElementById('p-save');
@@ -211,27 +205,24 @@ if (gallery) {
         const boostBtn = document.getElementById('p-boost');
         const deleteBtn = document.getElementById('p-delete');
 
-        // যদি ইউজার লগইন করা থাকে এবং তিনিই এই পোস্টের মালিক হন
         if (currentUser && currentUser.uid === sellerId) {
-            // ভিজিটর বাটনগুলো হাইড করুন
             if (callBtn) callBtn.style.display = 'none';
             if (msgBtn) msgBtn.style.display = 'none';
             if (saveBtn) saveBtn.style.display = 'none';
 
-            // নিজের বাটনগুলো শো করুন
             if (editBtn) editBtn.style.display = 'flex';
             if (boostBtn) boostBtn.style.display = 'flex';
             if (deleteBtn) deleteBtn.style.display = 'flex';
 
-            // --- ওনার অ্যাকশন বাটনগুলোর ইভেন্ট লিসেনার ---
             if (editBtn) {
                 editBtn.onclick = () => {
                     window.location.href = `post.html?edit=${postId}`;
                 };
             }
             if (boostBtn) {
-                boostBtn.onclick = () => {
-                    window.location.href = `boost.html?edit=${postId}`;
+                boostBtn.onclick = (e) => {
+                    e.preventDefault();
+                    alert("ফিচারটি অতিশিগ্রই আসছে, সাইটের কাজ চলমান।");
                 };
             }
             if (deleteBtn) {
@@ -240,7 +231,7 @@ if (gallery) {
                         try {
                             await db.collection('properties').doc(postId).delete();
                             alert("প্রপার্টিটি সফলভাবে ডিলিট করা হয়েছে।");
-                            window.location.href = "index.html"; // ড্যাশবোর্ডে ফেরত পাঠানো
+                            window.location.href = "index.html";
                         } catch (error) {
                             console.error("ডিলিট করতে সমস্যা:", error);
                             alert("দুঃখিত, পোস্টটি ডিলিট করা যায়নি।");
@@ -250,12 +241,10 @@ if (gallery) {
             }
 
         } else {
-            // ইউজার যদি ভিজিটর হন (অথবা লগইন না থাকে)
             if (callBtn && data.phoneNumber) callBtn.style.display = 'flex';
             if (msgBtn) msgBtn.style.display = 'flex';
             if (saveBtn) saveBtn.style.display = 'flex';
 
-            // ওনার বাটনগুলো হাইড রাখুন
             if (editBtn) editBtn.style.display = 'none';
             if (boostBtn) boostBtn.style.display = 'none';
             if (deleteBtn) deleteBtn.style.display = 'none';
@@ -305,22 +294,19 @@ if (gallery) {
                 alert(`দুঃখিত, চ্যাট রুম তৈরি করা যায়নি।`);
             }
         };
-            }
-    
+    }
     
     // =======================================================
-    // 🎯 আমার বাড়ি.কম - এক্সপার্ট ডাইনামিক এসইও ইঞ্জিন
+    // 🎯 আমার বাড়ি প্ল্যাটফর্ম - এক্সপার্ট ডাইনামিক এসইও ইঞ্জিন
     // =======================================================
     const currentUrl = window.location.href;
-
-    const village = data.location?.village || "তথ্য নেই";
-    const thana = data.location?.thana || data.location?.upazila || "তথ্য নেই";
-    
-    const district = data.location?.district || "তথ্য নেই";
+    const village = data.location?.village || " can't find";
+    const thana = data.location?.thana || data.location?.upazila || "can't find";
+    const district = data.location?.district || "can't find";
     const fullLocation = `${village}, ${thana}, ${district}`;
 
-    const seoTitle = `${data.title || "আমার বাড়ি.কম প্রপার্টি"} - ${thana}, ${district} | আমার বাড়ি.অনলাইন`;
-    const seoDescription = `${fullLocation}-এ আকর্ষনীয় মূল্যে প্রপার্টি। মূল্য: ৳${data.category === 'বিক্রয়' ? (data.price || "আলোচনা সাপেক্ষ") : (data.monthlyRent || "আলোচনা সাপেক্ষ")} টাকা। বিস্তারিত তথ্য ও ছবির জন্য ভিজিট করুন amarbari.online।`;
+    const seoTitle = `${data.title || "আমার বাড়ি প্ল্যাটফর্ম প্রপার্টি"} - ${thana}, ${district} | আমার বাড়ি প্ল্যাটফর্ম`;
+    const seoDescription = `${fullLocation}-এ আকর্ষণীয় মূল্যে প্রপার্টি। মূল্য: ৳${data.category === 'বিক্রয়' ? (data.price || "আলোচনা সাপেক্ষ") : (data.monthlyRent || "আলোচনা সাপেক্ষ")} টাকা। বিস্তারিত তথ্য ও ছবির জন্য ভিজিট করুন আমার বাড়ি প্ল্যাটফর্ম।`;
     
     let firstImg = "https://i.postimg.cc/YSbRvftN/FB-IMG-1781692297303.jpg"; 
     if (data.images && data.images.length > 0) {
@@ -342,39 +328,8 @@ if (gallery) {
     document.getElementById('og-desc')?.setAttribute('content', seoDescription);
     document.getElementById('og-image')?.setAttribute('content', firstImg);
 
-    const schemaData = {
-        "@context": "https://schema.org",
-        "@type": "RealEstateListing",
-        "name": data.title || "আমার বাড়ি.কম প্রপার্টি", 
-        "description": data.description ? data.description.substring(0, 200) : seoDescription,
-        "url": currentUrl,
-        "image": firstImg, 
-        "offers": {
-            "@type": "Offer",
-            "price": data.category === 'বিক্রয়' ? (data.price || 0) : (data.monthlyRent || 0), 
-            "priceCurrency": "BDT",
-            "availability": "https://schema.org/InStock"
-        },
-        "location": {
-            "@type": "Place",
-            "name": fullLocation,
-            "address": {
-                "@type": "PostalAddress",
-                "streetAddress": village,       
-                "addressLocality": thana || upazila,      
-                "addressRegion": district,     
-                "addressCountry": "BD"
-            }
-        }
-    };
-    
-    const schemaTag = document.getElementById('seo-schema');
-    if (schemaTag) {
-        schemaTag.text = JSON.stringify(schemaData);
-    }
-
     setupSaveAndShareSystem(data);
-} // <--- renderDetails ফাংশনটি এখানে সুরক্ষিতভাবে শেষ হয়েছে।
+} 
 
 function initSinglePropertyMap(data) {
     const mapContainer = document.getElementById('map-container');
@@ -408,7 +363,7 @@ function initSinglePropertyMap(data) {
     }
 }
 
-async function setupLikeSystem() {
+async function setupLikeSystem(postData) {
     const likeBtn = document.getElementById('likeBtn');
     const likeIcon = document.getElementById('likeIcon');
     if (!likeBtn) return;
@@ -429,8 +384,8 @@ async function setupLikeSystem() {
     try {
         db.collection('properties').doc(postId).onSnapshot((doc) => {
             if (doc.exists) {
-                const postData = doc.data();
-                const totalLikes = postData.likes || 0;
+                const currentPostData = doc.data();
+                const totalLikes = currentPostData.likes || 0;
                 const likeCountText = document.getElementById('likeCountText');
                 if (likeCountText) likeCountText.textContent = `${totalLikes} লাইক`;
             }
@@ -449,30 +404,28 @@ async function setupLikeSystem() {
             await postRef.update({
                 likes: firebase.firestore.FieldValue.increment(isLiked ? 1 : -1)
             });
+
+            // --- লাইক নোটিফিকেশন ট্রিগার লজিক এখানে সুরক্ষিতভাবে সেট করা হলো ---
+            if (isLiked) {
+                const currentUser = firebase.auth().currentUser;
+                if (currentUser && currentUser.uid !== postData.userId) {
+                    writeNotificationToFirestore(
+                        postData.userId,              
+                        currentUser.uid,                
+                        postId,                         
+                        "লাইক পেয়েছেন! 👍",
+                        `একজন ইউজার আপনার '${postData.title}' প্রপার্টিটি লাইক করেছেন! আপনার বিজ্ঞাপনের জনপ্রিয়তা বাড়ছে।`,
+                        "like"
+                    );
+                }
+            }
         } catch (e) {
             console.log("ফায়ারবেসে লাইক ডেটা আপডেট করতে সমস্যা:", e);
         }
     });
 }
 
-// তোমার লাইক সাকসেস লজিকের ভেতর যেখানে লাইক স্ট্যাটাস ডাটাবেজে আপডেট হয়:
-if (isLiked) { // যদি ইউজার লাইক দিয়ে থাকে
-    const currentUser = firebase.auth().currentUser;
-    if (currentUser) {
-        // সাইনআপড ইউজার লাইক দিলে বিক্রেতার কাছে নোটিফিকেশন যাবে
-        writeNotificationToFirestore(
-            postData.sellerId,              // বিক্রেতার আইডি (পোস্ট ডাটা থেকে প্রাপ্ত)
-            currentUser.uid,                // লাইক প্রদানকারীর আইডি
-            postId,                         // এই প্রপার্টির আইডি
-            "লাইক পেয়েছেন! 👍",
-            `একজন ইউজার আপনার '${postData.title}' প্রপার্টিটি লাইক করেছেন! আপনার বিজ্ঞাপনের জনপ্রিয়তা বাড়ছে।`,
-            "like"
-        );
-    }
-    // গেস্ট ইউজারের লাইকের ক্ষেত্রে বিক্রেতার আইডি পাওয়া যায় না বলে আমরা এটি বিক্রেতাকে পাঠাই না, তবে চাইলে লোকাল স্টোরেজে রাখা যায়।
-} 
-
-function setupSaveAndShareSystem(data) {
+function setupSaveAndShareSystem(postData) {
     const saveBtn = document.getElementById('p-save');
     const shareBtn = document.getElementById('p-share');
     const currentUrl = window.location.href;
@@ -502,7 +455,31 @@ function setupSaveAndShareSystem(data) {
             isSaved = !isSaved;
             localStorage.setItem(saveStorageKey, isSaved);
             updateSaveUI(isSaved);
-            alert(isSaved ? "পোস্টটি আপনার ব্রাউজারে সেভ করা হয়েছে!" : "সেভ তালিকা থেকে বাদ দেওয়া হয়েছে।");
+            alert(isSaved ? "পোস্টটি সফলভাবে সেভ করা হয়েছে!" : "সেভ তালিকা থেকে বাদ দেওয়া হয়েছে।");
+
+            // --- সেভ/বুকমার্ক নোটিফিকেশন ট্রিগার লজিক এখানে হ্যান্ডেল করা হলো ---
+            if (isSaved) {
+                const currentUser = firebase.auth().currentUser;
+                if (currentUser) {
+                    if (currentUser.uid !== postData.userId) {
+                        writeNotificationToFirestore(
+                            postData.userId,
+                            currentUser.uid,
+                            postId,
+                            "বুকমার্ক অ্যালার্ট! ❤️",
+                            `একজন সম্ভাব্য ক্রেতা আপনার '${postData.title}' প্রপার্টিটি বুকমার্ক করে সেভ রেখেছেন। দ্রুত চ্যাট শুরু করতে পারেন!`,
+                            "save"
+                        );
+                    }
+                } else {
+                    writeNotificationToLocalStorage(
+                        postId,
+                        "বিজ্ঞাপনটি সফলভাবে সেভ হয়েছে! 📌",
+                        `এই বাড়িটির মালিক যদি কখনো দাম কমান বা নতুন কোনো তথ্য আপডেট করেন, আমরা আপনাকে সরাসরি এখানে জানিয়ে দেব।`,
+                        "save"
+                    );
+                }
+            }
         };
     }
 
@@ -511,8 +488,8 @@ function setupSaveAndShareSystem(data) {
             if (navigator.share) {
                 try {
                     await navigator.share({
-                        title: data.title || "আমার বাড়ি.কম প্রপার্টি",
-                        text: `আমার বাড়ি.কম-এ এই চমৎকার প্রপার্টিটি দেখুন: ${data.title}`,
+                        title: postData.title || "আমার বাড়ি প্ল্যাটফর্ম প্রপার্টি",
+                        text: `আমার বাড়ি প্ল্যাটফর্মে এই চমৎকার প্রপার্টিটি দেখুন: ${postData.title}`,
                         url: currentUrl
                     });
                 } catch (err) {
@@ -526,27 +503,39 @@ function setupSaveAndShareSystem(data) {
     }
 }
 
-const currentUser = firebase.auth().currentUser;
+// খতিয়ান ভেরিফিকেশন বাটন হ্যান্ডলার ও একই সাথে নোটিফিকেশন রাইটার
+document.addEventListener('DOMContentLoaded', () => {
+    const khotiyanButton = document.getElementById('btn-verify-khotian');
+    if (khotiyanButton) {
+        khotiyanButton.addEventListener('click', async (event) => {
+            event.preventDefault();
+            alert("ফিচারটি অতিশিগ্রই আসছে, সাইটের কাজ চলমান।");
 
-if (currentUser) {
-    // সাইনআপড ইউজার প্রপার্টি সেভ করলে বিক্রেতার কাছে নোটিফিকেশন যাবে
-    writeNotificationToFirestore(
-        postData.sellerId,
-        currentUser.uid,
-        postId,
-        "বুকমার্ক অ্যালার্ট! ❤️",
-        `একজন সম্ভাব্য ক্রেতা আপনার '${postData.title}' প্রপার্টিটি বুকমার্ক করে সেভ রেখেছেন। দ্রুত চ্যাট শুরু করতে পারেন!`,
-        "save"
-    );
-} else {
-    // গেস্ট ইউজার সেভ করলে তার নিজের লোকাল স্টোরেজে নোটিফিকেশন জমা হবে (যাতে পরে সে দেখতে পারে)
-    writeNotificationToLocalStorage(
-        postId,
-        "বিজ্ঞাপনটি সফলভাবে সেভ হয়েছে! 📌",
-        `এই বাড়িটির মালিক যদি কখনো দাম কমান বা নতুন কোনো তথ্য আপডেট করেন, আমরা আপনাকে সরাসরি এখানে জানিয়ে দেব।`,
-        "save"
-    );
-}
+            // বাটন ক্লিক করার ট্র্যাকিং ও নোটিফিকেশন পুশ লজিক
+            if (postId) {
+                try {
+                    const doc = await db.collection('properties').doc(postId).get();
+                    if (doc.exists) {
+                        const postData = doc.data();
+                        const currentUser = firebase.auth().currentUser;
+                        if (currentUser && currentUser.uid !== postData.userId) {
+                            writeNotificationToFirestore(
+                                postData.userId,
+                                currentUser.uid,
+                                postId,
+                                "খতিয়ান যাচাই হচ্ছে! 🔍",
+                                `অভিনন্দন! একজন ক্রেতা আপনার '${postData.title}' প্রপার্টির খতিয়ান যাচাই করে দেখছেন। একটি বিশ্বস্ত এবং নিরাপদ ডিল সম্পন্ন হতে যাচ্ছে!`,
+                                "khotian"
+                            );
+                        }
+                    }
+                } catch (err) {
+                    console.error("খতিয়ান নোটিফিকেশন পাঠাতে সমস্যা হয়েছে:", err);
+                }
+            }
+        });
+    }
+});
 
 function formatPostTime(date) {
     const now = new Date();
@@ -588,20 +577,15 @@ async function loadRelatedPosts(currentData) {
             if (doc.id !== postId) allPosts.push({ id: doc.id, ...doc.data() });
         });
 
-        
-        // প্রপার্টি টাইপ, গ্রাম এবং থানা/উপজেলা অনুযায়ী সর্টিং
         allPosts.sort((a, b) => {
-            // ১. টাইপ ম্যাচিং (একই টাইপ হলে অগ্রাধিকার পাবে)
             const aType = (a.type === currentData.type) ? 1 : 0;
             const bType = (b.type === currentData.type) ? 1 : 0;
             if (aType !== bType) return bType - aType;
 
-            // ২. গ্রাম ম্যাচিং (টাইপ মেলার পর যদি গ্রামও মেলে)
             const aVillage = (a.location?.village === currentData.location?.village) ? 1 : 0;
             const bVillage = (b.location?.village === currentData.location?.village) ? 1 : 0;
             if (aVillage !== bVillage) return bVillage - aVillage;
 
-            // ৩. থানা/উপজেলা ম্যাচিং (গ্রাম না মিললে থানা/উপজেলা দেখবে)
             const aThana = (a.location?.thana === currentData.location?.thana || a.location?.upazila === currentData.location?.upazila) ? 1 : 0;
             const bThana = (b.location?.thana === currentData.location?.thana || b.location?.upazila === currentData.location?.upazila) ? 1 : 0;
             return bThana - aThana;
@@ -609,9 +593,8 @@ async function loadRelatedPosts(currentData) {
 
         list.innerHTML = "";
         let displayedCount = 0;
-        const limitIncrement = 10; // প্রতি ক্লিকে ১০টি করে নতুন পোস্ট দেখাবে
+        const limitIncrement = 10; 
 
-        // কার্ড রেন্ডার করার হেল্পার ফাংশন
         const renderPostCards = (start, end) => {
             const slice = allPosts.slice(start, end);
             slice.forEach(post => {
@@ -630,20 +613,14 @@ async function loadRelatedPosts(currentData) {
             displayedCount = end;
         };
 
-        // শুরুতে প্রথম ১০টি পোস্ট দেখাবো
         renderPostCards(0, Math.min(10, allPosts.length));
 
-        // যদি মোট প্রপার্টি ১০টির বেশি থাকে, তবেই বাটন দেখাবো
         if (allPosts.length > 10 && seeMoreBox) {
             seeMoreBox.style.display = 'block';
-            
-            // সিমোর বাটনের ক্লিক লজিক
             if (seeMoreBtn) {
                 seeMoreBtn.onclick = () => {
                     const nextLimit = Math.min(displayedCount + limitIncrement, allPosts.length);
                     renderPostCards(displayedCount, nextLimit);
-
-                    // যদি আর কোনো প্রপার্টি দেখানোর না থাকে, বাটনটি হাইড করে দেবো
                     if (displayedCount >= allPosts.length) {
                         seeMoreBox.style.display = 'none';
                     }
@@ -654,15 +631,6 @@ async function loadRelatedPosts(currentData) {
         }
     } catch (e) { 
         console.error("সম্পর্কিত পোস্ট লোড করতে সমস্যা:", e); 
-    }
-                                               }
-
-function openLightbox(url) {
-    const lbImg = document.getElementById('lb-img');
-    const lb = document.getElementById('lightbox');
-    if(lbImg && lb) {
-        lbImg.src = url;
-        lb.style.display = 'flex';
     }
 }
 
@@ -693,10 +661,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
 
-
 firebase.auth().onAuthStateChanged(async (user) => {
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
-    
     if (user && headerProfileImg) {
         try {
             const userDoc = await db.collection('users').doc(user.uid).get();
@@ -713,43 +679,21 @@ firebase.auth().onAuthStateChanged(async (user) => {
     }
 });
 
-//////// সাময়িক ভাবে বুস্ট বাটন ও খতিয়ান যাচাই করুন বাটন বন্দ রাকা হলো/////
-
-// --- নতুন ফিচার মেসেজ এলার্ট কোড ---
-
-// HTML থেকে বুস্ট এবং খতিয়ান বাটন দুটি সিলেক্ট করা
-const boostButton = document.getElementById('p-boost');
-const khotiyanButton = document.getElementById('btn-verify-khotian');
-
-// মেসেজ দেখানোর কমন ফাংশন
-function handleComingSoon(event) {
-  event.preventDefault(); // বাটনের অরিজিনাল কাজ বা লিংক ভিজিট করা বন্ধ করবে
-  alert("ফিচারটি অতিশিগ্রই আসছে, সাইটের কাজ চলমান।");
-}
-
-// বুস্ট বাটনে ক্লিক করলে মেসেজ দেখাবে
-if (boostButton) {
-  boostButton.addEventListener('click', handleComingSoon);
-}
-
-
 /**
  * ফায়ারস্টোরে নোটিফিকেশন লেখার কমন ফাংশন (সাইনআপড ইউজারের জন্য)
  */
 async function writeNotificationToFirestore(recipientId, senderId, postId, title, message, type) {
     try {
         const notifData = {
-            userId: recipientId,      // প্রপার্টি বিক্রেতা (Seller) এর UID
-            senderId: senderId,        // যে অ্যাকশনটি করেছে (Buyer/Visitor) তার UID
-            postId: postId,            // প্রপার্টির আইডি
+            userId: recipientId,      
+            senderId: senderId,        
+            postId: postId,            
             title: title,
             message: message,
-            type: type,                // 'like', 'save', 'khotian'
+            type: type,                
             isRead: false,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
-
-        // ফায়ারস্টোরের 'notifications' কালেকশনে নোটিফিকেশনটি রাইট করা হবে
         await db.collection("notifications").add(notifData);
         console.log("ফায়ারস্টোরে নোটিফিকেশন সফলভাবে লেখা হয়েছে।");
     } catch (error) {
@@ -762,21 +706,15 @@ async function writeNotificationToFirestore(recipientId, senderId, postId, title
  */
 function writeNotificationToLocalStorage(postId, title, message, type) {
     let guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
-
     const newNotification = {
         postId: postId,
         title: title,
         message: message,
         type: type,
         isRead: false,
-        timestamp: { seconds: Math.floor(Date.now() / 1000) } // ফায়ারস্টোর ফরম্যাটের সাথে সামঞ্জস্য রেখে
+        timestamp: { seconds: Math.floor(Date.now() / 1000) } 
     };
-
-    // নতুন নোটিফিকেশনটি লিস্টের প্রথমে যুক্ত করা
     guestNotifications.unshift(newNotification);
-
     localStorage.setItem("guest_notifications", JSON.stringify(guestNotifications));
     console.log("গেস্ট নোটিফিকেশন লোকাল স্টোরেজে লেখা হয়েছে।");
                     }
-
-
