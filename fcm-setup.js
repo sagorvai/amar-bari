@@ -126,29 +126,49 @@ async function handleAllowClick() {
 // 💾 ৬. টোকেন সংগ্রহ এবং ফায়ারস্টোরে স্মার্ট সংরক্ষণ
 async function getAndSaveToken() {
     try {
+        console.log("FCM টোকেন সংগ্রহের চেষ্টা করা হচ্ছে...");
         const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
-        if (!currentToken) return;
+        
+        if (!currentToken) {
+            console.error('কোনো টোকেন পাওয়া যায়নি! পারমিশন বা VAPID কী চেক করুন।');
+            return;
+        }
 
+        console.log("টোকেন জেনারেট হয়েছে:", currentToken);
         localStorage.setItem('my_fcm_token', currentToken);
+
+        // গ্লোবাল db রেফারেন্স অথবা লোকাল ইনিশিয়ালাইজেশন নিশ্চিত করা
+        const firestoreDb = typeof db !== 'undefined' ? db : firebase.firestore();
         const currentUser = firebase.auth().currentUser;
 
         if (currentUser) {
-            await firebase.firestore().collection('users').doc(currentUser.uid).set({
-                fcmToken: currentToken
+            console.log("লগইন করা ইউজারের জন্য টোকেন সেভ হচ্ছে...");
+            await firestoreDb.collection('users').doc(currentUser.uid).set({
+                fcmToken: currentToken,
+                lastActive: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
             
-            await firebase.firestore().collection('anonymous_tokens').doc(currentToken).delete();
+            // অ্যানোনিমাস কালেকশন থেকে ডিলিট করা (যদি থাকে)
+            try {
+                await firestoreDb.collection('anonymous_tokens').doc(currentToken).delete();
+            } catch(e) { /* ডক না থাকলে এরর স্কিপ করবে */ }
+            
         } else {
-            await firebase.firestore().collection('anonymous_tokens').doc(currentToken).set({
+            console.log("গেস্ট (Anonymous) ইউজারের জন্য টোকেন সেভ হচ্ছে...");
+            
+            // আপনার রুলস অনুযায়ী 'create' পারমিশন ট্রিগার করতে সরাসরি .doc(currentToken).set() ব্যবহার
+            await firestoreDb.collection('anonymous_tokens').doc(currentToken).set({
                 token: currentToken,
+                deviceType: "web",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+            
+            console.log("🎉 গেস্ট টোকেন সফলভাবে anonymous_tokens কালেকশনে জমা হয়েছে!");
         }
     } catch (error) {
-        console.error('টোকেন সেভ করার সময় ত্রুটি:', error);
+        console.error('টোকেন ডাটাবেজে সেভ করার সময় মূল ত্রুটি:', error);
     }
-}
-
+            }
 // 🔄 ৭. স্মার্ট টোকেন মাইগ্রেশন
 async function migrateVisitorTokenToUser(userId) {
     const savedToken = localStorage.getItem('my_fcm_token');
