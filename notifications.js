@@ -1,9 +1,12 @@
-// Firebase কনফিগারেশন এবং ইনিশিয়ালাইজেশন (তোমার প্রজেক্টের সাথে মিলিয়ে নিও)
-// assumed firebase, db (firestore), auth, and messaging are already initialized globally or imported
+// =======================================================
+// 🎯 আমার বাড়ি.কম - স্মার্ট ইন-অ্যাপ নোটিফিকেশন ম্যানেজার
+// =======================================================
 
 const db = firebase.firestore();
 const auth = firebase.auth();
-const messaging = firebase.messaging(); // Firebase Cloud Messaging
+const messaging = firebase.messaging(); 
+
+const VAPID_KEY = "BIWyqUvtwx7iH6nKiZRVCNl7ihTsFn40IJ1LVp58RYIFDEbHrWBSYnVVQ2iA5m9d7tmbNngRPvAhPDEW34SBoLg"; 
 
 // পেজ লোড হলে কাজ শুরু হবে
 document.addEventListener("DOMContentLoaded", () => {
@@ -14,114 +17,66 @@ document.addEventListener("DOMContentLoaded", () => {
  * নোটিফিকেশন পেজের মেইন ইনিশিয়ালাইজেশন ফাংশন
  */
 function initNotificationPage() {
-    // ইউজার সাইন-ইন স্টেট পর্যবেক্ষণ
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             console.log("সাইনআপ/লগইন করা ইউজার একটিভ আছেন।");
-            // ১. সাইনআপ ইউজারের জন্য ডিভাইস টোকেন সংগ্রহ ও আপডেট করা[cite: 6]
-            await handleUserTokenSetup(user.uid);
-            // ২. গেস্ট মোডের কোনো ডাটা বা টোকেন থাকলে তা নতুন অ্যাকাউন্টে মাইগ্রেট করা[cite: 6]
-            await migrateGuestDataToUser(user.uid);
-            // ৩. ইন-অ্যাপ নোটিফিকেশনগুলো ডাটাবেজ থেকে রিয়েল-টাইমে লোড করা[cite: 6]
+            // ১. সাইনআপ করার পর স্বয়ংক্রিয় স্বাগত নোটিফিকেশন চেক ও তৈরি
+            await checkAndCreateWelcomeNotification(user.uid);
+            // ২. নোটিফিকেশন রিয়েল-টাইমে লোড করা
             listenForUserNotifications(user.uid);
         } else {
             console.log("গেস্ট ইউজার পেজ ব্রাউজ করছেন।");
-            // ৪. গেস্ট ইউজারের নোটিফিকেশন (লোকাল স্টোরেজ ভিত্তিক) লোড করা
             loadGuestNotifications();
-            // ৫. গেস্ট ইউজার পারমিশন দিলে তার টোকেন অ্যানোনিমাস কালেকশনে রাখা[cite: 6]
             await handleGuestTokenSetup();
         }
     });
 }
 
 /**
- * ১. সাইনআপ করা ইউজারের ডিভাইস টোকেন সংগ্রহ ও ফায়ারস্টোরে সেভ করার আপডেটেড লজিক
+ * ১. নতুন সাইনআপ করা ইউজারের জন্য স্বাগত নোটিফিকেশন তৈরি করার লজিক
  */
-async function handleUserTokenSetup(uid) {
+async function checkAndCreateWelcomeNotification(uid) {
     try {
-        // ইউজার যদি আগে পারমিশন না দিয়ে থাকে (default), তবে তাকে পারমিশন চাওয়ার প্রম্পট দেখাবে
-        if (Notification.permission === "default") {
-            console.log("নতুন সাইনআপ ইউজার, নোটিফিকেশন পারমিশন চাওয়া হচ্ছে...");
-            await Notification.requestPermission();
-        }
+        const notifRef = db.collection("notifications");
+        // চেক করা হচ্ছে এই ইউজারের জন্য ইতিমধ্যে স্বাগত নোটিফিকেশন তৈরি হয়েছে কিনা
+        const snapshot = await notifRef
+            .where("userId", "==", uid)
+            .where("type", "==", "welcome")
+            .get();
 
-        // ইউজার যদি পারমিশন এলাউ করে (আগে থেকে করা থাকলে বা এখন করলে)
-        if (Notification.permission === "granted") {
-            const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
-
-            if (currentToken) {
-                // ইউজারের প্রোফাইলে টোকেনটি সেভ বা আপডেট করা
-                await db.collection("users").doc(uid).set({
-                    fcmToken: currentToken,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
-                console.log("সাইনআপ ইউজারের পুশ টোকেন সফলভাবে সিঙ্ক হয়েছে।");
-            }
-        } else {
-            console.log("ইউজার নোটিফিকেশন পারমিশন ডিনাই (Block) করে রেখেছেন।");
-        }
-    } catch (error) {
-        console.error("সাইনআপ ইউজারের টোকেন সংগ্রহ করতে সমস্যা হয়েছে: ", error);
-    }
-}
-
-/**
- * ২. গেস্ট থেকে সাইনআপে রূপান্তর (Guest to Signup Migration)[cite: 6]
- */
-async function migrateGuestDataToUser(uid) {
-    try {
-        const guestToken = localStorage.getItem("anonymous_fcm_token");
-        const guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
-
-        // যদি লোকাল স্টোরেজে গেস্ট টোকেন থাকে, তবে তা ইউজারের মেইন প্রোফাইলে নিয়ে যাওয়া[cite: 6]
-        if (guestToken) {
-            await db.collection("users").doc(uid).set({
-                fcm_tokens: firebase.firestore.FieldValue.arrayUnion(guestToken)
-            }, { merge: true });
-
-            // পুরানো অ্যানোনিমাস কালেকশন থেকে ডিলিট করা (ক্লিনআপ)[cite: 6]
-            await db.collection("anonymous_tokens").doc(guestToken).delete();
-            localStorage.removeItem("anonymous_fcm_token");
-            console.log("গেস্ট টোকেন সফলভাবে ইউজার অ্যাকাউন্টে মাইগ্রেট হয়েছে।[cite: 6]");
-        }
-
-        // যদি গেস্ট মোডে থাকা অবস্থায় কোনো নোটিফিকেশন লোকাল স্টোরেজে সেভ হয়ে থাকে
-        if (guestNotifications.length > 0) {
-            const batch = db.batch();
-            guestNotifications.forEach((notif) => {
-                const notifRef = db.collection("notifications").doc();
-                batch.set(notifRef, {
-                    ...notif,
-                    userId: uid, // এখন এটি সাইনআপ ইউজারের আইডি হয়ে গেল
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
+        // যদি আগে কোনো স্বাগত নোটিফিকেশন না থাকে, তবে একটি নতুন তৈরি হবে
+        if (snapshot.empty) {
+            await notifRef.add({
+                userId: uid,
+                title: "👋 আমার বাড়ি.কম-এ আপনাকে স্বাগতম!",
+                message: "আমাদের প্ল্যাটফর্মে যুক্ত হওয়ার জন্য ধন্যবাদ। আপনার অ্যাকাউন্টের রিয়েল-টাইম আপডেট ও পুশ নোটিফিকেশন সচল করতে এই নোটিফিকেশনে ক্লিক করুন।",
+                type: "welcome",
+                isRead: false,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
-            await batch.commit();
-            localStorage.removeItem("guest_notifications");
-            console.log("গেস্ট নোটিফিকেশন হিস্ট্রি অ্যাকাউন্টে যুক্ত হয়েছে।");
+            console.log("নতুন ইউজারের জন্য স্বাগত নোটিফিকেশন সফলভাবে তৈরি হয়েছে।");
         }
     } catch (error) {
-        console.error("মাইগ্রেশন করতে সমস্যা হয়েছে: ", error);
+        console.error("স্বাগত নোটিফিকেশন তৈরিতে সমস্যা: ", error);
     }
 }
 
 /**
- * ৩. সাইনআপ করা ইউজারের জন্য ফায়ারস্টোর থেকে রিয়েল-টাইমে ইন-অ্যাপ নোটিফিকেশন লোড[cite: 6]
+ * ২. সাইনআপ করা ইউজারের জন্য ফায়ারস্টোর থেকে রিয়েল-টাইমে ইন-অ্যাপ নোটিফিকেশন লোড
  */
 function listenForUserNotifications(uid) {
-    const notificationContainer = document.getElementById("notification-list");
+    const notificationContainer = document.getElementById("notifications-list");
     if (!notificationContainer) return;
 
-    // ইউজারের আইডি অনুযায়ী নোটিফিকেশন কুয়েরি করা (সর্বশেষগুলো আগে আসবে)
     db.collection("notifications")
         .where("userId", "==", uid)
         .orderBy("timestamp", "desc")
         .onSnapshot((snapshot) => {
-            notificationContainer.innerHTML = ""; // আগের লিস্ট ক্লিয়ার করা
+            notificationContainer.innerHTML = ""; 
 
             if (snapshot.empty) {
-                notificationContainer.innerHTML = `<p class="no-notif-text">আপনার নোটিফিকেশন বক্স এখন খালি।</p>`;
-                updateNotificationBadge(0); // বেলের লাল ডট আপডেট[cite: 6]
+                notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">আপনার নোটিফিকেশন বক্স এখন খালি।</p>`;
+                updateNotificationBadge(0); 
                 return;
             }
 
@@ -131,111 +86,93 @@ function listenForUserNotifications(uid) {
                 const notif = doc.data();
                 if (!notif.isRead) unreadCount++;
 
-                // নোটিফিকেশনের HTML কার্ড তৈরি
-                const notifItem = createNotificationCard(doc.id, notif);
+                const notifItem = createNotificationCard(doc.id, notif, uid);
                 notificationContainer.appendChild(notifItem);
             });
 
-            // হেডার বা বেল আইকনে লাল ব্যাজ বা সংখ্যা আপডেট[cite: 6]
             updateNotificationBadge(unreadCount);
         }, (error) => {
-            console.error("নোটিফিকেশন রিয়েল-টাইম লোড ব্যর্থ: ", error);
+            console.error("নোটিফিকেশন লোড ব্যর্থ: ", error);
         });
 }
 
 /**
- * ৪. গেস্ট ইউজারের নোটিফিকেশন (लोकल স্টোরেজ) লোড করা
+ * নোটিফিকেশন কার্ডের HTML লেআউট এবং স্মার্ট ক্লিক হ্যান্ডলার
  */
-function loadGuestNotifications() {
-    const notificationContainer = document.getElementById("notification-list");
-    if (!notificationContainer) return;
-
-    const guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
-    notificationContainer.innerHTML = "";
-
-    if (guestNotifications.length === 0) {
-        notificationContainer.innerHTML = `<p class="no-notif-text">আপনার নোটিফিকেশন বক্স এখন খালি।</p>`;
-        updateNotificationBadge(0);
-        return;
-    }
-
-    guestNotifications.forEach((notif, index) => {
-        // গেস্ট নোটিফিকেশন কার্ড তৈরি (ইনডেক্স ব্যবহার করে ইউনিক আইডি দেওয়া)
-        const notifItem = createNotificationCard(`guest_${index}`, notif, true);
-        notificationContainer.appendChild(notifItem);
-    });
-
-    // আনরিড কাউন্ট গেস্টদের জন্যও ব্যাজে দেখানো
-    const unreadCount = guestNotifications.filter(n => !n.isRead).length;
-    updateNotificationBadge(unreadCount);
-}
-
-/**
- * ৫. গেস্ট ইউজার যদি পারমিশন দিয়ে থাকে তবে ব্যাকগ্রাউন্ড টোকেন অ্যানোনিমাস কালেকশনে রাখা[cite: 6]
- */
-async function handleGuestTokenSetup() {
-    try {
-        if (Notification.permission === "granted") {
-            const currentToken = await messaging.getToken({
-                vapidKey: "YOUR_PUBLIC_VAPID_KEY_HERE"
-            });
-
-            if (currentToken) {
-                localStorage.setItem("anonymous_fcm_token", currentToken);
-                
-                // ফায়ারস্টোরের অস্থায়ী কালেকশনে রাখা, যাতে অফলাইনেও পুশ পাঠানো যায়[cite: 6]
-                await db.collection("anonymous_tokens").doc(currentToken).set({
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    deviceType: "web"
-                });
-            }
-        }
-    } catch (error) {
-        console.log("গেস্ট টোকেন সেটআপ স্কিপ করা হয়েছে।");
-    }
-}
-
-/**
- * নোটিফিকেশন কার্ডের HTML লেআউট তৈরি (আমাদের ফাইনাল মেসেজ ফরম্যাট অনুযায়ী)
- */
-function createNotificationCard(docId, notif, isGuest = false) {
-    const card = document.createElement("div");
-    card.className = `notification-card ${notif.isRead ? 'read' : 'unread'}`;
+function createNotificationCard(docId, notif, uid, isGuest = false) {
+    const li = document.createElement("li");
+    li.className = `notification-item ${notif.isRead ? 'read' : 'unread'}`;
     
-    // টাইপ অনুযায়ী সুন্দর আইকন ডিফাইন করা
-    let icon = "🔔";
-    if (notif.type === "like") icon = "👍";
-    else if (notif.type === "save") icon = "❤️";
-    else if (notif.type === "price_drop") icon = "🔥";
-    else if (notif.type === "khotian") icon = "🔍";
-    else if (notif.type === "chat") icon = "💬";
+    // টাইপ অনুযায়ী আইকন সেট করা
+    let iconName = "notifications";
+    if (notif.type === "welcome") iconName = "celebration"; // স্বাগতমের জন্য স্পেশাল আইকন
+    else if (notif.type === "like") iconName = "thumb_up";
+    else if (notif.type === "save") iconName = "bookmark";
+    else if (notif.type === "chat") iconName = "chat";
 
-    // নোটিফিকেশনের ডেট ফরম্যাট করা
-    const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    const dateStr = notif.timestamp ? new Date(notif.timestamp.seconds * 1000).toLocaleDateString('bn-BD', options) : 'এইমাত্র';
+    let dateStr = "এইমাত্র";
+    if (notif.timestamp) {
+        const dateObj = notif.timestamp.toDate ? notif.timestamp.toDate() : new Date(notif.timestamp.seconds * 1000);
+        const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        dateStr = dateObj.toLocaleDateString('bn-BD', options);
+    }
 
-    card.innerHTML = `
-        <div class="notif-icon-wrapper">${icon}</div>
-        <div class="notif-content-wrapper">
-            <h4 class="notif-title">${notif.title}</h4>
-            <p class="notif-message">${notif.message}</p>
-            <span class="notif-time">${dateStr}</span>
+    li.innerHTML = `
+        <i class="material-icons notification-icon-large">${iconName}</i>
+        <div class="notif-content">
+            <h4 style="margin: 0 0 5px 0; color: #2c3e50; font-size: 16px;">${notif.title}</h4>
+            <p class="notif-text">${notif.message}</p>
         </div>
+        <span class="notif-time">${dateStr}</span>
     `;
 
-    // কার্ডে ক্লিক করলে 'পঠিত' (Mark as Read) করার লজিক এবং সংশ্লিষ্ট প্রপার্টি বা চ্যাট পেজে রিডাইরেক্ট
-    card.addEventListener("click", () => {
-        markAsRead(docId, isGuest);
+    // 🎯 ইউজারের ক্লিক হ্যান্ডলার লজিক (আপনার পরিকল্পনা অনুযায়ী)
+    li.addEventListener("click", async () => {
+        // প্রথমে নোটিফিকেশনটি Read মার্ক হবে
+        await markAsRead(docId, isGuest);
         
-        // যদি চ্যাট নোটিফিকেশন হয় তবে চ্যাট বক্সে যাবে, প্রপার্টি হলে ডিটেইলস পেজে যাবে
-        if (notif.type === "chat" && notif.chatId) {
-            window.location.href = `chat.html?chatId=${notif.chatId}`;
-        } else if (notif.postId) {
-            window.location.href = `details.html?id=${notif.postId}`;
+        if (!isGuest) {
+            // ১. ডাটাবেজে ইউজারের আইডি চেক করা হচ্ছে টোকেন আছে কি না
+            const userDoc = await db.collection("users").doc(uid).get();
+            const userData = userDoc.data();
+
+            if (!userData || !userData.fcmToken) {
+                console.log("ইউজারের কোনো টোকেন পাওয়া যায়নি! এবার পারমিশন প্রম্পট দেখানো হবে...");
+                
+                // ২. যদি টোকেন না থাকে তবে নোটিফিকেশন এলাউ করার প্রম্পট দেখাবে
+                const permission = await Notification.requestPermission();
+                
+                // ৩. যদি পারমিশন দেয়, তবে টোকেন সংগ্রহ করে ইউজার আইডিতে যুক্ত করবে
+                if (permission === "granted") {
+                    try {
+                        const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
+                        if (currentToken) {
+                            await db.collection("users").doc(uid).set({
+                                fcmToken: currentToken,
+                                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                            }, { merge: true });
+                            alert("🎉 ধন্যবাদ! পুশ নোটিফিকেশন সফলভাবে চালু হয়েছে।");
+                        }
+                    } catch (err) {
+                        console.error("টোকেন সংগ্রহে সমস্যা: ", err);
+                    }
+                } else {
+                    alert("⚠️ আপনি নোটিফিকেশন ব্লক করেছেন। লাইভ আপডেট পেতে ব্রাউজার সেটিংস থেকে এটি এলাউ করুন।");
+                }
+            } else {
+                console.log("ইউজারের টোকেন ইতিমধ্যে ডাটাবেজে সচল আছে।");
+            }
+
+            // ৪. নোটিফিকেশনের টাইপ অনুযায়ী নির্দিষ্ট পেজে পাঠানো
+            if (notif.type === "chat" && notif.chatId) {
+                window.location.href = `messages.html?chatId=${notif.chatId}&postId=${notif.postId || ''}&action=direct`;
+            } else if (notif.postId) {
+                window.location.href = `details.html?id=${notif.postId}`;
+            }
         }
     });
 
-    return card;
+    return li;
 }
 
 /**
@@ -243,20 +180,16 @@ function createNotificationCard(docId, notif, isGuest = false) {
  */
 async function markAsRead(docId, isGuest) {
     if (isGuest) {
-        // গেস্টের জন্য লোকাল স্টোরেজ আপডেট
         let guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
         const index = parseInt(docId.split("_")[1]);
         if (guestNotifications[index]) {
             guestNotifications[index].isRead = true;
             localStorage.setItem("guest_notifications", JSON.stringify(guestNotifications));
-            loadGuestNotifications(); // পেজ রিফ্রেশ ছাড়া রেন্ডার
+            loadGuestNotifications(); 
         }
     } else {
-        // সাইনআপ ইউজারের জন্য সরাসরি ফায়ারস্টোর আপডেট
         try {
-            await db.collection("notifications").doc(docId).update({
-                isRead: true
-            });
+            await db.collection("notifications").doc(docId).update({ isRead: true });
         } catch (error) {
             console.error("Read স্ট্যাটাস আপডেট করতে সমস্যা: ", error);
         }
@@ -264,16 +197,61 @@ async function markAsRead(docId, isGuest) {
 }
 
 /**
- * হেডার বা বেল আইকনের লাল ব্যাজ (🔴) আপডেট করার ফাংশন[cite: 6]
+ * গেস্ট ইউজারের নোটিফিকেশন (লোকাল স্টোরেজ) লোড করা
+ */
+function loadGuestNotifications() {
+    const notificationContainer = document.getElementById("notifications-list");
+    if (!notificationContainer) return;
+
+    const guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
+    notificationContainer.innerHTML = "";
+
+    if (guestNotifications.length === 0) {
+        notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">আপনার নোটিফিকেশন বক্স এখন খালি।</p>`;
+        updateNotificationBadge(0);
+        return;
+    }
+
+    guestNotifications.forEach((notif, index) => {
+        const notifItem = createNotificationCard(`guest_${index}`, notif, null, true);
+        notificationContainer.appendChild(notifItem);
+    });
+
+    const unreadCount = guestNotifications.filter(n => !n.isRead).length;
+    updateNotificationBadge(unreadCount);
+}
+
+/**
+ * গেস্ট টোকেন সেটআপ
+ */
+async function handleGuestTokenSetup() {
+    try {
+        if (Notification.permission === "granted") {
+            const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
+            if (currentToken) {
+                localStorage.setItem("my_fcm_token", currentToken);
+                await db.collection("anonymous_tokens").doc(currentToken).set({
+                    token: currentToken,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        }
+    } catch (error) {
+        console.log("গেস্ট টোকেন স্কিপ করা হয়েছে।");
+    }
+}
+
+/**
+ * হেডার বা বেল আইকনের লাল ব্যাজ (🔴) আপডেট করার ফাংশন
  */
 function updateNotificationBadge(count) {
-    const badge = document.getElementById("notification-badge");
+    const badge = document.getElementById("notification-count");
     if (!badge) return;
 
     if (count > 0) {
         badge.innerText = count;
-        badge.style.display = "block"; // সংখ্যা থাকলে লাল ব্যাজ দেখাবে[cite: 6]
+        badge.style.display = "block"; 
     } else {
-        badge.style.display = "none";  // কোনো নতুন নোটিফিকেশন না থাকলে হাইড থাকবে
+        badge.style.display = "none";  
     }
-            }
+                   }
