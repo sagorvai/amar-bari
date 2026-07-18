@@ -1,5 +1,6 @@
 // Firebase SDKs
 const auth = firebase.auth();
+const db = firebase.firestore(); // ফায়ারস্টোর ডাটাবেজ রেফারেন্স যুক্ত করা হলো
 
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('login-form');
@@ -58,14 +59,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ২. ইউজার সাইনআপ হ্যান্ডেল
+    // ২. ইউজার সাইনআপ হ্যান্ডেল (স্বাগত নোটিফিকেশন ফিচারসহ আপডেটেড)
     if (signupForm) {
         signupForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = signupForm['signup-email'].value;
             const password = signupForm['signup-password'].value;
             try {
-                await auth.createUserWithEmailAndPassword(email, password);
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                console.log("সফলভাবে অ্যাকাউন্ট তৈরি হয়েছে। UID:", user.uid);
+
+                // 🎯 আপনার পরিকল্পনা অনুযায়ী ফায়ারস্টোরে ইন-অ্যাপ স্বাগত নোটিফিকেশন পাঠানো হচ্ছে
+                await db.collection("notifications").add({
+                    userId: user.uid,
+                    title: "🏡 আমার বাড়ি.কম-এ আপনাকে স্বাগতম!",
+                    message: "সেরা সব প্রপার্টি ডিল এবং ক্রেতা-বিক্রেতার চ্যাট মেসেজের লাইভ আপডেট পেতে এই মেসেজটিতে ক্লিক করে নোটিফিকেশন সচল করুন।",
+                    type: "welcome", // টাইপ স্বাগত নির্ধারণ করা হলো
+                    isRead: false,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                console.log("স্বাগত নোটিফিকেশন ফায়ারস্টোরে যুক্ত হয়েছে।");
+                
                 alert('সফলভাবে সাইনআপ করা হয়েছে!');
                 window.location.href = 'index.html';
             } catch (error) {
