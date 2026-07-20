@@ -178,19 +178,55 @@ function setupSliderAndLikeLogic() {
     });
 }
 
-// 🎯 ১. ফিডের মধ্যে দেখানোর জন্য ন্যাটিভ ব্যানার অ্যাড HTML কার্ড
-function createBannerAdHTML() {
+// 🎯 ১. ডাইনামিক ফিচার্ড, ব্যানার অ্যাড ও প্লাস (+) বাটন স্লাইডার জেনারেটর (১ বারই দেখাবে)
+function createAdAndFeaturedSliderHTML() {
     return `
-        <div class="fb-feed-card banner-ad-card" style="background: linear-gradient(135deg, #1877f2, #0d52b5); color: white; padding: 18px; border-radius: 8px; margin-bottom: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-            <span style="background: rgba(255,255,255,0.25); font-size: 11px; padding: 2px 10px; border-radius: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">বিজ্ঞাপন / স্পন্সরড</span>
-            <h3 style="margin: 10px 0 6px 0; font-size: 18px; font-weight: 700;">আপনার প্রপার্টি দ্রুত বিক্রি বা ভাড়া দিতে চান?</h3>
-            <p style="font-size: 13.5px; margin-bottom: 14px; opacity: 0.95; line-height:1.4;">আমার বাড়ি.কম-এ সরাসরি কোনো থার্ড-পার্টি কমিশন ছাড়াই হাজারও প্রকৃত ক্রেতার কাছে প্রপার্টি পৌঁছে দিন।</p>
-            <a href="post.html" style="background: #ffffff; color: #1877f2; padding: 9px 20px; border-radius: 20px; font-weight: bold; text-decoration: none; display: inline-block; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">এখনই ফ্রিতে পোস্ট করুন</a>
+        <div class="fb-feed-card banner-slider-section" style="background:#fff; border:1px solid #ced0d4; border-radius:8px; padding:12px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,0.05); font-family:'Hind Siliguri', sans-serif;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-weight:700; font-size:14px; color:#1877f2; display:flex; align-items:center; gap:4px;">
+                    <i class="material-icons" style="font-size:18px; color:#ff9800;">stars</i> স্পন্সরড ও ফিচার্ড অফার
+                </span>
+                <span style="font-size:11px; background:#e4e6eb; color:#65676b; padding:2px 8px; border-radius:10px;">বিজ্ঞাপন</span>
+            </div>
+
+            <!-- হরিজন্টাল স্ক্রোল কনটেইনার -->
+            <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:8px; scroll-behavior:smooth; -webkit-overflow-scrolling:touch;">
+                
+                <!-- ডেমো অ্যাড ১: ইউজার বিহেভিয়ার টার্গেটেড -->
+                <div style="min-width:240px; width:240px; background:linear-gradient(135deg, #1877f2, #0d52b5); color:#fff; border-radius:8px; padding:12px; display:flex; flex-direction:column; justify-content:space-between; flex-shrink:0;">
+                    <div>
+                        <span style="background:rgba(255,255,255,0.2); font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold;">🎯 আপনার জন্য বিশেষ অফার</span>
+                        <h4 style="margin:8px 0 4px 0; font-size:14px;">আস্থা আবাসিক প্রকল্প - খুলনা</h4>
+                        <p style="margin:0; font-size:12px; opacity:0.9;">রেডি প্লট ও রেডি ফ্ল্যাটে বিশেষ মূল্যছাড়। সরাসরি ভিজিট করুন!</p>
+                    </div>
+                    <a href="details.html" style="margin-top:10px; background:#fff; color:#1877f2; text-align:center; padding:6px; border-radius:6px; font-weight:bold; font-size:12px; text-decoration:none;">অফার দেখুন</a>
+                </div>
+
+                <!-- ডেমো অ্যাড ২: ফিচার্ড ব্যানার -->
+                <div style="min-width:240px; width:240px; background:#fff3e0; border:1px solid #ffe082; color:#333; border-radius:8px; padding:12px; display:flex; flex-direction:column; justify-content:space-between; flex-shrink:0;">
+                    <div>
+                        <span style="background:#ff9800; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold;">🔥 হট ডিল</span>
+                        <h4 style="margin:8px 0 4px 0; font-size:14px; color:#e65100;">সোনাডাঙ্গায় ৩ বেডের লাক্সারি ফ্ল্যাট</h4>
+                        <p style="margin:0; font-size:12px; color:#666;">মালিকের সাথে সরাসরি চ্যাট করে ফাইনাল করুন। কোনো কমিশন নেই!</p>
+                    </div>
+                    <a href="post.html" style="margin-top:10px; background:#ff9800; color:#fff; text-align:center; padding:6px; border-radius:6px; font-weight:bold; font-size:12px; text-decoration:none;">বুকিং নিন</a>
+                </div>
+
+                <!-- ➕ প্লাস (+) বাটন (ইউজার নিজে ব্যানার অ্যাড দিতে পারবে) -->
+                <div style="min-width:140px; width:140px; background:#f0f2f5; border:2px dashed #1877f2; border-radius:8px; padding:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; flex-shrink:0; cursor:pointer;" onclick="window.location.href='boost.html'">
+                    <div style="width:40px; height:40px; background:#1877f2; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:6px; box-shadow:0 2px 6px rgba(24,119,242,0.3);">
+                        <i class="material-icons" style="font-size:24px;">add</i>
+                    </div>
+                    <span style="font-size:12px; font-weight:bold; color:#1877f2;">আপনার অ্যাড দিন</span>
+                    <span style="font-size:10px; color:#65676b; margin-top:2px;">বুস্ট ও ব্যানার</span>
+                </div>
+
+            </div>
         </div>
     `;
 }
 
-// 🎯 ২. ফেসবুক পোস্ট কার্ড মেকার (বুস্টেড এবং নরমাল পোস্ট সাপোর্ট)
+// 🎯 ২. ফেসবুক পোস্ট কার্ড মেকার
 function createFbPostHTML(docId, data) {
     const title = data.title || 'শিরোনামহীন প্রোপার্টি';
     const village = data.location?.village || "তথ্য নেই";
@@ -309,7 +345,7 @@ const bdDistricts = {
     "চট্টগ্রাম": ["বান্দরবান", "ব্রাহ্মণবাড়িয়া", "চাঁদপুর", "চট্টগ্রাম", "কুমিল্লা", "কক্সবাজার", "ফেনী", "খাগড়াছড়ি", "লক্ষ্মীপুর", "নোয়াখালী", "রাঙ্গামাটি"],
     "রাজশাহী": ["বগুড়া", "জয়পুরহাট", "নওগাঁ", "নাটোর", "নবাবগঞ্জ", "পাবনা", "রাজশাহী", "সিরাজগঞ্জ"],
     "রংপুর": ["দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "রংপুর", "ঠাকুরগাঁও"],
-    "বরিশাল": ["বরগুনা", "বরিশাল", "ভোলা", "ঝালকাঠি", "পটুখালী", "পিরোজপুর"],
+    "বরিশাল": ["বরগুনা", "বরিশাল", "ভোলা", "ঝালকাঠি", "পটুয়াখালী", "পিরোজপুর"],
     "সিলেট": ["হবিগঞ্জ", "মৌলভীবাজার", "সুনামগঞ্জ", "সিলেট"],
     "ময়মনসিংহ": ["ময়মনসিংহ", "নেত্রকোনা", "শেরপুর", "জামালপুর"]
 };
@@ -337,7 +373,7 @@ if (filterDivisionEl && filterDistrictEl) {
     });
 }
 
-// 🎯 ৩. স্মার্ট নিউজ ফিড রেন্ডারার উইথ স্পন্সরড অ্যান্ড বুস্টেড প্রায়োরিটি লজিক
+// 🎯 ৩. স্মার্ট নিউজ ফিড রেন্ডারার
 async function fetchAndDisplayProperties(category, searchFilter = '') {
     if (!propertyG) return;
     propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:#65676b;">নিউজ ফিড রিফ্রেশ হচ্ছে...</p>';
@@ -351,7 +387,8 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         propertyG.innerHTML = '';
         let hasPost = false;
         let postCounter = 0;
-        
+        let isAdSectionRendered = false; 
+
         const filterType = document.getElementById('filterType')?.value || '';
         const filterDistrict = document.getElementById('filterDistrict')?.value || '';
         const formattedSearch = searchFilter.toLowerCase().trim();
@@ -382,22 +419,27 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
             }
         });
 
-        // 🎯 বুস্টেড পোস্টগুলোকে সবার উপরে স্থান দেওয়া (Facebook Sponsored Logic)
+        // বুস্টেড পোস্টগুলোকে উপরে রাখা
         matchedDocs.sort((a, b) => (b.data.isBoosted === true ? 1 : 0) - (a.data.isBoosted === true ? 1 : 0));
 
         matchedDocs.forEach(item => {
             hasPost = true;
             postCounter++;
 
-            // ১. প্রপার্টি পোস্ট কার্ড যোগ করা
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
             loadPostAuthorDetails(item.id, item.data.userId);
 
-            // ২. প্রতি ৪টি পোস্ট পরপর ফিডে একটি স্পন্সরড ব্যানার অ্যাড দেখাবে
-            if (postCounter % 4 === 0) {
-                propertyG.insertAdjacentHTML('beforeend', createBannerAdHTML());
+            // 🎯 ঠিক ৩টি পোস্টের পর "শুধুমাত্র একবার" স্ক্রোলিং ব্যানার সেকশনটি বসবে
+            if (postCounter === 3 && !isAdSectionRendered) {
+                propertyG.insertAdjacentHTML('beforeend', createAdAndFeaturedSliderHTML());
+                isAdSectionRendered = true;
             }
         });
+
+        // পোস্ট ৩টার কম থাকলে কিন্তু অন্তত ১টা পোস্ট থাকলেও ফিডের শেষে অ্যাড সেকশন বসবে
+        if (hasPost && !isAdSectionRendered) {
+            propertyG.insertAdjacentHTML('beforeend', createAdAndFeaturedSliderHTML());
+        }
 
         if (!hasPost) {
             propertyG.innerHTML = '<p style="text-align:center; padding:40px; color:#65676b;">আপনার সার্চ অনুযায়ী এই মুহূর্তে কোনো পোস্ট পাওয়া যায়নি।</p>';
