@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>amarbari |আমার বাড়ি | বাংলাদেশ ও খুলনায় ফ্ল্যাট, প্লট এবং বাড়ি কেনাবেচার সেরা মাধ্যম</title>
+    <title>amarbari | আমার বাড়ি | বাংলাদেশ ও খুলনায় ফ্ল্যাট, প্লট এবং বাড়ি কেনাবেচার সেরা মাধ্যম</title>
     <meta name="description" content="কোনো দালাল বা থার্ড-পার্টি কমিশন ছাড়াই সরাসরি মালিকের কাছ থেকে প্রপার্টি, ফ্ল্যাট, বাড়ি এবং জমি কিনুন বা ভাড়া নিন। খতিয়ান ও নকশা যাচাইকৃত নিরাপদ প্ল্যাটফর্ম।">
-    <meta name="keywords" content="amarbari, আমার বাড়ি, প্রপার্টি কেনাবেচা, ফ্ল্যাট ভাড়া, জমি বিক্রি, খুলনায় বাড়ি, দালালমুক্ত রিয়েল এস্টেট, amarbari">
+    <meta name="keywords" content="amarbari, আমার বাড়ি, প্রপার্টি কেনাবেচা, ফ্ল্যাট ভাড়া, জমি বিক্রি, খুলনায় বাড়ি, দালালমুক্ত রিয়েল এস্টেট">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- 🟢 ফায়ারবেস কোর লাইব্রেরিসমূহ (এখানেই একবার লোড হবে) -->
+    <!-- 🟢 ফায়ারবেস কোর লাইব্রেরিসমূহ -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -24,7 +24,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
 
     <script>
-      // ফায়ারবেস কনফিগারেশন
       const firebaseConfig = {
         apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
         authDomain: "amar-bari-website.firebaseapp.com",
@@ -36,22 +35,6 @@
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     </script>
 
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "RealEstateAgent",
-      "name": "আমার বাড়ি.কম",
-      "url": "https://amarbarirealestate.netlify.app",
-      "logo": "https://amarbarirealestate.netlify.app/assets/images/logo.png",
-      "description": "বাংলাদেশে ফ্ল্যাট, প্লট এবং বাড়ি কেনাবেচার বিশ্বস্ত online প্ল্যাটফর্ম।",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Khulna",
-        "addressCountry": "BD"
-      }
-    }
-    </script>
-
     <style>
         :root {
             --fb-blue: #1877f2;
@@ -61,6 +44,7 @@
             --text-sub: #65676b;
             --border-color: #ced0d4;
             --success: #42b72a;
+            --boost-gold: #ff9800;
         }
 
         body {
@@ -106,7 +90,6 @@
         }
         .fb-icon-circle:hover { background-color: #d8dadf; }
         
-        /* 🔔 নোটিফিকেশন ব্যাজ স্টাইল */
         .fb-badge {
             position: absolute; top: -2px; right: -2px; background: #e41e3f; color: white;
             border-radius: 50%; padding: 1px 6px; font-size: 11px; font-weight: bold; display: none;
@@ -171,7 +154,6 @@
 
         .main-layout { display: grid; grid-template-columns: 1fr; gap: 16px; }
 
-        /* ফিড গ্রিড */
         .property-grid {
             display: flex;
             flex-direction: column;
@@ -179,11 +161,10 @@
             width: 100%;
         }
 
-        /* ফেসবুক স্টাইল প্রোপার্টি কার্ড */
-        .fb-feed-card {
-            background: var(--fb-card-bg); border: 1px solid var(--border-color);
-            border-radius: 8px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            display: flex; flex-direction: column; text-decoration: none; color: inherit;
+        /* বুস্টেড কার্ড বিশেষ স্টাইল */
+        .fb-feed-card.boosted-card {
+            border: 2px solid var(--boost-gold);
+            background: #fffdf6;
         }
 
         .card-author-header { padding: 12px; display: flex; align-items: center; justify-content: space-between; }
@@ -193,6 +174,7 @@
 
         .badge-verified { background: var(--success); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .badge-category { background: var(--fb-blue); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge-boosted { background: var(--boost-gold); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; display: flex; align-items: center; gap: 2px; }
 
         .card-body-text { padding: 0 12px 12px 12px; font-size: 14px; line-height: 1.5; color: var(--text-main); }
 
@@ -233,72 +215,21 @@
 
         .fb-footer { background: white; border-top: 1px solid var(--border-color); padding: 16px 0; text-align: center; font-size: 13px; color: var(--text-sub); }
 
-        /* 🔔 কাস্টম নোটিফিকেশন পপআপের আধুনিক CSS স্টাইল */
         #custom-notification-popup {
-    position: fixed;
-    bottom: -300px; /* ডিফল্টভাবে স্ক্রিনের নিচে থাকবে */
-    right: 20px;
-    width: 380px;
-    background: #ffffff;
-    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.15);
-    border-radius: 12px;
-    padding: 20px;
-    z-index: 99999;
-    transition: bottom 0.5s ease-in-out;
-    border-left: 5px solid #1877f2;
-    font-family: 'Hind Siliguri', sans-serif;
-    display: block !important; /* এটি যেন কোনোভাবে হাইড না থাকে */
-}
-#custom-notification-popup.fcm-popup-show {
-    bottom: 20px; /* যখন শো করবে তখন ওপরে উঠে আসবে */
-}
-        .fcm-popup-content {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            position: fixed; bottom: -300px; right: 20px; width: 380px; background: #ffffff;
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.15); border-radius: 12px; padding: 20px;
+            z-index: 99999; transition: bottom 0.5s ease-in-out; border-left: 5px solid var(--fb-blue);
+            font-family: 'Hind Siliguri', sans-serif; display: block !important;
         }
-        .fcm-popup-icon {
-            font-size: 30px;
-            animation: wiggle 2s infinite;
-            width: max-content;
-        }
-        .fcm-popup-text h4 {
-            margin: 0 0 6px 0;
-            color: #333;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        .fcm-popup-text p {
-            margin: 0;
-            color: #666;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        .fcm-popup-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 5px;
-        }
-        .fcm-btn-primary {
-            background: #1877f2;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        .fcm-btn-secondary {
-            background: #f1f1f1;
-            color: #555;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
+        #custom-notification-popup.fcm-popup-show { bottom: 20px; }
+        .fcm-popup-content { display: flex; flex-direction: column; gap: 12px; }
+        .fcm-popup-icon { font-size: 30px; animation: wiggle 2s infinite; width: max-content; }
+        .fcm-popup-text h4 { margin: 0 0 6px 0; color: #333; font-size: 18px; font-weight: 600; }
+        .fcm-popup-text p { margin: 0; color: #666; font-size: 14px; line-height: 1.4; }
+        .fcm-popup-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 5px; }
+        .fcm-btn-primary { background: var(--fb-blue); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
+        .fcm-btn-secondary { background: #f1f1f1; color: #555; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+
         @keyframes wiggle {
             0% { transform: rotate(0); }
             15% { transform: rotate(10deg); }
@@ -309,13 +240,8 @@
             100% { transform: rotate(0); }
         }
 
-        /* রেসপনসিভ কুয়েরি */
         @media (max-width: 480px) {
-            #custom-notification-popup {
-                width: calc(100% - 40px);
-                right: 20px;
-                left: 20px;
-            }
+            #custom-notification-popup { width: calc(100% - 40px); right: 20px; left: 20px; }
         }
         @media (max-width: 767px) {
             .main-layout { grid-template-columns: 1fr; }
@@ -350,13 +276,10 @@
         <div class="header-content">
             <div class="header-left">
                 <i class="material-icons menu-btn" id="menuButton">menu</i>
-                <a href="index.html" class="logo-fb">
-                    AmarBari
-                </a>
+                <a href="index.html" class="logo-fb">AmarBari</a>
             </div>
             
             <div class="header-actions">
-                <!-- 🎯 নোটিফিকেশন বেল বাটন ও ব্যাজ এখানে একদম ক্লিন করা হয়েছে -->
                 <div class="fb-icon-circle" id="notificationButton" title="নোটিফিকেশন">
                     <i class="material-icons" id="notification-bell-btn">notifications</i>
                     <span class="fb-badge" id="notification-badge">0</span>
@@ -381,6 +304,7 @@
             <i class="material-icons">feed</i> নিউজ ফিড
         </a>
         <a href="post.html"><i class="material-icons">add_business</i> প্রপার্টি পোস্ট করুন</a>
+        <a href="boost.html"><i class="material-icons" style="color: var(--boost-gold);">bolt</i> পোস্ট বুস্ট করুন</a>
         <a href="tips.html"><i class="material-icons">sticky_note_2</i> আবাসন গাইডলাইন</a>
         <a href="privacy.html"><i class="material-icons">verified_user</i> সিকিউরিটি ও প্রাইভেসি</a> 
         <a href="auth.html" id="login-link-sidebar"><i class="material-icons">login</i> অ্যাকাউন্ট লগইন</a>
@@ -389,7 +313,7 @@
 
     <div class="container">
         <section class="fb-hero">
-            <h1 class="seo-h1">জমি,বড়ি,প্লট,ফ্ল্যাট,অফিস,দোকান ভাড়া কিংবা বিক্রয়ের সেরা মাধ্যম - আমার বাড়ি.কম</h1>
+            <h1 class="seo-h1">জমি, বাড়ি, প্লট, ফ্ল্যাট, অফিস, দোকান ভাড়া কিংবা বিক্রয়ের সেরা মাধ্যম - আমার বাড়ি.কম</h1>
             
             <div class="fb-search-box">
                 <select id="filterType">
@@ -431,6 +355,7 @@
                 <div class="widget-card" style="border:none; background:transparent; padding:0;">
                     <a href="index.html" class="widget-link" style="background: #e4e6eb;"><i class="material-icons" style="color:var(--fb-blue)">feed</i>আজকের ফিড</a>
                     <a href="post.html" class="widget-link"><i class="material-icons" style="color:var(--success)">add_business</i>প্রপার্টি আপলোড</a>
+                    <a href="boost.html" class="widget-link"><i class="material-icons" style="color:var(--boost-gold)">bolt</i>পোস্ট বুস্ট করুন</a>
                     <a href="tips.html" class="widget-link"><i class="material-icons" style="color:#f5bb41">lightbulb</i>আইনি পরামর্শ</a>
                 </div>
             </aside>
@@ -457,7 +382,18 @@
                 </div>
             </main>
 
+            <!-- 🎯 ডানপাশের প্রফেশনাল উইজেট প্যানেল (স্পন্সরড অ্যান্ড প্রমোশন) -->
             <aside class="right-widgets-panel">
+                <div class="widget-card" style="background: #fffdf3; border: 1px solid #ffe082;">
+                    <h5 style="color: #d7ccc8; display:flex; align-items:center; gap:4px; margin-top:0;">
+                        <i class="material-icons" style="color:var(--boost-gold);">workspace_premium</i> প্রিমিয়াম ফিচার
+                    </h5>
+                    <p style="font-size:13px; color:var(--text-main); margin:0 0 10px 0; line-height:1.4;">
+                        আপনার প্রপার্টিটি ফিডের সবার উপরে রাখুন এবং ৫ গুণ দ্রুত ক্রেতাদের সাথে চ্যাট শুরু করুন।
+                    </p>
+                    <a href="boost.html" style="display:block; text-align:center; background:var(--boost-gold); color:white; padding:8px; border-radius:6px; font-weight:bold; text-decoration:none; font-size:13px;">পোস্ট বুস্ট করুন</a>
+                </div>
+
                 <div class="widget-card">
                     <h5>📢 নিরাপদ আবাসন বার্তা</h5>
                     <p style="font-size:13px; color:var(--text-sub); margin:0; line-height:1.4;">যে কোনো প্রপার্টি ক্রয়ের পূর্বে অবশ্যই ফিজিক্যালি কাগজ স্কেচ এবং মূল মালিকের খতিয়ান ডাবল চেক করে নিন। আমার বাড়ি.কম কোনো থার্ড পার্টি কমিশন নেয় না।</p>
@@ -477,7 +413,6 @@
         </div>
     </footer>
 
-    <!-- 🔔 কাস্টম নোটিফিকেশন ব্যানার/পপআপ HTML স্ট্রাকচার -->
     <div id="custom-notification-popup">
         <div class="fcm-popup-content">
             <div class="fcm-popup-icon">🔔</div>
@@ -492,15 +427,12 @@
         </div>
     </div>
 
-    <!-- 📜 জাভাস্ক্রিপ্ট ফাইল লোড করার সঠিক ক্রম -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const menuButton = document.getElementById('menuButton');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
             const notificationButton = document.getElementById('notificationButton');
-            const headerPostButton = document.getElementById('headerPostButton');
-            const messageButton = document.getElementById('messageButton');
 
             if (menuButton && sidebar && overlay) {
                 menuButton.addEventListener('click', () => {
@@ -521,10 +453,8 @@
                     if (!user && !hasPermission) {
                         e.preventDefault(); 
                         e.stopPropagation();
-                        console.log("গেস্ট ভিজিটর ক্লিক করেছেন। কাস্টম পপআপ লোড করা হচ্ছে...");
-                        window.triggerFCM("badge");
+                        if (window.triggerFCM) window.triggerFCM("badge");
                     } else {
-                        // ইউজার লগইন করা থাকলে বা নোটিফিকেশন পারমিশন অলরেডি দেওয়া থাকলে রিডাইরেক্ট হবে
                         window.location.href = 'notifications.html';
                     }
                 });
@@ -534,9 +464,6 @@
     
     <script src="index.js"></script>
     <script src="header-sync.js"></script>
-    <!-- 🎯 আমাদের মেইন স্মার্ট লজিক ইঞ্জিন সবার শেষে এক্সিকিউট হবে -->
     <script src="fcm-setup.js"></script>
 </body>
-</html>
-
-
+    </html>
