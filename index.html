@@ -288,10 +288,12 @@
                 <a href="post.html" class="fb-icon-circle" title="প্রপার্টি পোস্ট">
                     <i class="material-icons" style="color: var(--success);">add_circle</i>
                 </a>
-                <div class="fb-icon-circle" id="messageButton" title="মেসেজ">
+                
+                <!-- 🎯 লিঙ্ক যুক্ত করা হয়েছে যাতে মেসেজ বাটন ক্লিক করলে সরাসরি মেসেজেস পেজে চলে যায় -->
+                <a href="messages.html" class="fb-icon-circle" id="messageButton" title="মেসেজ">
                     <i class="material-icons">chat</i>
                     <span class="fb-badge" id="message-count">0</span>
-                </div>
+                </a>
                 
                 <img id="profileImage" class="fb-profile-pic" src="" alt="Profile" style="display:none;">
                 <i class="material-icons" id="defaultProfileIcon" style="font-size: 40px; color: var(--text-sub); cursor:pointer;">account_circle</i>
@@ -304,6 +306,7 @@
             <i class="material-icons">feed</i> নিউজ ফিড
         </a>
         <a href="post.html"><i class="material-icons">add_business</i> প্রপার্টি পোস্ট করুন</a>
+        <a href="messages.html"><i class="material-icons">chat</i> মেসেজ সমূহ</a>
         <a href="boost.html"><i class="material-icons" style="color: var(--boost-gold);">bolt</i> পোস্ট বুস্ট করুন</a>
         <a href="tips.html"><i class="material-icons">sticky_note_2</i> আবাসন গাইডলাইন</a>
         <a href="privacy.html"><i class="material-icons">verified_user</i> সিকিউরিটি ও প্রাইভেসি</a> 
@@ -382,10 +385,9 @@
                 </div>
             </main>
 
-            <!-- 🎯 ডানপাশের প্রফেশনাল উইজেট প্যানেল (স্পন্সরড অ্যান্ড প্রমোশন) -->
             <aside class="right-widgets-panel">
                 <div class="widget-card" style="background: #fffdf3; border: 1px solid #ffe082;">
-                    <h5 style="color: #d7ccc8; display:flex; align-items:center; gap:4px; margin-top:0;">
+                    <h5 style="color: #8d6e63; display:flex; align-items:center; gap:4px; margin-top:0;">
                         <i class="material-icons" style="color:var(--boost-gold);">workspace_premium</i> প্রিমিয়াম ফিচার
                     </h5>
                     <p style="font-size:13px; color:var(--text-main); margin:0 0 10px 0; line-height:1.4;">
@@ -466,4 +468,4 @@
     <script src="header-sync.js"></script>
     <script src="fcm-setup.js"></script>
 </body>
-    </html>
+                    </html>
