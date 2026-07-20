@@ -13,11 +13,9 @@ const profileImageWrapper = document.getElementById('profileImageWrapper');
 const profileImage = document.getElementById('profileImage'); 
 const defaultProfileIcon = document.getElementById('defaultProfileIcon'); 
 
-// কাউন্টারস
 const notificationCount = document.getElementById('notification-count');
 const messageCount = document.getElementById('message-count');
 
-// 🎯 সংশোধন: HTML ফাইলের সঠিক ক্লাস সিলেক্টর ম্যাপিং (.fb-tabs .fb-tab-btn)
 const navButtons = document.querySelectorAll('.fb-tabs .fb-tab-btn:not(#mapViewToggleBtn)'); 
 const propertyG = document.querySelector('.property-grid');
 const loginLinkSidebar = document.getElementById('login-link-sidebar');
@@ -180,7 +178,19 @@ function setupSliderAndLikeLogic() {
     });
 }
 
-// ফেসবুক পোস্ট কার্ড মেকার (HTML জেনারেটর)
+// 🎯 ১. ফিডের মধ্যে দেখানোর জন্য ন্যাটিভ ব্যানার অ্যাড HTML কার্ড
+function createBannerAdHTML() {
+    return `
+        <div class="fb-feed-card banner-ad-card" style="background: linear-gradient(135deg, #1877f2, #0d52b5); color: white; padding: 18px; border-radius: 8px; margin-bottom: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+            <span style="background: rgba(255,255,255,0.25); font-size: 11px; padding: 2px 10px; border-radius: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">বিজ্ঞাপন / স্পন্সরড</span>
+            <h3 style="margin: 10px 0 6px 0; font-size: 18px; font-weight: 700;">আপনার প্রপার্টি দ্রুত বিক্রি বা ভাড়া দিতে চান?</h3>
+            <p style="font-size: 13.5px; margin-bottom: 14px; opacity: 0.95; line-height:1.4;">আমার বাড়ি.কম-এ সরাসরি কোনো থার্ড-পার্টি কমিশন ছাড়াই হাজারও প্রকৃত ক্রেতার কাছে প্রপার্টি পৌঁছে দিন।</p>
+            <a href="post.html" style="background: #ffffff; color: #1877f2; padding: 9px 20px; border-radius: 20px; font-weight: bold; text-decoration: none; display: inline-block; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">এখনই ফ্রিতে পোস্ট করুন</a>
+        </div>
+    `;
+}
+
+// 🎯 ২. ফেসবুক পোস্ট কার্ড মেকার (বুস্টেড এবং নরমাল পোস্ট সাপোর্ট)
 function createFbPostHTML(docId, data) {
     const title = data.title || 'শিরোনামহীন প্রোপার্টি';
     const village = data.location?.village || "তথ্য নেই";
@@ -192,31 +202,37 @@ function createFbPostHTML(docId, data) {
     
     const type = data.type || 'প্রপার্টি';
     const category = data.category || 'বিক্রয়';
+    const isBoosted = data.isBoosted === true;
     
     let amount = category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let priceUnit = data.priceUnit || data.rentUnit || ""; 
     let displayPrice = amount ? new Intl.NumberFormat('bn-BD').format(amount) : 'আলোচনা সাপেক্ষে';
 
     const hasDocs = data.documents && (data.documents.khotian || data.documents.sketch);
-    const verifiedBadge = hasDocs ? `<span class="badge-verified" style="background:#42b72a; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-right:5px;">✓ ভেরিফাইড</span>` : '';
+    const verifiedBadge = hasDocs ? `<span class="badge-verified">✓ ভেরিফাইড</span>` : '';
+    const boostedBadge = isBoosted ? `
+        <span class="badge-boosted">
+            <i class="material-icons" style="font-size:12px;">bolt</i> স্পন্সরড
+        </span>
+    ` : '';
 
     let images = [];
     if (data.images) data.images.forEach(img => images.push(img.url || img));
     
-    let mediaHTML = `<div class="fb-slide-item" style="background-image: url('https://via.placeholder.com/500x260?text=No+Photo'); display:block; width:100%; height:100%; background-size:cover; background-position:center;"></div>`;
+    let mediaHTML = `<div class="fb-slide-item" style="background-image: url('https://via.placeholder.com/500x260?text=No+Photo'); display:block;"></div>`;
     if (images.length > 0) {
         mediaHTML = images.map((img, i) => `
-            <div class="fb-slide-item" style="background-image: url('${img}'); display:${i === 0 ? 'block' : 'none'}; width:100%; height:100%; background-size:cover; background-position:center;"></div>
+            <div class="fb-slide-item" style="background-image: url('${img}'); display:${i === 0 ? 'block' : 'none'};"></div>
         `).join('');
     }
 
     const navArrows = images.length > 1 ? `
-        <button class="fb-slider-btn fb-prev" style="position: absolute; top: 50%; left: 12px; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; z-index: 5;">&#10094;</button>
-        <button class="fb-slider-btn fb-next" style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; z-index: 5;">&#10095;</button>
+        <button class="fb-slider-btn fb-prev">&#10094;</button>
+        <button class="fb-slider-btn fb-next">&#10095;</button>
     ` : '';
 
     return `
-        <div class="fb-feed-card" style="background:#fff; border:1px solid #ced0d4; border-radius:8px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,0.05); display:flex; flex-direction:column; font-family:'Hind Siliguri', sans-serif;">
+        <div class="fb-feed-card ${isBoosted ? 'boosted-card' : ''}" style="background:#fff; border:1px solid ${isBoosted ? '#ff9800' : '#ced0d4'}; border-radius:8px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,0.05); display:flex; flex-direction:column; font-family:'Hind Siliguri', sans-serif;">
             <div class="card-author-header" style="padding:12px; display:flex; align-items:center; justify-content:space-between;">
                 <div class="author-info" style="display:flex; align-items:center; gap:10px;">
                     <img id="author-pic-${docId}" src="https://via.placeholder.com/40?text=Pic" class="author-avatar-img" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid #ced0d4;" alt="pic">
@@ -228,8 +244,9 @@ function createFbPostHTML(docId, data) {
                     </div>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center;">
+                    ${boostedBadge}
                     ${verifiedBadge}
-                    <span class="badge-category" style="background:#1877f2; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold;">${category}</span>
+                    <span class="badge-category">${category}</span>
                 </div>
             </div>
             
@@ -240,27 +257,27 @@ function createFbPostHTML(docId, data) {
                 </div>
             </div>
 
-            <div class="card-media-section" style="position:relative; height:280px; background:#000; overflow:hidden;">
-                <div class="fb-slider" data-current-index="0" data-total-slides="${images.length}" style="width:100%; height:100%; position:relative;">
+            <div class="card-media-section">
+                <div class="fb-slider" data-current-index="0" data-total-slides="${images.length}">
                     ${mediaHTML}
                     ${navArrows}
                 </div>
-                <div class="price-tag-overlay" style="position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.75); color:#fff; padding:6px 12px; border-radius:6px; font-weight:bold; font-size:16px; z-index:4;">
+                <div class="price-tag-overlay">
                     ৳ ${displayPrice} ${priceUnit ? `(${priceUnit})` : ''} ${category === 'ভাড়া' ? '/মাস' : ''}
                 </div>
             </div>
 
-            <div class="fb-stats-bar" style="padding:10px 12px; display:flex; justify-content:space-between; font-size:13px; color:#65676b; border-bottom:1px solid #f2f3f5;">
-                <div class="fb-reactions" style="display:flex; align-items:center; gap:4px;">
+            <div class="fb-stats-bar">
+                <div class="fb-reactions">
                     <i class="material-icons" style="background:#1877f2; color:white; border-radius:50%; font-size:12px; padding:3px;">thumb_up</i>
                     <span class="likes-num"><span class="like-count">${data.likes || 0}</span> জন পছন্দ করেছেন</span>
                 </div>
                 <div>কমেন্ট দেখুন</div>
             </div>
 
-            <div class="fb-action-buttons" style="display:flex; padding:4px; border-top:1px solid #f2f3f5;">
-                <button class="fb-action-btn like-btn-toggle" style="flex:1; padding:10px; border:none; background:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:600; color:#65676b; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:4px;"><i class="material-icons">thumb_up_off_alt</i> লাইক</button>
-                <a href="details.html?id=${docId}" class="fb-action-btn" style="flex:1; padding:10px; border:none; background:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:700; color:#ff4d4d; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:4px; text-decoration:none;">
+            <div class="fb-action-buttons">
+                <button class="fb-action-btn like-btn-toggle"><i class="material-icons">thumb_up_off_alt</i> লাইক</button>
+                <a href="details.html?id=${docId}" class="fb-action-btn" style="color:#ff4d4d; font-weight:700; text-decoration:none;">
                     <i class="material-icons">double_arrow</i> বিস্তারিত ও যোগাযোগ
                 </a>
             </div>
@@ -285,19 +302,18 @@ function loadPostAuthorDetails(docId, userId) {
     }).catch(err => console.error("ইউজার কার্ড ডাটা লোড ত্রুটি:", err));
 }
 
-// 🎯 ১. বিভাগ অনুযায়ী জেলাগুলোর ডাইনামিক ডেটা তালিকা
+// জেলা ডাইনামিক ফিল্টার ডিকশনারি
 const bdDistricts = {
     "খুলনা": ["বাগেরহাট", "চুয়াডাঙ্গা", "যশোর", "ঝিনাইদহ", "খুলনা", "কুষ্টিয়া", "মাগুরা", "মেহেরপুর", "নড়াইল", "সাতক্ষীরা"],
     "ঢাকা": ["ঢাকা", "ফরিদপুর", "গাজীপুর", "গোপালগঞ্জ", "কিশোরগঞ্জ", "মাদারীপুর", "মানিকগঞ্জ", "মুন্সিগঞ্জ", "নারায়ণগঞ্জ", "নরসিংদী", "রাজবাড়ী", "শরীয়তপুর", "টাঙ্গাইল"],
     "চট্টগ্রাম": ["বান্দরবান", "ব্রাহ্মণবাড়িয়া", "চাঁদপুর", "চট্টগ্রাম", "কুমিল্লা", "কক্সবাজার", "ফেনী", "খাগড়াছড়ি", "লক্ষ্মীপুর", "নোয়াখালী", "রাঙ্গামাটি"],
     "রাজশাহী": ["বগুড়া", "জয়পুরহাট", "নওগাঁ", "নাটোর", "নবাবগঞ্জ", "পাবনা", "রাজশাহী", "সিরাজগঞ্জ"],
     "রংপুর": ["দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "রংপুর", "ঠাকুরগাঁও"],
-    "বরিশাল": ["বরগুনা", "বরিশাল", "ভোলা", "ঝালকাঠি", "পটুয়াখালী", "পিরোজপুর"],
+    "বরিশাল": ["বরগুনা", "বরিশাল", "ভোলা", "ঝালকাঠি", "পটুখালী", "পিরোজপুর"],
     "সিলেট": ["হবিগঞ্জ", "মৌলভীবাজার", "সুনামগঞ্জ", "সিলেট"],
     "ময়মনসিংহ": ["ময়মনসিংহ", "নেত্রকোনা", "শেরপুর", "জামালপুর"]
 };
 
-// 🎯 ২. বিভাগ সিলেক্ট করলে জেলা ডাইনামিক করার কন্ট্রোলার
 const filterDivisionEl = document.getElementById('filterDivision');
 const filterDistrictEl = document.getElementById('filterDistrict');
 
@@ -321,7 +337,7 @@ if (filterDivisionEl && filterDistrictEl) {
     });
 }
 
-// 🎯 ৩. তোমার বর্ণনা অনুযায়ী তৈরি মূল বুদ্ধিমান সার্চইঞ্জিন ফাংশন
+// 🎯 ৩. স্মার্ট নিউজ ফিড রেন্ডারার উইথ স্পন্সরড অ্যান্ড বুস্টেড প্রায়োরিটি লজিক
 async function fetchAndDisplayProperties(category, searchFilter = '') {
     if (!propertyG) return;
     propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:#65676b;">নিউজ ফিড রিফ্রেশ হচ্ছে...</p>';
@@ -334,51 +350,52 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
             
         propertyG.innerHTML = '';
         let hasPost = false;
+        let postCounter = 0;
         
-        // ৪টি ঘরের ইনপুট রিড করা
         const filterType = document.getElementById('filterType')?.value || '';
-        
         const filterDistrict = document.getElementById('filterDistrict')?.value || '';
         const formattedSearch = searchFilter.toLowerCase().trim();
 
+        let matchedDocs = [];
+
         snap.forEach(doc => {
             const data = doc.data();
-            
-            // ডিফল্টভাবে ধরে নিচ্ছি পোস্টটি দেখাবে, যদি কোনো শর্ত পূরণ না হয় তখন এটি false হবে
             let isMatched = true; 
 
-            // ১. যদি শুধু ধরন (Type) সিলেক্ট করে এবং ডাটার সাথে না মেলে
-            if (filterType && data.type !== filterType) {
-                isMatched = false;
-            }
+            if (filterType && data.type !== filterType) isMatched = false;
+            if (filterDistrict && data.location?.district !== filterDistrict) isMatched = false;
             
-            
-            
-            // ৩. যদি শুধু জেলা (District) সিলেক্ট করে এবং ডাটার সাথে না মেলে
-            if (filterDistrict && data.location?.district !== filterDistrict) {
-                isMatched = false;
-            }
-            
-            // ৪. যদি শুধু এলাকা/থানা/গ্রাম/রোড ফিল্ড পূরণ করে এবং ডাটার সাথে না মেলে
             if (formattedSearch) {
                 const titleMatch = data.title?.toLowerCase().includes(formattedSearch);
                 const villageMatch = data.location?.village?.toLowerCase().includes(formattedSearch);
                 const thanaMatch = data.location?.thana?.toLowerCase().includes(formattedSearch);
-                
                 const roadMatch = data.location?.road?.toLowerCase().includes(formattedSearch);
                 const districtTextMatch = data.location?.district?.toLowerCase().includes(formattedSearch);
                 
-                // যদি ৪ নম্বর ঘরের কোনো লেখার সাথেই ম্যাচ না করে
                 if (!titleMatch && !villageMatch && !thanaMatch && !roadMatch && !districtTextMatch) {
                     isMatched = false;
                 }
             }
 
-            // যদি গ্রাহকের পূরণ করা ঘরগুলোর শর্তের সাথে পোস্টটি টিকে যায় (Match করে), তবেই দেখাবে
             if (isMatched) {
-                hasPost = true;
-                propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(doc.id, data));
-                loadPostAuthorDetails(doc.id, data.userId);
+                matchedDocs.push({ id: doc.id, data: data });
+            }
+        });
+
+        // 🎯 বুস্টেড পোস্টগুলোকে সবার উপরে স্থান দেওয়া (Facebook Sponsored Logic)
+        matchedDocs.sort((a, b) => (b.data.isBoosted === true ? 1 : 0) - (a.data.isBoosted === true ? 1 : 0));
+
+        matchedDocs.forEach(item => {
+            hasPost = true;
+            postCounter++;
+
+            // ১. প্রপার্টি পোস্ট কার্ড যোগ করা
+            propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
+            loadPostAuthorDetails(item.id, item.data.userId);
+
+            // ২. প্রতি ৪টি পোস্ট পরপর ফিডে একটি স্পন্সরড ব্যানার অ্যাড দেখাবে
+            if (postCounter % 4 === 0) {
+                propertyG.insertAdjacentHTML('beforeend', createBannerAdHTML());
             }
         });
 
@@ -391,7 +408,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         console.error("সার্চইঞ্জিন ত্রুটি:", error);
         propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:red;">ফিড লোড করতে সমস্যা হয়েছে।</p>';
     }
-            }
+}
 
 // ইভেন্ট লিসেনার সেটআপ
 function setupUIEventListeners() {
@@ -400,7 +417,6 @@ function setupUIEventListeners() {
         overlay.onclick = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
     }
 
-    // 🎯 সংশোধন: সঠিক ক্লাস ফিল্টারিং অনুযায়ী লুপ সেটআপ
     navButtons.forEach(btn => {
         btn.onclick = function() {
             navButtons.forEach(b => b.classList.remove('active'));
@@ -429,7 +445,6 @@ function setupUIEventListeners() {
             if (gridContainer) gridContainer.style.display = 'none';
             if (mapSection) mapSection.style.display = 'block';
             
-            // 🎯 সংশোধন: ক্যাটগরি চেক করার জন্য ডাইনামিক ক্লাস রিড করা
             const activeNavButton = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
             const currentCat = activeNavButton ? activeNavButton.getAttribute('data-category') : 'বিক্রয়';
             initMap(currentCat);
@@ -456,7 +471,7 @@ function setupUIEventListeners() {
     }
 }
 
-// অ্যাপ্লিকেশন রানিং সোর্স
+// অ্যাপ্লিকেশন রানিং
 document.addEventListener('DOMContentLoaded', () => {
     setupUIEventListeners();
     fetchAndDisplayProperties('বিক্রয়', ''); 
