@@ -12,9 +12,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> 
     
+    <!-- Leaflet CSS & JS for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -50,8 +52,7 @@
         body {
             font-family: 'Hind Siliguri', Arial, sans-serif;
             margin: 0; padding: 0; padding-top: 56px;
-            background-color: var(--fb-bg);
-            color: var(--text-main);
+            background-color: var(--fb-bg); color: var(--text-main);
         }
 
         .container { max-width: 680px; margin: 0 auto; padding: 0 8px; }
@@ -65,18 +66,18 @@
         .header-content { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 16px; }
         .header-left { display: flex; align-items: center; gap: 8px; }
         .menu-btn { cursor: pointer; color: var(--text-sub); font-size: 28px; }
-        
         .logo-fb { font-size: 22px; font-weight: 800; color: var(--fb-blue); text-decoration: none; }
-        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; }
         
         .fb-icon-circle {
-            background-color: #e4e6eb; width: 40px; height: 40px; border-radius: 50%;
+            background-color: #e4e6eb; width: 38px; height: 38px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; cursor: pointer;
             position: relative; text-decoration: none; color: var(--text-main);
         }
 
-        .fb-profile-pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); }
+        .fb-profile-pic { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--fb-blue); cursor: pointer; }
 
+        /* সাইডবার */
         .sidebar {
             position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
             background: white; box-shadow: 4px 0 12px rgba(0,0,0,0.1);
@@ -87,35 +88,50 @@
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; z-index: 1040; }
         .overlay.active { display: block; }
         
+        /* 📸 কভার ব্যানার অটো-স্লাইডার স্টাইল */
+        .cover-slider-container {
+            width: 100%; height: 180px; position: relative; overflow: hidden;
+            border-radius: 8px; margin: 10px 0 12px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+        .cover-slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center; opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+        }
+        .cover-slide.active { opacity: 1; }
+        .cover-overlay-text {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.75));
+            color: #fff; padding: 12px; font-size: 14px; font-weight: 600;
+        }
+
+        /* সার্চ বক্স */
         .fb-hero {
-            background: var(--fb-card-bg); padding: 16px; margin-bottom: 12px;
-            border-bottom: 1px solid var(--border-color); border-radius: 0 0 8px 8px;
+            background: var(--fb-card-bg); padding: 14px; margin-bottom: 12px;
+            border: 1px solid var(--border-color); border-radius: 8px;
         }
+        .seo-h1 { font-size: 16px; font-weight: 700; margin: 0 0 10px 0; text-align: center; }
 
-        .seo-h1 { font-size: 18px; font-weight: 700; margin: 0 0 12px 0; text-align: center; }
-
-        .fb-search-box {
-            background: var(--fb-bg); padding: 10px; border-radius: 12px;
-            display: flex; flex-direction: column; gap: 8px;
-        }
+        .fb-search-box { display: flex; flex-direction: column; gap: 8px; }
         .fb-search-box select, .fb-search-box input {
-            background: white; border: 1px solid var(--border-color); padding: 10px 14px;
-            border-radius: 8px; font-family: inherit; font-size: 14px; outline: none; width: 100%;
+            background: #f8f9fa; border: 1px solid var(--border-color); padding: 9px 12px;
+            border-radius: 6px; font-family: inherit; font-size: 13.5px; outline: none; width: 100%;
         }
         .fb-search-btn {
             background: var(--fb-blue); color: white; border: none; padding: 10px;
-            border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer;
+            border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 6px;
         }
 
+        /* ট্যাব বার */
         .fb-tabs {
-            display: flex; background: var(--fb-card-bg); border-bottom: 1px solid var(--border-color);
+            display: flex; background: var(--fb-card-bg); border: 1px solid var(--border-color);
             margin-bottom: 12px; border-radius: 8px; overflow: hidden;
         }
         .fb-tab-btn {
-            flex: 1; padding: 12px; border: none; background: none; cursor: pointer;
-            font-family: inherit; font-weight: bold; font-size: 14px; color: var(--text-sub);
-            display: flex; align-items: center; justify-content: center; gap: 6px;
+            flex: 1; padding: 10px 4px; border: none; background: none; cursor: pointer;
+            font-family: inherit; font-weight: bold; font-size: 13px; color: var(--text-sub);
+            display: flex; align-items: center; justify-content: center; gap: 4px;
             border-bottom: 3px solid transparent;
         }
         .fb-tab-btn.active { color: var(--fb-blue); border-bottom: 3px solid var(--fb-blue); background: rgba(24, 119, 242, 0.05); }
@@ -127,45 +143,44 @@
 
         .card-author-header { padding: 12px; display: flex; align-items: center; justify-content: space-between; }
         .author-info { display: flex; align-items: center; gap: 10px; }
-        .author-meta h4 { margin: 0; font-size: 15px; font-weight: 600; }
-        .author-meta p { margin: 2px 0 0 0; font-size: 12px; color: var(--text-sub); display: flex; align-items: center; gap: 4px; }
+        .author-meta h4 { margin: 0; font-size: 14px; font-weight: 600; }
+        .author-meta p { margin: 2px 0 0 0; font-size: 11.5px; color: var(--text-sub); display: flex; align-items: center; gap: 4px; }
 
-        .badge-verified { background: var(--success); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .badge-category { background: var(--fb-blue); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .badge-boosted { background: var(--boost-gold); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; display: flex; align-items: center; gap: 2px; }
+        .badge-verified { background: var(--success); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .badge-category { background: var(--fb-blue); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .badge-boosted { background: var(--boost-gold); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
 
-        .card-body-text { padding: 0 12px 12px 12px; font-size: 14px; line-height: 1.5; }
+        .card-body-text { padding: 0 12px 10px 12px; font-size: 13.5px; line-height: 1.4; }
 
-        .card-media-section { position: relative; height: 260px; background: #000; overflow: hidden; }
+        .card-media-section { position: relative; height: 250px; background: #000; overflow: hidden; }
         .fb-slider { width: 100%; height: 100%; position: relative; }
         .fb-slide-item { width: 100%; height: 100%; background-size: cover; background-position: center; position: absolute; top:0; left:0; }
         
         .fb-slider-btn {
             position: absolute; top: 50%; transform: translateY(-50%);
-            background: rgba(0,0,0,0.5); color: white; border: none; width: 36px; height: 36px;
-            border-radius: 50%; cursor: pointer; font-size: 18px; z-index: 5; display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.5); color: white; border: none; width: 32px; height: 32px;
+            border-radius: 50%; cursor: pointer; font-size: 16px; z-index: 5; display: flex; align-items: center; justify-content: center;
         }
-        .fb-prev { left: 12px; } .fb-next { right: 12px; }
+        .fb-prev { left: 8px; } .fb-next { right: 8px; }
 
         .price-tag-overlay {
-            position: absolute; bottom: 12px; right: 12px; background: rgba(0, 0, 0, 0.75);
-            color: #fff; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 15px; z-index: 4;
+            position: absolute; bottom: 10px; right: 10px; background: rgba(0, 0, 0, 0.8);
+            color: #fff; padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 14px; z-index: 4;
         }
 
-        .fb-stats-bar { padding: 10px 12px; display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); border-bottom: 1px solid #f2f3f5; }
-        .fb-action-buttons { display: flex; padding: 4px; border-top: 1px solid #f2f3f5; }
+        .fb-stats-bar { padding: 8px 12px; display: flex; justify-content: space-between; font-size: 12px; color: var(--text-sub); border-bottom: 1px solid #f2f3f5; }
+        .fb-action-buttons { display: flex; padding: 2px; border-top: 1px solid #f2f3f5; }
         .fb-action-btn {
-            flex: 1; padding: 10px; border: none; background: none; cursor: pointer;
-            font-family: inherit; font-size: 14px; font-weight: 600; color: var(--text-sub);
-            display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none;
+            flex: 1; padding: 8px; border: none; background: none; cursor: pointer;
+            font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text-sub);
+            display: flex; align-items: center; justify-content: center; gap: 4px; text-decoration: none;
         }
 
-        /* 📸 বড় সাইজের ফিচার্ড স্ক্রোলারের কাস্টম সিএসএস */
-        .featured-scroll-container { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 8px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
-        .featured-card-item { min-width: 280px; width: 280px; background: #fff; border: 1px solid #ff9800; border-radius: 10px; overflow: hidden; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-        .featured-img-box { height: 160px; background-size: cover; background-position: center; position: relative; }
+        .featured-scroll-container { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        .featured-card-item { min-width: 260px; width: 260px; background: #fff; border: 1px solid #ff9800; border-radius: 8px; overflow: hidden; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
+        .featured-img-box { height: 150px; background-size: cover; background-position: center; position: relative; }
 
-        .fb-footer { background: white; border-top: 1px solid var(--border-color); padding: 16px 0; text-align: center; font-size: 13px; color: var(--text-sub); margin-top: 20px; }
+        .fb-footer { background: white; border-top: 1px solid var(--border-color); padding: 14px 0; text-align: center; font-size: 12px; color: var(--text-sub); margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -178,9 +193,9 @@
             </div>
             
             <div class="header-actions">
-                <div class="fb-icon-circle" id="notificationButton" title="নোটিফিকেশন">
+                <a href="notifications.html" class="fb-icon-circle" title="নোটিফিকেশন">
                     <i class="material-icons">notifications</i>
-                </div>
+                </a>
                 
                 <a href="post.html" class="fb-icon-circle" title="প্রপার্টি পোস্ট">
                     <i class="material-icons" style="color: var(--success);">add_circle</i>
@@ -190,8 +205,11 @@
                     <i class="material-icons">chat</i>
                 </a>
                 
-                <img id="profileImage" class="fb-profile-pic" src="" alt="Profile" style="display:none;">
-                <i class="material-icons" id="defaultProfileIcon" style="font-size: 40px; color: var(--text-sub); cursor:pointer;">account_circle</i>
+                <!-- 👤 ডায়নামিক প্রোফাইল পিকচার -->
+                <a href="profile.html">
+                    <img id="profileImage" class="fb-profile-pic" src="" alt="Profile" style="display:none;">
+                    <i class="material-icons" id="defaultProfileIcon" style="font-size: 38px; color: var(--text-sub); cursor:pointer;">account_circle</i>
+                </a>
             </div>
         </div>
     </header>
@@ -209,6 +227,21 @@
     <div class="overlay" id="overlay"></div>
 
     <div class="container">
+        
+        <!-- 📸 ১. সবার উপরে অটো-স্লাইড কভার ছবি (৩টি ছবি) -->
+        <div class="cover-slider-container" id="coverSlider">
+            <div class="cover-slide active" style="background-image: url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&auto=format&fit=crop&q=80');">
+                <div class="cover-overlay-text">🏡 আপনার স্বপ্নের বাড়ি ও জমি কিনুন দালালমুক্ত উপায়ে</div>
+            </div>
+            <div class="cover-slide" style="background-image: url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=80');">
+                <div class="cover-overlay-text">✨ সরাসরি প্রপার্টি মালিকের সাথে চ্যাট করুন</div>
+            </div>
+            <div class="cover-slide" style="background-image: url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80');">
+                <div class="cover-overlay-text">🔥 খুলনা ও সারা দেশের ভেরিফাইড প্রপার্টি ডিলস</div>
+            </div>
+        </div>
+
+        <!-- ২. সার্চ ফিল্টার -->
         <section class="fb-hero">
             <h1 class="seo-h1">আমার বাড়ি.কম - ফ্ল্যাট, প্লট ও জমি কেনাবেচার সেরা মাধ্যম</h1>
             
@@ -219,20 +252,27 @@
                     <option value="বাড়ি">বাড়ি (House)</option>
                     <option value="প্লট">প্লট (Plot)</option>
                     <option value="ফ্ল্যাট">ফ্ল্যাট (Apartment)</option>
+                    <option value="অফিস">অফিস (Office)</option>
+                    <option value="দোকান">দোকান (Shop)</option>
                 </select>
                 
                 <select id="filterDivision">
-                    <option value="">সব বিভাগ</option>
-                    <option value="খুলনা">খুলনা</option>
+                    <option value="">সব বিভাগ (All Divisions)</option>
                     <option value="ঢাকা">ঢাকা</option>
+                    <option value="খুলনা">খুলনা</option>
                     <option value="চট্টগ্রাম">চট্টগ্রাম</option>
+                    <option value="রাজশাহী">রাজশাহী</option>
+                    <option value="রংপুর">রংপুর</option>
+                    <option value="বরিশাল">বরিশাল</option>
+                    <option value="সিলেট">সিলেট</option>
+                    <option value="ময়মনসিংহ">ময়মনসিংহ</option>
                 </select>
 
                 <select id="filterDistrict" disabled>
                     <option value="">প্রথমে বিভাগ মেলান</option>
                 </select>
                 
-                <input type="text" id="globalSearchInput" placeholder="এলাকা, থানা বা গ্রাম...">
+                <input type="text" id="globalSearchInput" placeholder="এলাকা, থানা, রোড বা গ্রাম...">
                 
                 <button class="fb-search-btn" id="btnAdvancedSearch">
                     <i class="material-icons">search</i> খুঁজুন
@@ -241,17 +281,27 @@
         </section>        
         
         <main>
+            <!-- ৩. নেভিগেশন ট্যাব উইথ ম্যাপ বাটন -->
             <div class="fb-tabs">
                 <button class="fb-tab-btn active" data-category="বিক্রয়">
-                    <i class="material-icons">shopping_bag</i> বিক্রির জন্য পোস্ট
+                    <i class="material-icons">shopping_bag</i> বিক্রির পোস্ট
                 </button>
                 <button class="fb-tab-btn" data-category="ভাড়া">
-                    <i class="material-icons">hotel</i> ভাড়ার জন্য পোস্ট
+                    <i class="material-icons">hotel</i> ভাড়ার পোস্ট
+                </button>
+                <button class="fb-tab-btn" id="mapViewToggleBtn">
+                    <i class="material-icons">pin_drop</i> ম্যাপে দেখুন
                 </button>
             </div>
 
+            <!-- নিউজ ফিড কনটেইনার -->
             <div id="property-grid-container">
                 <div class="property-grid"></div>
+            </div>
+
+            <!-- 🗺️ ম্যাপ সেকশন -->
+            <div id="map-section" style="display: none;">
+                <div id="map-container" style="height: 420px; width: 100%; border-radius: 8px; border: 1px solid var(--border-color);"></div>
             </div>
         </main>
     </div>
