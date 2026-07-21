@@ -3,599 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>প্রোফাইল ড্যাশবোর্ড - আমার বাড়ি.কম</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-
+    <title>প্রোফাইল - আমার বাড়ি.কম</title>
+    <!-- FontAwesome & Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { 
-            --primary: #007bff; 
-            --primary-gradient: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
-            --cover-gradient: linear-gradient(135deg, rgba(24, 43, 73, 0.9) 0%, rgba(0, 123, 255, 0.85) 100%);
-            --success: #2ecc71; 
-            --danger: #e74c3c;
-            --dark: #1c1e21; 
-            --gray: #65676b; 
-            --bg: #f0f2f5;   
-            --border: #ced0d4;
-        }
-        body { background-color: var(--bg); font-family: 'Segoe UI', Helvetica, Arial, sans-serif; margin: 0; padding-top: 60px; color: var(--dark); }
-        .container { max-width: 650px; margin: auto; padding:10px; box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f0f2f5; color: #1c1e21; }
 
-        .main-header {
-             position: fixed; 
-             top: 0; left: 0; right: 0;
-             background-color: white; 
-             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-             z-index: 1000; 
-        }
+        /* Header UI */
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 16px; border-bottom: 1px solid #e4e6eb; position: sticky; top: 0; z-index: 100; }
+        .nav-title { font-size: 1.2rem; font-weight: bold; color: #0066ff; display: flex; align-items: center; gap: 8px; }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 12px; }
+
+        /* Profile Card */
+        .profile-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; position: relative; }
+        .cover-photo { height: 120px; background: linear-gradient(135deg, #1877f2, #0052cc); position: relative; background-size: cover; background-position: center; }
+        .profile-avatar-container { text-align: center; margin-top: -50px; position: relative; }
+        .profile-avatar { width: 100px; height: 100px; border-radius: 50%; border: 4px solid #fff; object-fit: cover; background: #eee; }
         
-        /* --- ⭐ FIX 2: সাইডবার পজিশনিং, ট্রানজিশন ও রঙ যোগ করা হলো ⭐ --- */
-        .sidebar {
-            position: fixed; 
-            top: 0;
-            left: -250px; 
-            width: 250px; 
-            height: 100%;
-            background-color: #34495e; /* গাঢ় নীল/ধূসর রঙ */
-            transition: left 0.3s ease; 
-            box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
-            z-index: 1050; 
-            overflow-y: auto;
-            padding-top: 50px; 
-        }
-        
-        .sidebar.active {
-            left: 0; 
-        }
-        
-        .overlay {
-            position: fixed; 
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5); 
-            z-index: 1040; 
-            display: none; 
-        }
-        
-        .overlay.active {
-            display: block; 
-        }
-        
-        /* সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা */
-        .sidebar a {
-            color: #ffffff; 
-            padding: 12px 15px; 
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            font-weight: 500;
-        }
+        .profile-info { text-align: center; padding: 10px 16px 16px; }
+        .user-name { font-size: 1.4rem; font-weight: bold; color: #050505; }
+        .user-bio { font-size: 0.9rem; color: #65676b; font-style: italic; margin-top: 4px; }
 
-        .sidebar a i.material-icons {
-            color: #ffffff; 
-            margin-right: 10px;
-        }
+        .action-buttons { display: flex; gap: 10px; margin-top: 15px; justify-content: center; }
+        .btn { padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+        .btn-gray { background: #e4e6eb; color: #050505; }
+        .btn-blue { background: #1877f2; color: #fff; }
+        .btn-switch { background: #e7f3ff; color: #1877f2; width: 100%; justify-content: center; margin-top: 10px; border: 1px solid #bcdcff; }
 
-        .sidebar a:hover {
-            background-color: #3e5369; 
-        }
-        
-        /* সাইডবারের লোগো লিঙ্ক */
-        .sidebar-logo {
-            padding: 15px;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: white !important; 
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 5px;
-        }
-        
-        .header-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; }
-        .header-left { display: flex; align-items: center; flex-shrink: 0; }
-        .menu-icon { cursor: pointer; color: dark; font-size: 28px; }
-        
-        .logo-title { display: flex; align-items: center; font-size: 1.5em; font-weight: bold; color: var(--primary); text-decoration: none; white-space: nowrap; margin-left: 10px; }
-        .logo-icon { margin-right: 5px; }
+        /* Switch Bar Widget (Above Intro) */
+        .company-switch-card { background: #fff; border-radius: 12px; padding: 12px 16px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .switch-header { font-size: 0.85rem; font-weight: 600; color: #65676b; text-transform: uppercase; margin-bottom: 8px; }
+        .company-item { display: flex; align-items: center; justify-content: space-between; background: #f7f8fa; padding: 8px 12px; border-radius: 8px; border: 1px solid #e4e6eb; cursor: pointer; transition: 0.2s; }
+        .company-item:hover { background: #ebedf0; }
+        .company-item-left { display: flex; align-items: center; gap: 10px; }
+        .company-logo-small { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; }
+        .company-name-text { font-weight: bold; font-size: 1rem; color: #050505; }
+        .badge-tag { background: #00a884; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
 
-        .header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-        .icon-wrapper { position: relative; display: inline-flex; cursor: pointer; align-items: center; justify-content: center; height: 30px; width: 30px; }
-        
-        .notification-count { position: absolute; top: -5px; right: -8px; background-color: red; color: white; border-radius: 50%; padding: 2px 5px; font-size: 0.7em; font-weight: bold; min-width: 10px; text-align: center; line-height: 1; display: none; }
-        .notification-icon, .message-icon { color: var(--primary); }
-        .post-icon-header { color: #28a745; }
+        /* Intro Section */
+        .section-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .section-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; color: #050505; }
+        .intro-list { list-style: none; }
+        .intro-list li { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; color: #4b4c4f; font-size: 0.95rem; }
+        .intro-list li i { width: 20px; color: #65676b; font-size: 1.1rem; }
 
-        .profile-image-wrapper { cursor: pointer; width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; }
-        .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
-        
-        @media (max-width: 600px) {
-            body { padding-top: 55px; }
-            .logo-title { font-size: 1.2em; }
-            .header-actions { gap: 8px; }
-        }
-        
-        .profile-premium-card { 
-            background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; border: 1px solid var(--border);
-        }
-        .profile-cover-photo::before {
-            
-            content: "corporate_fare";
-            font-family: 'Material Icons';
-            position: absolute;
-            right: 15px;
-            bottom: -15px;
-            font-size: 120px;
-            color: rgba(255, 255, 255, 0.08);
-            pointer-events: none;
-        }
+        /* Modal Popup */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 15px; }
+        .modal.active { display: flex; }
+        .modal-content { background: #fff; border-radius: 12px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 20px; position: relative; }
+        .close-btn { position: absolute; top: 12px; right: 15px; font-size: 1.5rem; cursor: pointer; color: #65676b; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; }
 
-            .profile-cover-photo::after {
-            content: "home";
-            font-family: 'Material Icons';
-            position: absolute;
-            left: 20px;
-            top: 20px;
-            font-size: 70px;
-            color: rgba(255, 255, 255, 0.05);
-            pointer-events: none;
-            }
-        
-        .profile-cover-photo { height: 140px; background: var(--cover-gradient); position: relative; }
-        .profile-content-box { padding: 0px 16px 20px 16px; position: relative; margin-top: -60px; z-index: 5; }
-        .avatar-container { position: relative; width: 120px; height: 120px; margin: 0 auto 10px auto; }
-        .profile-avatar-big { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background: #eee; }
-        
-        .user-info h2 { margin: 0 0 4px 0; font-size: 24px; color: var(--dark); font-weight: bold; }
-        .user-bio-text { font-size: 14px; color: var(--gray); max-width: 85%; margin: 8px auto 14px auto; line-height: 1.4; font-style: italic; }
-
-        .facebook-intro-card { background: white; border-radius: 12px; border: 1px solid #e4e6eb; box-shadow: 0 1px 2px rgba(0,0,0,0.1); padding: 16px; margin-bottom: 16px; text-align: left; }
-        .facebook-intro-card h3 { margin: 0 0 12px 0; font-size: 17px; font-weight: bold; color: var(--dark); }
-        .intro-list { list-style: none; padding: 0; margin: 0; }
-        .intro-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; color: var(--dark); }
-        .intro-item i { color: #8c939d; font-size: 20px; }
-        
-        .action-buttons-div { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 5px; border-top: 1px solid #e4e6eb; padding-top: 15px; }
-        .edit-badge { background: #e4e6eb; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: var(--dark); display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
-        .add-property-btn { background: var(--primary); padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 6px; border: none; font-weight: 600; }
-
-        .stats-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
-        .stat-card { background: white; padding: 12px 5px; border-radius: 8px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid #e4e6eb; }
-        .stat-card h4 { margin: 0 0 4px 0; color: var(--gray); font-size: 12px; font-weight: 600; }
-
-        .profile-tabs { display: flex; gap: 8px; border-bottom: 1px solid #ced0d4; margin-bottom: 16px; }
-        .tab-btn { padding: 10px 12px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gray); position: relative; }
-        .tab-btn.active { color: var(--primary); }
-        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: var(--primary); border-radius: 3px; }
-        
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 12px; }
-        .property-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid #e4e6eb; }
-        
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); overflow-y: auto; backdrop-filter: blur(3px); }
-        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 92%; max-width: 440px; border-radius: 12px; position: relative; box-sizing: border-box; }
-        .close-modal { position: absolute; right: 16px; top: 12px; font-size: 24px; cursor: pointer; color: var(--gray); }
-        .input-group { margin-bottom: 12px; }
-        .input-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; color: var(--dark); }
-        .input-group input, .input-group textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        .submit-button { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; }
-        
-        /* ডিলিট ও এডিট বাটনের বাড়তি সিএসএস */
-        .modal-action-buttons { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-modal-edit { flex: 1; background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
-        .btn-modal-delete { flex: 1; background: var(--danger); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
-    
-    /* ==========================================
-   TABLET VIEW (768px - 1023px)
-========================================== */
-@media screen and (min-width:768px){
-
-    .container{
-        max-width:1000px;
-        padding:20px;
-    }
-
-    .profile-cover-photo{
-        height:220px;
-    }
-
-    .profile-content-box{
-        margin-top:-80px;
-    }
-
-    .avatar-container{
-        width:160px;
-        height:160px;
-    }
-
-    .user-info h2{
-        font-size:32px;
-    }
-
-    .user-bio-text{
-        font-size:16px;
-        max-width:70%;
-    }
-
-    .stats-container{
-        grid-template-columns:repeat(3,1fr);
-        gap:20px;
-    }
-
-    .stat-card{
-        padding:18px;
-    }
-
-    .stat-card p{
-        font-size:22px;
-        font-weight:bold;
-    }
-
-    .facebook-intro-card{
-        padding:25px;
-    }
-
-    .profile-tabs{
-        justify-content:center;
-        gap:20px;
-    }
-
-    .tab-btn{
-        font-size:16px;
-        padding:15px 25px;
-    }
-
-    .property-grid{
-        grid-template-columns:repeat(3,1fr);
-        gap:20px;
-    }
-
-    .property-card{
-        transition:.3s;
-    }
-
-    .property-card:hover{
-        transform:translateY(-4px);
-    }
-}
-
-
-/* ==========================================
-   DESKTOP VIEW (1024px+)
-========================================== */
-@media screen and (min-width:1024px){
-
-    body{
-        background:#eef2f7;
-    }
-
-    .container{
-        max-width:1400px;
-        padding:25px;
-    }
-
-    /* Desktop Layout */
-    .main-content{
-        display:grid;
-        grid-template-columns:380px 1fr;
-        gap:30px;
-        align-items:start;
-    }
-
-    /* Left Column */
-    .profile-premium-card,
-    .facebook-intro-card,
-    .stats-container{
-        grid-column:1;
-    }
-
-    /* Right Column */
-    .profile-tabs,
-    #my-posts,
-    #saved-posts{
-        grid-column:2;
-    }
-
-    .profile-premium-card{
-        position:sticky;
-        top:80px;
-        margin-bottom:20px;
-        border-radius:20px;
-        overflow:hidden;
-    }
-
-    .profile-cover-photo{
-        height:240px;
-    }
-
-    .avatar-container{
-        width:180px;
-        height:180px;
-    }
-
-    .profile-content-box{
-        margin-top:-95px;
-    }
-
-    .user-info h2{
-        font-size:34px;
-    }
-
-    .user-bio-text{
-        max-width:80%;
-        font-size:16px;
-    }
-
-    .facebook-intro-card{
-        border-radius:18px;
-        padding:25px;
-    }
-
-    .intro-item{
-        font-size:15px;
-    }
-
-    .stats-container{
-        display:grid;
-        grid-template-columns:repeat(3,1fr);
-        gap:15px;
-    }
-
-    .stat-card{
-        border-radius:15px;
-        padding:20px;
-    }
-
-    .stat-card p{
-        font-size:24px;
-        font-weight:700;
-        color:#007bff;
-    }
-
-    .profile-tabs{
-        background:#fff;
-        padding:10px 15px;
-        border-radius:15px;
-        margin-bottom:20px;
-        box-shadow:0 2px 10px rgba(0,0,0,.05);
-    }
-
-    .tab-btn{
-        font-size:16px;
-        padding:15px 25px;
-    }
-
-    /* Property Cards */
-    .property-grid{
-        grid-template-columns:repeat(3,1fr);
-        gap:25px;
-    }
-
-    .property-card{
-        border-radius:16px;
-        overflow:hidden;
-        transition:.3s;
-        box-shadow:0 4px 15px rgba(0,0,0,.08);
-    }
-
-    .property-card:hover{
-        transform:translateY(-6px);
-        box-shadow:0 10px 25px rgba(0,0,0,.15);
-    }
-
-    .property-card img{
-        height:220px;
-        object-fit:cover;
-    }
-
-    /* Action Buttons */
-    .action-buttons-div{
-        flex-direction:column;
-        gap:10px;
-    }
-
-    .edit-badge,
-    .add-property-btn{
-        width:100%;
-        justify-content:center;
-        padding:12px;
-    }
-
-    /* Modal */
-    .modal-content{
-        max-width:700px;
-    }
-        }
-        
+        /* Properties Post Tabs */
+        .posts-header { font-weight: bold; font-size: 1.1rem; margin: 15px 0 10px; }
+        .property-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .property-card { background: #fff; border-radius: 8px; padding: 10px; display: flex; gap: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .property-card img { width: 90px; height: 70px; border-radius: 6px; object-fit: cover; }
+        .property-info { flex: 1; }
+        .property-title { font-weight: bold; font-size: 0.95rem; line-height: 1.2; }
+        .property-price { color: #1877f2; font-weight: bold; font-size: 0.9rem; margin-top: 4px; }
     </style>
 </head>
 <body>
-    <div id="overlay" class="overlay"></div>
 
-    <header class="main-header">
-        <div class="header-top">
-            <div class="header-left">
-                <i class="material-icons menu-icon" id="menuButton">menu</i>
-                <a href="index.html" class="logo-title">
-                   <i class="material-icons logo-icon">home</i>  
-                   <span>আমার বাড়ি.কম</span>
-                </a>
-            </div>
-            <div class="header-actions">
-                <div class="icon-wrapper" id="notificationButton"> 
-                    <i class="material-icons notification-icon">notifications</i>
-                    <span class="notification-count" id="notification-count"></span>
-                </div>
-                <div class="icon-wrapper" id="headerPostButton">
-                    <i class="material-icons post-icon-header">add_circle_outline</i>
-                </div>
-                <div class="icon-wrapper" id="messageButton">
-                    <i class="material-icons message-icon">message</i>
-                    <span class="notification-count" id="message-count"></span>
-                </div>
-                <div class="profile-image-wrapper" id="profileImageWrapper">
-                    <img src="https://www.w3schools.com/howto/img_avatar.png" alt="Profile" id="profileImage">
-                </div>
-            </div>
-        </div>
-    </header>
-    
-    <div class="sidebar" id="sidebar">
-        <nav style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
-            <a href="index.html" class="sidebar-logo">
-                <i class="material-icons">home</i> 
-                <span>আমার বাড়ি.কম</span>
-            </a>
-            
-            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
-            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            
-            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
-            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
-            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            
-            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
-        </nav>
+    <!-- Top Navigation -->
+    <div class="navbar">
+        <div class="nav-title"><i class="fa-solid fa-house"></i> আমার বাড়ি.কম</div>
     </div>
 
-    <main class="main-content container">
-        <div class="profile-premium-card">
-            <div class="profile-cover-photo"></div>
-            <div class="profile-content-box">
-                <div class="avatar-container">
-                    <img src="https://www.w3schools.com/howto/img_avatar.png" id="user-avatar" class="profile-avatar-big" alt="User Avatar">
-                </div>
-                <div class="user-info">
-                    <h2 id="display-name">আমার প্রোফাইল</h2>
-                    <p id="user-bio" class="user-bio-text">আপনার সম্পর্কে কিছু লিখুন...</p>
-                    <div class="action-buttons-div">
-                        <div class="edit-badge" id="edit-profile-show-btn">
-                            <i class="material-icons" style="font-size: 18px;">edit</i> প্রোফাইল সাজান
-                        </div>
-                        <button class="add-property-btn" id="direct-post-btn">
-                            <i class="material-icons" style="font-size: 18px;">add_circle</i> প্রোপার্টি যুক্ত করুন
-                        </button>
-                    </div>
+    <div class="container">
+        
+        <!-- Profile Header Card -->
+        <div class="profile-card">
+            <div class="cover-photo" id="coverPhoto"></div>
+            <div class="profile-avatar-container">
+                <img src="https://via.placeholder.com/100" id="profileAvatar" class="profile-avatar" alt="Avatar">
+            </div>
+            <div class="profile-info">
+                <h2 class="user-name" id="displayName">লোড হচ্ছে...</h2>
+                <p class="user-bio" id="displayBio">...</p>
+
+                <div class="action-buttons">
+                    <button class="btn btn-gray" onclick="openEditProfileModal()"><i class="fa-solid fa-pen"></i> প্রোফাইল সাজান</button>
+                    <a href="post.html" class="btn btn-blue"><i class="fa-solid fa-circle-plus"></i> প্রোপার্টি যুক্ত করুন</a>
                 </div>
             </div>
         </div>
 
-        <div class="facebook-intro-card">
-            <h3>পরিচিতি (Intro)</h3>
+        <!-- COMPANY SWITCHER / CREATE WIDGET (Just Above Intro) -->
+        <div class="company-switch-card" id="companySwitchWidget">
+            <div class="switch-header">আবাসন ও ডেভেলপার পেজ</div>
+            <div id="companyWidgetContent">
+                <!-- JavaScript দিয়ে ডাইনামিক লোড হবে -->
+            </div>
+        </div>
+
+        <!-- Intro Section -->
+        <div class="section-card">
+            <h3 class="section-title">পরিচিতি (Intro)</h3>
             <ul class="intro-list">
-                <li class="intro-item"><i class="material-icons">work</i><span>পেশা: <strong id="user-profession">যুক্ত করা নেই</strong></span></li>
-                <li class="intro-item"><i class="material-icons">location_on</i><span>বসবাস করেন: <strong id="user-location">যুক্ত করা নেই</strong></span></li>
-                <li class="intro-item" id="intro-office-item" style="display: none;"><i class="material-icons">business</i><span>অফিস: <strong id="user-office">...</strong></span></li>
-                <li class="intro-item"><i class="material-icons">phone</i><span>মোবাইল: <strong id="user-phone">ফোন সেট করা নেই</strong></span></li>
-                <li class="intro-item"><i class="material-icons">email</i><span>ইমেইল: <strong id="user-email">...</strong></span></li>
+                <li><i class="fa-solid fa-briefcase"></i> পেশা: <strong id="introProfession">নট সেট</strong></li>
+                <li><i class="fa-solid fa-location-dot"></i> বসবাস করেন: <strong id="introAddress">নট সেট</strong></li>
+                <li><i class="fa-solid fa-building"></i> অফিস: <strong id="introOffice">নট সেট</strong></li>
+                <li><i class="fa-solid fa-phone"></i> মোবাইল: <strong id="introPhone">নট সেট</strong></li>
+                <li><i class="fa-solid fa-envelope"></i> ইমেইল: <strong id="introEmail">নট সেট</strong></li>
             </ul>
         </div>
 
-        <div class="stats-container">
-            <div class="stat-card"><h4>আমার লিস্টিং</h4><p id="total-posts-count">০</p></div>
-            <div class="stat-card"><h4>পছন্দের তালিকা</h4><p id="saved-posts-count">০</p></div>
-            <div class="stat-card"><h4>পাবলিক রেটিং</h4><p id="my-rating-score">⭐ ০.০</p></div>
+        <!-- Posts Section -->
+        <div class="posts-header" id="postsTitle">আমার প্রপার্টি সমূহ</div>
+        <div class="property-grid" id="propertiesContainer">
+            <!-- ডাইনামিক পোস্ট আসবে -->
         </div>
 
-        <div class="profile-tabs">
-            <button class="tab-btn active" onclick="openTab(event, 'my-posts')">আমার পোস্ট সমূহ</button>
-            <button class="tab-btn" onclick="openTab(event, 'saved-posts')">বুকমার্ক প্রপার্টি</button>
-        </div>
+    </div>
 
-        <div id="my-posts" class="tab-content active">
-            <div id="my-properties-list" class="property-grid"></div>
-            <p id="empty-posts-message" style="display:none; text-align:center; padding: 30px; color: var(--gray);">আপনি এখনও কোনো প্রপার্টি বিজ্ঞাপন দেননি।</p>
-        </div>
-
-        <div id="saved-posts" class="tab-content">
-            <p style="text-align:center; padding: 30px; color: var(--gray);">বুকমার্ক তালিকায় কোনো আইটেম নেই।</p>
-        </div>
-    </main>
-
-    <div id="editProfileModal" class="modal">
+    <!-- CREATE COMPANY PAGE MODAL -->
+    <div class="modal" id="companyModal">
         <div class="modal-content">
-            <span class="close-modal" id="edit-profile-close-btn">&times;</span>
-            <h3 style="margin: 0 0 15px 0; text-align: center;">তথ্য আপডেট করুন</h3>
-            <form id="edit-profile-form">
-                <div style="text-align: center; margin-bottom: 12px; position: relative;">
-                    <img src="https://www.w3schools.com/howto/img_avatar.png" id="edit-avatar-preview" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover;">
-                    <label for="edit-profile-picture" style="position: absolute; bottom: 0; right: calc(50% - 45px); background: #1c1e21; color: white; padding: 5px; border-radius: 50%; cursor: pointer;">
-                        <i class="material-icons" style="font-size: 16px;">photo_camera</i>
-                    </label>
-                    <input type="file" id="edit-profile-picture" accept="image/png, image/jpeg" style="display: none;">
+            <span class="close-btn" onclick="closeCompanyModal()">&times;</span>
+            <h3 style="margin-bottom: 15px;">আবাসন ও ডেভেলপার কোম্পানি পেজ খুলুন</h3>
+            <form id="companyForm">
+                <div class="form-group">
+                    <label>প্রতিষ্ঠানের নাম *</label>
+                    <input type="text" id="compName" required placeholder="যেমন: ড্রিম হাউজিং লিঃ">
                 </div>
-                <div class="input-group"><label>আপনার পুরো নাম:</label><input type="text" id="edit-full-name" required></div>
-                <div class="input-group"><label>বায়ো (Bio):</label><textarea id="edit-bio" maxlength="120"></textarea></div>
-                <div class="input-group"><label>পেশা:</label><input type="text" id="edit-profession"></div>
-                <div class="input-group"><label>ফোন নম্বর:</label><input type="tel" id="edit-phone-number"></div>
-                <div class="input-group"><label>বর্তমান অবস্থান:</label><input type="text" id="edit-location"></div>
-                <div class="input-group"><label>অফিসের ঠিকানা (ঐচ্ছিক):</label><input type="text" id="edit-office"></div>
-                <button type="submit" class="submit-button" id="update-profile-btn">পরিবর্তন সেভ করুন</button>
+                <div class="form-group">
+                    <label>লোগো URL *</label>
+                    <input type="url" id="compLogo" required placeholder="https://example.com/logo.jpg">
+                </div>
+                <div class="form-group">
+                    <label>কভার ছবি URL (ঐচ্ছিক)</label>
+                    <input type="url" id="compCover" placeholder="https://example.com/cover.jpg">
+                </div>
+                <div class="form-group">
+                    <label>স্লোগান / স্লোগান (Bio)</label>
+                    <input type="text" id="compBio" placeholder="যেমন: আপনার স্বপ্নের ঠিকানা আমরা গড়ি">
+                </div>
+                <div class="form-group">
+                    <label>অফিসের ঠিকানা</label>
+                    <input type="text" id="compAddress" placeholder="যেমন: জলিল সরণি, খুলনা">
+                </div>
+                <div class="form-group">
+                    <label>হটলাইন/মোবাইল</label>
+                    <input type="text" id="compPhone" placeholder="017xxxxxxxx">
+                </div>
+                <button type="submit" class="btn btn-blue" style="width: 100%; margin-top: 10px;">পেজ খুলুন</button>
             </form>
         </div>
     </div>
 
+    <!-- Firebase JS (Core logic will be in profile.js) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <script src="profile.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuButton = document.getElementById('menuButton');
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            const notificationButton = document.getElementById('notificationButton');
-            const headerPostButton = document.getElementById('headerPostButton');
-            const messageButton = document.getElementById('messageButton');
-            const profileImageWrapper = document.getElementById('profileImageWrapper');
-
-            if (menuButton && sidebar && overlay) {
-                menuButton.addEventListener('click', () => {
-                    sidebar.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                });
-                overlay.addEventListener('click', () => {
-                    sidebar.classList.remove('active');
-                    overlay.classList.remove('active');
-                });
-            }
-
-            if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
-            if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
-            if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
-            if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
-        });
-
-        function openTab(evt, tabName) {
-            let i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) { tabcontent[i].classList.remove("active"); }
-            tablinks = document.getElementsByClassName("tab-btn");
-            for (i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
-        }
-
-        
-    </script>
-
-    <script src="notifications.js"></script> 
-    
-    <!-- 🎯 আমাদের নতুন লাইভ হেডার সিঙ্ক স্ক্রিপ্ট -->
-    <script src="header-sync.js"></script>
-
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
-        </div>
-    </footer>
-    
 </body>
-                        </html>
+</html>
