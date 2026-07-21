@@ -96,3 +96,32 @@
         if (unreadMsgListener) { unreadMsgListener(); unreadMsgListener = null; }
     }
 })();
+
+// ⚡ বর্তমান অ্যাক্টিভ আইডি (User UID নাকি Company ID) রিটার্ন করবে
+function getActiveIdentity() {
+    const activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
+    const activeCompanyId = localStorage.getItem('activeCompanyId');
+    const user = firebase.auth().currentUser;
+
+    if (!user) return null;
+
+    if (activeIdentityType === 'company' && activeCompanyId) {
+        return {
+            id: activeCompanyId,       // যেমন: "comp_abc123"
+            type: 'company',
+            ownerUid: user.uid,
+            name: localStorage.getItem('activeName') || 'কোম্পানি',
+            avatar: localStorage.getItem('activeAvatar') || ''
+        };
+    } else {
+        return {
+            id: user.uid,              // ইউজার নিজের UID
+            type: 'user',
+            ownerUid: user.uid,
+            name: localStorage.getItem('activeName') || 'ইউজার',
+            avatar: localStorage.getItem('activeAvatar') || ''
+        };
+    }
+}
+
+
