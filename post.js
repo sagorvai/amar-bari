@@ -1192,9 +1192,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         primaryPhoneInput.value = userData.phoneNumber;
                         primaryPhoneInput.disabled = true; 
                     }
-                    if (headerProfileImg && userData) {
-                        headerProfileImg.src = userData.profilePic || user.photoURL || 'assets/images/default-avatar.png';
-                    }
+                    
                     if (!editPostId) loadStagedData(); // শুধুমাত্র ক্রিয়েট মুডেই ডিফল্ট স্টেজড লোড হবে
                 }).catch(() => {
                     if (!editPostId) loadStagedData();
