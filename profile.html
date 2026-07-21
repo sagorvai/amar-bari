@@ -267,27 +267,30 @@
     </div>
 
     <main class="main-content container">
-        <!-- Main Profile Card -->
-        <div class="profile-premium-card">
-            <div class="profile-cover-photo" id="profile-cover-photo"></div>
-            <div class="profile-content-box">
-                <div class="avatar-container">
-                    <img src="https://www.w3schools.com/howto/img_avatar.png" id="user-avatar" class="profile-avatar-big" alt="User Avatar">
+
+        <!-- Profile Premium Card -->
+<div class="profile-premium-card">
+    <div class="profile-cover-photo" id="profile-cover-photo"></div>
+    <div class="profile-content-box">
+        <div class="avatar-container">
+            <img src="https://www.w3schools.com/howto/img_avatar.png" id="user-avatar" class="profile-avatar-big" alt="User Avatar">
+        </div>
+        <div class="user-info">
+            <h2 id="display-name">আমার প্রোফাইল</h2>
+            <p id="user-bio" class="user-bio-text">আপনার সম্পর্কে কিছু লিখুন...</p>
+            <div class="action-buttons-div">
+                <!-- ✏️ বাটনের আইডি 'edit-profile-show-btn' থেকে চেঞ্জ করে ফাংশনে হ্যান্ডেল করা হয়েছে -->
+                <div class="edit-badge" id="edit-profile-show-btn" onclick="handleEditButtonClick()">
+                    <i class="material-icons" style="font-size: 18px;" id="edit-btn-icon">edit</i> 
+                    <span id="edit-btn-text">প্রোফাইল সাজান</span>
                 </div>
-                <div class="user-info">
-                    <h2 id="display-name">আমার প্রোফাইল</h2>
-                    <p id="user-bio" class="user-bio-text">আপনার সম্পর্কে কিছু লিখুন...</p>
-                    <div class="action-buttons-div">
-                        <div class="edit-badge" id="edit-profile-show-btn">
-                            <i class="material-icons" style="font-size: 18px;">edit</i> প্রোফাইল সাজান
-                        </div>
-                        <button class="add-property-btn" id="direct-post-btn">
-                            <i class="material-icons" style="font-size: 18px;">add_circle</i> প্রোপার্টি যুক্ত করুন
-                        </button>
-                    </div>
-                </div>
+                <button class="add-property-btn" id="direct-post-btn">
+                    <i class="material-icons" style="font-size: 18px;">add_circle</i> প্রোপার্টি যুক্ত করুন
+                </button>
             </div>
         </div>
+    </div>
+</div>
 
         <!-- 🏢 ⭐ কোম্পানি পেজ সুইচার / ক্রিয়েট উইজেট (পরিচিতির ঠিক উপরে) ⭐ -->
         <div class="company-switch-card">
