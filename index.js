@@ -500,12 +500,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// চেক করা ইউজার পেজ মোডে আছে নাকি পার্সোনাল মোডে
-const activeIdentityType = localStorage.getItem('activeIdentityType'); // 'company' বা 'user'
-const activeCompanyId = localStorage.getItem('activeCompanyId');
-
-let senderId = firebase.auth().currentUser.uid;
-if (activeIdentityType === 'company' && activeCompanyId) {
-    senderId = activeCompanyId; // পেজের আইডি পাঠাবে
-}
 
