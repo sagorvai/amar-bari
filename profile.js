@@ -56,7 +56,8 @@ const compressImage = (file, maxWidth = 500, quality = 0.7) => {
 // গ্লোবাল স্টেট
 let currentUserData = null;
 let companyData = null;
-let isCompanyMode = false;
+// ⚡ LocalStorage থেকে আগের সেভ করা মোড চেক করা
+let isCompanyMode = localStorage.getItem('activeIdentityType') === 'company';
 
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -126,11 +127,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
             }
 
-            if (headerProfileImg) {
-                let pic = currentUserData.profilePic || currentUserData.avatarUrl || user.photoURL;
-                if (pic) headerProfileImg.src = pic;
-            }
-
             try {
                 const compDoc = await db.collection('companies').doc(user.uid).get();
                 if (compDoc.exists) {
@@ -159,15 +155,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if(displayNameEl) displayNameEl.textContent = companyData.name;
             if(userBioEl) userBioEl.textContent = companyData.bio || "আবাসন ও ডেভেলপার প্রতিষ্ঠান";
             if(userAvatar) userAvatar.src = companyData.logo || 'https://via.placeholder.com/150';
+            if(headerProfileImg) headerProfileImg.src = companyData.logo || 'https://via.placeholder.com/150';
             
             if(userProfessionEl) userProfessionEl.textContent = "আবাসন কোম্পানি";
             if(userPhoneEl) userPhoneEl.textContent = companyData.phone || "ফোন সেট করা নেই";
             
-            // অবস্থান: পার্সোনাল লোকেশন থাকবে
             let personalLocation = (currentUserData && (currentUserData.location || currentUserData.city)) ? (currentUserData.location || currentUserData.city) : "যুক্ত করা নেই";
             if(userLocationEl) userLocationEl.textContent = personalLocation;
             
-            // অফিস: কোম্পানির ঠিকানা
             if (companyData.officeAddress) {
                 if(userOfficeEl) userOfficeEl.textContent = companyData.officeAddress;
                 if(introOfficeItem) introOfficeItem.style.display = "flex";
@@ -201,6 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let pPic = currentUserData.profilePic || currentUserData.avatarUrl;
                 if(pPic && userAvatar) userAvatar.src = pPic;
                 if(pPic && avatarPreview) avatarPreview.src = pPic;
+                if(pPic && headerProfileImg) headerProfileImg.src = pPic;
 
                 if (currentUserData.ratingCount && currentUserData.ratingCount > 0 && myRatingScoreEl) {
                     let avg = ((currentUserData.ratingSum || 0) / currentUserData.ratingCount).toFixed(1);
@@ -264,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🎯 ৫. বাটন ক্লিক হ্যান্ডলার (ডায়নামিক মডাল ওপেনার)
+    // 🎯 ৫. বাটন ক্লিক হ্যান্ডলার
     window.handleEditButtonClick = function() {
         if (isCompanyMode && companyData) {
             const compNameInput = document.getElementById('comp-name');
@@ -291,9 +287,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // ⚡ ⭐ ফেসবুকের মতো অ্যাক্টিভ প্রোফাইল গ্লোবালি সুইচ করার লজিক ⭐
     window.switchMode = function(toCompany) {
         isCompanyMode = toCompany;
+
+        if (toCompany && companyData) {
+            // কোম্পানি মোড অ্যাক্টিভ থাকলে LocalStorage-এ পেজের তথ্য সেভ হবে
+            localStorage.setItem('activeIdentityType', 'company');
+            localStorage.setItem('activeCompanyId', companyData.companyId);
+            localStorage.setItem('activeName', companyData.name);
+            localStorage.setItem('activeAvatar', companyData.logo || '');
+        } else {
+            // পার্সোনাল মোডে ফেরত গেলে কোম্পানি তথ্য রিমুভ হবে
+            localStorage.setItem('activeIdentityType', 'user');
+            localStorage.removeItem('activeCompanyId');
+            if (currentUserData) {
+                localStorage.setItem('activeName', currentUserData.fullName || currentUserData.name || '');
+                localStorage.setItem('activeAvatar', currentUserData.profilePic || '');
+            }
+        }
+
         renderProfileView();
+        
+        // হেডার ও নোটিফিকেশন সিস্টেম সিঙ্ক করার জন্য ইভেন্ট ট্রিগার
+        window.dispatchEvent(new Event('identityChanged'));
     };
 
     window.openCompanyModal = function() {
@@ -592,4 +609,4 @@ async function loadSavedProperties(userId) {
         console.error("Saved properties error:", error);
         savedListEl.innerHTML = '<p style="text-align:center; color:red; padding:20px;">বুকমার্ক লোড করতে সমস্যা হয়েছে।</p>';
     }
-            }
+                }
