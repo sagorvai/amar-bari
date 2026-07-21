@@ -158,6 +158,9 @@ document.addEventListener('DOMContentLoaded', function() {
 window.renderProfileView = function() {
     renderCompanyWidget();
 
+    const editBtnText = document.getElementById('edit-btn-text');
+    const editBtnIcon = document.getElementById('edit-btn-icon');
+
     if (isCompanyMode && companyData) {
         // ================== কোম্পানি পেজ মোড ==================
         if(displayNameEl) displayNameEl.textContent = companyData.name;
@@ -167,21 +170,22 @@ window.renderProfileView = function() {
         if(userProfessionEl) userProfessionEl.textContent = "আবাসন কোম্পানি";
         if(userPhoneEl) userPhoneEl.textContent = companyData.phone || "ফোন সেট করা নেই";
         
-        // 🎯 অবস্থান: পার্সোনাল প্রোফাইলের লোকেশন (যেমন: খুলনা) দেখাবে
         let personalLocation = (currentUserData && (currentUserData.location || currentUserData.city)) ? (currentUserData.location || currentUserData.city) : "যুক্ত করা নেই";
         if(userLocationEl) userLocationEl.textContent = personalLocation;
         
-        // 🎯 অফিস: কোম্পানির অফিসের ঠিকানা দেখাবে
         if (companyData.officeAddress) {
             if(userOfficeEl) userOfficeEl.textContent = companyData.officeAddress;
             if(introOfficeItem) introOfficeItem.style.display = "flex";
         }
 
+        // 🎯 বাটনের নাম পরিবর্তন
+        if(editBtnText) editBtnText.textContent = "পেজ এডিট করুন";
+        if(editBtnIcon) editBtnIcon.textContent = "admin_panel_settings";
+
         if(document.getElementById('my-posts-tab-btn')) {
             document.getElementById('my-posts-tab-btn').textContent = "কোম্পানির পোস্ট সমূহ";
         }
 
-        // কোম্পানির প্রপার্টি লোড
         loadCompanyProperties(companyData.companyId);
 
     } else {
@@ -200,7 +204,6 @@ window.renderProfileView = function() {
                 if(introOfficeItem) introOfficeItem.style.display = "none";
             }
             
-            // ছবি সেট করা
             let pPic = currentUserData.profilePic || currentUserData.avatarUrl;
             if(pPic && userAvatar) userAvatar.src = pPic;
             if(pPic && avatarPreview) avatarPreview.src = pPic;
@@ -210,7 +213,6 @@ window.renderProfileView = function() {
                 myRatingScoreEl.textContent = `⭐ ${avg}`;
             }
 
-            // এডিট ফর্মের ফিল্ডগুলো ফিল করা
             if(document.getElementById('edit-full-name')) document.getElementById('edit-full-name').value = currentUserData.fullName || currentUserData.name || "";
             if(document.getElementById('edit-bio')) document.getElementById('edit-bio').value = currentUserData.bio || "";
             if(document.getElementById('edit-profession')) document.getElementById('edit-profession').value = currentUserData.profession || "";
@@ -219,16 +221,107 @@ window.renderProfileView = function() {
             if(document.getElementById('edit-office')) document.getElementById('edit-office').value = currentUserData.officeAddress || "";
         }
 
+        // 🎯 বাটনের নাম পরিবর্তন
+        if(editBtnText) editBtnText.textContent = "প্রোফাইল সাজান";
+        if(editBtnIcon) editBtnIcon.textContent = "edit";
+
         if(document.getElementById('my-posts-tab-btn')) {
             document.getElementById('my-posts-tab-btn').textContent = "আমার পোস্ট সমূহ";
         }
 
-        // পার্সোনাল প্রপার্টি লোড
         if(currentUserData && currentUserData.uid) {
             loadUserProperties(currentUserData.uid);
         }
     }
+    }
+
+    // 🎯 ৩.১ এডিট বাটন ক্লিক ফাংশন
+window.handleEditButtonClick = function() {
+    if (isCompanyMode && companyData) {
+        // কোম্পানি মোডে থাকলে কোম্পানি মডালের ফিল্ডগুলো ডাটা দিয়ে ফিল করে ওপেন করবে
+        document.getElementById('comp-name').value = companyData.name || "";
+        document.getElementById('comp-bio').value = companyData.bio || "";
+        document.getElementById('comp-office').value = companyData.officeAddress || "";
+        document.getElementById('comp-phone').value = companyData.phone || "";
+        if(companyData.logo) {
+            document.getElementById('company-logo-preview').src = companyData.logo;
         }
+        
+        // টাইটেল ও বাটন চেঞ্জ
+        const modalTitle = document.querySelector('#createCompanyModal h3');
+        const saveBtn = document.getElementById('save-company-btn');
+        if(modalTitle) modalTitle.textContent = "কোম্পানি পেজ আপডেট করুন";
+        if(saveBtn) saveBtn.textContent = "তথ্য সেভ করুন";
+
+        openCompanyModal();
+    } else {
+        // পার্সোনাল মোডে থাকলে সাধারণ এডিট মডাল ওপেন হবে
+        if (editModal) editModal.style.display = 'block';
+    }
+};
+
+// 🎯 ৩.২ কোম্পানি ফর্ম সাবমিটের সময় Update/Create সঠিকভাবে হ্যান্ডেল করা
+if (companyForm) {
+    companyForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('save-company-btn');
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const name = document.getElementById('comp-name').value;
+        const bio = document.getElementById('comp-bio').value;
+        const office = document.getElementById('comp-office').value;
+        const phone = document.getElementById('comp-phone').value;
+        const logoFile = companyLogoInput ? companyLogoInput.files[0] : null;
+
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = "তথ্য সেভ হচ্ছে...";
+        }
+
+        try {
+            let logoUrl = companyData ? companyData.logo : 'https://via.placeholder.com/150?text=Company+Logo';
+
+            if (logoFile) {
+                const compressedLogo = await compressImage(logoFile, 400, 0.8);
+                const fileName = `comp_logo_${user.uid}_${Date.now()}`;
+                const storageRef = storage.ref(`company_logos/${user.uid}/${fileName}`);
+                const snapshot = await storageRef.put(compressedLogo);
+                logoUrl = await snapshot.ref.getDownloadURL();
+            }
+
+            const updatedCompData = {
+                companyId: "comp_" + user.uid,
+                ownerUid: user.uid,
+                name: name,
+                bio: bio,
+                officeAddress: office,
+                phone: phone,
+                logo: logoUrl,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            await db.collection('companies').doc(user.uid).set(updatedCompData, { merge: true });
+            companyData = updatedCompData;
+            
+            alert("আপনার কোম্পানি পেজের তথ্য সফলভাবে আপডেট হয়েছে!");
+            if (companyModal) companyModal.style.display = 'none';
+            
+            // UI সাথে সাথে রিফ্রেশ করা
+            renderProfileView();
+
+        } catch (err) {
+            console.error("Company update error:", err);
+            alert("আপডেট করতে সমস্যা হয়েছে: " + err.message);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = "তথ্য সেভ করুন";
+            }
+        }
+    };
+}
+    
     // 🏢 ৪. কোম্পানি সুইচ কার্ড রেন্ডার (পরিচিতি কার্ডের উপরে)
     function renderCompanyWidget() {
         const widgetEl = document.getElementById('company-widget-content');
