@@ -155,78 +155,80 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 🏢 ৩. মূল ভিউ রেন্ডার লজিক (প্রোফাইল <-> কোম্পানি)
-    window.renderProfileView = function() {
-        // কোম্পানি সুইচার বাটন বা কার্ড তৈরি
-        renderCompanyWidget();
+window.renderProfileView = function() {
+    renderCompanyWidget();
 
-        if (isCompanyMode && companyData) {
-            // ================== কোম্পানি পেজ মোড ==================
-            if(displayNameEl) displayNameEl.textContent = companyData.name;
-            if(userBioEl) userBioEl.textContent = companyData.bio || "আবাসন ও ডেভেলপার প্রতিষ্ঠান";
-            if(userAvatar) userAvatar.src = companyData.logo || 'https://via.placeholder.com/150';
+    if (isCompanyMode && companyData) {
+        // ================== কোম্পানি পেজ মোড ==================
+        if(displayNameEl) displayNameEl.textContent = companyData.name;
+        if(userBioEl) userBioEl.textContent = companyData.bio || "আবাসন ও ডেভেলপার প্রতিষ্ঠান";
+        if(userAvatar) userAvatar.src = companyData.logo || 'https://via.placeholder.com/150';
+        
+        if(userProfessionEl) userProfessionEl.textContent = "আবাসন কোম্পানি";
+        if(userPhoneEl) userPhoneEl.textContent = companyData.phone || "ফোন সেট করা নেই";
+        
+        // 🎯 অবস্থান: পার্সোনাল প্রোফাইলের লোকেশন (যেমন: খুলনা) দেখাবে
+        let personalLocation = (currentUserData && (currentUserData.location || currentUserData.city)) ? (currentUserData.location || currentUserData.city) : "যুক্ত করা নেই";
+        if(userLocationEl) userLocationEl.textContent = personalLocation;
+        
+        // 🎯 অফিস: কোম্পানির অফিসের ঠিকানা দেখাবে
+        if (companyData.officeAddress) {
+            if(userOfficeEl) userOfficeEl.textContent = companyData.officeAddress;
+            if(introOfficeItem) introOfficeItem.style.display = "flex";
+        }
+
+        if(document.getElementById('my-posts-tab-btn')) {
+            document.getElementById('my-posts-tab-btn').textContent = "কোম্পানির পোস্ট সমূহ";
+        }
+
+        // কোম্পানির প্রপার্টি লোড
+        loadCompanyProperties(companyData.companyId);
+
+    } else {
+        // ================== পার্সোনাল প্রোফাইল মোড ==================
+        if(currentUserData) {
+            if(displayNameEl) displayNameEl.textContent = currentUserData.fullName || currentUserData.name || "ইউজার প্রোফাইল";
+            if(userBioEl) userBioEl.textContent = currentUserData.bio || "আপনার সম্পর্কে কিছু বলুন...";
+            if(userProfessionEl) userProfessionEl.textContent = currentUserData.profession || "যুক্ত করা নেই";
+            if(userPhoneEl) userPhoneEl.textContent = currentUserData.phoneNumber || currentUserData.phone || "ফোন সেট করা নেই";
+            if(userLocationEl) userLocationEl.textContent = currentUserData.location || "যুক্ত করা নেই";
             
-            if(userProfessionEl) userProfessionEl.textContent = "আবাসন কোম্পানি";
-            if(userPhoneEl) userPhoneEl.textContent = companyData.phone || "ফোন সেট করা নেই";
-            if(userLocationEl) userLocationEl.textContent = companyData.officeAddress || "যুক্ত করা নেই";
-            
-            if (companyData.officeAddress) {
-                if(userOfficeEl) userOfficeEl.textContent = companyData.officeAddress;
+            if (currentUserData.officeAddress && currentUserData.officeAddress.trim() !== "") {
+                if(userOfficeEl) userOfficeEl.textContent = currentUserData.officeAddress;
                 if(introOfficeItem) introOfficeItem.style.display = "flex";
+            } else {
+                if(introOfficeItem) introOfficeItem.style.display = "none";
+            }
+            
+            // ছবি সেট করা
+            let pPic = currentUserData.profilePic || currentUserData.avatarUrl;
+            if(pPic && userAvatar) userAvatar.src = pPic;
+            if(pPic && avatarPreview) avatarPreview.src = pPic;
+
+            if (currentUserData.ratingCount && currentUserData.ratingCount > 0 && myRatingScoreEl) {
+                let avg = ((currentUserData.ratingSum || 0) / currentUserData.ratingCount).toFixed(1);
+                myRatingScoreEl.textContent = `⭐ ${avg}`;
             }
 
-            if(document.getElementById('my-posts-tab-btn')) {
-                document.getElementById('my-posts-tab-btn').textContent = "কোম্পানির পোস্ট সমূহ";
-            }
+            // এডিট ফর্মের ফিল্ডগুলো ফিল করা
+            if(document.getElementById('edit-full-name')) document.getElementById('edit-full-name').value = currentUserData.fullName || currentUserData.name || "";
+            if(document.getElementById('edit-bio')) document.getElementById('edit-bio').value = currentUserData.bio || "";
+            if(document.getElementById('edit-profession')) document.getElementById('edit-profession').value = currentUserData.profession || "";
+            if(document.getElementById('edit-phone-number')) document.getElementById('edit-phone-number').value = currentUserData.phoneNumber || currentUserData.phone || "";
+            if(document.getElementById('edit-location')) document.getElementById('edit-location').value = currentUserData.location || "";
+            if(document.getElementById('edit-office')) document.getElementById('edit-office').value = currentUserData.officeAddress || "";
+        }
 
-            // কোম্পানির প্রপার্টি লোড
-            loadCompanyProperties(companyData.companyId);
+        if(document.getElementById('my-posts-tab-btn')) {
+            document.getElementById('my-posts-tab-btn').textContent = "আমার পোস্ট সমূহ";
+        }
 
-        } else {
-            // ================== পার্সোনাল প্রোফাইল মোড ==================
-            if(currentUserData) {
-                if(displayNameEl) displayNameEl.textContent = currentUserData.fullName || currentUserData.name || "ইউজার প্রোফাইল";
-                if(userBioEl) userBioEl.textContent = currentUserData.bio || "আপনার সম্পর্কে কিছু বলুন...";
-                if(userProfessionEl) userProfessionEl.textContent = currentUserData.profession || "যুক্ত করা নেই";
-                if(userPhoneEl) userPhoneEl.textContent = currentUserData.phoneNumber || currentUserData.phone || "ফোন সেট করা নেই";
-                if(userLocationEl) userLocationEl.textContent = currentUserData.location || "যুক্ত করা নেই";
-                
-                if (currentUserData.officeAddress && currentUserData.officeAddress.trim() !== "") {
-                    if(userOfficeEl) userOfficeEl.textContent = currentUserData.officeAddress;
-                    if(introOfficeItem) introOfficeItem.style.display = "flex";
-                } else {
-                    if(introOfficeItem) introOfficeItem.style.display = "none";
-                }
-                
-                // ছবি সেট করা
-                let pPic = currentUserData.profilePic || currentUserData.avatarUrl;
-                if(pPic && userAvatar) userAvatar.src = pPic;
-                if(pPic && avatarPreview) avatarPreview.src = pPic;
-
-                if (currentUserData.ratingCount && currentUserData.ratingCount > 0 && myRatingScoreEl) {
-                    let avg = ((currentUserData.ratingSum || 0) / currentUserData.ratingCount).toFixed(1);
-                    myRatingScoreEl.textContent = `⭐ ${avg}`;
-                }
-
-                // এডিট ফর্মের ফিল্ডগুলো ফিল করা
-                if(document.getElementById('edit-full-name')) document.getElementById('edit-full-name').value = currentUserData.fullName || currentUserData.name || "";
-                if(document.getElementById('edit-bio')) document.getElementById('edit-bio').value = currentUserData.bio || "";
-                if(document.getElementById('edit-profession')) document.getElementById('edit-profession').value = currentUserData.profession || "";
-                if(document.getElementById('edit-phone-number')) document.getElementById('edit-phone-number').value = currentUserData.phoneNumber || currentUserData.phone || "";
-                if(document.getElementById('edit-location')) document.getElementById('edit-location').value = currentUserData.location || "";
-                if(document.getElementById('edit-office')) document.getElementById('edit-office').value = currentUserData.officeAddress || "";
-            }
-
-            if(document.getElementById('my-posts-tab-btn')) {
-                document.getElementById('my-posts-tab-btn').textContent = "আমার পোস্ট সমূহ";
-            }
-
-            // পার্সোনাল প্রপার্টি লোড
-            if(currentUserData && currentUserData.uid) {
-                loadUserProperties(currentUserData.uid);
-            }
+        // পার্সোনাল প্রপার্টি লোড
+        if(currentUserData && currentUserData.uid) {
+            loadUserProperties(currentUserData.uid);
         }
     }
-
+        }
     // 🏢 ৪. কোম্পানি সুইচ কার্ড রেন্ডার (পরিচিতি কার্ডের উপরে)
     function renderCompanyWidget() {
         const widgetEl = document.getElementById('company-widget-content');
