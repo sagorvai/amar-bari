@@ -194,30 +194,25 @@
             }
         }
 
-        /* 🔙 ব্যাক বাটন ফিক্স ও জাঁকজমক লুক */
-.btn-back {
-    background: white;
-    border: 2px solid var(--primary-color);
-    color: var(--primary-color);
-    padding: 10px 20px;
-    border-radius: 30px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: bold;
-    font-size: 14px;
-    margin: 15px 0;
-    box-shadow: var(--card-shadow);
-    transition: all 0.3s ease;
-}
-
-.btn-back:hover {
-    background: var(--primary-color);
-    color: white;
-    transform: translateY(-2px);
-}
-
+        /* ⬅️ ব্যাক বাটন স্টাইল (স্ক্রিনশটের মত) */
+        .back-navigation-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            margin-bottom: 10px;
+            cursor: pointer;
+            width: fit-content;
+        }
+        .back-navigation-bar i {
+            font-size: 22px;
+            color: var(--dark);
+        }
+        .back-navigation-bar span {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--dark);
+        }
         
     /* প্রফেশনাল ফাইল আপলোড ড্রপ বক্স (ইউজারের স্ক্রিনশট অনুযায়ী) */
 .custom-upload-box {
