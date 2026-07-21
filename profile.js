@@ -77,7 +77,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Modals
     const editModal = document.getElementById('editProfileModal');
-    const showEditBtn = document.getElementById('edit-profile-show-btn');
     const closeEditBtn = document.getElementById('edit-profile-close-btn');
     const editForm = document.getElementById('edit-profile-form');
     const avatarPreview = document.getElementById('edit-avatar-preview');
@@ -90,20 +89,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const companyLogoInput = document.getElementById('company-logo-file');
     const companyLogoPreview = document.getElementById('company-logo-preview');
 
-    // ১. অথেনটিকেশন চেক ও ডাটা লোড (সবচেয়ে গুরুত্বপূর্ণ অংশ)
+    // ১. অথেনটিকেশন চেক ও ডাটা লোড
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             if(userEmailEl) userEmailEl.textContent = user.email;
             
             try {
-                // ইউজারের প্রোফাইল ডাটা লোড
                 await loadUserProfile(user);
             } catch (err) {
                 console.error("Profile load error:", err);
             }
             
             try {
-                // বুকমার্কড ডাটা লোড
                 await loadSavedProperties(user.uid);
             } catch (err) {
                 console.error("Saved properties load error:", err);
@@ -122,7 +119,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentUserData = doc.data();
                 currentUserData.uid = user.uid;
             } else {
-                // ইউজার ডকুমেন্ট না থাকলে ডিফল্ট অবজেক্ট তৈরি
                 currentUserData = {
                     uid: user.uid,
                     email: user.email,
@@ -130,13 +126,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
             }
 
-            // হেডার প্রোফাইল পিকচার সেট করা
             if (headerProfileImg) {
                 let pic = currentUserData.profilePic || currentUserData.avatarUrl || user.photoURL;
                 if (pic) headerProfileImg.src = pic;
             }
 
-            // চেক করা ইউজার কোনো কোম্পানি পেজ তৈরি করেছে কিনা
             try {
                 const compDoc = await db.collection('companies').doc(user.uid).get();
                 if (compDoc.exists) {
@@ -146,7 +140,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("No company profile found yet.");
             }
 
-            // ভিউ রেন্ডার করা
             renderProfileView();
 
         } catch (e) { 
@@ -155,181 +148,93 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 🏢 ৩. মূল ভিউ রেন্ডার লজিক (প্রোফাইল <-> কোম্পানি)
-window.renderProfileView = function() {
-    renderCompanyWidget();
+    window.renderProfileView = function() {
+        renderCompanyWidget();
 
-    const editBtnText = document.getElementById('edit-btn-text');
-    const editBtnIcon = document.getElementById('edit-btn-icon');
+        const editBtnText = document.getElementById('edit-btn-text');
+        const editBtnIcon = document.getElementById('edit-btn-icon');
 
-    if (isCompanyMode && companyData) {
-        // ================== কোম্পানি পেজ মোড ==================
-        if(displayNameEl) displayNameEl.textContent = companyData.name;
-        if(userBioEl) userBioEl.textContent = companyData.bio || "আবাসন ও ডেভেলপার প্রতিষ্ঠান";
-        if(userAvatar) userAvatar.src = companyData.logo || 'https://via.placeholder.com/150';
-        
-        if(userProfessionEl) userProfessionEl.textContent = "আবাসন কোম্পানি";
-        if(userPhoneEl) userPhoneEl.textContent = companyData.phone || "ফোন সেট করা নেই";
-        
-        let personalLocation = (currentUserData && (currentUserData.location || currentUserData.city)) ? (currentUserData.location || currentUserData.city) : "যুক্ত করা নেই";
-        if(userLocationEl) userLocationEl.textContent = personalLocation;
-        
-        if (companyData.officeAddress) {
-            if(userOfficeEl) userOfficeEl.textContent = companyData.officeAddress;
-            if(introOfficeItem) introOfficeItem.style.display = "flex";
-        }
-
-        // 🎯 বাটনের নাম পরিবর্তন
-        if(editBtnText) editBtnText.textContent = "পেজ এডিট করুন";
-        if(editBtnIcon) editBtnIcon.textContent = "admin_panel_settings";
-
-        if(document.getElementById('my-posts-tab-btn')) {
-            document.getElementById('my-posts-tab-btn').textContent = "কোম্পানির পোস্ট সমূহ";
-        }
-
-        loadCompanyProperties(companyData.companyId);
-
-    } else {
-        // ================== পার্সোনাল প্রোফাইল মোড ==================
-        if(currentUserData) {
-            if(displayNameEl) displayNameEl.textContent = currentUserData.fullName || currentUserData.name || "ইউজার প্রোফাইল";
-            if(userBioEl) userBioEl.textContent = currentUserData.bio || "আপনার সম্পর্কে কিছু বলুন...";
-            if(userProfessionEl) userProfessionEl.textContent = currentUserData.profession || "যুক্ত করা নেই";
-            if(userPhoneEl) userPhoneEl.textContent = currentUserData.phoneNumber || currentUserData.phone || "ফোন সেট করা নেই";
-            if(userLocationEl) userLocationEl.textContent = currentUserData.location || "যুক্ত করা নেই";
+        if (isCompanyMode && companyData) {
+            // ================== কোম্পানি পেজ মোড ==================
+            if(displayNameEl) displayNameEl.textContent = companyData.name;
+            if(userBioEl) userBioEl.textContent = companyData.bio || "আবাসন ও ডেভেলপার প্রতিষ্ঠান";
+            if(userAvatar) userAvatar.src = companyData.logo || 'https://via.placeholder.com/150';
             
-            if (currentUserData.officeAddress && currentUserData.officeAddress.trim() !== "") {
-                if(userOfficeEl) userOfficeEl.textContent = currentUserData.officeAddress;
+            if(userProfessionEl) userProfessionEl.textContent = "আবাসন কোম্পানি";
+            if(userPhoneEl) userPhoneEl.textContent = companyData.phone || "ফোন সেট করা নেই";
+            
+            // অবস্থান: পার্সোনাল লোকেশন থাকবে
+            let personalLocation = (currentUserData && (currentUserData.location || currentUserData.city)) ? (currentUserData.location || currentUserData.city) : "যুক্ত করা নেই";
+            if(userLocationEl) userLocationEl.textContent = personalLocation;
+            
+            // অফিস: কোম্পানির ঠিকানা
+            if (companyData.officeAddress) {
+                if(userOfficeEl) userOfficeEl.textContent = companyData.officeAddress;
                 if(introOfficeItem) introOfficeItem.style.display = "flex";
-            } else {
-                if(introOfficeItem) introOfficeItem.style.display = "none";
-            }
-            
-            let pPic = currentUserData.profilePic || currentUserData.avatarUrl;
-            if(pPic && userAvatar) userAvatar.src = pPic;
-            if(pPic && avatarPreview) avatarPreview.src = pPic;
-
-            if (currentUserData.ratingCount && currentUserData.ratingCount > 0 && myRatingScoreEl) {
-                let avg = ((currentUserData.ratingSum || 0) / currentUserData.ratingCount).toFixed(1);
-                myRatingScoreEl.textContent = `⭐ ${avg}`;
             }
 
-            if(document.getElementById('edit-full-name')) document.getElementById('edit-full-name').value = currentUserData.fullName || currentUserData.name || "";
-            if(document.getElementById('edit-bio')) document.getElementById('edit-bio').value = currentUserData.bio || "";
-            if(document.getElementById('edit-profession')) document.getElementById('edit-profession').value = currentUserData.profession || "";
-            if(document.getElementById('edit-phone-number')) document.getElementById('edit-phone-number').value = currentUserData.phoneNumber || currentUserData.phone || "";
-            if(document.getElementById('edit-location')) document.getElementById('edit-location').value = currentUserData.location || "";
-            if(document.getElementById('edit-office')) document.getElementById('edit-office').value = currentUserData.officeAddress || "";
-        }
+            if(editBtnText) editBtnText.textContent = "পেজ এডিট করুন";
+            if(editBtnIcon) editBtnIcon.textContent = "admin_panel_settings";
 
-        // 🎯 বাটনের নাম পরিবর্তন
-        if(editBtnText) editBtnText.textContent = "প্রোফাইল সাজান";
-        if(editBtnIcon) editBtnIcon.textContent = "edit";
-
-        if(document.getElementById('my-posts-tab-btn')) {
-            document.getElementById('my-posts-tab-btn').textContent = "আমার পোস্ট সমূহ";
-        }
-
-        if(currentUserData && currentUserData.uid) {
-            loadUserProperties(currentUserData.uid);
-        }
-    }
-    }
-
-    // 🎯 ৩.১ এডিট বাটন ক্লিক ফাংশন
-window.handleEditButtonClick = function() {
-    if (isCompanyMode && companyData) {
-        // কোম্পানি মোডে থাকলে কোম্পানি মডালের ফিল্ডগুলো ডাটা দিয়ে ফিল করে ওপেন করবে
-        document.getElementById('comp-name').value = companyData.name || "";
-        document.getElementById('comp-bio').value = companyData.bio || "";
-        document.getElementById('comp-office').value = companyData.officeAddress || "";
-        document.getElementById('comp-phone').value = companyData.phone || "";
-        if(companyData.logo) {
-            document.getElementById('company-logo-preview').src = companyData.logo;
-        }
-        
-        // টাইটেল ও বাটন চেঞ্জ
-        const modalTitle = document.querySelector('#createCompanyModal h3');
-        const saveBtn = document.getElementById('save-company-btn');
-        if(modalTitle) modalTitle.textContent = "কোম্পানি পেজ আপডেট করুন";
-        if(saveBtn) saveBtn.textContent = "তথ্য সেভ করুন";
-
-        openCompanyModal();
-    } else {
-        // পার্সোনাল মোডে থাকলে সাধারণ এডিট মডাল ওপেন হবে
-        if (editModal) editModal.style.display = 'block';
-    }
-};
-
-// 🎯 ৩.২ কোম্পানি ফর্ম সাবমিটের সময় Update/Create সঠিকভাবে হ্যান্ডেল করা
-if (companyForm) {
-    companyForm.onsubmit = async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('save-company-btn');
-        const user = auth.currentUser;
-        if (!user) return;
-
-        const name = document.getElementById('comp-name').value;
-        const bio = document.getElementById('comp-bio').value;
-        const office = document.getElementById('comp-office').value;
-        const phone = document.getElementById('comp-phone').value;
-        const logoFile = companyLogoInput ? companyLogoInput.files[0] : null;
-
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = "তথ্য সেভ হচ্ছে...";
-        }
-
-        try {
-            let logoUrl = companyData ? companyData.logo : 'https://via.placeholder.com/150?text=Company+Logo';
-
-            if (logoFile) {
-                const compressedLogo = await compressImage(logoFile, 400, 0.8);
-                const fileName = `comp_logo_${user.uid}_${Date.now()}`;
-                const storageRef = storage.ref(`company_logos/${user.uid}/${fileName}`);
-                const snapshot = await storageRef.put(compressedLogo);
-                logoUrl = await snapshot.ref.getDownloadURL();
+            if(document.getElementById('my-posts-tab-btn')) {
+                document.getElementById('my-posts-tab-btn').textContent = "কোম্পানির পোস্ট সমূহ";
             }
 
-            const updatedCompData = {
-                companyId: "comp_" + user.uid,
-                ownerUid: user.uid,
-                name: name,
-                bio: bio,
-                officeAddress: office,
-                phone: phone,
-                logo: logoUrl,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
+            loadCompanyProperties(companyData.companyId);
 
-            await db.collection('companies').doc(user.uid).set(updatedCompData, { merge: true });
-            companyData = updatedCompData;
-            
-            alert("আপনার কোম্পানি পেজের তথ্য সফলভাবে আপডেট হয়েছে!");
-            if (companyModal) companyModal.style.display = 'none';
-            
-            // UI সাথে সাথে রিফ্রেশ করা
-            renderProfileView();
+        } else {
+            // ================== পার্সোনাল প্রোফাইল মোড ==================
+            if(currentUserData) {
+                if(displayNameEl) displayNameEl.textContent = currentUserData.fullName || currentUserData.name || "ইউজার প্রোফাইল";
+                if(userBioEl) userBioEl.textContent = currentUserData.bio || "আপনার সম্পর্কে কিছু বলুন...";
+                if(userProfessionEl) userProfessionEl.textContent = currentUserData.profession || "যুক্ত করা নেই";
+                if(userPhoneEl) userPhoneEl.textContent = currentUserData.phoneNumber || currentUserData.phone || "ফোন সেট করা নেই";
+                if(userLocationEl) userLocationEl.textContent = currentUserData.location || "যুক্ত করা নেই";
+                
+                if (currentUserData.officeAddress && currentUserData.officeAddress.trim() !== "") {
+                    if(userOfficeEl) userOfficeEl.textContent = currentUserData.officeAddress;
+                    if(introOfficeItem) introOfficeItem.style.display = "flex";
+                } else {
+                    if(introOfficeItem) introOfficeItem.style.display = "none";
+                }
+                
+                let pPic = currentUserData.profilePic || currentUserData.avatarUrl;
+                if(pPic && userAvatar) userAvatar.src = pPic;
+                if(pPic && avatarPreview) avatarPreview.src = pPic;
 
-        } catch (err) {
-            console.error("Company update error:", err);
-            alert("আপডেট করতে সমস্যা হয়েছে: " + err.message);
-        } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = "তথ্য সেভ করুন";
+                if (currentUserData.ratingCount && currentUserData.ratingCount > 0 && myRatingScoreEl) {
+                    let avg = ((currentUserData.ratingSum || 0) / currentUserData.ratingCount).toFixed(1);
+                    myRatingScoreEl.textContent = `⭐ ${avg}`;
+                }
+
+                if(document.getElementById('edit-full-name')) document.getElementById('edit-full-name').value = currentUserData.fullName || currentUserData.name || "";
+                if(document.getElementById('edit-bio')) document.getElementById('edit-bio').value = currentUserData.bio || "";
+                if(document.getElementById('edit-profession')) document.getElementById('edit-profession').value = currentUserData.profession || "";
+                if(document.getElementById('edit-phone-number')) document.getElementById('edit-phone-number').value = currentUserData.phoneNumber || currentUserData.phone || "";
+                if(document.getElementById('edit-location')) document.getElementById('edit-location').value = currentUserData.location || "";
+                if(document.getElementById('edit-office')) document.getElementById('edit-office').value = currentUserData.officeAddress || "";
+            }
+
+            if(editBtnText) editBtnText.textContent = "প্রোফাইল সাজান";
+            if(editBtnIcon) editBtnIcon.textContent = "edit";
+
+            if(document.getElementById('my-posts-tab-btn')) {
+                document.getElementById('my-posts-tab-btn').textContent = "আমার পোস্ট সমূহ";
+            }
+
+            if(currentUserData && currentUserData.uid) {
+                loadUserProperties(currentUserData.uid);
             }
         }
     };
-}
-    
-    // 🏢 ৪. কোম্পানি সুইচ কার্ড রেন্ডার (পরিচিতি কার্ডের উপরে)
+
+    // 🏢 ৪. কোম্পানি সুইচ কার্ড রেন্ডার
     function renderCompanyWidget() {
         const widgetEl = document.getElementById('company-widget-content');
         if (!widgetEl) return;
 
         if (companyData) {
             if (!isCompanyMode) {
-                // ইউজার পার্সোনালে আছে -> কোম্পানি পেজে সুইচ করার উইজেট
                 widgetEl.innerHTML = `
                     <div class="company-item-box" onclick="switchMode(true)">
                         <div class="company-left">
@@ -343,7 +248,6 @@ if (companyForm) {
                     </div>
                 `;
             } else {
-                // ইউজার কোম্পানি মোডে আছে -> পার্সোনালে ফেরত যাওয়ার উইজেট
                 let userName = currentUserData ? (currentUserData.fullName || currentUserData.name || 'ইউজার') : 'ইউজার';
                 widgetEl.innerHTML = `
                     <button class="btn-switch-back" onclick="switchMode(false)">
@@ -352,7 +256,6 @@ if (companyForm) {
                 `;
             }
         } else {
-            // কোম্পানি পেজ না থাকলে তৈরি করার বাটন
             widgetEl.innerHTML = `
                 <button class="btn-create-company" onclick="openCompanyModal()">
                     <i class="material-icons">add_business</i> আবাসন ও ডেভেলপার পেজ তৈরি করুন
@@ -361,13 +264,43 @@ if (companyForm) {
         }
     }
 
-    // সুইচ করার গ্লোবাল ফাংশন
+    // 🎯 ৫. বাটন ক্লিক হ্যান্ডলার (ডায়নামিক মডাল ওপেনার)
+    window.handleEditButtonClick = function() {
+        if (isCompanyMode && companyData) {
+            const compNameInput = document.getElementById('comp-name');
+            const compBioInput = document.getElementById('comp-bio');
+            const compOfficeInput = document.getElementById('comp-office');
+            const compPhoneInput = document.getElementById('comp-phone');
+            const compLogoPreview = document.getElementById('company-logo-preview');
+
+            if(compNameInput) compNameInput.value = companyData.name || "";
+            if(compBioInput) compBioInput.value = companyData.bio || "";
+            if(compOfficeInput) compOfficeInput.value = companyData.officeAddress || "";
+            if(compPhoneInput) compPhoneInput.value = companyData.phone || "";
+            if(compLogoPreview && companyData.logo) compLogoPreview.src = companyData.logo;
+
+            const modalTitle = document.querySelector('#createCompanyModal h3');
+            const saveBtn = document.getElementById('save-company-btn');
+            
+            if(modalTitle) modalTitle.textContent = "কোম্পানি পেজ আপডেট করুন";
+            if(saveBtn) saveBtn.textContent = "তথ্য সেভ করুন";
+
+            if(companyModal) companyModal.style.display = 'block';
+        } else {
+            if (editModal) editModal.style.display = 'block';
+        }
+    };
+
     window.switchMode = function(toCompany) {
         isCompanyMode = toCompany;
         renderProfileView();
     };
 
     window.openCompanyModal = function() {
+        const modalTitle = document.querySelector('#createCompanyModal h3');
+        const saveBtn = document.getElementById('save-company-btn');
+        if(modalTitle && !companyData) modalTitle.textContent = "আবাসন ও ডেভেলপার পেজ খুলুন";
+        if(saveBtn && !companyData) saveBtn.textContent = "পেজ তৈরি করুন";
         if (companyModal) companyModal.style.display = 'block';
     };
 
@@ -386,7 +319,7 @@ if (companyForm) {
         });
     }
 
-    // 🏢 ৫. নতুন কোম্পানি পেজ সাবমিট করা
+    // 🏢 ৬. কোম্পানি পেজ তৈরি/আপডেট সাবমিট
     if (companyForm) {
         companyForm.onsubmit = async (e) => {
             e.preventDefault();
@@ -402,11 +335,11 @@ if (companyForm) {
 
             if (btn) {
                 btn.disabled = true;
-                btn.textContent = "পেজ তৈরি হচ্ছে...";
+                btn.textContent = "তথ্য সেভ হচ্ছে...";
             }
 
             try {
-                let logoUrl = 'https://via.placeholder.com/150?text=Company+Logo';
+                let logoUrl = companyData ? companyData.logo : 'https://via.placeholder.com/150?text=Company+Logo';
 
                 if (logoFile) {
                     const compressedLogo = await compressImage(logoFile, 400, 0.8);
@@ -416,7 +349,7 @@ if (companyForm) {
                     logoUrl = await snapshot.ref.getDownloadURL();
                 }
 
-                const newCompData = {
+                const updatedCompData = {
                     companyId: "comp_" + user.uid,
                     ownerUid: user.uid,
                     name: name,
@@ -424,24 +357,24 @@ if (companyForm) {
                     officeAddress: office,
                     phone: phone,
                     logo: logoUrl,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                await db.collection('companies').doc(user.uid).set(newCompData);
-                companyData = newCompData;
+                await db.collection('companies').doc(user.uid).set(updatedCompData, { merge: true });
+                companyData = updatedCompData;
                 
-                alert("আপনার আবাসন কোম্পানি পেজটি সফলভাবে তৈরি হয়েছে!");
+                alert("আপনার কোম্পানি পেজের তথ্য সফলভাবে সেভ হয়েছে!");
                 if (companyModal) companyModal.style.display = 'none';
                 
-                // সাথে সাথে কোম্পানি মোডে সুইচ করা
                 switchMode(true);
 
             } catch (err) {
-                console.error("Company creation error:", err);
-                alert("কোম্পানি পেজ তৈরি করতে সমস্যা হয়েছে: " + err.message);
+                console.error("Company update error:", err);
+                alert("সেভ করতে সমস্যা হয়েছে: " + err.message);
+            } finally {
                 if (btn) {
                     btn.disabled = false;
-                    btn.textContent = "আবার চেষ্টা করুন";
+                    btn.textContent = "তথ্য সেভ করুন";
                 }
             }
         };
@@ -452,7 +385,7 @@ if (companyForm) {
         directPostBtn.onclick = () => { window.location.href = 'post.html'; };
     }
     
-    // ৬. পার্সোনাল প্রপার্টি লোড
+    // ৭. পার্সোনাল প্রপার্টি লোড
     async function loadUserProperties(userId) {
         if(!propertiesList) return;
         propertiesList.innerHTML = '<p style="text-align:center; width:100%;">খোঁজা হচ্ছে...</p>';
@@ -473,7 +406,7 @@ if (companyForm) {
         }
     }
 
-    // 🏢 ৭. কোম্পানির প্রপার্টি লোড
+    // 🏢 ৮. কোম্পানির প্রপার্টি লোড
     async function loadCompanyProperties(companyId) {
         if(!propertiesList) return;
         propertiesList.innerHTML = '<p style="text-align:center; width:100%;">কোম্পানির পোস্ট খোঁজা হচ্ছে...</p>';
@@ -488,7 +421,7 @@ if (companyForm) {
         }
     }
 
-    // গ্রিড রেন্ডারার
+    // ৯. প্রপার্টি কার্ড গ্রিড রেন্ডার
     function renderPropertiesGrid(snapshot) {
         propertiesList.innerHTML = '';
         if(totalPostsEl) totalPostsEl.textContent = snapshot.size;
@@ -530,7 +463,6 @@ if (companyForm) {
         });
     }
 
-    if (showEditBtn && editModal) showEditBtn.onclick = () => editModal.style.display = 'block';
     if (closeEditBtn && editModal) closeEditBtn.onclick = () => editModal.style.display = 'none';
     
     if (fileInput) {
@@ -544,7 +476,7 @@ if (companyForm) {
         });
     }
 
-    // ৮. প্রোফাইল এডিট সাবমিট লজিক
+    // ১০. পার্সোনাল প্রোফাইল এডিট সাবমিট
     if (editForm) {
         editForm.onsubmit = async (e) => {
             e.preventDefault();
@@ -601,7 +533,7 @@ if (companyForm) {
     }
 });
 
-// ৯. বুকমার্ক প্রপার্টি লোড করা
+// ১১. বুকমার্ক প্রপার্টি লোড
 async function loadSavedProperties(userId) {
     const savedListEl = document.getElementById('saved-posts');
     const savedCountEl = document.getElementById('saved-posts-count');
@@ -660,4 +592,4 @@ async function loadSavedProperties(userId) {
         console.error("Saved properties error:", error);
         savedListEl.innerHTML = '<p style="text-align:center; color:red; padding:20px;">বুকমার্ক লোড করতে সমস্যা হয়েছে।</p>';
     }
-        }
+            }
