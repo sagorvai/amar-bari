@@ -90,6 +90,26 @@
         .profile-image-wrapper { cursor: pointer; width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; }
         .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
         
+        /* ⬅️ ব্যাক বাটন স্টাইল (স্ক্রিনশটের মত) */
+        .back-navigation-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            margin-bottom: 10px;
+            cursor: pointer;
+            width: fit-content;
+        }
+        .back-navigation-bar i {
+            font-size: 22px;
+            color: var(--dark);
+        }
+        .back-navigation-bar span {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
         @media (max-width: 600px) {
             body { padding-top: 55px; }
             .logo-title { font-size: 1.2em; }
@@ -116,7 +136,6 @@
         .user-info h2 { margin: 0 0 4px 0; font-size: 24px; color: var(--dark); font-weight: bold; }
         .user-bio-text { font-size: 14px; color: var(--gray); max-width: 85%; margin: 8px auto 14px auto; line-height: 1.4; font-style: italic; }
 
-        /* --- 🏢 নতুন কোম্পানি উইজেট সিএসএস --- */
         .company-switch-card { 
             background: white; border-radius: 12px; border: 1px solid #e4e6eb; 
             box-shadow: 0 1px 2px rgba(0,0,0,0.1); padding: 14px 16px; margin-bottom: 16px; text-align: left; 
@@ -267,6 +286,12 @@
     </div>
 
     <main class="main-content container">
+        <!-- ⬅️ স্ক্রিনশটের মতো ব্যাক অ্যারো নেভিগেশন -->
+        <div class="back-navigation-bar" onclick="window.history.back()">
+            <i class="material-icons">arrow_back</i>
+            <span>ফিরে যান</span>
+        </div>
+
         <!-- Main Profile Card -->
         <div class="profile-premium-card">
             <div class="profile-cover-photo" id="profile-cover-photo"></div>
@@ -425,4 +450,4 @@
         </div>
     </footer>
 </body>
-                        </html>
+    </html>
