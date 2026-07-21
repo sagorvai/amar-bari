@@ -1,411 +1,205 @@
-const firebaseConfig = {
-    apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
-    authDomain: "amar-bari-website.firebaseapp.com",
-    projectId: "amar-bari-website",
-    storageBucket: "amar-bari-website.firebasestorage.app",
-    messagingSenderId: "719084789035",
-    appId: "1:719084789035:web:f4da765290b3519d0e82fe"
-};
+// firebase.initializeApp(firebaseConfig) আপনার ইফেসিয়েট কনফিগ নিশ্চিত করুন
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-
-const db = firebase.firestore();
-const storage = firebase.storage();
 const auth = firebase.auth();
+const db = firebase.firestore();
 
-// ⚡ ম্যাজিক ফাংশন: ক্যানভাস (Canvas API) দিয়ে প্রোফাইল ছবি কম্প্রেস করে KB সাইজে আনা
-const compressImage = (file, maxWidth = 500, quality = 0.7) => {
-    return new Promise((resolve, reject) => {
-        // যদি ফাইলটি ইমেজ না হয়, তবে কম্প্রেস ছাড়া সরাসরি রিটার্ন করবে
-        if (!file.type.startsWith('image/')) {
-            return resolve(file);
-        }
+let currentUserData = null;
+let companyData = null;
+let isCompanyMode = false; // বর্তমানে কিসে আছে (পার্সোনাল নাকি কোম্পানি পেজে)
 
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-
-                // প্রোফাইল ছবির জন্য স্কয়ার বা রেশিও ঠিক রেখে সাইজ কমানো (সর্বোচ্চ ৫০০ পিক্সেল উইডথ)
-                if (width > maxWidth) {
-                    height = Math.round((height * maxWidth) / width);
-                    width = maxWidth;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // ক্যানভাস থেকে ছবিকে ব্লোব (Blob) বা বাইনারি ফাইলে রূপান্তর
-                canvas.toBlob((blob) => {
-                    if (!blob) {
-                        return reject(new Error('ইমেজ কম্প্রেস করতে সমস্যা হয়েছে।'));
-                    }
-                    // ব্লোব ফাইলটিকে পুনরায় ফাইল অবজেক্টে রূপান্তর
-                    const compressedFile = new File([blob], file.name, {
-                        type: 'image/jpeg',
-                        lastModified: Date.now()
-                    });
-                    resolve(compressedFile);
-                }, 'image/jpeg', quality);
-            };
-        };
-        reader.onerror = (error) => reject(error);
-    });
-};
-
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // UI Elements
-    const displayNameEl = document.getElementById('display-name');
-    const userBioEl = document.getElementById('user-bio');
-    const userEmailEl = document.getElementById('user-email');
-    const userPhoneEl = document.getElementById('user-phone');
-    const userProfessionEl = document.getElementById('user-profession');
-    const userLocationEl = document.getElementById('user-location');
-    const userOfficeEl = document.getElementById('user-office');
-    const introOfficeItem = document.getElementById('intro-office-item');
-    const userAvatar = document.getElementById('user-avatar');
-    const propertiesList = document.getElementById('my-properties-list');
-    const totalPostsEl = document.getElementById('total-posts-count');
-    const myRatingScoreEl = document.getElementById('my-rating-score');
-    const headerProfileImg = document.querySelector('#profileImageWrapper img');
-    
-    // Edit Profile Modal Elements
-    const editModal = document.getElementById('editProfileModal');
-    const showEditBtn = document.getElementById('edit-profile-show-btn');
-    const closeEditBtn = document.getElementById('edit-profile-close-btn');
-    const editForm = document.getElementById('edit-profile-form');
-    const avatarPreview = document.getElementById('edit-avatar-preview');
-    const fileInput = document.getElementById('edit-profile-picture');
-
-    // ১. অথেনটিকেশন চেক ও ডাটা লোড
-    auth.onAuthStateChanged(async (user) => {
-        if (user) {
-            if(userEmailEl) userEmailEl.textContent = user.email;
-            
-            if (headerProfileImg) {
-                if (user.photoURL) headerProfileImg.src = user.photoURL;
-                else headerProfileImg.src = 'https://www.w3schools.com/howto/img_avatar.png';
-            }
-
-            try {
-                await loadUserProfile(user);
-            } catch (err) {
-                console.error("Profile load error:", err);
-            }
-            
-            try {
-                await loadUserProperties(user.uid);
-            } catch (err) {
-                console.error("Properties load error:", err);
-            }
-            
-        } else {
-            window.location.href = 'auth.html';
-        }
-
-        try {
-    await loadSavedProperties(user.uid);
-} catch (err) {
-    console.error("Saved properties load error:", err);
-        }
-    });
-
-    // ২. প্রোফাইল ডাটাবেজ থেকে রিড করা
-    async function loadUserProfile(user) {
-        try {
-            const doc = await db.collection('users').doc(user.uid).get();
-            if (doc.exists) {
-                const data = doc.data();
-                
-                if(displayNameEl) displayNameEl.textContent = data.fullName || data.name || "ইউজার প্রোফাইল";
-                if(userBioEl) userBioEl.textContent = data.bio || "আপনার সম্পর্কে কিছু বলুন...";
-                if(userProfessionEl) userProfessionEl.textContent = data.profession || "যুক্ত করা নেই";
-                if(userPhoneEl) userPhoneEl.textContent = data.phoneNumber || data.phone || "ফোন সেট করা নেই";
-                if(userLocationEl) userLocationEl.textContent = data.location || "যুক্ত করা নেই";
-                
-                if (data.officeAddress && data.officeAddress.trim() !== "") {
-                    if(userOfficeEl) userOfficeEl.textContent = data.officeAddress;
-                    if(introOfficeItem) introOfficeItem.style.display = "flex";
-                } else {
-                    if(introOfficeItem) introOfficeItem.style.display = "none";
-                }
-                
-                if(data.profilePic || data.avatarUrl) {
-                    let pPic = data.profilePic || data.avatarUrl;
-                    if(userAvatar) userAvatar.src = pPic;
-                    if(avatarPreview) avatarPreview.src = pPic;
-                    if(headerProfileImg) headerProfileImg.src = pPic;
-                }
-
-                if (data.ratingCount && data.ratingCount > 0 && myRatingScoreEl) {
-                    let avg = ((data.ratingSum || 0) / data.ratingCount).toFixed(1);
-                    myRatingScoreEl.textContent = `⭐ ${avg}`;
-                }
-                
-                if(document.getElementById('edit-full-name')) document.getElementById('edit-full-name').value = data.fullName || data.name || "";
-                if(document.getElementById('edit-bio')) document.getElementById('edit-bio').value = data.bio || "";
-                if(document.getElementById('edit-profession')) document.getElementById('edit-profession').value = data.profession || "";
-                if(document.getElementById('edit-phone-number')) document.getElementById('edit-phone-number').value = data.phoneNumber || data.phone || "";
-                if(document.getElementById('edit-location')) document.getElementById('edit-location').value = data.location || "";
-                if(document.getElementById('edit-office')) document.getElementById('edit-office').value = data.officeAddress || "";
-            }
-        } catch (e) { 
-            console.error("Firestore fetch error:", e);
-        }
-    }
-
-    const directPostBtn = document.getElementById('direct-post-btn');
-    if (directPostBtn) {
-        directPostBtn.onclick = () => { window.location.href = 'post.html'; };
-    }
-    
-    // ৩. ইউজারের নিজস্ব প্রপার্টি কুয়েরি করা
-async function loadUserProperties(userId) {
-    if(!propertiesList) return;
-    propertiesList.innerHTML = '<p style="text-align:center; width:100%;">খোঁজা হচ্ছে...</p>';
-    try {
-        let snapshot = await db.collection('properties').where('userId', '==', userId).get();
-        if (snapshot.empty) {
-            snapshot = await db.collection('properties').where('uid', '==', userId).get();
-        }
-
-        propertiesList.innerHTML = '';
-        if(totalPostsEl) totalPostsEl.textContent = snapshot.size;
-
-        if (snapshot.empty) {
-            if(document.getElementById('empty-posts-message')) document.getElementById('empty-posts-message').style.display = 'block';
-            return;
-        }
-
-        snapshot.forEach(doc => {
-            const p = doc.data();
-            const card = document.createElement('div');
-            card.className = 'property-card';
-            card.style.cursor = "pointer";
-            
-            // ⭐ পরিবর্তন: মডাল না খুলে সরাসরি ডিটেইলস পেজে চলে যাবে
-            card.onclick = () => {
-                window.location.href = `details.html?id=${doc.id}`;
-            };
-            
-            let imageUrl = 'https://via.placeholder.com/150?text=No+Image';
-            if (p.images && p.images.length > 0) {
-                imageUrl = p.images[0].url || p.images[0];
-            } else if (p.image) {
-                imageUrl = p.image;
-            }
-
-            let displayPrice = p.price || p.rent || p.monthlyRent || p.amount || '০';
-
-            card.innerHTML = `
-                <img src="${imageUrl}" style="width:100%; height:105px; object-fit:cover;">
-                <div style="padding:8px;">
-                    <h4 style="margin:0 0 4px 0; font-size:12px; height:32px; overflow:hidden; color:var(--dark); font-weight:600;">${p.title || 'শিরোনামহীন'}</h4>
-                    <p style="color:var(--success); font-weight:bold; margin:0; font-size:12px;">৳ ${displayPrice}</p>
-                </div>
-            `;
-            propertiesList.appendChild(card);
-        });
-    } catch (e) { 
-        console.error("Properties list fetch error:", e);
-    }
-                }
-
-    
-    // ৪. প্রপার্টি ডিটেইলস মডাল রেন্ডার, এডিট এবং ডিলিট লজিক
-    window.showPropertyDetails = function(docId, propertyData) {
-        const modalInner = document.getElementById('modal-content-inner');
-        if(modalInner) {
-            let imageUrl = 'https://via.placeholder.com/150?text=No+Image';
-            if (propertyData.images && propertyData.images.length > 0) {
-                imageUrl = propertyData.images[0].url || propertyData.images[0];
-            } else if (propertyData.image) {
-                imageUrl = propertyData.image;
-            }
-
-            modalInner.innerHTML = `
-                <div style="text-align:center;">
-                    <img src="${imageUrl}" style="width:100%; max-height:200px; object-fit:cover; border-radius:8px;">
-                    <h3 style="margin: 12px 0 6px 0; color:var(--dark);">${propertyData.title || 'শিরোনামহীন'}</h3>
-                    <p style="color:var(--success); font-weight:bold; margin: 0 0 8px 0; font-size: 16px;">মূল্য: ৳ ${propertyData.price || propertyData.rent || '০'}</p>
-                    <p style="color:var(--gray); font-size:13px; margin:0;"><b>অবস্থান:</b> ${propertyData.location || 'দেওয়া নেই'}</p>
-                </div>
-            `;
-        }
-
-        const deleteBtn = document.getElementById('modal-delete-btn');
-        if (deleteBtn) {
-            deleteBtn.onclick = async () => {
-                if (confirm("আপনি কি নিশ্চিতভাবে এই বিজ্ঞাপনটি ডিলিট করতে চান?")) {
-                    try {
-                        await db.collection('properties').doc(docId).delete();
-                        alert("বিজ্ঞাপনটি সফলভাবে মুছে ফেলা হয়েছে!");
-                        document.getElementById('propertyModal').style.display = 'none';
-                        location.reload(); 
-                    } catch (err) {
-                        alert("ডিলিট করতে সমস্যা হয়েছে: " + err.message);
-                    }
-                }
-            };
-        }
-
-        const editBtn = document.getElementById('modal-edit-btn');
-        if (editBtn) {
-            editBtn.onclick = () => {
-                window.location.href = `post.html?editId=${docId}`;
-            };
-        }
-
-        const pModal = document.getElementById('propertyModal');
-        if(pModal) pModal.style.display = 'block';
-    }
-
-    if (showEditBtn && editModal) showEditBtn.onclick = () => editModal.style.display = 'block';
-    if (closeEditBtn && editModal) closeEditBtn.onclick = () => editModal.style.display = 'none';
-    
-    if (fileInput) {
-        fileInput.addEventListener('change', function() {
-            const file = this.files[0];
-            if (file && avatarPreview) {
-                const reader = new FileReader();
-                reader.onload = (e) => avatarPreview.src = e.target.result;
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    // 🛠️ ৫. প্রোফাইল এডিট সাবমিট লজিক (কম্প্রেশন যুক্ত করা হয়েছে)
-    if (editForm) {
-        editForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('update-profile-btn');
-            const user = auth.currentUser;
-            
-            const newName = document.getElementById('edit-full-name').value;
-            const newBio = document.getElementById('edit-bio').value;
-            const newProfession = document.getElementById('edit-profession').value;
-            const newPhone = document.getElementById('edit-phone-number').value;
-            const newLocation = document.getElementById('edit-location').value;
-            const newOffice = document.getElementById('edit-office').value;
-            const file = fileInput.files[0];
-            
-            if(btn) {
-                btn.disabled = true;
-                btn.textContent = "ছবি সাইজ অপ্টিমাইজ ও আপডেট হচ্ছে...";
-            }
-            
-            try {
-                let updateData = { 
-                    fullName: newName, 
-                    bio: newBio,
-                    profession: newProfession,
-                    phoneNumber: newPhone,
-                    location: newLocation,
-                    officeAddress: newOffice,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                };
-
-                if (file) {
-                    // ⚡ সাবমিটের ঠিক আগে ছবিটিকে কম্প্রেস করা হচ্ছে
-                    const compressedFile = await compressImage(file, 500, 0.7);
-                    
-                    const fileName = `avatar_${user.uid}_${Date.now()}`;
-                    const storageRef = storage.ref(`profile_pics/${user.uid}/${fileName}`);
-                    const snapshot = await storageRef.put(compressedFile);
-                    const downloadURL = await snapshot.ref.getDownloadURL();
-                    updateData.profilePic = downloadURL;
-                }
-
-                await db.collection('users').doc(user.uid).set(updateData, { merge: true });
-                alert('আপনার তথ্য সফলভাবে আপডেট হয়েছে!');
-                if(editModal) editModal.style.display = 'none';
-                location.reload();
-                
-            } catch (error) {
-                console.error("Update profile error:", error);
-                alert('সমস্যা হয়েছে: ' + error.message);
-                if(btn) {
-                    btn.disabled = false;
-                    btn.textContent = "আবার চেষ্টা করুন";
-                }
-            }
-        };
+// Auth State Changed
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        await loadUserData(user.uid);
+    } else {
+        window.location.href = "login.html";
     }
 });
 
+// ইউজারের মেইন ডাটা লোড
+async function loadUserData(uid) {
+    try {
+        const doc = await db.collection("users").doc(uid).get();
+        if (doc.exists) {
+            currentUserData = doc.data();
+            
+            // কোম্পানি পেজের তথ্য লোড
+            const compDoc = await db.collection("companies").doc(uid).get();
+            if (compDoc.exists) {
+                companyData = compDoc.data();
+            }
 
+            // মোড চেক করে UI রেন্ডার করা
+            renderProfile();
+        }
+    } catch (err) {
+        console.error("Error loading user data:", err);
+    }
+}
 
-// 🛠️ ফিক্সড ফাংশন: বুকমার্ক/সেভ করা প্রপার্টি লোড করা (for...of লুপ ব্যবহার করে)
-async function loadSavedProperties(userId) {
-    const savedListEl = document.getElementById('saved-posts');
-    const savedCountEl = document.getElementById('saved-posts-count');
-    if (!savedListEl) return;
+// UI রেন্ডারিং ফাংশন
+function renderProfile() {
+    // কোম্পানি সুইচার উইজেট আপডেট (পরিচিতির ঠিক উপরে)
+    renderCompanyWidget();
 
-    savedListEl.innerHTML = '<p style="text-align:center; padding:20px;">বুকমার্ক খোঁজা হচ্ছে...</p>';
+    if (isCompanyMode && companyData) {
+        // --- কোম্পানি পেজ ভিউ (Company Page Active) ---
+        document.getElementById("displayName").innerText = companyData.name;
+        document.getElementById("displayBio").innerText = companyData.bio || "আবাসন ও ডেভেলপার প্রতিষ্ঠান";
+        document.getElementById("profileAvatar").src = companyData.logo || "https://via.placeholder.com/100";
+        if(companyData.cover) {
+            document.getElementById("coverPhoto").style.backgroundImage = `url('${companyData.cover}')`;
+        }
+
+        // কোম্পানি পরিচিতি (Intro)
+        document.getElementById("introProfession").innerText = "আবাসন ও ডেভেলপার কোম্পানি";
+        document.getElementById("introAddress").innerText = companyData.address || "নট সেট";
+        document.getElementById("introOffice").innerText = companyData.address || "নট সেট";
+        document.getElementById("introPhone").innerText = companyData.phone || "নট সেট";
+        document.getElementById("introEmail").innerText = currentUserData.email || "নট সেট";
+
+        document.getElementById("postsTitle").innerText = companyData.name + " - এর প্রপার্টি সমূহ";
+        
+        // কোম্পানি পোস্ট লোড
+        loadProperties(companyData.companyId, true);
+
+    } else {
+        // --- পার্সোনাল প্রোফাইল ভিউ (Personal Profile Active) ---
+        document.getElementById("displayName").innerText = currentUserData.name || "ইউজার";
+        document.getElementById("displayBio").innerText = currentUserData.bio || "সততাই ব্যবসার মূল ধন।";
+        document.getElementById("profileAvatar").src = currentUserData.photoURL || "https://via.placeholder.com/100";
+        document.getElementById("coverPhoto").style.backgroundImage = currentUserData.coverURL ? `url('${currentUserData.coverURL}')` : "none";
+
+        // পার্সোনাল পরিচিতি (Intro)
+        document.getElementById("introProfession").innerText = currentUserData.profession || "ব্যবসায়ী";
+        document.getElementById("introAddress").innerText = currentUserData.city || "খুলনা";
+        document.getElementById("introOffice").innerText = currentUserData.office || "জলিল সরণি, খুলনা";
+        document.getElementById("introPhone").innerText = currentUserData.phone || "ফোন সেট করা নেই";
+        document.getElementById("introEmail").innerText = currentUserData.email || "";
+
+        document.getElementById("postsTitle").innerText = "আমার প্রপার্টি সমূহ";
+
+        // ইউজার পোস্ট লোড
+        loadProperties(currentUserData.uid, false);
+    }
+}
+
+// কোম্পানি সুইচ উইজেট (Intro-র ঠিক উপরে গোল লোগো ও সুইচ বাটন)
+function renderCompanyWidget() {
+    const container = document.getElementById("companyWidgetContent");
+
+    if (companyData) {
+        if (!isCompanyMode) {
+            // ইউজার পার্সোনাল প্রোফাইলে আছে, কোম্পানি পেজে সুইচ করার অপশন দেখাবে
+            container.innerHTML = `
+                <div class="company-item" onclick="toggleMode(true)">
+                    <div class="company-item-left">
+                        <img src="${companyData.logo}" class="company-logo-small" alt="logo">
+                        <div>
+                            <div class="company-name-text">${companyData.name} <span class="badge-tag">কোম্পানি</span></div>
+                            <small style="color: #65676b;">ক্লিক করে কোম্পানি পেজে সুইচ করুন</small>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color: #65676b;"></i>
+                </div>
+            `;
+        } else {
+            // ইউজার বর্তমানে কোম্পানি পেজে আছে, পার্সোনালে ফেরত আসার অপশন
+            container.innerHTML = `
+                <button class="btn btn-switch" onclick="toggleMode(false)">
+                    <i class="fa-solid fa-repeat"></i> পার্সোনাল প্রোফাইলে ফেরত যান (${currentUserData.name})
+                </button>
+            `;
+        }
+    } else {
+        // কোম্পানি পেজ না থাকলে তৈরি করার বাটন দেখাবে
+        container.innerHTML = `
+            <button class="btn btn-blue" style="width: 100%; justify-content: center;" onclick="openCompanyModal()">
+                <i class="fa-solid fa-plus-circle"></i> আবাসন ও ডেভেলপার কোম্পানি পেজ তৈরি করুন
+            </button>
+        `;
+    }
+}
+
+// পার্সোনাল <-> কোম্পানি সুইচ
+function toggleMode(toCompany) {
+    isCompanyMode = toCompany;
+    renderProfile();
+}
+
+// কোম্পানি পেজ খোলার মোডাল কন্ট্রোল
+function openCompanyModal() {
+    document.getElementById("companyModal").classList.add("active");
+}
+function closeCompanyModal() {
+    document.getElementById("companyModal").classList.remove("active");
+}
+
+// কোম্পানি ফর্ম সাবমিট
+document.getElementById("companyForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const uid = auth.currentUser.uid;
+
+    const newCompany = {
+        companyId: "comp_" + uid, // Unique ID for company
+        ownerUid: uid,
+        name: document.getElementById("compName").value,
+        logo: document.getElementById("compLogo").value,
+        cover: document.getElementById("compCover").value || "",
+        bio: document.getElementById("compBio").value || "",
+        address: document.getElementById("compAddress").value || "",
+        phone: document.getElementById("compPhone").value || "",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
 
     try {
-        const savedSnapshot = await db.collection('saves').where('userId', '==', userId).get();
-        
-        if(savedCountEl) savedCountEl.textContent = savedSnapshot.size;
+        await db.collection("companies").doc(uid).set(newCompany);
+        companyData = newCompany;
+        closeCompanyModal();
+        alert("আপনার আবাসন কোম্পানি পেজ সফলভাবে তৈরি হয়েছে!");
+        toggleMode(true); // সরাসরি পেজে সুইচ করবে
+    } catch (err) {
+        console.error("Error creating company:", err);
+        alert("পেজ তৈরি করতে সমস্যা হয়েছে!");
+    }
+});
 
-        if (savedSnapshot.empty) {
-            savedListEl.innerHTML = '<p style="text-align:center; padding: 30px; color: var(--gray);">বুকমার্ক তালিকায় কোনো আইটেম নেই।</p>';
+// প্রপার্টি লোড করার লজিক (কোম্পানি বা ইউজার অনুযায়ী)
+async function loadProperties(targetId, isComp) {
+    const container = document.getElementById("propertiesContainer");
+    container.innerHTML = "<p>লোড হচ্ছে...</p>";
+
+    try {
+        let query;
+        if(isComp) {
+            query = db.collection("posts").where("companyId", "==", targetId);
+        } else {
+            query = db.collection("posts").where("userId", "==", targetId).where("companyId", "==", null);
+        }
+
+        const snapshot = await query.get();
+        if(snapshot.empty) {
+            container.innerHTML = "<p style='color: #65676b;'>কোনো পোস্ট পাওয়া যায়নি।</p>";
             return;
         }
 
-        savedListEl.innerHTML = '<div id="saved-properties-grid" class="property-grid"></div>';
-        const savedGrid = document.getElementById('saved-properties-grid');
-
-        // FIXED: for...of লুপ ব্যবহার করা হলো async/await সঠিকভাবে কাজ করার জন্য
-        for (const saveDoc of savedSnapshot.docs) {
-            const saveData = saveDoc.data();
-            const postId = saveData.postId;
-
-            if (!postId) continue;
-
-            const postDoc = await db.collection('properties').doc(postId).get();
-            if (postDoc.exists) {
-                const p = postDoc.data();
-                
-                const card = document.createElement('div');
-                card.className = 'property-card';
-                card.style.cursor = "pointer";
-                card.onclick = () => {
-                    window.location.href = `details.html?id=${postDoc.id}`;
-                };
-
-                let imageUrl = 'https://via.placeholder.com/150?text=No+Image';
-                if (p.images && p.images.length > 0) {
-                    imageUrl = p.images[0].url || p.images[0];
-                } else if (p.image) {
-                    imageUrl = p.image;
-                }
-
-                let displayPrice = p.price || p.rent || p.monthlyRent || p.amount || '০';
-
-                card.innerHTML = `
-                    <img src="${imageUrl}" style="width:100%; height:105px; object-fit:cover;">
-                    <div style="padding:8px;">
-                        <h4 style="margin:0 0 4px 0; font-size:12px; height:32px; overflow:hidden; color:var(--dark); font-weight:600;">${p.title || 'শিরোনামহীন'}</h4>
-                        <p style="color:var(--success); font-weight:bold; margin:0; font-size:12px;">৳ ${displayPrice}</p>
+        let html = "";
+        snapshot.forEach(doc => {
+            const item = doc.data();
+            html += `
+                <div class="property-card">
+                    <img src="${item.images ? item.images[0] : 'https://via.placeholder.com/90'}" alt="Property">
+                    <div class="property-info">
+                        <div class="property-title">${item.title || 'শিরোনাম নেই'}</div>
+                        <div class="property-price">৳ ${item.price || '0'}</div>
+                        <small style="color:#65676b;">${item.location || ''}</small>
                     </div>
-                `;
-                savedGrid.appendChild(card);
-            }
-        }
-
-    } catch (error) {
-        console.error("Saved properties error:", error);
-        savedListEl.innerHTML = '<p style="text-align:center; color:red; padding:20px;">বুকমার্ক লোড করতে সমস্যা হয়েছে।</p>';
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    } catch (err) {
+        console.error("Error fetching posts:", err);
+        container.innerHTML = "<p>পোস্ট লোড করা যায়নি।</p>";
     }
-                }
-
+        }
