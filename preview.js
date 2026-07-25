@@ -1,4 +1,4 @@
-// preview.js - Fixed with Production-Ready Storage Moving & Price Drop Alert Sync
+// preview.js - Fixed with Page Mode Support, Production-Ready Storage Moving & Price Drop Alert Sync
 const db = firebase.firestore();
 const auth = firebase.auth();
 
@@ -81,6 +81,15 @@ row(basic, 'টাইপ', postData.type);
 row(basic, 'শিরোনাম', postData.title);
 row(basic, 'বর্ণনা', postData.description);
 
+// 🎯 পেজের তথ্য থাকলে তা আলাদাভাবে প্রদর্শন
+if (postData.pageId) {
+  db.collection('pages').doc(postData.pageId).get().then(doc => {
+    if (doc.exists) {
+      row(basic, 'পোস্টকারী পেজ', doc.data().pageName || 'অজানা পেজ');
+    }
+  });
+}
+
 /* ---------------- ২. ডাইনামিক প্রপার্টি ফিল্ডস ---------------- */
 row(basic, 'রুম সংখ্যা', postData.rooms);
 row(basic, 'বেডরুম', postData.bedRooms || postData.bedrooms);
@@ -144,7 +153,7 @@ if (postData.category === 'বিক্রয়' && postData.owner) {
   row(own, 'দাগের ধরন', postData.owner.dagNoType);
   row(own, 'খতিয়ান টাইপ', postData.owner.khotianNoType);
   row(own, 'খতিয়ান নং', postData.owner.khotianNo);
-  row(own, 'مৌজা', postData.owner.mouja);
+  row(own, 'মৌজা', postData.owner.mouja);
 }
 
 /* ---------------- ৬. যোগাযোগ ---------------- */
@@ -155,11 +164,16 @@ row(contact, 'অতিরিক্ত ফোন নম্বর', postData.seco
 /* ---------------- Actions Button Logic ---------------- */
 function goBack() {
   const originalPostId = sessionStorage.getItem('editingPostId');
+  const activePageId = postData.pageId || sessionStorage.getItem('activePageId');
+  
+  let targetUrl = 'post.html';
   if (originalPostId) {
-    location.href = `post.html?edit=${originalPostId}`;
-  } else {
-    location.href = 'post.html';
+    targetUrl = `post.html?edit=${originalPostId}`;
+  } else if (activePageId) {
+    targetUrl = `post.html?pageId=${activePageId}`;
   }
+  
+  location.href = targetUrl;
 }
 
 async function moveImageToPermanentStorage(url, userId, docType = 'images') {
@@ -227,8 +241,11 @@ async function publishPost() {
       finalSketch = imageData.sketch.url ? { ...imageData.sketch, url: permanentSketchUrl } : permanentSketchUrl;
     }
 
+    // 🎯 পেজ আইডি যুক্ত করে ডেটা প্রিপেয়ার করা
     const preparedData = {
       ...postData,
+      pageId: postData.pageId || sessionStorage.getItem('activePageId') || null,
+      postedAsPage: !!(postData.pageId || sessionStorage.getItem('activePageId')),
       images: finalImages,
       documents: {
         khotian: finalKhotian,
