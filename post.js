@@ -7,7 +7,7 @@ const auth = firebase.auth();
 let isEditMode = false;
 let editPostId = null;
 
-// ⚡ ক্যানভাস (Canvas API) দিয়ে ক্লায়েন্ট-সাইডেই ছবি কম্প্রেস করে KB সাইজে আনা
+// ⚡ ম্যাজিক ফাংশন: ক্যানভাস (Canvas API) দিয়ে ক্লায়েন্ট-সাইডেই ছবি কম্প্রেস করে KB সাইজে আনা
 const compressImage = (file, maxWidth = 1200, quality = 0.7) => {
     return new Promise((resolve, reject) => {
         if (!file.type.startsWith('image/')) {
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
             "ব্রাহ্মণবাড়িয়া": { "উপজেলা": ["ব্রাহ্মণবাড়িয়া সদর", "আশুগঞ্জ", "সরাইল", "নাসিরনগর", "নবীনগর", "বাঞ্ছারামপুর", "কসবা", "আখাউড়া", "বিজয়নগর"] },
             "নোয়াখালী": { "উপজেলা": ["নোয়াখালী সদর", "কোম্পানীগঞ্জ", "বেগমগঞ্জ", "চাটখিল", "সেনবাগ", "হাতিয়া", "চৌমুহনী", "সুবর্ণচর", "কবীরহাট"] },
             "লক্ষ্মীপুর": { "উপজেলা": ["লক্ষ্মীপুর সদর", "রায়পুর", "রামগঞ্জ", "রামগতি", "কমলনগর"] },
-            "চাঁদপুর": { "উপজেলা": ["চাঁদপুর সদর", "হাজীগঞ্জ", "কচুয়া", "ফریدগঞ্জ", "মতলব উত্তর", "মতলব দক্ষিণ", "হাইমচর", "শাহরাস্তি"] },
+            "চাঁদপুর": { "উপজেলা": ["চাঁদপুর সদর", "হাজীগঞ্জ", "কচুয়া", "ফরিদগঞ্জ", "মতলব উত্তর", "মতলব দক্ষিণ", "হাইমচর", "শাহরাস্তি"] },
             "খাগড়াছড়ি": { "উপজেলা": ["খাগড়াছড়ি সদর", "দীঘিনালা", "পানছড়ি", "মাটিরাঙ্গা", "মহালছড়ি", "মানিকছড়ি", "রামগড়", "গুইমারা", "লক্ষ্মীছড়ি"] },
             "রাঙ্গামাটি": { "উপজেলা": ["রাঙ্গামাটি সদর", "কাপ্তাই", "কাউখালী", "বাঘাইছড়ি", "লংগদু", "রাজস্থলী", "জুরাছড়ি", "বলাইছড়ি", "নানিয়ারচর", "বরকল"] },
             "বান্দরবান": { "উপজেলা": ["বান্দরবান সদর", "লামা", "আলীকদম", "নাইক্ষ্যংছড়ি", "রুমা", "থানচি", "রোয়াংছড়ি"] }
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
             "বগুড়া": { "উপজেলা": ["বগুড়া সদর", "শাজাহানপুর", "শেরপুর", "ধুনট", "গাবতলী", "সারিয়াকান্দি", "নন্দীগ্রাম", "কাহালু", "আদমদিঘী", "দুপচাঁচিয়া", "শিবগঞ্জ", "সোনাতলা"] },
             "পাবনা": { "উপজেলা": ["পাবনা সদর", "ঈশ্বরদী", "আটঘরিয়া", "চাটমোহর", "ভাঙ্গুড়া", "ফریدপুর", "সুজানগর", "বেড়া", "সাঁথিয়া"] },
             "নাটোর": { "উপজেলা": ["নাটোর সদর", "সিংড়া", "বড়াইগ্রাম", "গুরুদাসপুর", "লালপুর", "বাগাতিপাড়া", "নলডাঙ্গা"] },
-            "নওগাঁ": { "উপজেলা": ["নওগাঁ সদর", "রানীনগর", "আত্রাই", "মহাদেবপুর", "বদলাগছী", "পত্নীতলা", "ধামইরহাট", "নিয়ামতপুর", "পোরশা", "সাপাহার", "মান্দা"] },
+            "নওগাঁ": { "উপজেলা": ["নওগাঁ সদর", "রানীনগর", "আত্রাই", "মহাদেবপুর", "বদলগাছী", "পত্নীতলা", "ধামইরহাট", "নিয়ামতপুর", "পোরশা", "সাপাহার", "মান্দা"] },
             "জয়পুরহাট": { "উপজেলা": ["জয়পুরহাট সদর", "পাঁচবিবি", "আক্কেলপুর", "ক্ষেতলাল", "কালাই"] },
             "সিরাজগঞ্জ": { "উপজেলা": ["সিরাজগঞ্জ সদর", "বেলকুচি", "চৌহালী", "কামারখন্দ", "কাজীপুর", "রায়গঞ্জ", "শাহজাদপুর", "তাড়াশ", "উল্লাপাড়া"] },
             "চাঁপাইনবাবগঞ্জ": { "উপজেলা": ["চাঁপাইনবাবগঞ্জ সদর", "শিবগঞ্জ", "গোমস্তাপুর", "নাচোল", "ভোলাহাট"] }
@@ -282,6 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let categoryDescriptionText = category === 'ভাড়া' ? 'ভাড়ার বিবরণ' : `${category}ের বিবরণ`;
+        
         let maxMainImages = category === 'বিক্রয়' ? 3 : 5;
         let imageLabelText = category === 'বিক্রয়' ? `প্রপার্টি ছবি (সর্বোচ্চ ৩টি):` : `প্রপার্টি ছবি (সর্বোচ্চ ৫টি):`;
 
@@ -1106,6 +1107,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.moveInDate = getValue('move-in-date');
             }
 
+            // সেশন স্টোরেজে ডেটা স্টেজ করা (প্রিভিউ পেজে রিড করার জন্য)
             sessionStorage.setItem('stagedPropertyData', JSON.stringify(propertyData));
             window.location.href = 'preview.html';
 
@@ -1117,6 +1119,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
+        // ইউআরএল (URL) থেকে এডিট আইডি চেক করা
         const urlParams = new URLSearchParams(window.location.search);
         editPostId = urlParams.get('edit');
 
@@ -1130,12 +1133,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
             if (localSubmitBtn) localSubmitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
 
+            // সঠিক কালেকশন 'properties' থেকে ডেটা রিড করা
             db.collection('properties').doc(editPostId).get()
                 .then((doc) => {
                     if (doc.exists) {
                         const postData = doc.data();
                         console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
 
+                        // 🎯 দাম কমার নোটিফিকেশন অ্যালার্টের জন্য আগের প্রাইস সেশন স্টোরেজে ব্যাকআপ রাখা
                         const originalPrice = postData.category === 'বিক্রয়' ? postData.price : postData.monthlyRent;
                         sessionStorage.setItem('preEditPriceBackup', originalPrice || '0');
 
@@ -1190,7 +1195,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (headerProfileImg && userData) {
                         headerProfileImg.src = userData.profilePic || user.photoURL || 'assets/images/default-avatar.png';
                     }
-                    if (!editPostId) loadStagedData();
+                    if (!editPostId) loadStagedData(); // শুধুমাত্র ক্রিয়েট মুডেই ডিফল্ট স্টেজড লোড হবে
                 }).catch(() => {
                     if (!editPostId) loadStagedData();
                 });
