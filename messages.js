@@ -1,7 +1,4 @@
-// =======================================================
-// 🎯 আমার বাড়ি প্ল্যাটফর্ম - আলটিমেট রিয়েল-টাইম চ্যাট ইঞ্জিন (অপ্টিমাইজড মোড)
-// =======================================================
-
+// messages.js - রিয়েল-টাইম চ্যাট ইঞ্জিন
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -11,11 +8,9 @@ const firebaseConfig = {
     appId: "1:719084789035:web:f4da765290b3519d0e82fe"
 };
 
-// ফায়ারবেস ইনিশিয়ালাইজেশন
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ইউআরএল থেকে প্যারামিটার নেওয়া
 const urlParams = new URLSearchParams(window.location.search);
 let currentChatId = urlParams.get('chatId');
 let currentPostId = urlParams.get('postId');
@@ -24,18 +19,15 @@ let currentAction = urlParams.get('action');
 let currentUser = null;
 let activeChatListener = null;
 
-// চ্যাট আইডির নামকরণের ধারাবাহিকতা বজায় রাখার হেল্পার ফাংশন (Alphabetical Sort)
 function getChatId(uid1, uid2) {
     return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
 }
 
-// ১. ইউজার লগইন স্টেট পর্যবেক্ষণ ও হেডার প্রোফাইল পিকচার ইন্টিগ্রেশন
 firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
         console.log("লগইন করা ইউজার UID:", currentUser.uid);
         
-        // হেডার প্রোফাইল পিকচার অটো-লোড
         const headerProfileImg = document.getElementById('profileImage');
         if (headerProfileImg) {
             try {
@@ -57,11 +49,9 @@ firebase.auth().onAuthStateChanged(async (user) => {
     }
 });
 
-// চ্যাট সিস্টেম স্টার্ট
 function initChatSystem() {
     loadChatList();
 
-    // details.html থেকে ডাইরেক্ট আসা মোড চেক
     if (currentChatId) {
         if (currentAction === 'direct' || window.innerWidth <= 768) {
             const sidebar = document.getElementById('chatSidebar');
@@ -69,21 +59,19 @@ function initChatSystem() {
             if (sidebar) sidebar.classList.add('hidden');
             if (mainBox) mainBox.classList.add('active');
             
-            // 🎯 মোবাইলে চ্যাট ডাইরেক্ট ওপেন হলে মেইন ব্যাক বাটন হাইড
             document.body.classList.add('chat-open');
         }
         openChatBox(currentChatId, currentPostId);
     }
 }
 
-// ২. বামপাশের চ্যাট লিস্ট লোড করা (থ্রি-ডট মেনু ও ডিলিট অপশন সহ)
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer) return;
 
     db.collection('chats')
         .where('participants', 'array-contains', currentUser.uid)
-        .orderBy('timestamp', 'desc') // সর্বশেষ চ্যাটটি সবার উপরে দেখানোর জন্য
+        .orderBy('timestamp', 'desc')
         .onSnapshot((snapshot) => {
             
             if (snapshot.empty) {
@@ -98,8 +86,6 @@ function loadChatList() {
                 const chatId = doc.id;
                 
                 const otherUserId = chatData.participants ? chatData.participants.find(id => id !== currentUser.uid) : null;
-                
-                // আনরিড মেসেজের স্টাইল হ্যান্ডেল করার লজিক
                 const isUnreadMessage = chatData.isUnread && chatData.lastSenderId !== currentUser.uid;
                 const unreadClass = isUnreadMessage ? 'unread-chat' : '';
 
@@ -107,7 +93,6 @@ function loadChatList() {
                 chatItemDiv.className = `chat-item ${chatId === currentChatId ? 'active' : ''} ${unreadClass}`;
                 chatItemDiv.id = `item_${chatId}`;
                 
-                // ডাইনামিক ড্রপডাউন ও থ্রি-ডট সহ চ্যাট আইটেম HTML গঠন
                 chatItemDiv.innerHTML = `
                     <img src="https://via.placeholder.com/45/007bff/ffffff?text=U" id="avatar_${chatId}">
                     <div class="chat-item-info">
@@ -115,15 +100,12 @@ function loadChatList() {
                         <p id="msg_preview_${chatId}" style="${isUnreadMessage ? 'font-weight: bold; color: #1e293b;' : ''}">${chatData.lastMessage || "নতুন চ্যাট শুরু হয়েছে..."}</p>
                     </div>
                     
-                    <!-- 🎯 আনরিড ইন্ডিকেটর ডট -->
                     ${isUnreadMessage ? `<span class="unread-dot" style="width: 8px; height: 8px; background-color: #007bff; border-radius: 50%; margin-right: 8px;"></span>` : ''}
 
-                    <!-- 🎯 থ্রি-ডট মেনু বাটন -->
                     <button class="chat-item-menu-btn" id="menu_btn_${chatId}">
                         <i class="material-icons" style="font-size: 20px;">more_vert</i>
                     </button>
                     
-                    <!-- 🎯 ড্রপডাউন কন্টেইনার -->
                     <div class="chat-dropdown" id="dropdown_${chatId}">
                         <button class="chat-dropdown-item" id="delete_btn_${chatId}">
                             <i class="material-icons">delete</i> ডিলিট করুন
@@ -133,7 +115,6 @@ function loadChatList() {
                 
                 chatListContainer.appendChild(chatItemDiv);
 
-                // চ্যাট আইটেমে ক্লিক করলে চ্যাট বক্স ওপেন হবে
                 chatItemDiv.onclick = (e) => {
                     if (e.target.closest('.chat-item-menu-btn') || e.target.closest('.chat-dropdown')) {
                         return; 
@@ -151,7 +132,6 @@ function loadChatList() {
                     openChatBox(chatId, chatData.postId);
                 };
 
-                // থ্রি-ডট মেনু টগল করার লজিক
                 const menuBtn = chatItemDiv.querySelector(`#menu_btn_${chatId}`);
                 const dropdown = chatItemDiv.querySelector(`#dropdown_${chatId}`);
                 
@@ -167,7 +147,6 @@ function loadChatList() {
                     };
                 }
 
-                // চ্যাট ডিলিট করার লজিক
                 const deleteBtn = chatItemDiv.querySelector(`#delete_btn_${chatId}`);
                 if (deleteBtn) {
                     deleteBtn.onclick = async (e) => {
@@ -177,7 +156,6 @@ function loadChatList() {
                         const confirmDelete = confirm("আপনি কি নিশ্চিতভাবে এই চ্যাটটি ডিলিট করতে চান? (আপনার সব মেসেজ মুছে যাবে)");
                         if (confirmDelete) {
                             try {
-                                // ১. চ্যাটের ভেতরের সব মেসেজ সাব-কালেকশন থেকে ডিলিট করা
                                 const messagesSnapshot = await db.collection('chats').doc(chatId).collection('messages').get();
                                 const batch = db.batch();
                                 messagesSnapshot.forEach(mDoc => {
@@ -185,7 +163,6 @@ function loadChatList() {
                                 });
                                 await batch.commit();
 
-                                // ২. মূল চ্যাট ডকুমেন্টটি ডিলিট করা
                                 await db.collection('chats').doc(chatId).delete();
                                 
                                 alert("চ্যাটটি সফলভাবে ডিলিট করা হয়েছে।");
@@ -230,14 +207,12 @@ function loadChatList() {
         });
 }
 
-// স্ক্রিনের অন্য কোথাও ক্লিক করলে যেন খোলা ড্রপডাউন মেনুগুলো বন্ধ হয়ে যায়
 document.addEventListener('click', () => {
     document.querySelectorAll('.chat-dropdown').forEach(dd => {
         dd.classList.remove('show');
     });
 });
 
-// ৩. ডানপাশের নির্দিষ্ট চ্যাট বক্স ওপেন করা
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
     
@@ -251,7 +226,6 @@ async function openChatBox(chatId, postId) {
     const currentItem = document.getElementById(`item_${chatId}`);
     if (currentItem) currentItem.classList.add('active');
 
-    // ডাটাবেজে চ্যাট ডকুমেন্টটি না থাকলে তা তৈরি করা (সেফগার্ড)
     const chatRef = db.collection('chats').doc(chatId);
     let chatDocData = null;
     try {
@@ -271,7 +245,6 @@ async function openChatBox(chatId, postId) {
         } else {
             chatDocData = chatDoc.data();
             
-            // 🎯 চ্যাটটি ওপেন করলে এটি যদি আনরিড মেসেজ হয়, তবে এটিকে রিমোটলি 'রিড' (isUnread: false) সেট করবে
             if (chatDocData.isUnread && chatDocData.lastSenderId !== currentUser.uid) {
                 await chatRef.update({ isUnread: false });
             }
@@ -280,13 +253,10 @@ async function openChatBox(chatId, postId) {
         console.error("চ্যাট ইনিশিয়ালিং এরর:", e);
     }
 
-    // প্রপার্টির মিনি কার্ড লোড করা
     loadPropertyContext(postId || currentPostId || (chatDocData ? chatDocData.postId : ""));
 
-    // আগের কোনো লিসেনার সচল থাকলে তা রিমুভ করা
     if (activeChatListener) activeChatListener();
 
-    // রিয়েল-টাইম মেসেজ লোড ও রেন্ডারিং
     const messagesDisplay = document.getElementById('messagesDisplay');
     const quickRepliesContainer = document.querySelector('.quick-replies');
 
@@ -305,7 +275,6 @@ async function openChatBox(chatId, postId) {
                 
                 bubble.className = `msg-bubble ${isIncoming ? 'incoming' : 'outgoing'}`;
                 
-                // 🎯 নিখুঁত টাইমস্ট্যাম্প পার্সিং (সার্ভার ডিলে হ্যান্ডেলিং বাগ ফিক্স)
                 let timeString = "এইমাত্র";
                 if (msg.timestamp && typeof msg.timestamp.toDate === 'function') {
                     try {
@@ -320,10 +289,8 @@ async function openChatBox(chatId, postId) {
                 messagesDisplay.appendChild(bubble);
             });
 
-            // অটোমেটিক স্ক্রল ডাউন
             messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
 
-            // 🎯 কুইক রিপ্লাই শো/হাইড লজিক
             const targetPostId = postId || currentPostId || (chatDocData ? chatDocData.postId : "");
             if (quickRepliesContainer) {
                 if (hasMessages || !targetPostId) {
@@ -348,7 +315,6 @@ async function openChatBox(chatId, postId) {
 
         }, (err) => console.error("মেসেজ লোড এরর:", err));
 
-    // চ্যাট হেডারে অপরপক্ষের নাম সেট করা
     const parts = chatId.split('_');
     const otherUserId = parts.find(id => id !== currentUser.uid);
     if (otherUserId) {
@@ -361,7 +327,6 @@ async function openChatBox(chatId, postId) {
     }
 }
 
-// ৪. মেসেজ পাঠানো লজিক (লাস্ট সেন্ডার আইডি ট্র্যাকিং সহ)
 async function sendMessage(text) {
     if (!text.trim() || !currentChatId) return;
 
@@ -373,10 +338,8 @@ async function sendMessage(text) {
     };
 
     try {
-        // ১. মেসেজ সাব-কালেকশনে নতুন মেসেজ অ্যাড করা
         await db.collection('chats').doc(currentChatId).collection('messages').add(messageData);
         
-        // ২. মূল চ্যাট ডকুমেন্টে লাইভ কাউন্টের জন্য ট্র্যাকিং ডাটা আপডেট করা
         await db.collection('chats').doc(currentChatId).update({
             lastMessage: cleanText,
             lastSenderId: currentUser.uid,             
@@ -388,7 +351,6 @@ async function sendMessage(text) {
     }
 }
 
-// ৫. মেসেজের ভেতরে প্রপার্টি মিনি কার্ড লোড করা
 function loadPropertyContext(postId) {
     const card = document.getElementById('activePropertyCard');
     if (!card) return;
@@ -416,7 +378,6 @@ function loadPropertyContext(postId) {
     }).catch(() => card.style.display = 'none');
 }
 
-// DOM ইভেন্ট লিসেনার ও কিবোর্ড ভিউপোর্ট ফিক্সিং
 document.addEventListener('DOMContentLoaded', () => {
     const sendBtn = document.getElementById('sendMessageBtn');
     const inputField = document.getElementById('messageInputField');
@@ -434,7 +395,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // 🎯 অ্যান্ড্রেয়ড ও আইওএস মোবাইল কিবোর্ড অন হলে স্ক্রোল ফিক্স
         inputField.addEventListener('focus', () => {
             setTimeout(() => {
                 inputField.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -442,7 +402,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // কুইক রিপ্লাই কোয়েরি একশন লিসেনার
     const quickRepliesContainer = document.querySelector('.quick-replies');
     if (quickRepliesContainer) {
         quickRepliesContainer.addEventListener('click', (e) => {
@@ -452,7 +411,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 🎯 ক্রোম ব্রাউজারে কিবোর্ড অন/অফ ট্র্যাকিং ও স্ক্রিন রিসাইজ ফিক্স
     if (window.visualViewport) {
         const chatMain = document.getElementById('chatMainBox');
         window.visualViewport.addEventListener('resize', () => {
@@ -464,7 +422,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // মোবাইলের ভেতরের ব্যাক বাটন লজিক
     const backBtn = document.getElementById('backToListBtn');
     if (backBtn) {
         backBtn.onclick = () => {
@@ -482,4 +439,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function sendQuickReply(text) {
     sendMessage(text);
-}
+    }
