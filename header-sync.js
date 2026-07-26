@@ -2,8 +2,8 @@
 // 🎯 আমার বাড়ি.কম - গ্লোবাল হেডার লাইভ সিঙ্ক ENGINE (কোম্পানি ও পার্সোনাল মোড সাপোর্ট সহ)
 // =======================================================
 
-// ⚡ ১. বর্তমান অ্যাক্টিভ আইডি (User UID নাকি Company ID) রিটার্ন করবে
-function getActiveIdentity() {
+// ⚡ ১. বর্তমান অ্যাক্টিভ আইডি (User UID নাকি Company ID) রিটার্ন করবে (গ্লোবাল এক্সেসযোগ্য)
+window.getActiveIdentity = function() {
     const activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
     const activeCompanyId = localStorage.getItem('activeCompanyId');
     const user = firebase.auth().currentUser;
@@ -23,11 +23,28 @@ function getActiveIdentity() {
             id: user.uid,              // ইউজার নিজের UID
             type: 'user',
             ownerUid: user.uid,
-            name: localStorage.getItem('activeName') || 'ইউজার',
-            avatar: localStorage.getItem('activeAvatar') || ''
+            name: localStorage.getItem('activeName') || user.displayName || 'ইউজার',
+            avatar: localStorage.getItem('activeAvatar') || user.photoURL || ''
         };
     }
-}
+};
+
+// ⚡ ২. আইডি বা মোড সুইচ করার গ্লোবাল হেলপার ফাংশন
+window.switchIdentity = function(type, companyId = null, name = '', avatar = '') {
+    localStorage.setItem('activeIdentityType', type);
+    
+    if (type === 'company' && companyId) {
+        localStorage.setItem('activeCompanyId', companyId);
+    } else {
+        localStorage.removeItem('activeCompanyId');
+    }
+
+    if (name) localStorage.setItem('activeName', name);
+    if (avatar) localStorage.setItem('activeAvatar', avatar);
+
+    // সিঙ্ক করার জন্য কাস্টম ইভেন্ট ফায়ার করা
+    window.dispatchEvent(new Event('identityChanged'));
+};
 
 (function() {
     const db = firebase.firestore();
@@ -47,7 +64,7 @@ function getActiveIdentity() {
             }
         });
 
-        // ⚡ প্রোফাইল পেজ থেকে আইডি সুইচ করলে সঙ্গে সঙ্গে অন্য সব উপাদান আপডেট হবে
+        // ⚡ প্রোফাইল পেজ বা সুইচ ড্রপডাউন থেকে আইডি সুইচ করলে সঙ্গে সঙ্গে সব আপডেট হবে
         window.addEventListener('identityChanged', function() {
             if (auth.currentUser) {
                 initHeaderSync();
@@ -56,11 +73,11 @@ function getActiveIdentity() {
     });
 
     function initHeaderSync() {
-        const activeIdentity = getActiveIdentity();
+        const activeIdentity = window.getActiveIdentity();
         if (!activeIdentity) return;
 
-        // 🖼️ হেডারের ছবি অ্যাক্টিভ প্রোফাইল/কোম্পানির লোগো অনুযায়ী চেঞ্জ করা
-        updateHeaderAvatar(activeIdentity);
+        // 🖼️ হেডারের ছবি ও ভিজ্যুয়াল ইন্ডিকেটর আপডেট করা
+        updateHeaderAvatarAndBadge(activeIdentity);
 
         // 🔔 ১. অ্যাক্টিভ আইডির নোটিফিকেশন লোড
         syncUnreadNotifications(activeIdentity.id);
@@ -69,11 +86,17 @@ function getActiveIdentity() {
         syncUnreadMessages(activeIdentity.id);
     }
 
-    // 🖼️ হেডারের ছবি আপডেট ফাংশন
-    function updateHeaderAvatar(activeIdentity) {
+    // 🖼️ হেডারের ছবি ও মোড টেক্সট আপডেট ফাংশন
+    function updateHeaderAvatarAndBadge(activeIdentity) {
         const headerProfileImg = document.querySelector('#profileImageWrapper img') || document.getElementById('profileImage');
         if (headerProfileImg && activeIdentity.avatar) {
             headerProfileImg.src = activeIdentity.avatar;
+        }
+
+        // যদি হেডারে মোড দেখানোর জন্য কোনো এলিমেন্ট থাকে (যেমন: #active-mode-label)
+        const modeLabel = document.getElementById('active-mode-label');
+        if (modeLabel) {
+            modeLabel.textContent = activeIdentity.type === 'company' ? `🏢 ${activeIdentity.name}` : `👤 ${activeIdentity.name}`;
         }
     }
 
@@ -84,7 +107,6 @@ function getActiveIdentity() {
 
         if (unreadNotifListener) unreadNotifListener();
 
-        // 🎯 FIXED: user.uid এর জায়গায় activeId ব্যবহার করা হয়েছে
         unreadNotifListener = db.collection('notifications')
             .where('userId', '==', activeId)
             .where('isRead', '==', false) 
@@ -107,7 +129,6 @@ function getActiveIdentity() {
 
         if (unreadMsgListener) unreadMsgListener();
 
-        // 🎯 FIXED: activeId (যা পার্সোনাল আইডি অথবা কোম্পানি আইডি) চেক করা হচ্ছে
         unreadMsgListener = db.collection('chats')
             .where('participants', 'array-contains', activeId)
             .onSnapshot(snapshot => {
