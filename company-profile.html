@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>কোম্পানি প্রোফাইল - আমার বাড়ি</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="style.css"> <!-- আপনার আসল CSS ফাইলের নাম দিন -->
+    <style>
+        /* কোম্পানি প্রোফাইলের জন্য প্রয়োজনীয় স্টাইল */
+        body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 0; }
+        .profile-container { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .profile-header { text-align: center; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .profile-avatar { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid #008069; }
+        .profile-name { font-size: 20px; font-weight: bold; margin: 8px 0 4px; color: #333; }
+        .badge-verified { display: none; align-items: center; justify-content: center; gap: 4px; color: #008069; font-size: 14px; margin-bottom: 10px; }
+        .info-list { list-style: none; padding: 0; margin: 15px 0; }
+        .info-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; color: #555; }
+        .info-item i { color: #008069; }
+        .listings-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 15px; }
+        .post-card { display: flex; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; background: #fff; cursor: pointer; }
+        .post-card img { width: 110px; height: 90px; object-fit: cover; }
+        .post-info { padding: 8px; flex: 1; }
+        .post-title-text { font-size: 14px; margin: 0 0 5px; color: #222; }
+        .no-post { text-align: center; padding: 20px; color: #777; }
+    </style>
+</head>
+<body>
+
+    <div class="profile-container">
+        <div class="profile-header">
+            <img id="c-avatar" class="profile-avatar" src="https://www.w3schools.com/howto/img_avatar.png" alt="Company Logo">
+            <h2 id="c-name" class="profile-name">লোডিং...</h2>
+            <div id="badgeVerified" class="badge-verified">
+                <i class="material-icons" style="font-size: 16px;">verified</i> ভেরিফাইড কোম্পানি
+            </div>
+            <p id="c-bio" style="font-style: italic; color: #666; font-size: 14px;"></p>
+        </div>
+
+        <ul class="info-list">
+            <li class="info-item"><i class="material-icons">business</i> <span id="c-profession">কোম্পানি / প্রতিষ্ঠান</span></li>
+            <li class="info-item"><i class="material-icons">email</i> <span id="c-email">লোডিং...</span></li>
+            <li class="info-item"><i class="material-icons">phone</i> <span id="c-phone">লোডিং...</span></li>
+            <li class="info-item"><i class="material-icons">location_on</i> <span id="c-location">লোডিং...</span></li>
+        </ul>
+
+        <h3>কোম্পানির প্রপার্টি সমূহ</h3>
+        <div id="company-listings" class="listings-grid">
+            <div class="no-post">পোস্ট লোড হচ্ছে...</div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- JS File -->
+    <script src="company-profile.js"></script>
+</body>
+</html>
