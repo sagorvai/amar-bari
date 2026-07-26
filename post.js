@@ -1,4 +1,4 @@
-// post.js - Updated with Page Mode & Profile Post Logic
+// post.js - Fixed with User/Page Mode Switching, Client-Side Image Compression, Fast Parallel Uploads & Price Drop Alert
 const db = firebase.firestore();
 const storage = firebase.storage();
 const auth = firebase.auth();
@@ -91,56 +91,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const notificationButton = document.getElementById('notificationButton'); 
     const profileImageWrapper = document.getElementById('profileImageWrapper');
 
-    // 🎯 পেজ মোড সিলেক্টর এলিমেন্টস
-    const postAsTypeSelect = document.getElementById('post-as-type');
-    const pageSelectContainer = document.getElementById('page-select-container');
-    const userPageSelect = document.getElementById('user-page-select');
-
-    // পেজ মোড টগল লজিক
-    if (postAsTypeSelect) {
-        postAsTypeSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'page') {
-                pageSelectContainer.style.display = 'block';
-                userPageSelect.setAttribute('required', 'true');
-            } else {
-                pageSelectContainer.style.display = 'none';
-                userPageSelect.removeAttribute('required');
-                userPageSelect.value = '';
-            }
-        });
-    }
-
-    // ইউজারের তৈরি পেজগুলো ফায়ারস্টোর থেকে লোড করা
-    function loadUserPages(userId) {
-        if (!userPageSelect) return;
-        db.collection('pages').where('ownerId', '==', userId).get()
-            .then(snapshot => {
-                userPageSelect.innerHTML = '<option value="">-- পেজ নির্বাচন করুন --</option>';
-                if (snapshot.empty) {
-                    const option = document.createElement('option');
-                    option.value = "";
-                    option.textContent = "আপনার কোনো পেজ পাওয়া যায়নি (প্রোফাইল থেকে পেজ তৈরি করুন)";
-                    userPageSelect.appendChild(option);
-                    return;
-                }
-                snapshot.forEach(doc => {
-                    const pageData = doc.data();
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = pageData.pageName || pageData.name || doc.id;
-                    userPageSelect.appendChild(option);
-                });
-            })
-            .catch(err => {
-                console.error("পেজ লোড করতে সমস্যা:", err);
-            });
-    }
-
     // ভৌগোলিক অবজেক্ট
     const BD_GEOGRAPHY = {
         "ঢাকা বিভাগ": {
             "ঢাকা": {
-                "সিটি কর্পোরেশন": ["মিরপুর", "উত্তরা", "ধানমন্ডি", "গুলশান", "পল্টন", "মতিঝিল", "শাহবাগ", "মোহাম্মদপুর", "তেজগাঁও", "রমনা", "খিলগাঁও", "বাড্ডা", "মিরপুর মডেল", "কাফরুল", "পল্লবী", "দারুস সালাম", "শাহ আলী", "তুরাগ", "উত্তরখান", "দক্ষিণখান", "খিলক্ষেত", "ভাটারা", "রামপুরা", "সবুজবাগ", "চকবাজার", "কোতোয়ালী", "বংশাল", "সূত্রাপুর", "হাজারীবাগ", "কলাবাগান", "তেজগাঁও শিল্পাঞ্চল", "শেরেবাংলা নগর", "হাতিরঝিল", "কদমতলী", "যাত্রাবাড়ী", "শ্যামপুর", "ডেমরা", "ওয়ারী", "গেন্ডারিয়া", "লালবাগ", "কামরাঙ্গীরচর"],
+                "সিটি কর্পোরেশন": ["মিরপুর", "উত্তরা", "ধানমন্ডি", "গুলশান", "পল্টন", "মতিঝিল", "শাহবাগ", "মোহাম্মদপুর", "তেজগাঁও", "রমনা", "খিলগাঁও", "বাড্ডা", "মিরপুর মডেল", "কাফরুল", "পল্লবী", "দারুস সালাম", "শাহ আলী", "তুরাগ", "উত্তরখান", "দক্ষিণখান", "খিলক্ষেত", "ভাটারা", "রামপুরা", "সবুজবাগ", "মতিঝিল", "চকবাজার", "কোতোয়ালী", "বংশাল", "সূত্রাপুর", "হাজারীবাগ", "ধানমন্ডি", "কলাবাগান", "তেজগাঁও শিল্পাঞ্চল", "শেরেবাংলা নগর", "হাতিরঝিল", "কদমতলী", "যাত্রাবাড়ী", "শ্যামপুর", "ডেমরা", "ওয়ারী", "গেন্ডারিয়া", "লালবাগ", "কামরাঙ্গীরচর"],
                 "উপজেলা": ["সাভার", "ধামরাই", "কেরানীগঞ্জ", "দোহার", "নবাবগঞ্জ"]
             },
             "গাজীপুর": {
@@ -204,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
             "বগুড়া": { "উপজেলা": ["বগুড়া সদর", "শাজাহানপুর", "শেরপুর", "ধুনট", "গাবতলী", "সারিয়াকান্দি", "নন্দীগ্রাম", "কাহালু", "আদমদিঘী", "দুপচাঁচিয়া", "শিবগঞ্জ", "সোনাতলা"] },
             "পাবনা": { "উপজেলা": ["পাবনা সদর", "ঈশ্বরদী", "আটঘরিয়া", "চাটমোহর", "ভাঙ্গুড়া", "ফریدপুর", "সুজানগর", "বেড়া", "সাঁথিয়া"] },
             "নাটোর": { "উপজেলা": ["নাটোর সদর", "সিংড়া", "বড়াইগ্রাম", "গুরুদাসপুর", "লালপুর", "বাগাতিপাড়া", "নলডাঙ্গা"] },
-            "নওগাঁ": { "উপজেলা": ["নওগাঁ সদর", "রানীনগর", "আত্রাই", "মহাদেবপুর", "বদলগাছী", "পত্নীতলা", "ধামইরহাট", "নিয়ামতপুর", "পোরশা", "সাপাহার", "মান্দা"] },
+            "নওগাঁ": { "উপজেলা": ["নওগাঁ সদর", "রানীনগর", "আত্রাই", "মহাদেবপুর", "বদলাগছী", "পত্নীতলা", "ধামইরহাট", "নিয়ামতপুর", "পোরশা", "সাপাহার", "মান্দা"] },
             "জয়পুরহাট": { "উপজেলা": ["জয়পুরহাট সদর", "পাঁচবিবি", "আক্কেলপুর", "ক্ষেতলাল", "কালাই"] },
             "সিরাজগঞ্জ": { "উপজেলা": ["সিরাজগঞ্জ সদর", "বেলকুচি", "চৌহালী", "কামারখন্দ", "কাজীপুর", "রায়গঞ্জ", "শাহজাদপুর", "তাড়াশ", "উল্লাপাড়া"] },
             "চাঁপাইনবাবগঞ্জ": { "উপজেলা": ["চাঁপাইনবাবগঞ্জ সদর", "শিবগঞ্জ", "গোমস্তাপুর", "নাচোল", "ভোলাহাট"] }
@@ -262,16 +217,6 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const stagedData = JSON.parse(stagedDataString);
             const stagedMetadata = stagedMetadataString ? JSON.parse(stagedMetadataString) : {};
-
-            if (postAsTypeSelect && stagedData.postOwnerType) {
-                postAsTypeSelect.value = stagedData.postOwnerType;
-                if (stagedData.postOwnerType === 'page') {
-                    pageSelectContainer.style.display = 'block';
-                    setTimeout(() => {
-                        if (userPageSelect) userPageSelect.value = stagedData.pageId || '';
-                    }, 500);
-                }
-            }
 
             if (document.getElementById('lister-type')) {
                 document.getElementById('lister-type').value = stagedData.listerType || '';
@@ -337,6 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let categoryDescriptionText = category === 'ভাড়া' ? 'ভাড়ার বিবরণ' : `${category}ের বিবরণ`;
+        
         let maxMainImages = category === 'বিক্রয়' ? 3 : 5;
         let imageLabelText = category === 'বিক্রয়' ? `প্রপার্টি ছবি (সর্বোচ্চ ৩টি):` : `প্রপার্টি ছবি (সর্বোচ্চ ৫টি):`;
 
@@ -663,6 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fieldsHTML += contactHTML;
         specificFieldsContainer.innerHTML = fieldsHTML;
 
+        // চেইন ড্রপডাউন ইভেন্ট লিসেনার
         setTimeout(() => {
             const divSelect = document.getElementById('division-select');
             const distSelect = document.getElementById('district-select');
@@ -747,6 +694,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         }, 200);
 
+        // ওপেনস্ট্রিটম্যাপ রেন্ডারিং
         setTimeout(() => {
             const mapElement = document.getElementById('map-container');
             if (mapElement) {
@@ -1052,14 +1000,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        const postOwnerType = getValue('post-as-type') || 'user';
-        const pageId = postOwnerType === 'page' ? getValue('user-page-select') : null;
-
-        if (postOwnerType === 'page' && !pageId) {
-            alert("অনুগ্রহ করে একটি পেজ নির্বাচন করুন।");
-            return;
-        }
-
         submitBtn.disabled = true;
         submitBtn.textContent = 'ডেটা প্রক্রিয়াকরণ হচ্ছে...';
 
@@ -1072,6 +1012,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // 🎯 ফেসবুকের মতো মোড সুইচিং ট্র্যাক করার লজিক
+            const activeMode = sessionStorage.getItem('activeMode') || localStorage.getItem('activeMode') || 'user';
+            const activePageId = sessionStorage.getItem('activePageId') || localStorage.getItem('activePageId') || sessionStorage.getItem('activeCompanyId') || localStorage.getItem('activeCompanyId') || null;
+
+            let isPageMode = activeMode === 'page' && activePageId !== null;
+
             const areaTypeVal = document.getElementById('area-type-select')?.value || '';
 
             const propertyData = {
@@ -1082,9 +1028,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 phoneNumber: getValue('primary-phone'), 
                 secondaryPhone: getValue('secondary-phone'),
                 userId: user.uid,
-                authorId: user.uid,
-                postOwnerType: postOwnerType, // 'user' অথবা 'page'
-                pageId: pageId,               // পেজের ডক আইডি (যদি পেজ মোড হয়)
+                
+                // 🎯 পেজ বা কোম্পানি মোড ধরে পোস্ট ডাটা সেটআপ
+                postType: isPageMode ? 'company' : 'user',
+                postedBy: isPageMode ? 'page' : 'user',
+                companyId: isPageMode ? activePageId : null,
+                pageId: isPageMode ? activePageId : null,
+
                 status: 'pending',
                 listerType: getValue('lister-type'),
                 isEditMode: isEditMode,   
@@ -1169,6 +1119,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.moveInDate = getValue('move-in-date');
             }
 
+            // সেশন স্টোরেজে ডেটা স্টেজ করা
             sessionStorage.setItem('stagedPropertyData', JSON.stringify(propertyData));
             window.location.href = 'preview.html';
 
@@ -1197,6 +1148,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then((doc) => {
                     if (doc.exists) {
                         const postData = doc.data();
+                        console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
 
                         const originalPrice = postData.category === 'বিক্রয়' ? postData.price : postData.monthlyRent;
                         sessionStorage.setItem('preEditPriceBackup', originalPrice || '0');
@@ -1233,7 +1185,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         }
 
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async (user) => {
             const authWarningMessage = document.getElementById('auth-warning-message');
             const propertyFormDisplay = document.getElementById('property-form');
             const primaryPhoneInput = document.getElementById('primary-phone');
@@ -1243,21 +1195,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (propertyFormDisplay) propertyFormDisplay.style.display = 'block';
                 if (authWarningMessage) authWarningMessage.style.display = 'none';
 
-                loadUserPages(user.uid); // ইউজারের পেজ লোড করা
+                const activeMode = sessionStorage.getItem('activeMode') || localStorage.getItem('activeMode') || 'user';
+                const activePageId = sessionStorage.getItem('activePageId') || localStorage.getItem('activePageId') || sessionStorage.getItem('activeCompanyId') || localStorage.getItem('activeCompanyId');
 
-                db.collection('users').doc(user.uid).get().then(doc => {
-                    const userData = doc.data();
-                    if (primaryPhoneInput && userData?.phoneNumber) {
-                        primaryPhoneInput.value = userData.phoneNumber;
-                        primaryPhoneInput.disabled = true; 
+                // 🎯 পেজ মোডে থাকলে পেজের লোগো ও ছবি লোড হবে, ইউজার মোডে ইউজারের ছবি
+                if (activeMode === 'page' && activePageId) {
+                    try {
+                        const pageDoc = await db.collection('companies').doc(activePageId).get();
+                        if (pageDoc.exists && headerProfileImg) {
+                            const pageData = pageDoc.data();
+                            headerProfileImg.src = pageData.companyLogo || pageData.logo || 'assets/images/default-avatar.png';
+                        }
+                    } catch(err) {
+                        console.error("পেজ ডাটা লোড প্রবলেম:", err);
                     }
-                    if (headerProfileImg && userData) {
-                        headerProfileImg.src = userData.profilePic || user.photoURL || 'assets/images/default-avatar.png';
-                    }
-                    if (!editPostId) loadStagedData();
-                }).catch(() => {
-                    if (!editPostId) loadStagedData();
-                });
+                } else {
+                    db.collection('users').doc(user.uid).get().then(doc => {
+                        const userData = doc.data();
+                        if (primaryPhoneInput && userData?.phoneNumber) {
+                            primaryPhoneInput.value = userData.phoneNumber;
+                            primaryPhoneInput.disabled = true; 
+                        }
+                        if (headerProfileImg && userData) {
+                            headerProfileImg.src = userData.profilePic || user.photoURL || 'assets/images/default-avatar.png';
+                        }
+                    }).catch(() => {});
+                }
+
+                if (!editPostId) loadStagedData();
             } else {
                 if (propertyFormDisplay) propertyFormDisplay.style.display = 'none';
                 if (authWarningMessage) authWarningMessage.style.display = 'block';
