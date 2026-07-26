@@ -246,10 +246,11 @@ async function publishPost() {
       status: 'published',
       
       // 🎯 অ্যাক্টিভ আইডেন্টিটি সিঙ্ক
-      userId: activeIdentity.id,             // কোম্পানির ক্ষেত্রে কোম্পানি আইডি, নতুবা ইউজার আইডি
-      ownerId: activeIdentity.id,            // প্রপার্টির মূল ওনার
+      userId: activeIdentity.id,             // কোম্পানি আইডি অথবা ইউজার আইডি
+      companyId: activeIdentity.type === 'company' ? activeIdentity.id : null, // কোম্পানির পোস্টে ফিল্টারের জন্য
+      ownerId: activeIdentity.id,            // প্রপার্টির মূল মালিক
       ownerType: activeIdentity.type,        // 'company' অথবা 'user'
-      createdByUserId: userId,               // অথেনটিকেটেড ইউজার
+      createdByUserId: userId,               // লগইন করা ইউজার আইডি
       postedByName: activeIdentity.name,     // কোম্পানি বা ইউজারের নাম
       postedByAvatar: activeIdentity.avatar, // কোম্পানি বা ইউজারের ছবি
 
