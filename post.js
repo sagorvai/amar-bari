@@ -1,4 +1,4 @@
-// post.js - Fixed with User/Page Mode Switching, Client-Side Image Compression, Fast Parallel Uploads & Price Drop Alert
+// post.js - Fixed with Client-Side Image Compression (KB size), Fast Parallel Uploads, Price Drop Alert & Active Identity Integration
 const db = firebase.firestore();
 const storage = firebase.storage();
 const auth = firebase.auth();
@@ -7,7 +7,7 @@ const auth = firebase.auth();
 let isEditMode = false;
 let editPostId = null;
 
-// ⚡ ক্যানভাস (Canvas API) দিয়ে ক্লায়েন্ট-সাইডেই ছবি কম্প্রেস করে KB সাইজে আনা
+// ⚡ ম্যাজিক ফাংশন: ক্যানভাস (Canvas API) দিয়ে ক্লায়েন্ট-সাইডেই ছবি কম্প্রেস করে KB সাইজে আনা
 const compressImage = (file, maxWidth = 1200, quality = 0.7) => {
     return new Promise((resolve, reject) => {
         if (!file.type.startsWith('image/')) {
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const BD_GEOGRAPHY = {
         "ঢাকা বিভাগ": {
             "ঢাকা": {
-                "সিটি কর্পোরেশন": ["মিরপুর", "উত্তরা", "ধানমন্ডি", "গুলশান", "পল্টন", "মতিঝিল", "শাহবাগ", "মোহাম্মদপুর", "তেজগাঁও", "রমনা", "খিলগাঁও", "বাড্ডা", "মিরপুর মডেল", "কাফরুল", "পল্লবী", "দারুস সালাম", "শাহ আলী", "তুরাগ", "উত্তরখান", "দক্ষিণখান", "খিলক্ষেত", "ভাটারা", "রামপুরা", "সবুজবাগ", "মতিঝিল", "চকবাজার", "কোতোয়ালী", "বংশাল", "সূত্রাপুর", "হাজারীবাগ", "ধানমন্ডি", "কলাবাগান", "তেজগাঁও শিল্পাঞ্চল", "শেরেবাংলা নগর", "হাতিরঝিল", "কদমতলী", "যাত্রাবাড়ী", "শ্যামপুর", "ডেমরা", "ওয়ারী", "গেন্ডারিয়া", "লালবাগ", "কামরাঙ্গীরচর"],
+                "সিটি কর্পোরেশন": ["মিরপুর", "উত্তরা", "ধানমন্ডি", "গুলশান", "পল্টন", "মতিঝিল", "شاہবাগ", "মোহাম্মদপুর", "তেজগাঁও", "রমনা", "খিলগাঁও", "বাড্ডা", "মিরপুর মডেল", "কাফরুল", "পল্লবী", "দারুস সালাম", "شاہ আলী", "তুরাগ", "উত্তরখান", "দক্ষিণখান", "খিলক্ষেত", "ভাটারা", "রামপুরা", "সবুজবাগ", "মতিঝিল", "চকবাজার", "কোতোয়ালী", "বংশাল", "সূত্রাপুর", "হাজারীবাগ", "ধানমন্ডি", "কলাবাগান", "তেজগাঁও শিল্পাঞ্চল", "শেরেবাংলা নগর", "হাতিরঝিল", "কদমতলী", "যাত্রাবাড়ী", "শ্যামপুর", "ডেমরা", "ওয়ারী", "গেন্ডারিয়া", "লালবাগ", "কামরাঙ্গীরচর"],
                 "উপজেলা": ["সাভার", "ধামরাই", "কেরানীগঞ্জ", "দোহার", "নবাবগঞ্জ"]
             },
             "গাজীপুর": {
@@ -106,13 +106,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 "সিটি কর্পোরেশন": ["নারায়ণগঞ্জ সদর", "সিদ্ধিরগঞ্জ", "বন্দর"],
                 "উপজেলা": ["আড়াইহাজার", "রূপগঞ্জ", "সোনারগাঁও"]
             },
-            "টাঙ্গাইল": { "উপজেলা": ["টাঙ্গাইল সদর", "কালিহাতী", "ঘাটাইল", "মির্জাপুর", "মধুপুর", "গোপালপুর", "সখিপুর", "ভূঞাপুর", "বাসাইল", "দেলদুয়ার", "নাগরপুর", "ধনবাড়ী"] },
-            "ফরিদপুর": { "উপজেলা": ["ফরিদপুর সদর", "কমলগঞ্জ", "বোয়ালমারী", "আলফাডাঙ্গা", "নগরকান্দা", "ভাঙ্গা", "সদরপুর", "চরভদ্রাসন", "সালথা"] },
+            "টাঙ্গাইল": { "উপজেলা": ["টাঙ্গাইল সদর", "কালিহাতী", "घाटাইল", "মির্জাপুর", "مধুপুর", "গোপালপুর", "সখিপুর", "ভূঞাপুর", "বাসাইল", "دেলদুয়ার", "নাগরপুর", "ধনবাড়ী"] },
+            "ফریدপুর": { "উপজেলা": ["ফریدপুর সদর", "কমলগঞ্জ", "বোয়ালমারী", "আলফাডাঙ্গা", "নগরকান্দা", "ভাঙ্গা", "সদরপুর", "চরভদ্রাসন", "সালথা"] },
             "মানিকগঞ্জ": { "উপজেলা": ["মানিকগঞ্জ সদর", "সিংগাইর", "শিবালয়", "ঘিওর", "হরিরামপুর", "সাটুরিয়া", "দৌলতপুর"] },
             "মুন্সীগঞ্জ": { "উপজেলা": ["মুন্সীগঞ্জ সদর", "টংগিবাড়ী", "শ্রীনগর", "লৌহজং", "গজারিয়া", "সিরাজদিখান"] },
             "নরসিংদী": { "উপজেলা": ["নরসিংদী সদর", "পলাশ", "শিবপুর", "মনোহরদী", "বেলাবো", "রায়পুরা"] },
             "মাদারীপুর": { "উপজেলা": ["মাদারীপুর সদর", "শিবচর", "কালকিনি", "রাজৈর", "ডাসার"] },
-            "গোপালগঞ্জ": { "উপজেলা": ["গোপালগঞ্জ সদর", "টুঙ্গিপাড়া", "কোটালীপাড়া", "কাশিয়ানী", "মুকসুদপুর"] },
+            "গোপালগঞ্জ": { "উপজেলা": ["গোপালগঞ্জ সদর", "টুঙ্গিপাড়া", "কোটালীপাড়া", "কাশিয়ানী", "مুকসুদপুর"] },
             "রাজবাড়ী": { "উপজেলা": ["রাজবাড়ী সদর", "গোয়ালন্দ", "পাংশা", "বালিয়াকান্দি", "কালুখালী"] },
             "শরীয়তপুর": { "উপজেলা": ["শরীয়তপুর সদর", "ডামুড্যা", "নড়িয়া", "জাজিরা", "ভেদরগঞ্জ", "গোসাইরহাট"] },
             "কিশোরগঞ্জ": { "উপজেলা": ["কিশোরগঞ্জ সদর", "করিমগঞ্জ", "তাড়াইল", "হোসেনপুর", "পাকুন্দিয়া", "কটিয়াদী", "বাজিতপুর", "কুলিয়ারচর", "ভৈরব", "নিকলী", "মিঠামইন", "ইটনা", "অষ্টগ্রাম"] }
@@ -129,16 +129,16 @@ document.addEventListener('DOMContentLoaded', function() {
             "কক্সবাজার": { "উপজেলা": ["কক্সবাজার সদর", "উখিয়া", "টেকনাফ", "রামু", "চকরিয়া", "মহেশখালী", "পেকুয়া", "কুতুবদিয়া", "ঈদগাঁও"] },
             "ফেনী": { "উপজেলা": ["ফেনী সদর", "দাগনভূঞা", "ছাগলনাইয়া", "পরশুরাম", "ফুলগাজী", "সোনাগাজী"] },
             "ব্রাহ্মণবাড়িয়া": { "উপজেলা": ["ব্রাহ্মণবাড়িয়া সদর", "আশুগঞ্জ", "সরাইল", "নাসিরনগর", "নবীনগর", "বাঞ্ছারামপুর", "কসবা", "আখাউড়া", "বিজয়নগর"] },
-            "নোয়াখালী": { "উপজেলা": ["নোয়াখালী সদর", "কোম্পানীগঞ্জ", "বেগমগঞ্জ", "চাটখিল", "সেনবাগ", "হাতিয়া", "চৌমুহনী", "সুবর্ণচর", "কবীরহাট"] },
+            "নোয়াখালী": { "উপজেলা": ["নোয়াখালী সদর", "কোম্পানীগঞ্জ", "বেগমগঞ্জ", "চাটখিল", "সেনবাগ", "হাতিয়া", "চৌমুহনী", "subarnachar", "কবীরহাট"] },
             "লক্ষ্মীপুর": { "উপজেলা": ["লক্ষ্মীপুর সদর", "রায়পুর", "রামগঞ্জ", "রামগতি", "কমলনগর"] },
-            "চাঁদপুর": { "উপজেলা": ["চাঁদপুর সদর", "হাজীগঞ্জ", "কচুয়া", "ফরিদগঞ্জ", "মতলব উত্তর", "মতলব দক্ষিণ", "হাইমচর", "শাহরাস্তি"] },
+            "চাঁদপুর": { "উপজেলা": ["চাঁদপুর সদর", "হাজীগঞ্জ", "কচুয়া", "ফریدগঞ্জ", "মতলব উত্তর", "মতলব দক্ষিণ", "হাইমচর", "شاہরাস্তি"] },
             "খাগড়াছড়ি": { "উপজেলা": ["খাগড়াছড়ি সদর", "দীঘিনালা", "পানছড়ি", "মাটিরাঙ্গা", "মহালছড়ি", "মানিকছড়ি", "রামগড়", "গুইমারা", "লক্ষ্মীছড়ি"] },
-            "রাঙ্গামাটি": { "উপজেলা": ["রাঙ্গামাটি সদর", "কাপ্তাই", "কাউখালী", "বাঘাইছড়ি", "লংগদু", "রাজস্থলী", "জুরাছড়ি", "বলাইছড়ি", "নানিয়ারচর", "বরকল"] },
+            "রাঙ্গামাটি": { "উপজেলা": ["রাঙ্গামাটি সদর", "কাপ্তাই", "কাউখালী", "বাঘাইছড়ি", "লংগদু", "রাজস্থলী", "জুরাছড়ি", "বলাইছড়ি", "نانিয়ারচর", "বরকল"] },
             "বান্দরবান": { "উপজেলা": ["বান্দরবান সদর", "লামা", "আলীকদম", "নাইক্ষ্যংছড়ি", "রুমা", "থানচি", "রোয়াংছড়ি"] }
         },
         "খুলনা বিভাগ": {
             "খুলনা": {
-                "সিটি কর্পোরেশন": ["খুলনা সদর", "দৌলতপুর", "খালিশপুর", "খানজাহান আলী", "লবণচরা", "হরিণটানা", "আড়ংঘাটা", "সোনাডাঙ্গা"],
+                "সিটি কর্পোরেশন": ["খুলনা সদর", "দৌলতপুর", "খালিশপুর", "খানجاهান আলী", "লবণচরা", "হরিণটানা", "আড়ংঘাটা", "সোনাডাঙ্গা"],
                 "উপজেলা": ["বটিয়াঘাটা", "দাকোপ", "ডুমুরিয়া", "দীঘলিয়া", "কয়রা", "পাইকগাছা", "ফুলতলা", "রূপসা", "তেরখাদা"]
             },
             "যশোর": { "উপজেলা": ["যশোর সদর", "অভয়নগর", "বাঘেরপাড়া", "চৌগাছা", "ঝিকরগাছা", "কেশবপুর", "মণিরামপুর", "শার্শা"] },
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         "রাজশাহী বিভাগ": {
             "রাজশাহী": {
-                "সিটি কর্পোরেশন": ["বোয়ালিয়া", "রাজপাড়া", "মতিহার", "শাহ মখদুম", "চন্দ্রিমা", "কাটাখালী"],
+                "সিটি কর্পোরেশন": ["বোয়ালিয়া", "রাজপাড়া", "মতিহার", "شاہ মখদুম", "চন্দ্রিমা", "কাটাখালী"],
                 "উপজেলা": ["পবা", "গোদাগাড়ী", "তানোর", "মোহনপুর", "বাগমারা", "দুর্গাপুর", "পুট্টিয়া", "চারঘাট", "বাঘা"]
             },
             "বগুড়া": { "উপজেলা": ["বগুড়া সদর", "শাজাহানপুর", "শেরপুর", "ধুনট", "গাবতলী", "সারিয়াকান্দি", "নন্দীগ্রাম", "কাহালু", "আদমদিঘী", "দুপচাঁচিয়া", "শিবগঞ্জ", "সোনাতলা"] },
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         "সিলেট বিভাগ": {
             "সিলেট": {
-                "সিটি কর্পোরেশন": ["কোতোয়ালী", "শাহপরান", "এয়ারপোর্ট", "মোগলাবাজার", "দক্ষিণ সুরমা"],
+                "সিটি কর্পোরেশন": ["কোতোয়ালী", "شاہপরান", "এয়ারপোর্ট", "মোগলাবাজার", "দক্ষিণ সুরমা"],
                 "উপজেলা": ["সিলেট সদর", "গোলাপগঞ্জ", "বিয়ানীবাজার", "জৈন্তাপুর", "গোয়াইনঘাট", "কানাইঘাট", "কোম্পানীগঞ্জ", "বালাগঞ্জ", "বিশ্বনাথ", "ফেঞ্চুগঞ্জ", "জকিগঞ্জ", "ওসমানীনগর"]
             },
             "সুনামগঞ্জ": { "উপজেলা": ["সুনামগঞ্জ সদর", "দক্ষিণ সুনামগঞ্জ", "দোয়ারাবাজার", "ছাতক", "জগন্নাথপুর", "দিরাই", "শালল্লা", "ধর্মপাশা", "তাহিরপুর", "বিশ্বম্ভরপুর", "মধ্যনগর"] },
@@ -676,6 +676,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
+            // প্রি-লোডেড এড্রেস সেট করার জন্য (যদি স্টেজড ডেটা থাকে)
             if (stagedData?.location?.division) {
                 divSelect.value = stagedData.location.division;
                 divSelect.dispatchEvent(new Event('change'));
@@ -1012,11 +1013,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // 🎯 ফেসবুকের মতো মোড সুইচিং ট্র্যাক করার লজিক
-            const activeMode = sessionStorage.getItem('activeMode') || localStorage.getItem('activeMode') || 'user';
-            const activePageId = sessionStorage.getItem('activePageId') || localStorage.getItem('activePageId') || sessionStorage.getItem('activeCompanyId') || localStorage.getItem('activeCompanyId') || null;
-
-            let isPageMode = activeMode === 'page' && activePageId !== null;
+            // 🎯 বর্তমান অ্যাক্টিভ আইডেন্টিটি বের করা (Company নাকি User)
+            const activeIdentity = (typeof window.getActiveIdentity === 'function') ? window.getActiveIdentity() : {
+                id: user.uid,
+                type: 'user',
+                ownerUid: user.uid,
+                name: user.displayName || 'ইউজার',
+                avatar: user.photoURL || ''
+            };
 
             const areaTypeVal = document.getElementById('area-type-select')?.value || '';
 
@@ -1027,13 +1031,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 description: getValue('description'),
                 phoneNumber: getValue('primary-phone'), 
                 secondaryPhone: getValue('secondary-phone'),
-                userId: user.uid,
                 
-                // 🎯 পেজ বা কোম্পানি মোড ধরে পোস্ট ডাটা সেটআপ
-                postType: isPageMode ? 'company' : 'user',
-                postedBy: isPageMode ? 'page' : 'user',
-                companyId: isPageMode ? activePageId : null,
-                pageId: isPageMode ? activePageId : null,
+                // 🎯 অ্যাক্টিভ আইডেন্টিটি অনুযায়ী ফিল্ড আপডেট
+                userId: activeIdentity.id,             // Backward Compatibility (কোম্পানি আইডি অথবা ইউজার আইডি)
+                ownerId: activeIdentity.id,            // প্রপার্টির প্রকৃত ওনার (কোম্পানি আইডি বা ইউজার আইডি)
+                ownerType: activeIdentity.type,        // 'company' অথবা 'user'
+                createdByUserId: user.uid,             // যে অরিজিনাল ইউজার অ্যাকাউন্ট দিয়ে পোস্ট করা হয়েছে
+                postedByName: activeIdentity.name,     // কোম্পানির নাম বা ইউজারের নাম
+                postedByAvatar: activeIdentity.avatar, // কোম্পানির লোগো বা ইউজারের ছবি
 
                 status: 'pending',
                 listerType: getValue('lister-type'),
@@ -1119,7 +1124,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyData.moveInDate = getValue('move-in-date');
             }
 
-            // সেশন স্টোরেজে ডেটা স্টেজ করা
+            // সেশন স্টোরেজে ডেটা স্টেজ করা (প্রিভিউ পেজে রিড করার জন্য)
             sessionStorage.setItem('stagedPropertyData', JSON.stringify(propertyData));
             window.location.href = 'preview.html';
 
@@ -1131,6 +1136,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     if (typeof auth !== 'undefined' && auth.onAuthStateChanged) {
+        // ইউআরএল (URL) থেকে এডিট আইডি চেক করা
         const urlParams = new URLSearchParams(window.location.search);
         editPostId = urlParams.get('edit');
 
@@ -1144,12 +1150,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (pageTitle) pageTitle.textContent = 'পোস্ট সংশোধন করুন';
             if (localSubmitBtn) localSubmitBtn.textContent = 'সংশোধন ও প্রিভিউ দেখুন';
 
+            // সঠিক কালেকশন 'properties' থেকে ডেটা রিড করা
             db.collection('properties').doc(editPostId).get()
                 .then((doc) => {
                     if (doc.exists) {
                         const postData = doc.data();
                         console.log("সংশোধনের জন্য ডেটা লোড হয়েছে:", postData);
 
+                        // 🎯 দাম কমার নোটিফিকেশন অ্যালার্টের জন্য আগের প্রাইস সেশন স্টোরেজে ব্যাকআপ রাখা
                         const originalPrice = postData.category === 'বিক্রয়' ? postData.price : postData.monthlyRent;
                         sessionStorage.setItem('preEditPriceBackup', originalPrice || '0');
 
@@ -1185,7 +1193,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         }
 
-        auth.onAuthStateChanged(async (user) => {
+        auth.onAuthStateChanged(user => {
             const authWarningMessage = document.getElementById('auth-warning-message');
             const propertyFormDisplay = document.getElementById('property-form');
             const primaryPhoneInput = document.getElementById('primary-phone');
@@ -1195,34 +1203,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (propertyFormDisplay) propertyFormDisplay.style.display = 'block';
                 if (authWarningMessage) authWarningMessage.style.display = 'none';
 
-                const activeMode = sessionStorage.getItem('activeMode') || localStorage.getItem('activeMode') || 'user';
-                const activePageId = sessionStorage.getItem('activePageId') || localStorage.getItem('activePageId') || sessionStorage.getItem('activeCompanyId') || localStorage.getItem('activeCompanyId');
-
-                // 🎯 পেজ মোডে থাকলে পেজের লোগো ও ছবি লোড হবে, ইউজার মোডে ইউজারের ছবি
-                if (activeMode === 'page' && activePageId) {
-                    try {
-                        const pageDoc = await db.collection('companies').doc(activePageId).get();
-                        if (pageDoc.exists && headerProfileImg) {
-                            const pageData = pageDoc.data();
-                            headerProfileImg.src = pageData.companyLogo || pageData.logo || 'assets/images/default-avatar.png';
-                        }
-                    } catch(err) {
-                        console.error("পেজ ডাটা লোড প্রবলেম:", err);
+                db.collection('users').doc(user.uid).get().then(doc => {
+                    const userData = doc.data();
+                    if (primaryPhoneInput && userData?.phoneNumber) {
+                        primaryPhoneInput.value = userData.phoneNumber;
+                        primaryPhoneInput.disabled = true; 
                     }
-                } else {
-                    db.collection('users').doc(user.uid).get().then(doc => {
-                        const userData = doc.data();
-                        if (primaryPhoneInput && userData?.phoneNumber) {
-                            primaryPhoneInput.value = userData.phoneNumber;
-                            primaryPhoneInput.disabled = true; 
-                        }
-                        if (headerProfileImg && userData) {
-                            headerProfileImg.src = userData.profilePic || user.photoURL || 'assets/images/default-avatar.png';
-                        }
-                    }).catch(() => {});
-                }
-
-                if (!editPostId) loadStagedData();
+                    if (headerProfileImg && userData) {
+                        const activeIdentity = (typeof window.getActiveIdentity === 'function') ? window.getActiveIdentity() : null;
+                        headerProfileImg.src = activeIdentity?.avatar || userData.profilePic || user.photoURL || 'assets/images/default-avatar.png';
+                    }
+                    if (!editPostId) loadStagedData(); // শুধুমাত্র ক্রিয়েট মুডেই ডিফল্ট স্টেজড লোড হবে
+                }).catch(() => {
+                    if (!editPostId) loadStagedData();
+                });
             } else {
                 if (propertyFormDisplay) propertyFormDisplay.style.display = 'none';
                 if (authWarningMessage) authWarningMessage.style.display = 'block';
