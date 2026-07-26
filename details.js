@@ -696,37 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
 
-firebase.auth().onAuthStateChanged(async (user) => {
-    const headerProfileImg = document.querySelector('#profileImageWrapper img');
-    if (user && headerProfileImg) {
-        try {
-            // ১. লোকাল স্টোরেজ থেকে চেক করা হচ্ছে ইউজার কোম্পানি/পেজ মোডে আছে কিনা
-            const activeMode = localStorage.getItem('activeMode'); // 'company' or 'user'
-            const selectedCompanyId = localStorage.getItem('selectedCompanyId');
 
-            if (activeMode === 'company' && selectedCompanyId) {
-                // কোম্পানি মোডে থাকলে কোম্পানি লোগো লোড হবে
-                const compDoc = await db.collection('companies').doc(selectedCompanyId).get();
-                if (compDoc.exists && compDoc.data().logoUrl) {
-                    headerProfileImg.src = compDoc.data().logoUrl;
-                    return;
-                }
-            }
-
-            // ২. ইউজার মোডে থাকলে অথবা কোম্পানির লোগো না থাকলে ইউজার পিকচার লোড হবে
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().profilePic) {
-                headerProfileImg.src = userDoc.data().profilePic;
-            } else if (user.photoURL) {
-                headerProfileImg.src = user.photoURL;
-            } else {
-                headerProfileImg.src = 'assets/images/default-avatar.png';
-            }
-        } catch (error) {
-            console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
-        }
-    }
-});
 
 /**
  * ফায়ারস্টোরে নোটিফিকেশন লেখার কমন ফাংশন (সাইনআপড ইউজারের জন্য)
