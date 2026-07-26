@@ -40,9 +40,7 @@ function row(parent, label, value) {
 
 /* ---------------- 👤/🏢 পোস্ট কার মাধ্যমে হচ্ছে প্রফাইল রেন্ডার ---------------- */
 async function renderPosterHeader() {
-  const isPage = postData.postType === 'company' || postData.postedBy === 'page' || postData.authorType === 'page';
-  const pageIdToUse = postData.companyId || postData.pageId || postData.authorId;
-
+  const isPage = postData.postType === 'company' || postData.postedBy === 'page';
   const posterDiv = document.createElement('div');
   posterDiv.className = 'poster-identity-badge';
   posterDiv.style.cssText = 'display:flex; align-items:center; gap:12px; margin-bottom:15px; padding:12px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;';
@@ -50,9 +48,9 @@ async function renderPosterHeader() {
   let imgUrl = 'assets/images/default-avatar.png';
   let nameText = 'ইউজার';
 
-  if (isPage && pageIdToUse) {
+  if (isPage && postData.companyId) {
     try {
-      const pageDoc = await db.collection('companies').doc(pageIdToUse).get();
+      const pageDoc = await db.collection('companies').doc(postData.companyId).get();
       if (pageDoc.exists) {
         const pData = pageDoc.data();
         imgUrl = pData.companyLogo || pData.logo || imgUrl;
