@@ -11,23 +11,22 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 const sUrlParams = new URLSearchParams(window.location.search);
-const targetUserId = sUrlParams.get('userId');
+// userId, pageId বা companyId যেকোনোটি পেতে পারে
+const targetUserId = sUrlParams.get('userId') || sUrlParams.get('pageId') || sUrlParams.get('id');
 
 document.addEventListener('DOMContentLoaded', () => {
-    // হেডার ও সাইডবার নেভিগেশন লজিক
     setupHeaderAndSidebar();
 
     if (!targetUserId) {
-        alert("ভুল ব্যবহারকারী আইডি!");
+        alert("ভুল প্রোফাইল বা আইডি পাওয়া যায়নি!");
         window.history.back();
         return;
     }
-    loadSellerProfileData();
-    loadSellerProperties();
+    loadSellerOrPageProfileData();
+    loadSellerOrPageProperties();
     setupInteractiveProfileRating();
 });
 
-// হেডার এবং সাইডবারের জন্য ক্লিক ইভেন্ট
 function setupHeaderAndSidebar() {
     const menuButton = document.getElementById('menuButton');
     const sidebar = document.getElementById('sidebar');
@@ -54,17 +53,35 @@ function setupHeaderAndSidebar() {
     if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
 }
 
-// ১. বিক্রেতার ডাটা ফায়ারবেস থেকে পড়া
-function loadSellerProfileData() {
-    db.collection('users').doc(targetUserId).get().then(doc => {
-        if (doc.exists) {
-            const uData = doc.data();
-            
-            document.getElementById('s-name').textContent = uData.fullName || uData.name || "সম্মানিত বিক্রেতা";
+// ১. প্রথমে users কালেকশন, না পেলে pages/companies কালেকশন খুঁজবে
+async function loadSellerOrPageProfileData() {
+    try {
+        // Step A: Check 'users' collection
+        let userDoc = await db.collection('users').doc(targetUserId).get();
+        let uData = null;
+
+        if (userDoc.exists) {
+            uData = userDoc.data();
+        } else {
+            // Step B: Check 'pages' collection if not in users
+            let pageDoc = await db.collection('pages').doc(targetUserId).get();
+            if (pageDoc.exists) {
+                uData = pageDoc.data();
+            } else {
+                // Step C: Check 'companies' collection as backup
+                let companyDoc = await db.collection('companies').doc(targetUserId).get();
+                if (companyDoc.exists) {
+                    uData = companyDoc.data();
+                }
+            }
+        }
+
+        if (uData) {
+            document.getElementById('s-name').textContent = uData.pageName || uData.companyName || uData.fullName || uData.name || "পোস্টদাতা";
             document.getElementById('s-email').textContent = uData.email || "ইমেইল সরবরাহ করা হয়নি";
             document.getElementById('s-uid-text').textContent = `...${targetUserId.substring(0,6)}`;
-            document.getElementById('s-profession').textContent = uData.profession || "যুক্ত করা নেই";
-            document.getElementById('s-location').textContent = uData.location || "যুক্ত করা নেই";
+            document.getElementById('s-profession').textContent = uData.category || uData.profession || "পেজ/কোম্পানি";
+            document.getElementById('s-location').textContent = uData.address || uData.location || "যুক্ত করা নেই";
             
             let userPhone = uData.phoneNumber || uData.phone || "";
             document.getElementById('s-phone').textContent = userPhone ? userPhone : "ফোন নম্বর সেট করা নেই";
@@ -76,43 +93,49 @@ function loadSellerProfileData() {
                 document.getElementById('s-office-item').style.display = 'none';
             }
 
-            if (uData.bio && uData.bio.trim() !== "") {
-                document.getElementById('s-bio').textContent = `"${uData.bio}"`;
+            if (uData.bio || uData.description) {
+                document.getElementById('s-bio').textContent = `"${uData.bio || uData.description}"`;
             } else {
                 document.getElementById('s-bio').textContent = "";
             }
             
-            if (uData.profilePic) {
-                document.getElementById('s-avatar').src = uData.profilePic;
-            }
+            let avatarImg = uData.logo || uData.profilePic || uData.image || "https://www.w3schools.com/howto/img_avatar.png";
+            document.getElementById('s-avatar').src = avatarImg;
 
-            if (uData.isVerified === true || uData.role === 'admin') {
+            if (uData.isVerified === true || uData.role === 'admin' || uData.isPage) {
                 document.getElementById('badgeVerified').style.display = 'flex';
             }
 
             displayCalculatedRating(uData.ratingCount || 0, uData.ratingSum || 0);
-
         } else {
-            document.getElementById('s-name').textContent = "অজানা ব্যবহারকারী";
+            document.getElementById('s-name').textContent = "অজানা বিক্রেতা/পেজ";
         }
-    }).catch(err => {
-        console.error("ইউজার ডেটা লোড এরর:", err);
-    });
+    } catch (err) {
+        console.error("ডেটা লোড করতে সমস্যা:", err);
+    }
 }
 
-// ২. একটিভ প্রপার্টি কালেকশন লোড
-async function loadSellerProperties() {
+// ২. userId, pageId বা companyId যেকোনোটি দিয়ে পোস্ট লোড করবে
+async function loadSellerOrPageProperties() {
     const grid = document.getElementById('seller-listings');
     if (!grid) return;
 
     try {
-        const snapshot = await db.collection('properties')
-                                 .where('userId', '==', targetUserId)
-                                 .get();
         grid.innerHTML = "";
+        let snapshot = await db.collection('properties').where('userId', '==', targetUserId).get();
+
+        // userId তে না পেলে pageId দিয়ে খুঁজবে
+        if (snapshot.empty) {
+            snapshot = await db.collection('properties').where('pageId', '==', targetUserId).get();
+        }
+
+        // pageId তেও না পেলে companyId দিয়ে খুঁজবে
+        if (snapshot.empty) {
+            snapshot = await db.collection('properties').where('companyId', '==', targetUserId).get();
+        }
 
         if (snapshot.empty) {
-            grid.innerHTML = `<div class="no-post">এই ব্যবহারকারী এখনো কোনো প্রপার্টি পোস্ট করেননি।</div>`;
+            grid.innerHTML = `<div class="no-post">এই পেজ/বিক্রেতার কোনো একটিভ প্রপার্টি নেই।</div>`;
             return;
         }
 
@@ -146,12 +169,12 @@ async function loadSellerProperties() {
         });
 
     } catch (error) {
-        console.error("পোস্ট তালিকা লোড করতে সমস্যা হয়েছে:", error);
+        console.error("পোস্ট লোড করতে সমস্যা হয়েছে:", error);
         grid.innerHTML = `<div class="no-post">পোস্টগুলো লোড করা যাচ্ছে না।</div>`;
     }
 }
 
-// ৩. রেটিং ট্রানজেকশন
+// ৩. রেটিং লজিক
 function setupInteractiveProfileRating() {
     const starZone = document.getElementById('profileStarsZone');
     if (!starZone) return;
@@ -162,50 +185,35 @@ function setupInteractiveProfileRating() {
     let alreadyRatedValue = localStorage.getItem(localStoreKey);
     if (alreadyRatedValue) {
         highlightStars(stars, parseInt(alreadyRatedValue));
-        document.getElementById('ratingHeader').textContent = "আপনি এই পোস্টদাতাকে রেটিং দিয়েছেন";
+        document.getElementById('ratingHeader').textContent = "আপনি রেটিং দিয়েছেন";
     }
 
     stars.forEach(star => {
         star.addEventListener('click', async () => {
             if (localStorage.getItem(localStoreKey)) {
-                alert("আপনি ইতিমধ্যে এই ব্যবহারকারীকে রেটিং দিয়েছেন!");
+                alert("আপনি ইতিমধ্যে রেটিং দিয়েছেন!");
                 return;
             }
 
             const chosenRating = parseInt(star.getAttribute('data-star'));
-            const currentAuthUser = firebase.auth().currentUser;
-            
-            if (currentAuthUser && currentAuthUser.uid === targetUserId) {
-                alert("আপনার নিজের প্রোফাইলে নিজে রেটিং দিতে পারবেন না!");
-                return;
-            }
-
             localStorage.setItem(localStoreKey, chosenRating);
             highlightStars(stars, chosenRating);
 
+            // ডিফল্টভাবে users এ আপডেট করার চেষ্টা করবে
             const userRef = db.collection('users').doc(targetUserId);
             try {
                 await db.runTransaction(async (transaction) => {
                     const sfDoc = await transaction.get(userRef);
-                    if (!sfDoc.exists) {
-                        transaction.set(userRef, { ratingCount: 1, ratingSum: chosenRating });
-                        return;
+                    if (sfDoc.exists) {
+                        let newCount = (sfDoc.data().ratingCount || 0) + 1;
+                        let newSum = (sfDoc.data().ratingSum || 0) + chosenRating;
+                        transaction.update(userRef, { ratingCount: newCount, ratingSum: newSum });
                     }
-                    
-                    let newCount = (sfDoc.data().ratingCount || 0) + 1;
-                    let newSum = (sfDoc.data().ratingSum || 0) + chosenRating;
-                    
-                    transaction.update(userRef, {
-                        ratingCount: newCount,
-                        ratingSum: newSum
-                    });
                 });
-
-                alert("সফলভাবে রেটিং দেওয়া হয়েছে! ধন্যবাদ।");
+                alert("রেটিং দেওয়ার জন্য ধন্যবাদ!");
                 location.reload();
-
             } catch (err) {
-                console.error("রেটিং ট্রানজেকশন ব্যর্থ:", err);
+                console.error("রেটিং ট্রানজেকশন ভুল:", err);
             }
         });
     });
@@ -232,4 +240,4 @@ function displayCalculatedRating(count, sum) {
     }
     let average = (sum / count).toFixed(1);
     label.textContent = `গড় রেটিং: ⭐ ${average} (${count}টি ভোট)`;
-}
+        }
