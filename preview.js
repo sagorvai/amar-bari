@@ -1,4 +1,4 @@
-// preview.js - Fixed with Page Mode Support, Production-Ready Storage Moving & Price Drop Alert Sync
+// preview.js - Fixed with User/Page Mode Support, Storage Moving & Price Drop Alert Sync
 const db = firebase.firestore();
 const auth = firebase.auth();
 
@@ -37,6 +37,50 @@ function row(parent, label, value) {
   div.innerHTML = `<strong>${label}</strong> <span ${valueClass}>: ${value}</span>`;
   parent.appendChild(div);
 }
+
+/* ---------------- 👤/🏢 পোস্ট কার মাধ্যমে হচ্ছে প্রফাইল রেন্ডার ---------------- */
+async function renderPosterHeader() {
+  const isPage = postData.postType === 'company' || postData.postedBy === 'page';
+  const posterDiv = document.createElement('div');
+  posterDiv.className = 'poster-identity-badge';
+  posterDiv.style.cssText = 'display:flex; align-items:center; gap:12px; margin-bottom:15px; padding:12px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;';
+
+  let imgUrl = 'assets/images/default-avatar.png';
+  let nameText = 'ইউজার';
+
+  if (isPage && postData.companyId) {
+    try {
+      const pageDoc = await db.collection('companies').doc(postData.companyId).get();
+      if (pageDoc.exists) {
+        const pData = pageDoc.data();
+        imgUrl = pData.companyLogo || pData.logo || imgUrl;
+        nameText = pData.companyName || pData.name || 'কোম্পানি/পেজ';
+      }
+    } catch(e) { console.error("Page Info Error:", e); }
+  } else {
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        const uDoc = await db.collection('users').doc(user.uid).get();
+        if (uDoc.exists) {
+          const uData = uDoc.data();
+          imgUrl = uData.profilePic || user.photoURL || imgUrl;
+          nameText = uData.fullName || uData.name || user.displayName || 'ইউজার';
+        }
+      } catch(e) { console.error("User Info Error:", e); }
+    }
+  }
+
+  posterDiv.innerHTML = `
+    <img src="${imgUrl}" style="width:42px; height:42px; border-radius:50%; object-fit:cover;">
+    <div>
+      <div style="font-weight:bold; font-size:14px; color:#0f172a;">${nameText} ${isPage ? '<span style="background:#0284c7; color:#fff; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px;">Page</span>' : ''}</div>
+      <div style="font-size:11px; color:#64748b;">${isPage ? 'কোম্পানি অ্যাকাউন্ট থেকে পোস্ট হচ্ছে' : 'ব্যক্তিগত অ্যাকাউন্ট থেকে পোস্ট হচ্ছে'}</div>
+    </div>
+  `;
+  preview.insertBefore(posterDiv, preview.firstChild);
+}
+renderPosterHeader();
 
 /* ---------------- 🖼️ সকল ছবি লোড করার লজিক ---------------- */
 const imgBox = document.getElementById('previewImages');
@@ -80,15 +124,6 @@ row(basic, 'ক্যাটাগরি', postData.category);
 row(basic, 'টাইপ', postData.type);
 row(basic, 'শিরোনাম', postData.title);
 row(basic, 'বর্ণনা', postData.description);
-
-// 🎯 পেজের তথ্য থাকলে তা আলাদাভাবে প্রদর্শন
-if (postData.pageId) {
-  db.collection('pages').doc(postData.pageId).get().then(doc => {
-    if (doc.exists) {
-      row(basic, 'পোস্টকারী পেজ', doc.data().pageName || 'অজানা পেজ');
-    }
-  });
-}
 
 /* ---------------- ২. ডাইনামিক প্রপার্টি ফিল্ডস ---------------- */
 row(basic, 'রুম সংখ্যা', postData.rooms);
@@ -164,16 +199,11 @@ row(contact, 'অতিরিক্ত ফোন নম্বর', postData.seco
 /* ---------------- Actions Button Logic ---------------- */
 function goBack() {
   const originalPostId = sessionStorage.getItem('editingPostId');
-  const activePageId = postData.pageId || sessionStorage.getItem('activePageId');
-  
-  let targetUrl = 'post.html';
   if (originalPostId) {
-    targetUrl = `post.html?edit=${originalPostId}`;
-  } else if (activePageId) {
-    targetUrl = `post.html?pageId=${activePageId}`;
+    location.href = `post.html?edit=${originalPostId}`;
+  } else {
+    location.href = 'post.html';
   }
-  
-  location.href = targetUrl;
 }
 
 async function moveImageToPermanentStorage(url, userId, docType = 'images') {
@@ -241,11 +271,8 @@ async function publishPost() {
       finalSketch = imageData.sketch.url ? { ...imageData.sketch, url: permanentSketchUrl } : permanentSketchUrl;
     }
 
-    // 🎯 পেজ আইডি যুক্ত করে ডেটা প্রিপেয়ার করা
     const preparedData = {
       ...postData,
-      pageId: postData.pageId || sessionStorage.getItem('activePageId') || null,
-      postedAsPage: !!(postData.pageId || sessionStorage.getItem('activePageId')),
       images: finalImages,
       documents: {
         khotian: finalKhotian,
@@ -256,20 +283,16 @@ async function publishPost() {
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    // 🎯 ৩-লেভেল সেফটি চেক আইডি রিকভারির জন্য
     const originalPostId = sessionStorage.getItem('editingPostId') || postData.editPostId || postData.id;
 
     if (originalPostId) {
-      // ডুপ্লিকেট কি রিমুভ করা হচ্ছে
       delete preparedData.id; 
       delete preparedData.postId;
       delete preparedData.editPostId;
       delete preparedData.isEditMode;
 
-      // ফায়ারস্টোর আপডেট এক্সিকিউশন
       await db.collection('properties').doc(originalPostId).update(preparedData);
 
-      // 🎯 রিয়েল-টাইম দাম কমার অ্যালার্ট ট্রিগার লজিক
       const oldPrice = parseFloat(sessionStorage.getItem('preEditPriceBackup') || '0');
       const newPrice = parseFloat(preparedData.category === 'বিক্রয়' ? preparedData.price : preparedData.monthlyRent);
 
@@ -281,7 +304,6 @@ async function publishPost() {
               type: "price_drop",
               createdAt: firebase.firestore.FieldValue.serverTimestamp()
           };
-          // গ্লোবাল নোটিফিকেশন কালেকশনে অ্যালার্ট ডেটা পাঠানো হলো
           await db.collection('notifications').add(discountAlert);
       }
       
@@ -317,17 +339,30 @@ async function publishPost() {
 firebase.auth().onAuthStateChanged(async (user) => {
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
     if (user && headerProfileImg) {
-        try {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().profilePic) {
-                headerProfileImg.src = userDoc.data().profilePic;
-            } else if (user.photoURL) {
-                headerProfileImg.src = user.photoURL;
-            } else {
-                headerProfileImg.src = 'assets/images/default-avatar.png'; 
+        const activeMode = sessionStorage.getItem('activeMode') || localStorage.getItem('activeMode') || 'user';
+        const activePageId = sessionStorage.getItem('activePageId') || localStorage.getItem('activePageId') || sessionStorage.getItem('activeCompanyId') || localStorage.getItem('activeCompanyId');
+
+        if (activeMode === 'page' && activePageId) {
+            try {
+                const pageDoc = await db.collection('companies').doc(activePageId).get();
+                if (pageDoc.exists) {
+                    const pData = pageDoc.data();
+                    headerProfileImg.src = pData.companyLogo || pData.logo || 'assets/images/default-avatar.png';
+                }
+            } catch(err) { console.error("Page Logo Load Error:", err); }
+        } else {
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists && userDoc.data().profilePic) {
+                    headerProfileImg.src = userDoc.data().profilePic;
+                } else if (user.photoURL) {
+                    headerProfileImg.src = user.photoURL;
+                } else {
+                    headerProfileImg.src = 'assets/images/default-avatar.png'; 
+                }
+            } catch (error) {
+                console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
             }
-        } catch (error) {
-            console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
         }
     }
 });
