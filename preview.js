@@ -162,6 +162,33 @@ function goBack() {
   }
 }
 
+// 🎯 ১. স্টোরেজ পাথ ফিক্সড ফাংশন (সবসময় মূল ইউজারের UID ব্যবহার করবে)
+async function moveImageToPermanentStorage(url, realAuthUid, docType = 'images') {
+  if (!url) return null;
+  
+  if (url.includes('properties/images') || url.includes('properties/documents')) {
+    return url; 
+  }
+  
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    const storageRef = firebase.storage().ref();
+    const baseDir = docType === 'images' ? 'properties/images' : `properties/documents/${docType}`;
+    
+    // ⚡ এখানে কোম্পানির আইডির বদলে মূল আসল ইউজার আইডি (realAuthUid) যাবে
+    const filename = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const permanentFileRef = storageRef.child(`${baseDir}/${realAuthUid}/${filename}`);
+
+    await permanentFileRef.put(blob);
+    return await permanentFileRef.getDownloadURL();
+  } catch (error) {
+    console.error("ফাইল স্থায়ী স্টোরেজে স্থানান্তর করতে ব্যর্থ:", error);
+    return url; 
+  }
+}
+
 async function publishPost() {
   const user = auth.currentUser;
   if (!user) {
