@@ -72,54 +72,59 @@ function renderDetails(data) {
     // =======================================================
     // 🏢/👤 পোস্টদাতার তথ্য ডাইনামিক লোড (ইউজার বনাম কোম্পানি পেজ)
     // =======================================================
-    const isCompanyPost = data.authorType === 'company' || !!data.companyId;
-    const authorId = data.authorId || (isCompanyPost ? data.companyId : data.userId);
+    const isCompanyPost = data.authorType === 'company' || data.ownerType === 'company' || !!data.companyId;
+    const companyId = data.companyId || data.ownerId || data.authorId;
+    const userId = data.userId || data.createdByUid || data.authorId;
     const authorTrigger = document.getElementById('authorProfileTrigger');
 
-    if (isCompanyPost && authorId) {
+    if (isCompanyPost && companyId) {
         // কোম্পানি কালেকশন থেকে ডেটা লোড
-        db.collection('companies').doc(authorId).get().then(compDoc => {
+        db.collection('companies').doc(companyId).get().then(compDoc => {
             if (compDoc.exists) {
                 const compData = compDoc.data();
                 const compName = compData.companyName || compData.name || data.postedByName || "কোম্পানি/এজেন্সি";
-                const compLogo = compData.logoUrl || compData.logo || data.postedByAvatar;
+                const compLogo = compData.logoUrl || compData.logo || compData.image || data.postedByAvatar;
 
                 document.getElementById('pub-name').textContent = compName;
-                if (compLogo) {
+                if (compLogo && document.getElementById('pub-avatar')) {
                     document.getElementById('pub-avatar').src = compLogo;
                 }
             } else {
                 document.getElementById('pub-name').textContent = data.postedByName || "কোম্পানি পেজ";
-                if (data.postedByAvatar) document.getElementById('pub-avatar').src = data.postedByAvatar;
+                if (data.postedByAvatar && document.getElementById('pub-avatar')) {
+                    document.getElementById('pub-avatar').src = data.postedByAvatar;
+                }
             }
         }).catch(() => {
             document.getElementById('pub-name').textContent = data.postedByName || "কোম্পানি পেজ";
         });
 
+        // কোম্পানির জন্য company-profile.html পেজে নিয়ে যাবে
         if (authorTrigger) {
             authorTrigger.onclick = () => {
-                window.location.href = `company-profile.html?companyId=${authorId}`;
+                window.location.href = `company-profile.html?companyId=${companyId}`;
             };
         }
-    } else if (data.userId) {
+    } else if (userId) {
         // সাধারণ ইউজার কালেকশন থেকে ডেটা লোড
-        db.collection('users').doc(data.userId).get().then(userDoc => {
+        db.collection('users').doc(userId).get().then(userDoc => {
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 document.getElementById('pub-name').textContent = userData.fullName || userData.name || "সম্মানিত বিক্রেতা";
-                if (userData.profilePic) {
+                if (userData.profilePic && document.getElementById('pub-avatar')) {
                     document.getElementById('pub-avatar').src = userData.profilePic;
                 }
             } else {
-                document.getElementById('pub-name').textContent = "সাধারণ ইউজার";
+                document.getElementById('pub-name').textContent = data.postedByName || "সাধারণ ইউজার";
             }
         }).catch(() => {
             document.getElementById('pub-name').textContent = "আমার বাড়ি প্ল্যাটফর্ম ইউজার";
         });
 
+        // সাধারণ ইউজারের জন্য seller-profile.html পেজে নিয়ে যাবে
         if (authorTrigger) {
             authorTrigger.onclick = () => {
-                window.location.href = `seller-profile.html?userId=${data.userId}`;
+                window.location.href = `seller-profile.html?userId=${userId}`;
             };
         }
     } else {
@@ -226,7 +231,6 @@ function renderDetails(data) {
 
     // অথেনটিকেশন চেক করে বাটন টগল করা
     firebase.auth().onAuthStateChanged((currentUser) => {
-        // পোস্টটি কোন আসল ইউজার বানিয়েছে তা চিহ্নিত করা
         const postOwnerUid = data.createdByUid || data.userId;
         
         const callBtn = document.getElementById('p-call');
@@ -294,7 +298,7 @@ function renderDetails(data) {
                 return; 
             }
 
-            const sellerId = data.authorId || data.userId;
+            const sellerId = data.companyId || data.ownerId || data.userId;
             if (!sellerId || !postId) {
                 alert("প্রপার্টি বা বিক্রেতার তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।");
                 return;
@@ -329,7 +333,7 @@ function renderDetails(data) {
     }
     
     // =======================================================
-    // 🎯 আমার বাড়ি প্ল্যাটফর্ম - এক্সপার্ট ডাইনামিক এসইও ইঞ্জিন
+    // 🎯 আমার বাড়ি প্ল্যাটফর্ম - এসইও ইঞ্জিন
     // =======================================================
     const currentUrl = window.location.href;
     const village = data.location?.village || " can't find";
@@ -437,10 +441,9 @@ async function setupLikeSystem(postData) {
                 likes: firebase.firestore.FieldValue.increment(isLiked ? 1 : -1)
             });
 
-            // --- লাইক নোটিফিকেশন ট্রিগার লজিক ---
             if (isLiked) {
                 const currentUser = firebase.auth().currentUser;
-                const targetUserId = postData.createdByUid || postData.userId;
+                const targetUserId = postData.companyId || postData.ownerId || postData.createdByUid || postData.userId;
                 if (currentUser && currentUser.uid !== targetUserId) {
                     writeNotificationToFirestore(
                         targetUserId,              
@@ -490,10 +493,9 @@ function setupSaveAndShareSystem(postData) {
             updateSaveUI(isSaved);
             alert(isSaved ? "পোস্টটি সফলভাবে সেভ করা হয়েছে!" : "সেভ তালিকা থেকে বাদ দেওয়া হয়েছে।");
 
-            // --- সেভ/বুকমার্ক নোটিফিকেশন ট্রিগার লজিক ---
             if (isSaved) {
                 const currentUser = firebase.auth().currentUser;
-                const targetUserId = postData.createdByUid || postData.userId;
+                const targetUserId = postData.companyId || postData.ownerId || postData.createdByUid || postData.userId;
                 if (currentUser) {
                     if (currentUser.uid !== targetUserId) {
                         writeNotificationToFirestore(
@@ -537,7 +539,6 @@ function setupSaveAndShareSystem(postData) {
     }
 }
 
-// খতিয়ান ভেরিফিকেশন বাটন হ্যান্ডলার ও একই সাথে নোটিফিকেশন রাইটার
 document.addEventListener('DOMContentLoaded', () => {
     const khotiyanButton = document.getElementById('btn-verify-khotian');
     if (khotiyanButton) {
@@ -545,14 +546,13 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             alert("ফিচারটি অতিশিগ্রই আসছে, সাইটের কাজ চলমান।");
 
-            // বাটন ক্লিক করার ট্র্যাকিং ও নোটিফিকেশন পুশ লজিক
             if (postId) {
                 try {
                     const doc = await db.collection('properties').doc(postId).get();
                     if (doc.exists) {
                         const postData = doc.data();
                         const currentUser = firebase.auth().currentUser;
-                        const targetUserId = postData.createdByUid || postData.userId;
+                        const targetUserId = postData.companyId || postData.ownerId || postData.createdByUid || postData.userId;
                         if (currentUser && currentUser.uid !== targetUserId) {
                             writeNotificationToFirestore(
                                 targetUserId,
@@ -696,11 +696,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
 
-
-
-/**
- * ফায়ারস্টোরে নোটিফিকেশন লেখার কমন ফাংশন (সাইনআপড ইউজারের জন্য)
- */
 async function writeNotificationToFirestore(recipientId, senderId, postId, title, message, type) {
     try {
         const notifData = {
@@ -720,9 +715,6 @@ async function writeNotificationToFirestore(recipientId, senderId, postId, title
     }
 }
 
-/**
- * গেস্ট ইউজারের লোকাল স্টোরেজে নোটিফিকেশন লেখার ফাংশন
- */
 function writeNotificationToLocalStorage(postId, title, message, type) {
     let guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
     const newNotification = {
@@ -736,4 +728,4 @@ function writeNotificationToLocalStorage(postId, title, message, type) {
     guestNotifications.unshift(newNotification);
     localStorage.setItem("guest_notifications", JSON.stringify(guestNotifications));
     console.log("গেস্ট নোটিফিকেশন লোকাল স্টোরেজে লেখা হয়েছে।");
-                }
+}
