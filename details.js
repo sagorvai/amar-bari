@@ -57,20 +57,15 @@ function renderDetails(data) {
             gallery.appendChild(div);
         });
 
-        // ফ্যান্সি-বক্স অ্যাক্টিভ করার কোড
         if (typeof Fancybox !== 'undefined') {
             Fancybox.bind("[data-fancybox='gallery']", {
-                Images: {
-                    Panzoom: {
-                        maxScale: 3, 
-                    },
-                },
+                Images: { Panzoom: { maxScale: 3 } },
             });
         }
     }
 
     // =======================================================
-    // 🏢/👤 পোস্টদাতার তথ্য ডাইনামিক লোড (ইউজার বনাম কোম্পানি পেজ)
+    // 🏢/👤 পোস্টদাতার তথ্য ডাইনামিক লোড ও প্রোফাইল রিডাইরেক্ট
     // =======================================================
     const isCompanyPost = data.authorType === 'company' || data.ownerType === 'company' || !!data.companyId;
     const companyId = data.companyId || data.ownerId || data.authorId;
@@ -78,35 +73,26 @@ function renderDetails(data) {
     const authorTrigger = document.getElementById('authorProfileTrigger');
 
     if (isCompanyPost && companyId) {
-        // কোম্পানি কালেকশন থেকে ডেটা লোড
         db.collection('companies').doc(companyId).get().then(compDoc => {
             if (compDoc.exists) {
                 const compData = compDoc.data();
-                const compName = compData.companyName || compData.name || data.postedByName || "কোম্পানি/এজেন্সি";
-                const compLogo = compData.logoUrl || compData.logo || compData.image || data.postedByAvatar;
-
-                document.getElementById('pub-name').textContent = compName;
-                if (compLogo && document.getElementById('pub-avatar')) {
-                    document.getElementById('pub-avatar').src = compLogo;
+                document.getElementById('pub-name').textContent = compData.companyName || compData.name || data.postedByName || "কোম্পানি/এজেন্সি";
+                if ((compData.logoUrl || compData.logo) && document.getElementById('pub-avatar')) {
+                    document.getElementById('pub-avatar').src = compData.logoUrl || compData.logo;
                 }
             } else {
                 document.getElementById('pub-name').textContent = data.postedByName || "কোম্পানি পেজ";
-                if (data.postedByAvatar && document.getElementById('pub-avatar')) {
-                    document.getElementById('pub-avatar').src = data.postedByAvatar;
-                }
             }
         }).catch(() => {
             document.getElementById('pub-name').textContent = data.postedByName || "কোম্পানি পেজ";
         });
 
-        // কোম্পানির জন্য company-profile.html পেজে নিয়ে যাবে
         if (authorTrigger) {
             authorTrigger.onclick = () => {
                 window.location.href = `company-profile.html?companyId=${companyId}`;
             };
         }
     } else if (userId) {
-        // সাধারণ ইউজার কালেকশন থেকে ডেটা লোড
         db.collection('users').doc(userId).get().then(userDoc => {
             if (userDoc.exists) {
                 const userData = userDoc.data();
@@ -115,13 +101,12 @@ function renderDetails(data) {
                     document.getElementById('pub-avatar').src = userData.profilePic;
                 }
             } else {
-                document.getElementById('pub-name').textContent = data.postedByName || "সাধারণ ইউজার";
+                document.getElementById('pub-name').textContent = "সাধারণ ইউজার";
             }
         }).catch(() => {
             document.getElementById('pub-name').textContent = "আমার বাড়ি প্ল্যাটফর্ম ইউজার";
         });
 
-        // সাধারণ ইউজারের জন্য seller-profile.html পেজে নিয়ে যাবে
         if (authorTrigger) {
             authorTrigger.onclick = () => {
                 window.location.href = `seller-profile.html?userId=${userId}`;
@@ -217,7 +202,7 @@ function renderDetails(data) {
     }
 
     // =======================================================
-    // 📞 ৫. বাটন ও অ্যাকশন কন্ট্রোল (ভিজিটর বনাম পোস্টদাতা)
+    // 📞 ৫. বাটন ও অ্যাকশন কন্ট্রোল
     // =======================================================
     const conT = 'table-contact';
     if (document.getElementById(conT)) {
@@ -229,7 +214,6 @@ function renderDetails(data) {
         document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
     }
 
-    // অথেনটিকেশন চেক করে বাটন টগল করা
     firebase.auth().onAuthStateChanged((currentUser) => {
         const postOwnerUid = data.createdByUid || data.userId;
         
@@ -251,9 +235,7 @@ function renderDetails(data) {
             if (deleteBtn) deleteBtn.style.display = 'flex';
 
             if (editBtn) {
-                editBtn.onclick = () => {
-                    window.location.href = `post.html?edit=${postId}`;
-                };
+                editBtn.onclick = () => { window.location.href = `post.html?edit=${postId}`; };
             }
             if (boostBtn) {
                 boostBtn.onclick = (e) => {
@@ -275,7 +257,6 @@ function renderDetails(data) {
                     }
                 };
             }
-
         } else {
             if (callBtn && data.phoneNumber) callBtn.style.display = 'flex';
             if (msgBtn) msgBtn.style.display = 'flex';
@@ -287,7 +268,6 @@ function renderDetails(data) {
         }
     });
 
-    // মেসেজ বাটনের ক্লিকের মূল লজিক (ভিজিটরদের জন্য)
     const msgBtn = document.getElementById('p-message');
     if (msgBtn) {
         msgBtn.onclick = async () => {
@@ -332,9 +312,7 @@ function renderDetails(data) {
         };
     }
     
-    // =======================================================
-    // 🎯 আমার বাড়ি প্ল্যাটফর্ম - এসইও ইঞ্জিন
-    // =======================================================
+    // SEO
     const currentUrl = window.location.href;
     const village = data.location?.village || " can't find";
     const thana = data.location?.thana || data.location?.upazila || "can't find";
@@ -352,9 +330,7 @@ function renderDetails(data) {
     document.title = seoTitle; 
     
     const seoTitleTag = document.getElementById('seo-title');
-    if (seoTitleTag) {
-        seoTitleTag.innerText = seoTitle;
-    }
+    if (seoTitleTag) seoTitleTag.innerText = seoTitle;
     
     document.getElementById('seo-desc')?.setAttribute('content', seoDescription);
     document.getElementById('seo-canonical')?.setAttribute('href', currentUrl);
@@ -588,11 +564,7 @@ function formatPostTime(date) {
     if (diffWeek < 4) return `${diffWeek} সপ্তাহ আগে`;
     if (diffMonth < 3) return `${diffMonth} মাস আগে`;
 
-    return date.toLocaleDateString('bn-BD', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
+    return date.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 async function loadRelatedPosts(currentData) {
@@ -696,6 +668,24 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
 
+firebase.auth().onAuthStateChanged(async (user) => {
+    const headerProfileImg = document.querySelector('#profileImageWrapper img');
+    if (user && headerProfileImg) {
+        try {
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists && userDoc.data().profilePic) {
+                headerProfileImg.src = userDoc.data().profilePic;
+            } else if (user.photoURL) {
+                headerProfileImg.src = user.photoURL;
+            } else {
+                headerProfileImg.src = 'assets/images/default-avatar.png';
+            }
+        } catch (error) {
+            console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
+        }
+    }
+});
+
 async function writeNotificationToFirestore(recipientId, senderId, postId, title, message, type) {
     try {
         const notifData = {
@@ -709,7 +699,6 @@ async function writeNotificationToFirestore(recipientId, senderId, postId, title
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
         await db.collection("notifications").add(notifData);
-        console.log("ফায়ারস্টোরে নোটিফিকেশন সফলভাবে লেখা হয়েছে।");
     } catch (error) {
         console.error("ফায়ারস্টোরে নোটিফিকেশন লিখতে ত্রুটি: ", error);
     }
@@ -727,5 +716,4 @@ function writeNotificationToLocalStorage(postId, title, message, type) {
     };
     guestNotifications.unshift(newNotification);
     localStorage.setItem("guest_notifications", JSON.stringify(guestNotifications));
-    console.log("গেস্ট নোটিফিকেশন লোকাল স্টোরেজে লেখা হয়েছে।");
-}
+                }
