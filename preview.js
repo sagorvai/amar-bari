@@ -1,4 +1,4 @@
-// preview.js - Fixed with Production-Ready Storage Moving, Price Drop Alert & Active Identity Integration
+// preview.js - Fixed with Production-Ready Storage Moving, Price Drop Alert & Security Rules Sync
 const db = firebase.firestore();
 const auth = firebase.auth();
 
@@ -162,7 +162,6 @@ function goBack() {
   }
 }
 
-// 🎯 ১. স্টোরেজ পাথ ফিক্সড ফাংশন (সবসময় মূল ইউজারের UID ব্যবহার করবে)
 async function moveImageToPermanentStorage(url, realAuthUid, docType = 'images') {
   if (!url) return null;
   
@@ -177,7 +176,7 @@ async function moveImageToPermanentStorage(url, realAuthUid, docType = 'images')
     const storageRef = firebase.storage().ref();
     const baseDir = docType === 'images' ? 'properties/images' : `properties/documents/${docType}`;
     
-    // ⚡ এখানে কোম্পানির আইডির বদলে মূল আসল ইউজার আইডি (realAuthUid) যাবে
+    // ফাইল নেম তৈরি এবং আসল UID দিয়ে পাথ তৈরি
     const filename = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const permanentFileRef = storageRef.child(`${baseDir}/${realAuthUid}/${filename}`);
 
@@ -203,9 +202,9 @@ async function publishPost() {
   }
 
   try {
-    const realAuthUid = user.uid; // আপনার মূল Firebase Authentication UID
+    const realAuthUid = user.uid; // আসল ফায়ারবেস Auth UID
 
-    // 🎯 অ্যাক্টিভ আইডেন্টিটি চেক (ইউজার নাকি কোম্পানি পেজ)
+    // 🎯 বর্তমান অ্যাক্টিভ আইডেন্টিটি রিকভারি
     const activeIdentity = (typeof window.getActiveIdentity === 'function') ? window.getActiveIdentity() : {
       id: realAuthUid,
       type: 'user',
@@ -214,7 +213,7 @@ async function publishPost() {
       avatar: user.photoURL || ''
     };
 
-    // 🖼️ ১. ইমেজ স্থায়ী স্টোরেজে সেভ (সবসময় আসল UID দিয়ে)
+    // 🖼️ ১. স্থায়ী স্টোরেজে ছবি সেভ (সবসময় আসল Auth UID দিয়ে)
     const finalImages = [];
     const propertyImages = imageData.images || [];
     for (let img of propertyImages) {
@@ -239,7 +238,7 @@ async function publishPost() {
       finalSketch = imageData.sketch.url ? { ...imageData.sketch, url: permanentSketchUrl } : permanentSketchUrl;
     }
 
-    // 🎯 ২. ফায়ারস্টোর সিকিউরিটি রুলস (Security Rules) অনুযায়ী ডাটা স্ট্রাকচার তৈরি
+    // 🎯 ২. সিকিউরিটি রুলসের (Firestore Security Rules) সাথে ১০০% সিঙ্ক করা ডেটা অবজেক্ট
     const preparedData = {
       ...postData,
       images: finalImages,
@@ -248,33 +247,37 @@ async function publishPost() {
         sketch: finalSketch
       },
       status: 'published',
-
-      // 🔥 সিকিউরিটি রুলসের সাথে ১০০% ম্যাচ করা ফিল্ডসমূহ:
+      
+      // 🔥 সিকিউরিটি রুলসের প্রধান ফিল্ডসমূহ
       authorType: activeIdentity.type,                            // 'user' অথবা 'company'
       authorId: activeIdentity.id,                                // ইউজার আইডি অথবা কোম্পানি আইডি
-      userId: realAuthUid,                                       // সিকিউরিটি রুলস চেক করার জন্য মূল ইউজারের UID
-      companyId: activeIdentity.type === 'company' ? activeIdentity.id : null, // কোম্পানির পোস্টে ফিল্টারিংয়ের জন্য
-      createdByUid: realAuthUid,                                 // এডিট/ডিলিট পারমিশনের জন্য
+      userId: realAuthUid,                                       // রুলস চেক পার করার জন্য মূল Auth UID
+      companyId: activeIdentity.type === 'company' ? activeIdentity.id : null, // কোম্পানির ফিল্টারিং
+      createdByUid: realAuthUid,                                 // এডিট/ডিলিট পারমিশন ম্যাচ করার জন্য
       
-      // UI রেন্ডারিং সহজ করার জন্য তথ্য
-      postedByName: activeIdentity.name,
-      postedByAvatar: activeIdentity.avatar,
+      // UI ও যোগাযোগের তথ্যাদি
+      ownerId: activeIdentity.id,            
+      ownerType: activeIdentity.type,        
+      postedByName: activeIdentity.name,     
+      postedByAvatar: activeIdentity.avatar, 
 
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    // 🎯 ৩. এডিট মোড নাকি নতুন পোস্ট চেক
+    // 🎯 ৩. এডিট নাকি নতুন পোস্ট চেক
     const originalPostId = sessionStorage.getItem('editingPostId') || postData.editPostId || postData.id;
 
     if (originalPostId) {
+      // ডুপ্লিকেট কি রিমুভ
       delete preparedData.id; 
       delete preparedData.postId;
       delete preparedData.editPostId;
       delete preparedData.isEditMode;
 
+      // ফায়ারস্টোর আপডেট
       await db.collection('properties').doc(originalPostId).update(preparedData);
 
-      // দাম কমার অ্যালার্ট ট্রিগার
+      // 🎯 দাম কমার নোটিফিকেশন অ্যালার্ট
       const oldPrice = parseFloat(sessionStorage.getItem('preEditPriceBackup') || '0');
       const newPrice = parseFloat(preparedData.category === 'বিক্রয়' ? preparedData.price : preparedData.monthlyRent);
 
@@ -290,8 +293,13 @@ async function publishPost() {
       }
       
       sessionStorage.clear();
-      alert('🎉 অভিনন্দন বন্ধু! আপনার পোস্টটি সফলভাবে সংশোধিত হয়েছে।');
-      location.href = 'index.html';
+      alert('🎉 অভিনন্দন বন্ধু! আমার বাড়ি প্ল্যাটফর্মে আপনার পোস্টটি সফলভাবে সংশোধন করা হয়েছে।');
+      
+      if (document.referrer && !document.referrer.includes('post.html') && !document.referrer.includes('preview.html')) {
+        location.href = document.referrer;
+      } else {
+        location.href = 'index.html';
+      }
 
     } else {
       preparedData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
@@ -299,12 +307,12 @@ async function publishPost() {
       await db.collection('properties').add(preparedData);
       
       sessionStorage.clear();
-      alert('🎉 অভিনন্দন বন্ধু! কোম্পানি পেজ থেকে আপনার পোস্টটি সফলভাবে প্রকাশিত হয়েছে।');
+      alert('🎉 অভিনন্দন বন্ধু! আমার বাড়ি প্ল্যাটফর্মে আপনার পোস্টটি সফলভাবে লাইভ হয়েছে।');
       location.href = 'index.html';
     }
 
   } catch (e) {
-    console.error("Firestore error details:", e);
+    console.error("Firestore Save Error:", e);
     alert('পোস্ট প্রকাশ করতে সমস্যা হয়েছে: ' + e.message);
     if(originalBtn) {
       originalBtn.disabled = false;
