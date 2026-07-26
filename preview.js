@@ -162,31 +162,6 @@ function goBack() {
   }
 }
 
-async function moveImageToPermanentStorage(url, userId, docType = 'images') {
-  if (!url) return null;
-  
-  if (url.includes('properties/images') || url.includes('properties/documents')) {
-    return url; 
-  }
-  
-  try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-
-    const storageRef = firebase.storage().ref();
-    const baseDir = docType === 'images' ? 'properties/images' : `properties/documents/${docType}`;
-    
-    const filename = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    const permanentFileRef = storageRef.child(`${baseDir}/${userId}/${filename}`);
-
-    await permanentFileRef.put(blob);
-    return await permanentFileRef.getDownloadURL();
-  } catch (error) {
-    console.error("ফাইল স্থায়ী স্টোরেজে স্থানান্তর করতে ব্যর্থ:", error);
-    return url; 
-  }
-}
-
 async function publishPost() {
   const user = auth.currentUser;
   if (!user) {
@@ -201,23 +176,24 @@ async function publishPost() {
   }
 
   try {
-    const userId = user.uid;
+    const realAuthUid = user.uid; // আপনার মূল Firebase Authentication UID
 
-    // 🎯 বর্তমান অ্যাক্টিভ আইডেন্টিটি রিকভারি
+    // 🎯 অ্যাক্টিভ আইডেন্টিটি চেক (ইউজার নাকি কোম্পানি পেজ)
     const activeIdentity = (typeof window.getActiveIdentity === 'function') ? window.getActiveIdentity() : {
-      id: userId,
+      id: realAuthUid,
       type: 'user',
-      ownerUid: userId,
+      ownerUid: realAuthUid,
       name: user.displayName || 'ইউজার',
       avatar: user.photoURL || ''
     };
 
+    // 🖼️ ১. ইমেজ স্থায়ী স্টোরেজে সেভ (সবসময় আসল UID দিয়ে)
     const finalImages = [];
     const propertyImages = imageData.images || [];
     for (let img of propertyImages) {
       const currentUrl = img.url || img;
       if (currentUrl) {
-        const permanentUrl = await moveImageToPermanentStorage(currentUrl, userId, 'images');
+        const permanentUrl = await moveImageToPermanentStorage(currentUrl, realAuthUid, 'images');
         finalImages.push(img.url ? { ...img, url: permanentUrl } : permanentUrl);
       }
     }
@@ -225,17 +201,18 @@ async function publishPost() {
     let finalKhotian = null;
     if (imageData.khotian) {
       const khotianUrl = imageData.khotian.url || imageData.khotian;
-      const permanentKhotianUrl = await moveImageToPermanentStorage(khotianUrl, userId, 'khotian');
+      const permanentKhotianUrl = await moveImageToPermanentStorage(khotianUrl, realAuthUid, 'khotian');
       finalKhotian = imageData.khotian.url ? { ...imageData.khotian, url: permanentKhotianUrl } : permanentKhotianUrl;
     }
 
     let finalSketch = null;
     if (imageData.sketch) {
       const sketchUrl = imageData.sketch.url || imageData.sketch;
-      const permanentSketchUrl = await moveImageToPermanentStorage(sketchUrl, userId, 'sketch');
+      const permanentSketchUrl = await moveImageToPermanentStorage(sketchUrl, realAuthUid, 'sketch');
       finalSketch = imageData.sketch.url ? { ...imageData.sketch, url: permanentSketchUrl } : permanentSketchUrl;
     }
 
+    // 🎯 ২. ফায়ারস্টোর সিকিউরিটি রুলস (Security Rules) অনুযায়ী ডাটা স্ট্রাকচার তৈরি
     const preparedData = {
       ...postData,
       images: finalImages,
@@ -244,33 +221,33 @@ async function publishPost() {
         sketch: finalSketch
       },
       status: 'published',
+
+      // 🔥 সিকিউরিটি রুলসের সাথে ১০০% ম্যাচ করা ফিল্ডসমূহ:
+      authorType: activeIdentity.type,                            // 'user' অথবা 'company'
+      authorId: activeIdentity.id,                                // ইউজার আইডি অথবা কোম্পানি আইডি
+      userId: realAuthUid,                                       // সিকিউরিটি রুলস চেক করার জন্য মূল ইউজারের UID
+      companyId: activeIdentity.type === 'company' ? activeIdentity.id : null, // কোম্পানির পোস্টে ফিল্টারিংয়ের জন্য
+      createdByUid: realAuthUid,                                 // এডিট/ডিলিট পারমিশনের জন্য
       
-      // 🎯 অ্যাক্টিভ আইডেন্টিটি সিঙ্ক
-      userId: activeIdentity.id,             // কোম্পানি আইডি অথবা ইউজার আইডি
-      companyId: activeIdentity.type === 'company' ? activeIdentity.id : null, // কোম্পানির পোস্টে ফিল্টারের জন্য
-      ownerId: activeIdentity.id,            // প্রপার্টির মূল মালিক
-      ownerType: activeIdentity.type,        // 'company' অথবা 'user'
-      createdByUserId: userId,               // লগইন করা ইউজার আইডি
-      postedByName: activeIdentity.name,     // কোম্পানি বা ইউজারের নাম
-      postedByAvatar: activeIdentity.avatar, // কোম্পানি বা ইউজারের ছবি
+      // UI রেন্ডারিং সহজ করার জন্য তথ্য
+      postedByName: activeIdentity.name,
+      postedByAvatar: activeIdentity.avatar,
 
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    // 🎯 ৩-লেভেল সেফটি চেক আইডি রিকভারির জন্য
+    // 🎯 ৩. এডিট মোড নাকি নতুন পোস্ট চেক
     const originalPostId = sessionStorage.getItem('editingPostId') || postData.editPostId || postData.id;
 
     if (originalPostId) {
-      // ডুপ্লিকেট কি রিমুভ করা হচ্ছে
       delete preparedData.id; 
       delete preparedData.postId;
       delete preparedData.editPostId;
       delete preparedData.isEditMode;
 
-      // ফায়ারস্টোর আপডেট এক্সিকিউশন
       await db.collection('properties').doc(originalPostId).update(preparedData);
 
-      // 🎯 রিয়েল-টাইম দাম কমার অ্যালার্ট ট্রিগার লজিক
+      // দাম কমার অ্যালার্ট ট্রিগার
       const oldPrice = parseFloat(sessionStorage.getItem('preEditPriceBackup') || '0');
       const newPrice = parseFloat(preparedData.category === 'বিক্রয়' ? preparedData.price : preparedData.monthlyRent);
 
@@ -282,18 +259,12 @@ async function publishPost() {
               type: "price_drop",
               createdAt: firebase.firestore.FieldValue.serverTimestamp()
           };
-          // গ্লোবাল নোটিফিকেশন কালেকশনে অ্যালার্ট ডেটা পাঠানো হলো
           await db.collection('notifications').add(discountAlert);
       }
       
       sessionStorage.clear();
-      alert('🎉 অভিনন্দন বন্ধু! আমার বাড়ি প্ল্যাটফর্মে আপনার পোস্টটি সফলভাবে সংশোধন করা হয়েছে।');
-      
-      if (document.referrer && !document.referrer.includes('post.html') && !document.referrer.includes('preview.html')) {
-        location.href = document.referrer;
-      } else {
-        location.href = 'index.html';
-      }
+      alert('🎉 অভিনন্দন বন্ধু! আপনার পোস্টটি সফলভাবে সংশোধিত হয়েছে।');
+      location.href = 'index.html';
 
     } else {
       preparedData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
@@ -301,13 +272,13 @@ async function publishPost() {
       await db.collection('properties').add(preparedData);
       
       sessionStorage.clear();
-      alert('🎉 অভিনন্দন বন্ধু! আমার বাড়ি প্ল্যাটফর্মে আপনার পোস্টটি সফলভাবে লাইভ হয়েছে।');
+      alert('🎉 অভিনন্দন বন্ধু! কোম্পানি পেজ থেকে আপনার পোস্টটি সফলভাবে প্রকাশিত হয়েছে।');
       location.href = 'index.html';
     }
 
   } catch (e) {
-    console.error(e);
-    alert('পোস্ট প্রকাশ করতে সমস্যা হয়েছে, আবার চেষ্টা করুন।');
+    console.error("Firestore error details:", e);
+    alert('পোস্ট প্রকাশ করতে সমস্যা হয়েছে: ' + e.message);
     if(originalBtn) {
       originalBtn.disabled = false;
       originalBtn.innerText = '✅ চূড়ান্ত পোস্ট করুন';
