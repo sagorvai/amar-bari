@@ -14,6 +14,9 @@ const sUrlParams = new URLSearchParams(window.location.search);
 const targetUserId = sUrlParams.get('userId');
 
 document.addEventListener('DOMContentLoaded', () => {
+    // হেডার ও সাইডবার নেভিগেশন লজিক
+    setupHeaderAndSidebar();
+
     if (!targetUserId) {
         alert("ভুল ব্যবহারকারী আইডি!");
         window.history.back();
@@ -24,34 +27,48 @@ document.addEventListener('DOMContentLoaded', () => {
     setupInteractiveProfileRating();
 });
 
-// ১. বিক্রেতার ডাটা ফায়ারবেস থেকে পড়া এবং স্ক্রিনে রিডাইরেক্ট করা
+// হেডার এবং সাইডবারের জন্য ক্লিক ইভেন্ট
+function setupHeaderAndSidebar() {
+    const menuButton = document.getElementById('menuButton');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const notificationButton = document.getElementById('notificationButton');
+    const headerPostButton = document.getElementById('headerPostButton');
+    const messageButton = document.getElementById('messageButton');
+    const profileImageWrapper = document.getElementById('profileImageWrapper');
+
+    if (menuButton && sidebar && overlay) {
+        menuButton.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+
+    if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
+    if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
+    if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
+    if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
+}
+
+// ১. বিক্রেতার ডাটা ফায়ারবেস থেকে পড়া
 function loadSellerProfileData() {
     db.collection('users').doc(targetUserId).get().then(doc => {
         if (doc.exists) {
             const uData = doc.data();
             
-            // নাম সেটআপ
             document.getElementById('s-name').textContent = uData.fullName || uData.name || "সম্মানিত বিক্রেতা";
-            
-            // 🎯 ইমেইল ফিক্স: ফায়ারস্টোর ডক ফাইল থেকে সরাসরি রিড (uData.email)
             document.getElementById('s-email').textContent = uData.email || "ইমেইল সরবরাহ করা হয়নি";
-            
-            // মেম্বার আইডি
             document.getElementById('s-uid-text').textContent = `...${targetUserId.substring(0,6)}`;
-            
-            // 🎯 নতুন ফেসবুক পরিচিতি ফিল্ডসমূহ ম্যাপিং
             document.getElementById('s-profession').textContent = uData.profession || "যুক্ত করা নেই";
             document.getElementById('s-location').textContent = uData.location || "যুক্ত করা নেই";
             
-            // মোবাইল নম্বর ভ্যালিডেশন
             let userPhone = uData.phoneNumber || uData.phone || "";
-            if (userPhone) {
-                document.getElementById('s-phone').textContent = userPhone;
-            } else {
-                document.getElementById('s-phone').textContent = "ফোন নম্বর সেট করা নেই";
-            }
+            document.getElementById('s-phone').textContent = userPhone ? userPhone : "ফোন নম্বর সেট করা নেই";
 
-            // অফিস ঠিকানা শর্তসাপেক্ষে প্রদর্শন
             if (uData.officeAddress && uData.officeAddress.trim() !== "") {
                 document.getElementById('s-office').textContent = uData.officeAddress;
                 document.getElementById('s-office-item').style.display = 'flex';
@@ -59,19 +76,16 @@ function loadSellerProfileData() {
                 document.getElementById('s-office-item').style.display = 'none';
             }
 
-            // 🎯 বায়ো নামের নিচে সেটআপ
             if (uData.bio && uData.bio.trim() !== "") {
                 document.getElementById('s-bio').textContent = `"${uData.bio}"`;
             } else {
                 document.getElementById('s-bio').textContent = "";
             }
             
-            // প্রোফাইল পিকচার
             if (uData.profilePic) {
                 document.getElementById('s-avatar').src = uData.profilePic;
             }
 
-            // ভেরিফাইড ব্যাজ
             if (uData.isVerified === true || uData.role === 'admin') {
                 document.getElementById('badgeVerified').style.display = 'flex';
             }
@@ -86,7 +100,7 @@ function loadSellerProfileData() {
     });
 }
 
-// ২. একটিভ লিস্টিং সমুহ প্রপার্টি কালেকশন থেকে নিয়ে আসা
+// ২. একটিভ প্রপার্টি কালেকশন লোড
 async function loadSellerProperties() {
     const grid = document.getElementById('seller-listings');
     if (!grid) return;
@@ -137,7 +151,7 @@ async function loadSellerProperties() {
     }
 }
 
-// ৩. রিয়েল-টাইম ফায়ারবেস ট্রানজেকশন রেটিং জোন
+// ৩. রেটিং ট্রানজেকশন
 function setupInteractiveProfileRating() {
     const starZone = document.getElementById('profileStarsZone');
     if (!starZone) return;
@@ -218,4 +232,4 @@ function displayCalculatedRating(count, sum) {
     }
     let average = (sum / count).toFixed(1);
     label.textContent = `গড় রেটিং: ⭐ ${average} (${count}টি ভোট)`;
-                }
+}
