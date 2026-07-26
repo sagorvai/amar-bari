@@ -17,9 +17,9 @@
             --primary-gradient: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
             --cover-gradient: linear-gradient(135deg, rgba(24, 43, 73, 0.9) 0%, rgba(0, 123, 255, 0.85) 100%);
             --success: #28a745; 
-            --dark: #1c1e21; /* Facebook style dark */
-            --gray: #65676b; /* Facebook secondary text */
-            --bg: #f0f2f5;   /* Facebook body bg */
+            --dark: #1c1e21; 
+            --gray: #65676b; 
+            --bg: #f0f2f5;   
             --gold: #f1c40f;
             --border: #e4e6eb;
         }
@@ -33,14 +33,13 @@
              z-index: 1000; 
         }
         
-        /* --- ⭐ FIX 2: সাইডবার পজিশনিং, ট্রানজিশন ও রঙ যোগ করা হলো ⭐ --- */
         .sidebar {
             position: fixed; 
             top: 0;
             left: -250px; 
             width: 250px; 
             height: 100%;
-            background-color: #34495e; /* গাঢ় নীল/ধূসর রঙ */
+            background-color: #34495e;
             transition: left 0.3s ease; 
             box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
             z-index: 1050; 
@@ -48,26 +47,19 @@
             padding-top: 50px; 
         }
         
-        .sidebar.active {
-            left: 0; 
-        }
+        .sidebar.active { left: 0; }
         
         .overlay {
             position: fixed; 
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.5); 
             z-index: 1040; 
             display: none; 
         }
         
-        .overlay.active {
-            display: block; 
-        }
+        .overlay.active { display: block; }
         
-        /* সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা */
         .sidebar a {
             color: white; 
             padding: 12px 15px; 
@@ -77,16 +69,9 @@
             font-weight: 500;
         }
 
-        .sidebar a i.material-icons {
-            color: white; 
-            margin-right: 10px;
-        }
-
-        .sidebar a:hover {
-            background-color: #3e5369; 
-        }
+        .sidebar a i.material-icons { color: white; margin-right: 10px; }
+        .sidebar a:hover { background-color: #3e5369; }
         
-        /* সাইডবারের লোগো লিঙ্ক */
         .sidebar-logo {
             padding: 15px;
             font-size: 1.5em;
@@ -98,7 +83,7 @@
         
         .header-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; }
         .header-left { display: flex; align-items: center; flex-shrink: 0; }
-        .menu-icon { cursor: pointer; color: dark; font-size: 28px; }
+        .menu-icon { cursor: pointer; color: var(--dark); font-size: 28px; }
         .logo-title { display: flex; align-items: center; font-size: 1.5em; font-weight: bold; color: var(--primary); text-decoration: none; white-space: nowrap; margin-left: 10px; }
         .logo-icon { margin-right: 5px; }
 
@@ -117,34 +102,7 @@
             .logo-title { font-size: 1.2em; }
             .header-actions { gap: 8px; }
         }
-        
-        .profile-premium-card { 
-            background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; border: 1px solid var(--border);
-        }
-        .profile-cover-photo::before {
-            
-            content: "corporate_fare";
-            font-family: 'Material Icons';
-            position: absolute;
-            right: 15px;
-            bottom: -15px;
-            font-size: 120px;
-            color: rgba(255, 255, 255, 0.08);
-            pointer-events: none;
-        }
 
-            .profile-cover-photo::after {
-            content: "home";
-            font-family: 'Material Icons';
-            position: absolute;
-            left: 20px;
-            top: 20px;
-            font-size: 70px;
-            color: rgba(255, 255, 255, 0.05);
-            pointer-events: none;
-                }
-        
-        
         .container { max-width: 600px; margin: auto; padding: 10px; box-sizing: border-box; }
         
         .btn-back { background: white; border: 1px solid #ddd; color: var(--dark); padding: 8px 16px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 14px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: fit-content; transition: 0.2s; }
@@ -169,7 +127,6 @@
             position: relative;
         }
         .profile-cover-photo::before {
-            
             content: "corporate_fare";
             font-family: 'Material Icons';
             position: absolute;
@@ -179,8 +136,7 @@
             color: rgba(255, 255, 255, 0.08);
             pointer-events: none;
         }
-
-            .profile-cover-photo::after {
+        .profile-cover-photo::after {
             content: "home";
             font-family: 'Material Icons';
             position: absolute;
@@ -189,8 +145,7 @@
             font-size: 70px;
             color: rgba(255, 255, 255, 0.05);
             pointer-events: none;
-            }
-        
+        }
 
         .profile-content-box {
             padding: 0px 16px 20px 16px;
@@ -226,11 +181,8 @@
         .status-dot { position: absolute; bottom: 6px; right: 6px; width: 14px; height: 14px; background: #2ecc71; border: 2px solid white; border-radius: 50%; }
 
         .seller-name { font-size: 24px; font-weight: bold; color: var(--dark); margin: 0 0 4px 0; }
-        
-        /* 💬 বায়ো টেক্সট (এখন একদম নামের নিচে) */
         .seller-bio { font-size: 14px; color: var(--gray); line-height: 1.4; margin: 6px auto 12px auto; max-width: 85%; font-style: italic; }
 
-        /* 📋 ফেসবুক অরিজিনাল স্টাইল ইন্ট্রো পরিচিতি বক্স (সুবিন্যস্ত বামে এলাইন করা) */
         .facebook-intro-card {
             background: white;
             border-radius: 12px;
@@ -247,7 +199,6 @@
         .intro-item i { color: #8c939d; font-size: 20px; }
         .intro-item strong { font-weight: 600; }
 
-        /* ⭐ পাবলিক রেটিং এবং রিভিউ সেকশন */
         .profile-rating-section { background: #fffdf3; border: 1px solid #fbf1c9; padding: 15px; border-radius: 12px; margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
         .rating-title { font-size: 13px; font-weight: bold; color: #b78a00; text-transform: uppercase; }
         .stars-display { display: flex; gap: 4px; }
@@ -255,7 +206,6 @@
         .stars-display i.active { color: var(--gold); }
         .rating-stats-text { font-size: 12px; color: var(--dark); font-weight: 600; background: #fef6d3; padding: 4px 10px; border-radius: 10px; }
 
-        /* প্রপার্টি লিস্টিং কার্ড ডিজাইন */
         .list-title { font-size: 16px; font-weight: bold; color: var(--dark); margin: 25px 0 12px 0; display: flex; align-items: center; gap: 6px; border-left: 4px solid var(--primary); padding-left: 8px; }
         .seller-posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
         .post-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid var(--border); position: relative; }
@@ -270,81 +220,25 @@
         .post-price-text { color: var(--success); font-size: 12px; font-weight: bold; margin: 0; }
         
         .no-post { text-align: center; color: var(--gray); padding: 30px; font-weight: 500; width: 100%; background: white; border-radius: 8px; border: 1px solid var(--border); box-sizing: border-box; }
-    
-    /* ==========================
-   RESPONSIVE SELLER PROFILE  ট্যাব ও ডেক্সটপ মুডে ডিজাইন 
-========================== */
 
-.profile-layout{
-    display:grid;
-    gap:20px;
-}
-
-/* Tablet */
-@media (min-width:768px){
-
-    .container{
-        max-width:950px;
-    }
-
-    .profile-layout{
-        grid-template-columns:1fr 1fr;
-        align-items:start;
-    }
-
-    .profile-cover-photo{
-        height:180px;
-    }
-
-    .seller-posts-grid{
-        grid-template-columns:repeat(3,1fr);
-    }
-
-    .seller-name{
-        font-size:28px;
-    }
-}
-
-/* Desktop */
-@media (min-width:1024px){
-
-    .container{
-        max-width:1200px;
-    }
-
-    .profile-layout{
-        grid-template-columns:380px 1fr;
-        align-items:start;
-    }
-
-    .profile-cover-photo{
-        height:220px;
-    }
-
-    .avatar-container{
-        width:130px;
-        height:130px;
-    }
-
-    .seller-name{
-        font-size:30px;
-    }
-
-    .seller-posts-grid{
-        grid-template-columns:repeat(4,1fr);
-    }
-
-    .facebook-intro-card,
-    .seller-premium-card{
-        margin-bottom:0;
-    }
-                            }
-    
-    
+        /* RESPONSIVE DESIGN */
+        @media (min-width:768px){
+            .container{ max-width:950px; }
+            .profile-cover-photo{ height:180px; }
+            .seller-posts-grid{ grid-template-columns:repeat(3,1fr); }
+            .seller-name{ font-size:28px; }
+        }
+        @media (min-width:1024px){
+            .container{ max-width:1200px; }
+            .profile-cover-photo{ height:220px; }
+            .avatar-container{ width:130px; height:130px; }
+            .seller-name{ font-size:30px; }
+            .seller-posts-grid{ grid-template-columns:repeat(4,1fr); }
+        }
     </style>
 </head>
 <body>
-    <div class="overlay" id="overlay"></div> <!-- এই লাইনটি যোগ করুন -->
+    <div class="overlay" id="overlay"></div>
 
     <header class="main-header">
         <div class="header-top">
@@ -372,7 +266,6 @@
                 </div>
             </div>
         </div>
-    
     </header>
     
     <div class="sidebar" id="sidebar">
@@ -381,25 +274,19 @@
                 <i class="material-icons">home</i> 
                 <span>আমার বাড়ি.কম</span>
             </a>
-            
             <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
             <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            
             <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
             <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
             <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            
             <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
         </nav>
-                    </div>
-    
+    </div>
 
     <div class="container">
         <button class="btn-back" onclick="window.history.back()"><i class="material-icons">arrow_back</i> ফিরে যান</button>
 
-        <!-- 👑 মূল কার্ড প্রোফাইল -->
         <div class="seller-premium-card">
             <div class="profile-cover-photo">
                 <div class="viral-badge-box">
@@ -417,16 +304,11 @@
                     <img id="s-avatar" class="seller-avatar" src="https://www.w3schools.com/howto/img_avatar.png" alt="Seller Avatar">
                     <div class="status-dot"></div>
                 </div>
-
-                <!-- 🎯 নাম -->
                 <h1 id="s-name" class="seller-name">লোড হচ্ছে...</h1>
-                
-                <!-- 🎯 বায়ো (এখন পারফেক্টলি নামের নিচে) -->
-                <p id="s-bio" class="seller-bio">এই ইউজারের কোনো বিবরণ বা বায়ো পাওয়া যায়নি।</p>
+                <p id="s-bio" class="seller-bio"></p>
             </div>
         </div>
 
-        <!-- 📋 ফেসবুক অরিজিনাল স্টাইল ইন্ট্রো পরিচিতি বক্স (একত্রিত ও সুবিন্যস্ত) -->
         <div class="facebook-intro-card">
             <h3>পরিচিতি (Intro)</h3>
             <ul class="intro-list">
@@ -456,7 +338,6 @@
                 </li>
             </ul>
 
-            <!-- পাবলিক রেটিং জোন ইন্ট্রো বক্সের ভেতরেই বিল্ট-ইন -->
             <div class="profile-rating-section">
                 <span class="rating-title" id="ratingHeader">এই পোস্টদাতাকে রেটিং দিন</span>
                 <div class="stars-display" id="profileStarsZone">
@@ -470,7 +351,6 @@
             </div>
         </div>
 
-        <!-- প্রপার্টি লিস্টিং -->
         <div class="list-title">
             <i class="material-icons" style="color:var(--primary)">maps_home_work</i> 
             <span>এই বিজ্ঞাপনদাতার একটিভ প্রপার্টি সমূহ:</span>
@@ -479,46 +359,14 @@
         <div class="seller-posts-grid" id="seller-listings"></div>
     </div>
 
+    <!-- স্ক্রিপ্টসমূহ -->
     <script src="seller-profile.js"></script>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-            const menuButton = document.getElementById('menuButton');
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            const notificationButton = document.getElementById('notificationButton');
-            const headerPostButton = document.getElementById('headerPostButton');
-            const messageButton = document.getElementById('messageButton');
-            const profileImageWrapper = document.getElementById('profileImageWrapper');
-
-            // 🛠️ নিখুঁত সাইডবার টগল স্ক্রিপ্ট
-            if (menuButton && sidebar && overlay) {
-                menuButton.addEventListener('click', () => {
-                    sidebar.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                });
-                overlay.addEventListener('click', () => {
-                    sidebar.classList.remove('active');
-                    overlay.classList.remove('active');
-                });
-            }
-
-            if (notificationButton) notificationButton.addEventListener('click', () => { window.location.href = 'notifications.html'; });
-            if (headerPostButton) headerPostButton.addEventListener('click', () => { window.location.href = 'post.html'; });
-            if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
-            if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
-        });
-
-</script>
-
     <script src="notifications.js"></script> 
-    
-    <!-- 🎯 আমাদের নতুন লাইভ হেডার সিঙ্ক স্ক্রিপ্ট -->
     <script src="header-sync.js"></script>
     
     <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        <div class="container" style="text-align: center; padding: 20px 0; color: var(--gray);">
+            <p>&copy; 2026 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
 </body>
