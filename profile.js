@@ -59,6 +59,31 @@ let companyData = null;
 // ⚡ LocalStorage থেকে আগের সেভ করা মোড চেক করা
 let isCompanyMode = localStorage.getItem('activeIdentityType') === 'company';
 
+// 🎯 গ্লোবাল আইডেন্টিটি হেল্পার ফাংশন
+window.getActiveIdentity = function() {
+    const isCompany = localStorage.getItem('activeIdentityType') === 'company';
+    const user = firebase.auth().currentUser;
+    const userId = user ? user.uid : null;
+
+    if (isCompany && companyData) {
+        return {
+            id: companyData.companyId,
+            type: 'company',
+            ownerUid: userId,
+            name: companyData.name,
+            avatar: companyData.logo || ''
+        };
+    }
+
+    return {
+        id: userId,
+        type: 'user',
+        ownerUid: userId,
+        name: currentUserData ? (currentUserData.fullName || currentUserData.name || 'ইউজার') : 'ইউজার',
+        avatar: currentUserData ? (currentUserData.profilePic || currentUserData.avatarUrl || '') : ''
+    };
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     
     // UI Elements
@@ -609,4 +634,4 @@ async function loadSavedProperties(userId) {
         console.error("Saved properties error:", error);
         savedListEl.innerHTML = '<p style="text-align:center; color:red; padding:20px;">বুকমার্ক লোড করতে সমস্যা হয়েছে।</p>';
     }
-                }
+            }
