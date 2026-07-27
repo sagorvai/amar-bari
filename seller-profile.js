@@ -346,20 +346,3 @@ function displayCalculatedRating(count, sum) {
     label.textContent = `গড় রেটিং: ⭐ ${average} (${count}টি ভোট)`;
 }
 
-// হেডার প্রোফাইল পিকচার
-firebase.auth().onAuthStateChanged(async (user) => {
-    const headerProfileImg = document.querySelector('#profileImageWrapper img');
-
-    if (user && headerProfileImg) {
-        try {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().profilePic) {
-                headerProfileImg.src = userDoc.data().profilePic;
-            } else if (user.photoURL) {
-                headerProfileImg.src = user.photoURL;
-            }
-        } catch (error) {
-            console.error("হেডার ছবি লোড এরর:", error);
-        }
-    }
-});
