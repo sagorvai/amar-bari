@@ -22,19 +22,38 @@ document.addEventListener('DOMContentLoaded', () => {
         window.history.back();
         return;
     }
+    
+    // প্রথমে প্রোফাইল ডাটা লোড হবে, সেটি সফল হলে প্রপার্টি লোড হবে
     loadSellerProfileData();
-    loadSellerProperties();
     setupInteractiveProfileRating();
 });
 
-// ১. বিক্রেতার ডাটা (কোম্পানি/পেজ অথবা ইউজার) ফায়ারবেস থেকে পড়া এবং স্ক্রিনে দেখানো
-function loadSellerProfileData() {
-    // ডাইনামিক কালেকশন সিলেকশন
-    const collectionName = (targetType === 'company') ? 'companies' : 'users';
+// ১. বিক্রেতার ডাটা (কোম্পানি/পেজ অথবা ইউজার) ফায়ারবেস থেকে পড়া
+async function loadSellerProfileData() {
+    try {
+        let docSnap = null;
+        let isCompanyMode = (targetType === 'company');
 
-    db.collection(collectionName).doc(targetId).get().then(doc => {
-        if (doc.exists) {
-            const sData = doc.data();
+        // প্রথম চেষ্টা: নির্দিষ্ট টাইপ অনুযায়ী ডাটা ফেচ করা
+        if (isCompanyMode) {
+            docSnap = await db.collection('companies').doc(targetId).get();
+        } else {
+            docSnap = await db.collection('users').doc(targetId).get();
+        }
+
+        // দ্বিতীয় চেষ্টা (ফালব্যাক): যদি ভুলবশত টাইপ মিসম্যাচ হয়, তবে অন্য কালেকশন চেক করবে
+        if (!docSnap.exists) {
+            if (isCompanyMode) {
+                docSnap = await db.collection('users').doc(targetId).get();
+                if (docSnap.exists) targetType = 'user'; // মোড ঠিক করে দেওয়া হলো
+            } else {
+                docSnap = await db.collection('companies').doc(targetId).get();
+                if (docSnap.exists) targetType = 'company'; // মোড ঠিক করে দেওয়া হলো
+            }
+        }
+
+        if (docSnap && docSnap.exists) {
+            const sData = docSnap.data();
 
             // ১. নাম সেটআপ (কোম্পানি হলে companyName/name, ইউজার হলে fullName/name)
             const nameElem = document.getElementById('s-name');
@@ -58,10 +77,12 @@ function loadSellerProfileData() {
                 const avatarUrl = sData.logo || sData.companyLogo || sData.profilePic;
                 if (avatarUrl) {
                     avatarElem.src = avatarUrl;
+                } else {
+                    avatarElem.src = 'assets/images/default-avatar.png'; // ডিফল্ট ছবি
                 }
             }
 
-            // ৪. ইমেইল প্রদর্শন (কোম্পানি বা ইউজার থেকে)
+            // ৪. ইমেইল প্রদর্শন 
             const emailElem = document.getElementById('s-email');
             if (emailElem) {
                 emailElem.textContent = sData.email || "ইমেইল সরবরাহ করা হয়নি";
@@ -83,10 +104,10 @@ function loadSellerProfileData() {
                 }
             }
 
-            // ৭. লোকেশন (ইউজারের location অথবা কোম্পানির officeAddress)
+            // ৭. লোকেশন
             const locElem = document.getElementById('s-location');
             if (locElem) {
-                locElem.textContent = sData.location || sData.officeAddress || "যুক্ত করা নেই";
+                locElem.textContent = sData.officeAddress || sData.location || "যুক্ত করা নেই";
             }
 
             // ৮. মোবাইল নম্বর
@@ -113,19 +134,25 @@ function loadSellerProfileData() {
             if (badgeElem) {
                 if (sData.isVerified === true || sData.role === 'admin' || targetType === 'company') {
                     badgeElem.style.display = 'flex';
+                } else {
+                    badgeElem.style.display = 'none';
                 }
             }
 
             // ১১. রেটিং প্রদর্শন
             displayCalculatedRating(sData.ratingCount || 0, sData.ratingSum || 0);
 
+            // ১২. 🎯 প্রোফাইলের ধরণ নিশ্চিত হওয়ার পর প্রপার্টি লোড করা
+            loadSellerProperties();
+
         } else {
             const nameElem = document.getElementById('s-name');
             if (nameElem) nameElem.textContent = "অজানা প্রোফাইল";
+            document.getElementById('seller-listings').innerHTML = `<div class="no-post">এই বিক্রেতার কোনো তথ্য পাওয়া যায়নি।</div>`;
         }
-    }).catch(err => {
+    } catch (err) {
         console.error("প্রোফাইল ডাটা লোড করতে সমস্যা হয়েছে:", err);
-    });
+    }
 }
 
 // ২. একটিভ লিস্টিং সমূহ প্রপার্টি কালেকশন থেকে নিয়ে আসা (কোম্পানি বা ইউজার অনুযায়ী)
@@ -147,7 +174,7 @@ async function loadSellerProperties() {
         grid.innerHTML = "";
 
         if (snapshot.empty) {
-            grid.innerHTML = `<div class="no-post">এই ${targetType === 'company' ? 'পেজ' : 'ব্যবহারকারী'} থেকে এখনো কোনো প্রপার্টি পোস্ট করা হয়নি।</div>`;
+            grid.innerHTML = `<div class="no-post">এই ${targetType === 'company' ? 'পেজ' : 'ব্যবহারকারী'} এখনো কোনো প্রপার্টি পোস্ট করেননি।</div>`;
             return;
         }
 
@@ -161,7 +188,11 @@ async function loadSellerProperties() {
             let priceVal = post.category === 'বিক্রয়' ? post.price : post.monthlyRent;
             let unitVal = post.priceUnit || post.rentUnit || "";
             let thumbnail = (post.images && post.images[0]) ? (post.images[0].url || post.images[0]) : 'placeholder.jpg';
-            let locationText = `${post.location?.village || ''}, ${post.location?.thana || ''}`.replace(/^,\s*/, '');
+            
+            // লোকেশন টেক্সট ফিক্স
+            let village = post.location?.village || '';
+            let thana = post.location?.thana || post.location?.upazila || '';
+            let locationText = [village, thana].filter(Boolean).join(', ');
 
             grid.innerHTML += `
                 <div class="post-card" onclick="location.href='details.html?id=${doc.id}'">
@@ -193,6 +224,8 @@ function setupInteractiveProfileRating() {
     if (!starZone) return;
 
     const stars = starZone.querySelectorAll('i');
+    
+    // লোকাল স্টোরেজ কী (যাতে ইউজার/কোম্পানি অনুযায়ী রেটিং সেভ থাকে)
     const localStoreKey = `has_rated_${targetType}_${targetId}`;
 
     let alreadyRatedValue = localStorage.getItem(localStoreKey);
@@ -212,7 +245,7 @@ function setupInteractiveProfileRating() {
             const chosenRating = parseInt(star.getAttribute('data-star'));
             const currentAuthUser = firebase.auth().currentUser;
 
-            // নিজের অ্যাকাউন্টে নিজের রেটিং দেওয়া বন্ধ করা
+            // নিজের অ্যাকাউন্টে নিজে রেটিং দেওয়া বন্ধ করা
             if (currentAuthUser && currentAuthUser.uid === targetId) {
                 alert("আপনার নিজের প্রোফাইলে নিজে রেটিং দিতে পারবেন না!");
                 return;
@@ -221,6 +254,7 @@ function setupInteractiveProfileRating() {
             localStorage.setItem(localStoreKey, chosenRating);
             highlightStars(stars, chosenRating);
 
+            // সঠিক কালেকশন নির্বাচন
             const collectionName = (targetType === 'company') ? 'companies' : 'users';
             const targetRef = db.collection(collectionName).doc(targetId);
 
