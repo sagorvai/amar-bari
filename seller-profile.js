@@ -11,80 +11,160 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 const sUrlParams = new URLSearchParams(window.location.search);
-const targetUserId = sUrlParams.get('userId');
+// ইউজার আইডি বা পেজ আইডি ডায়নামিক্যালি পড়া
+const targetUserId = sUrlParams.get('userId') || sUrlParams.get('pageId') || sUrlParams.get('id');
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!targetUserId) {
-        alert("ভুল ব্যবহারকারী আইডি!");
+        alert("ভুল প্রোফাইল বা পেজ আইডি!");
         window.history.back();
         return;
     }
-    loadSellerProfileData();
+    loadDynamicProfileData();
     loadSellerProperties();
     setupInteractiveProfileRating();
 });
 
-function loadSellerProfileData() {
-    db.collection('users').doc(targetUserId).get().then(doc => {
-        if (doc.exists) {
-            const uData = doc.data();
+// ১. ফায়ারবেস থেকে ইউজার বা পেজের ডাটা অটোমেটিক্যালি ডিটেক্ট ও লোড করা
+async function loadDynamicProfileData() {
+    try {
+        // প্রথমে 'users' কালেকশনে সার্চ করবে
+        let userDoc = await db.collection('users').doc(targetUserId).get();
+
+        if (userDoc.exists) {
+            let uData = userDoc.data();
             
-            document.getElementById('s-name').textContent = uData.fullName || uData.name || "সম্মানিত বিক্রেতা";
-            document.getElementById('s-email').textContent = uData.email || "ইমেইল সরবরাহ করা হয়নি";
-            document.getElementById('s-uid-text').textContent = `...${targetUserId.substring(0,6)}`;
-            document.getElementById('s-profession').textContent = uData.profession || "যুক্ত করা নেই";
-            document.getElementById('s-location').textContent = uData.location || "যুক্ত করা নেই";
-            
-            let userPhone = uData.phoneNumber || uData.phone || "";
-            if (userPhone) {
-                document.getElementById('s-phone').textContent = userPhone;
+            // যদি টাইপ 'page' হয় অথবা 'pages' কালেকশনে থাকে
+            if (uData.type === 'page' || uData.isPage === true) {
+                renderPageUI(uData);
             } else {
-                document.getElementById('s-phone').textContent = "ফোন নম্বর সেট করা নেই";
+                renderUserUI(uData);
             }
-
-            if (uData.officeAddress && uData.officeAddress.trim() !== "") {
-                document.getElementById('s-office').textContent = uData.officeAddress;
-                document.getElementById('s-office-item').style.display = 'flex';
-            } else {
-                document.getElementById('s-office-item').style.display = 'none';
-            }
-
-            if (uData.bio && uData.bio.trim() !== "") {
-                document.getElementById('s-bio').textContent = `"${uData.bio}"`;
-            } else {
-                document.getElementById('s-bio').textContent = "";
-            }
-            
-            if (uData.profilePic) {
-                document.getElementById('s-avatar').src = uData.profilePic;
-            }
-
-            if (uData.isVerified === true || uData.role === 'admin') {
-                document.getElementById('badgeVerified').style.display = 'flex';
-            }
-
-            displayCalculatedRating(uData.ratingCount || 0, uData.ratingSum || 0);
-
         } else {
-            document.getElementById('s-name').textContent = "অজানা ব্যবহারকারী";
+            // ইউজার কালেকশনে না থাকলে 'pages' কালেকশনে সার্চ করবে
+            let pageDoc = await db.collection('pages').doc(targetUserId).get();
+            if (pageDoc.exists) {
+                renderPageUI(pageDoc.data());
+            } else {
+                document.getElementById('s-name').textContent = "অজানা প্রোফাইল বা পেজ";
+            }
         }
-    }).catch(err => {
-        console.error("ইউজার ডেটা লোড এরর:", err);
-    });
+    } catch (err) {
+        console.error("প্রোফাইল ডাটা লোড করতে সমস্যা:", err);
+    }
 }
 
+// 👤 ইউজার মোড রেন্ডার
+function renderUserUI(uData) {
+    document.getElementById('s-name').textContent = uData.fullName || uData.name || "সম্মানিত বিক্রেতা";
+    document.getElementById('s-email').textContent = uData.email || "ইমেইল সরবরাহ করা হয়নি";
+    document.getElementById('s-uid-text').textContent = `...${targetUserId.substring(0, 6)}`;
+    
+    document.getElementById('label-profession').textContent = "পেশা:";
+    document.getElementById('icon-profession').textContent = "work";
+    document.getElementById('s-profession').textContent = uData.profession || "যুক্ত করা নেই";
+
+    document.getElementById('label-location').textContent = "বসবাস করেন:";
+    document.getElementById('s-location').textContent = uData.location || "যুক্ত করা নেই";
+    
+    let userPhone = uData.phoneNumber || uData.phone || "";
+    document.getElementById('s-phone').textContent = userPhone ? userPhone : "ফোন নম্বর সেট করা নেই";
+
+    if (uData.officeAddress && uData.officeAddress.trim() !== "") {
+        document.getElementById('s-office').textContent = uData.officeAddress;
+        document.getElementById('s-office-item').style.display = 'flex';
+    } else {
+        document.getElementById('s-office-item').style.display = 'none';
+    }
+
+    if (uData.bio && uData.bio.trim() !== "") {
+        document.getElementById('s-bio').textContent = `"${uData.bio}"`;
+    } else {
+        document.getElementById('s-bio').textContent = "";
+    }
+    
+    if (uData.profilePic) {
+        document.getElementById('s-avatar').src = uData.profilePic;
+    }
+    if (uData.coverPic) {
+        document.getElementById('s-cover').style.backgroundImage = `url('${uData.coverPic}')`;
+    }
+
+    if (uData.isVerified === true || uData.role === 'admin') {
+        document.getElementById('badgeVerified').style.display = 'flex';
+    }
+
+    displayCalculatedRating(uData.ratingCount || 0, uData.ratingSum || 0);
+}
+
+// 🚩 পেজ মোড রেন্ডার
+function renderPageUI(pData) {
+    document.getElementById('s-name').textContent = pData.pageName || pData.title || pData.name || "অফিসিয়াল পেজ";
+    document.getElementById('s-email').textContent = pData.email || "ইমেইল নেই";
+    
+    // পেজ মোডে মেম্বার আইডির পরিবর্তে পেজ আইডি দেখানো
+    document.getElementById('label-uid').textContent = "পেজ আইডি:";
+    document.getElementById('s-uid-text').textContent = `...${targetUserId.substring(0, 6)}`;
+
+    // ক্যাটাগরি এবং অবস্থান
+    document.getElementById('label-profession').textContent = "ক্যাটাগরি:";
+    document.getElementById('icon-profession').textContent = "category";
+    document.getElementById('s-profession').textContent = pData.category || "বিজনেস পেজ";
+
+    document.getElementById('label-location').textContent = "ঠিকানা:";
+    document.getElementById('s-location').textContent = pData.address || pData.location || "যুক্ত করা নেই";
+
+    let phone = pData.phone || pData.phoneNumber || "";
+    document.getElementById('s-phone').textContent = phone ? phone : "ফোন নম্বর নেই";
+
+    if (pData.website) {
+        document.getElementById('s-website').textContent = pData.website;
+        document.getElementById('item-website').style.display = 'flex';
+    }
+
+    if (pData.description || pData.bio) {
+        document.getElementById('s-bio').textContent = `"${pData.description || pData.bio}"`;
+    }
+
+    if (pData.logo || pData.profilePic) {
+        document.getElementById('s-avatar').src = pData.logo || pData.profilePic;
+    }
+
+    if (pData.coverPic || pData.banner) {
+        document.getElementById('s-cover').style.backgroundImage = `url('${pData.coverPic || pData.banner}')`;
+    }
+
+    // পেজ ব্যাজ
+    document.getElementById('badgePage').style.display = 'flex';
+    if (pData.isVerified === true) {
+        document.getElementById('badgeVerified').style.display = 'flex';
+    }
+
+    document.getElementById('posts-title').textContent = "এই পেজের এক্টিভ প্রপার্টি সমূহ:";
+    displayCalculatedRating(pData.ratingCount || 0, pData.ratingSum || 0);
+}
+
+// ২. একটিভ লিস্টিং সমুহ লোড করা
 async function loadSellerProperties() {
     const grid = document.getElementById('seller-listings');
     if (!grid) return;
 
     try {
-        const snapshot = await db.collection('properties')
+        // প্রপার্টি 'userId' অথবা 'pageId' মিলিয়ে সার্চ করবে
+        let snapshot = await db.collection('properties')
                                  .where('userId', '==', targetUserId)
                                  .get();
+
+        if (snapshot.empty) {
+            snapshot = await db.collection('properties')
+                               .where('pageId', '==', targetUserId)
+                               .get();
+        }
+
         grid.innerHTML = "";
 
         if (snapshot.empty) {
-            grid.innerHTML = `<div class="no-post">এই ব্যবহারকারী এখনো কোনো প্রপার্টি পোস্ট করেননি।</div>`;
+            grid.innerHTML = `<div class="no-post">এখানে কোনো প্রপার্টি পোস্ট পাওয়া যায়নি।</div>`;
             return;
         }
 
@@ -118,28 +198,29 @@ async function loadSellerProperties() {
         });
 
     } catch (error) {
-        console.error("পোস্ট তালিকা লোড করতে সমস্যা হয়েছে:", error);
+        console.error("পোস্ট তালিকা লোড করতে সমস্যা হয়েছে:", error);
         grid.innerHTML = `<div class="no-post">পোস্টগুলো লোড করা যাচ্ছে না।</div>`;
     }
 }
 
+// ৩. রিয়েল-টাইম ফায়ারবেস রেটিং সিস্টেম
 function setupInteractiveProfileRating() {
     const starZone = document.getElementById('profileStarsZone');
     if (!starZone) return;
 
     const stars = starZone.querySelectorAll('i');
-    const localStoreKey = `has_rated_user_${targetUserId}`;
+    const localStoreKey = `has_rated_${targetUserId}`;
 
     let alreadyRatedValue = localStorage.getItem(localStoreKey);
     if (alreadyRatedValue) {
         highlightStars(stars, parseInt(alreadyRatedValue));
-        document.getElementById('ratingHeader').textContent = "আপনি এই পোস্টদাতাকে রেটিং দিয়েছেন";
+        document.getElementById('ratingHeader').textContent = "আপনি রেটিং দিয়েছেন";
     }
 
     stars.forEach(star => {
         star.addEventListener('click', async () => {
             if (localStorage.getItem(localStoreKey)) {
-                alert("আপনি ইতিমধ্যে এই ব্যবহারকারীকে রেটিং দিয়েছেন!");
+                alert("আপনি ইতিমধ্যে রেটিং দিয়েছেন!");
                 return;
             }
 
@@ -147,26 +228,32 @@ function setupInteractiveProfileRating() {
             const currentAuthUser = firebase.auth().currentUser;
             
             if (currentAuthUser && currentAuthUser.uid === targetUserId) {
-                alert("আপনার নিজের প্রোফাইলে নিজে রেটিং দিতে পারবেন না!");
+                alert("আপনার নিজের প্রোফাইলে রেটিং দিতে পারবেন না!");
                 return;
             }
 
             localStorage.setItem(localStoreKey, chosenRating);
             highlightStars(stars, chosenRating);
 
-            const userRef = db.collection('users').doc(targetUserId);
+            // 'users' না পেলে 'pages' ডকুমেন্টে আপডেট করবে
+            let docRef = db.collection('users').doc(targetUserId);
+            let docSnap = await docRef.get();
+            if (!docSnap.exists) {
+                docRef = db.collection('pages').doc(targetUserId);
+            }
+
             try {
                 await db.runTransaction(async (transaction) => {
-                    const sfDoc = await transaction.get(userRef);
+                    const sfDoc = await transaction.get(docRef);
                     if (!sfDoc.exists) {
-                        transaction.set(userRef, { ratingCount: 1, ratingSum: chosenRating });
+                        transaction.set(docRef, { ratingCount: 1, ratingSum: chosenRating });
                         return;
                     }
                     
                     let newCount = (sfDoc.data().ratingCount || 0) + 1;
                     let newSum = (sfDoc.data().ratingSum || 0) + chosenRating;
                     
-                    transaction.update(userRef, {
+                    transaction.update(docRef, {
                         ratingCount: newCount,
                         ratingSum: newSum
                     });
@@ -176,7 +263,7 @@ function setupInteractiveProfileRating() {
                 location.reload();
 
             } catch (err) {
-                console.error("রেটিং ট্রানজেকশন ব্যর্থ:", err);
+                console.error("রেটিং আপডেট ব্যর্থ:", err);
             }
         });
     });
@@ -197,6 +284,7 @@ function highlightStars(stars, value) {
 
 function displayCalculatedRating(count, sum) {
     const label = document.getElementById('ratingStatsLabel');
+    if (!label) return;
     if (count === 0) {
         label.textContent = "গড় রেটিং: ০.০ (০টি ভোট)";
         return;
@@ -205,9 +293,9 @@ function displayCalculatedRating(count, sum) {
     label.textContent = `গড় রেটিং: ⭐ ${average} (${count}টি ভোট)`;
 }
 
+// হেডার প্রোফাইল ছবি সিঙ্ক
 firebase.auth().onAuthStateChanged(async (user) => {
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
-    
     if (user && headerProfileImg) {
         try {
             const userDoc = await db.collection('users').doc(user.uid).get();
