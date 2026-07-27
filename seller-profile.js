@@ -346,3 +346,40 @@ function displayCalculatedRating(count, sum) {
     label.textContent = `গড় রেটিং: ⭐ ${average} (${count}টি ভোট)`;
 }
 
+// =======================================================
+// 🔄 হেডার প্রোফাইল পিকচার সিঙ্ক (অ্যাক্টিভ মোড অনুযায়ী)
+// =======================================================
+firebase.auth().onAuthStateChanged(async (user) => {
+    const headerProfileImg = document.querySelector('#profileImageWrapper img');
+    if (!user || !headerProfileImg) return;
+
+    // ১. লোকাল স্টোরেজ থেকে অ্যাক্টিভ মোড চেক করা
+    const activeIdentityType = localStorage.getItem('activeIdentityType');
+
+    if (activeIdentityType === 'company') {
+        // 🏢 কোম্পানি/পেজ মোডে থাকলে কোম্পানির লোগো দেখাবে
+        try {
+            const compDoc = await db.collection('companies').doc(user.uid).get();
+            if (compDoc.exists && compDoc.data().logo) {
+                headerProfileImg.src = compDoc.data().logo;
+                return; // কোম্পানির লোগো পেয়ে গেলে এখানেই শেষ
+            }
+        } catch (e) {
+            console.error("হেডারে কোম্পানি লোগো লোড করতে সমস্যা:", e);
+        }
+    }
+
+    // 👤 পার্সোনাল মোডে থাকলে বা কোম্পানির লোগো না পেলে ইউজারের ছবি দেখাবে
+    try {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (userDoc.exists && userDoc.data().profilePic) {
+            headerProfileImg.src = userDoc.data().profilePic;
+        } else if (user.photoURL) {
+            headerProfileImg.src = user.photoURL;
+        } else {
+            headerProfileImg.src = 'https://www.w3schools.com/howto/img_avatar.png';
+        }
+    } catch (error) {
+        console.error("হেডার ইউজার ছবি লোড এরর:", error);
+    }
+});
