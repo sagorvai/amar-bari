@@ -57,7 +57,6 @@ function renderDetails(data) {
             gallery.appendChild(div);
         });
 
-        // ফ্যান্সি-বক্স অ্যাক্টিভ করার কোড
         if (typeof Fancybox !== 'undefined') {
             Fancybox.bind("[data-fancybox='gallery']", {
                 Images: {
@@ -70,16 +69,18 @@ function renderDetails(data) {
     }
 
     // =======================================================
-    // 👤/🏢 পোস্টদাতার ডাটা লোড ও পেজ/কোম্পানি বনাম ইউজারের লজিক
+    // 👤/🏢 পোস্টদাতার ডাটা লোড ও পেজ/কোম্পানি বনাম ইউজারের লজিক (FIXED)
     // =======================================================
     const authorTrigger = document.getElementById('authorProfileTrigger');
     
-    // কোম্পানি/পেজ আইডি চেক (ownerType, authorType বা companyId থেকে)
-    const isCompany = data.ownerType === 'company' || data.authorType === 'company' || !!data.companyId;
-    const companyId = data.companyId || data.ownerId || data.authorId;
+    // কোম্পানি আইডি ফিল্টার করা (খালি বা আনডিফাইন্ড ভ্যালু বাদ দিয়ে)
+    const rawCompanyId = data.companyId || (data.ownerType === 'company' ? data.ownerId : null) || (data.authorType === 'company' ? data.authorId : null);
+    const companyId = (rawCompanyId && rawCompanyId !== "undefined" && rawCompanyId !== "") ? rawCompanyId : null;
+    
     const userId = data.userId || data.createdByUid || data.createdByUserId;
 
-    if (isCompany && companyId) {
+    // যদি কোম্পানি আইডি পাওয়া যায়, তবে কোম্পানি প্রাধান্য পাবে
+    if (companyId) {
         // ১. কোম্পানি/পেজ মোড - 'companies' কালেকশন থেকে ডেটা লোড হবে
         db.collection('companies').doc(companyId).get().then(compDoc => {
             if (compDoc.exists) {
@@ -158,7 +159,7 @@ function renderDetails(data) {
             addRow(basicT, "অগ্রিম (এডভ্যান্স)", data.advance ? `৳ ${data.advance} টাকা` : "");
         }
 
-        addRow(basicT, "বেডরুম", data.bedrooms || data.rooms ? `${data.rooms} টি` : "");
+        addRow(basicT, "বেডরুম", data.bedrooms || data.rooms ? `${data.rooms || data.bedrooms} টি` : "");
         addRow(basicT, "ডাইনিং", data.dining ? `${data.dining} টি` : "");
         addRow(basicT, "বাথরুম", data.bathrooms ? `${data.bathrooms} টি` : "");
         addRow(basicT, "কিচেন", data.kitchen ? `${data.kitchen} টি` : "");
@@ -216,7 +217,7 @@ function renderDetails(data) {
     }
 
     // =======================================================
-    // 📞 ৫. বাটন ও অ্যাকশন কন্ট্রোল (ভিজিটর বনাম পোস্টদাতা)
+    // 📞 ৫. বাটন ও অ্যাকশন কন্ট্রোল
     // =======================================================
     const conT = 'table-contact';
     if (document.getElementById(conT)) {
@@ -286,7 +287,7 @@ function renderDetails(data) {
         }
     });
 
-    // মেসেজ বাটন লজিক (কোম্পানি এবং ইউজার উভয় ক্ষেত্রেই কাজ করবে)
+    // চ্যাট বাটন লজিক (কোম্পানি এবং ইউজার উভয় ক্ষেত্রেই কাজ করবে)
     const msgBtn = document.getElementById('p-message');
     if (msgBtn) {
         msgBtn.onclick = async () => {
@@ -297,7 +298,9 @@ function renderDetails(data) {
                 return; 
             }
 
-            const receiverId = isCompany ? companyId : userId;
+            const receiverId = companyId || userId;
+            const isCompChat = !!companyId;
+
             if (!receiverId || !postId) {
                 alert("প্রপার্টি বা বিক্রেতার তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।");
                 return;
@@ -318,7 +321,7 @@ function renderDetails(data) {
                         postTitle: data.title || "প্রপার্টি চ্যাট",
                         lastMessage: "চ্যাট শুরু হয়েছে...",
                         senderId: currentUser.uid,
-                        chatType: isCompany ? 'company_chat' : 'user_chat',
+                        chatType: isCompChat ? 'company_chat' : 'user_chat',
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 }
@@ -332,9 +335,7 @@ function renderDetails(data) {
         };
     }
     
-    // =======================================================
-    // 🎯 আমার বাড়ি প্ল্যাটফর্ম - ডাইনামিক এসইও ইঞ্জিন
-    // =======================================================
+    // এসইও তথ্য সেটআপ
     const currentUrl = window.location.href;
     const village = data.location?.village || "";
     const thana = data.location?.thana || data.location?.upazila || "";
@@ -352,9 +353,7 @@ function renderDetails(data) {
     document.title = seoTitle; 
     
     const seoTitleTag = document.getElementById('seo-title');
-    if (seoTitleTag) {
-        seoTitleTag.innerText = seoTitle;
-    }
+    if (seoTitleTag) seoTitleTag.innerText = seoTitle;
     
     document.getElementById('seo-desc')?.setAttribute('content', seoDescription);
     document.getElementById('seo-canonical')?.setAttribute('href', currentUrl);
@@ -364,7 +363,7 @@ function renderDetails(data) {
     document.getElementById('og-desc')?.setAttribute('content', seoDescription);
     document.getElementById('og-image')?.setAttribute('content', firstImg);
 
-    setupSaveAndShareSystem(data, isCompany ? companyId : userId);
+    setupSaveAndShareSystem(data, companyId || userId);
 } 
 
 function initSinglePropertyMap(data) {
@@ -696,11 +695,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
 
-
-
-/**
- * ফায়ারস্টোরে নোটিফিকেশন লেখার কমন ফাংশন
- */
 async function writeNotificationToFirestore(recipientId, senderId, postId, title, message, type) {
     try {
         const notifData = {
@@ -720,9 +714,6 @@ async function writeNotificationToFirestore(recipientId, senderId, postId, title
     }
 }
 
-/**
- * গেস্ট ইউজারের লোকাল স্টোরেজে নোটিফিকেশন লেখার ফাংশন
- */
 function writeNotificationToLocalStorage(postId, title, message, type) {
     let guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
     const newNotification = {
@@ -736,4 +727,4 @@ function writeNotificationToLocalStorage(postId, title, message, type) {
     guestNotifications.unshift(newNotification);
     localStorage.setItem("guest_notifications", JSON.stringify(guestNotifications));
     console.log("গেস্ট নোটিফিকেশন লোকাল স্টোরেজে লেখা হয়েছে।");
-        }
+                          }
