@@ -1,4 +1,4 @@
-// messages.js - রিয়েল-টাইম চ্যাট ইঞ্জিন (পার্সোনাল ও কোম্পানি মোড সাপোর্টসহ)
+// messages.js - ইউজার ও পেজের জন্য সম্পূর্ণ আলাদা মেসেজিং ইঞ্জিন
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -20,17 +20,14 @@ let currentUser = null;
 let activeIdentity = null; // { id: '...', name: '...', photo: '...', type: 'user'|'company' }
 let activeChatListener = null;
 
-function getChatId(uid1, uid2) {
-    return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
-}
-
-// 🔄 ১. ইউজার ও কোম্পানি আইডেন্টিটি ইনিশিয়ালাইজেশন
+// 🔄 ১. অ্যাক্টিভ মোড (ইউজার vs পেজ) নির্ধারণ ও ইনিশিয়ালাইজেশন
 firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
         const activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
 
         if (activeIdentityType === 'company') {
+            // 🏢 পেজ মোড অ্যাক্টিভ
             try {
                 const compDoc = await db.collection('companies').doc(user.uid).get();
                 if (compDoc.exists) {
@@ -44,11 +41,11 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     };
                 }
             } catch (e) {
-                console.error("কোম্পানি প্রোফাইল লোড এরর:", e);
+                console.error("কোম্পানি প্রোফাইল লোড করতে সমস্যা:", e);
             }
         }
 
-        // কোম্পানি মোডে না থাকলে পার্সোনাল প্রোফাইল সেট হবে
+        // 👤 পার্সোনাল ইউজার মোড অ্যাক্টিভ (অথবা কোম্পানির তথ্য না পাওয়া গেলে)
         if (!activeIdentity) {
             let pName = "সম্মানিত ইউজার";
             let pPhoto = user.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
@@ -60,7 +57,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     pPhoto = uData.profilePic || pPhoto;
                 }
             } catch (e) {
-                console.error("ইউজার প্রোফাইল লোড এরর:", e);
+                console.error("ইউজার প্রোফাইল লোড করতে সমস্যা:", e);
             }
 
             activeIdentity = {
@@ -72,7 +69,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
             };
         }
 
-        // হেডার প্রোফাইল পিকচার সেট
+        // হেডারে অ্যাক্টিভ মোডের পিকচার সেট
         const headerProfileImg = document.getElementById('profileImage');
         if (headerProfileImg) {
             headerProfileImg.src = activeIdentity.photo;
@@ -101,18 +98,20 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. চ্যাট তালিকা লোড (ইউজার এবং কোম্পানি ফিল্টারিং সহ)
+// 💬 ২. সম্পূর্ণ আলাদা চ্যাট লিস্ট লোড (Isolate Chat List)
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer) return;
 
+    // শুধুমাত্র বর্তমান অ্যাক্টিভ আইডেন্টিটির (activeIdentity.id) চ্যাট ফেচ করা হবে
     db.collection('chats')
         .where('participants', 'array-contains', activeIdentity.id)
         .orderBy('timestamp', 'desc')
         .onSnapshot((snapshot) => {
             
             if (snapshot.empty) {
-                chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--gray);">কোনো মেসেজ পাওয়া যায়নি।</div>`;
+                const modeText = activeIdentity.type === 'company' ? 'কোম্পানি পেজে' : 'ইউজার অ্যাকাউন্টে';
+                chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--gray);">আপনার ${modeText} কোনো মেসেজ পাওয়া যায়নি।</div>`;
                 return;
             }
 
@@ -122,6 +121,7 @@ function loadChatList() {
                 const chatData = doc.data();
                 const chatId = doc.id;
                 
+                // নিজের আইডি বাদ দিয়ে অপর প্রান্তের আইডি (কাস্টমার বা বিক্রেতা) বের করা
                 const otherParticipantId = chatData.participants ? chatData.participants.find(id => id !== activeIdentity.id) : null;
                 const isUnreadMessage = chatData.isUnread && chatData.lastSenderId !== activeIdentity.id;
                 const unreadClass = isUnreadMessage ? 'unread-chat' : '';
@@ -197,7 +197,7 @@ function loadChatList() {
                                 await batch.commit();
 
                                 await db.collection('chats').doc(chatId).delete();
-                                alert("চ্যাটটি সফলভাবে ডিলিট করা হয়েছে।");
+                                alert("চ্যাটটি ডিলিট করা হয়েছে।");
                                 
                                 if (currentChatId === chatId) {
                                     currentChatId = null;
@@ -211,7 +211,7 @@ function loadChatList() {
                     };
                 }
 
-                // 👤/🏢 অপর পাশের পার্টি চ্যাট ইনফো লোড
+                // 👤/🏢 অপর পাশের প্রোফাইল তথ্য লোড
                 if (otherParticipantId) {
                     fetchParticipantDetails(otherParticipantId, `name_${chatId}`, `avatar_${chatId}`);
                 }
@@ -225,7 +225,7 @@ document.addEventListener('click', () => {
     document.querySelectorAll('.chat-dropdown').forEach(dd => dd.classList.remove('show'));
 });
 
-// 📖 ৩. চ্যাট বক্স ওপেন ও মেসেজ ফেচিং
+// 📖 ৩. ওপেন চ্যাট বক্স ও মেসেজ স্ট্রিম
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
     
@@ -330,7 +330,7 @@ async function openChatBox(chatId, postId) {
     }
 }
 
-// ✉️ ৪. মেসেজ সেন্ডিং
+// ✉️ ৪. বর্তমান আইডেন্টিটি অনুযায়ী মেসেজ সেন্ড
 async function sendMessage(text) {
     if (!text.trim() || !currentChatId) return;
 
@@ -356,10 +356,10 @@ async function sendMessage(text) {
     }
 }
 
-// 🔍 ৫. সাহায্যকারী সার্ভিস: ইউজার বা কোম্পানি ডাটা বের করা
+// 🔍 ৫. প্রোফাইল ইনফো ফেচ হেল্পার (ইউজার নাকি পেজ সনাক্তকরণ)
 async function fetchParticipantDetails(participantId, nameElemId, avatarElemId) {
     try {
-        // ১. আগে ইউজার কালেকশনে খোঁজা
+        // ১. আগে ইউজার কালেকশনে খোঁজ করা
         let uDoc = await db.collection('users').doc(participantId).get();
         if (uDoc.exists) {
             const uData = uDoc.data();
@@ -368,7 +368,7 @@ async function fetchParticipantDetails(participantId, nameElemId, avatarElemId) 
             return;
         }
 
-        // ২. না পাওয়া গেলে কোম্পানি কালেকশনে খোঁজা
+        // ২. না পাওয়া গেলে কোম্পানি/পেজ কালেকশনে খোঁজ করা
         let cDoc = await db.collection('companies').doc(participantId).get();
         if (!cDoc.exists) {
             const qSnap = await db.collection('companies').where('companyId', '==', participantId).limit(1).get();
@@ -381,7 +381,7 @@ async function fetchParticipantDetails(participantId, nameElemId, avatarElemId) 
             if (avatarElemId && document.getElementById(avatarElemId) && cData.logo) document.getElementById(avatarElemId).src = cData.logo;
         }
     } catch (e) {
-        console.error("পার্টিসিপ্যান্ট তথ্য লোড সমস্যা:", e);
+        console.error("প্রোফাইল লোড সমস্যা:", e);
     }
 }
 
@@ -473,4 +473,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function sendQuickReply(text) {
     sendMessage(text);
-}
+                                                         }
