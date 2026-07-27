@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>পোস্টদাতা প্রোফাইল - আমার বাড়ি.কম</title>
+    <title>প্রোফাইল - আমার বাড়ি.কম</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
@@ -39,7 +39,7 @@
             left: -250px; 
             width: 250px; 
             height: 100%;
-            background-color: #34495e;
+            background-color: #34495e; 
             transition: left 0.3s ease; 
             box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
             z-index: 1050; 
@@ -51,34 +51,22 @@
         
         .overlay {
             position: fixed; 
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.5); 
-            z-index: 1040; 
-            display: none; 
+            z-index: 1040; display: none; 
         }
-        
         .overlay.active { display: block; }
         
         .sidebar a {
-            color: white; 
-            padding: 12px 15px; 
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            font-weight: 500;
+            color: white; padding: 12px 15px; 
+            display: flex; align-items: center; text-decoration: none; font-weight: 500;
         }
-
         .sidebar a i.material-icons { color: white; margin-right: 10px; }
         .sidebar a:hover { background-color: #3e5369; }
         
         .sidebar-logo {
-            padding: 15px;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: white !important; 
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 5px;
+            padding: 15px; font-size: 1.5em; font-weight: bold;
+            color: white !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 5px;
         }
         
         .header-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; }
@@ -89,7 +77,6 @@
 
         .header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
         .icon-wrapper { position: relative; display: inline-flex; cursor: pointer; align-items: center; justify-content: center; height: 30px; width: 30px; }
-        
         .notification-count { position: absolute; top: -5px; right: -8px; background-color: red; color: white; border-radius: 50%; padding: 2px 5px; font-size: 0.7em; font-weight: bold; min-width: 10px; text-align: center; line-height: 1; display: none; }
         .notification-icon, .message-icon { color: var(--primary); }
         .post-icon-header { color: #28a745; }
@@ -97,84 +84,27 @@
         .profile-image-wrapper { cursor: pointer; width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; }
         .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
         
-        @media (max-width: 600px) {
-            body { padding-top: 55px; }
-            .logo-title { font-size: 1.2em; }
-            .header-actions { gap: 8px; }
-        }
-
         .container { max-width: 600px; margin: auto; padding: 10px; box-sizing: border-box; }
-        
         .btn-back { background: white; border: 1px solid #ddd; color: var(--dark); padding: 8px 16px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 14px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: fit-content; transition: 0.2s; }
         .btn-back:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* 👑 প্রিমিয়াম প্রোফাইল কার্ড */
         .seller-premium-card { 
-            background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
-            text-align: center; 
-            margin-bottom: 16px; 
-            position: relative;
-            overflow: hidden;
-            border: 1px solid var(--border);
+            background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+            text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; border: 1px solid var(--border);
         }
 
-        /* 🏙️ কভার ফটো গ্রাফিক্স */
-        .profile-cover-photo {
-            height: 140px;
-            background: var(--cover-gradient);
-            position: relative;
-        }
+        .profile-cover-photo { height: 140px; background: var(--cover-gradient); position: relative; background-size: cover; background-position: center; }
         .profile-cover-photo::before {
-            content: "corporate_fare";
-            font-family: 'Material Icons';
-            position: absolute;
-            right: 15px;
-            bottom: -15px;
-            font-size: 120px;
-            color: rgba(255, 255, 255, 0.08);
-            pointer-events: none;
-        }
-        .profile-cover-photo::after {
-            content: "home";
-            font-family: 'Material Icons';
-            position: absolute;
-            left: 20px;
-            top: 20px;
-            font-size: 70px;
-            color: rgba(255, 255, 255, 0.05);
-            pointer-events: none;
+            content: "corporate_fare"; font-family: 'Material Icons'; position: absolute; right: 15px; bottom: -15px; font-size: 120px; color: rgba(255, 255, 255, 0.08); pointer-events: none;
         }
 
-        .profile-content-box {
-            padding: 0px 16px 20px 16px;
-            position: relative;
-            margin-top: -60px;
-            z-index: 5;
-        }
+        .profile-content-box { padding: 0px 16px 20px 16px; position: relative; margin-top: -60px; z-index: 5; }
 
-        .viral-badge-box {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            display: flex;
-            gap: 8px;
-            z-index: 10;
-        }
-        .badge-item {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            padding: 6px 12px;
-            border-radius: 20px;
-            color: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        }
+        .viral-badge-box { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 10; }
+        .badge-item { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 20px; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
         .badge-verified { background: #00b894; }
         .badge-top-seller { background: #6c5ce7; }
+        .badge-page { background: #e67e22; }
 
         .avatar-container { position: relative; width: 110px; height: 110px; margin: 0 auto 10px auto; }
         .seller-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.15); background: #fff; }
@@ -184,20 +114,13 @@
         .seller-bio { font-size: 14px; color: var(--gray); line-height: 1.4; margin: 6px auto 12px auto; max-width: 85%; font-style: italic; }
 
         .facebook-intro-card {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            padding: 16px;
-            margin-bottom: 16px;
-            text-align: left;
+            background: white; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.1); padding: 16px; margin-bottom: 16px; text-align: left;
         }
         .facebook-intro-card h3 { margin: 0 0 12px 0; font-size: 17px; font-weight: bold; color: var(--dark); }
         
         .intro-list { list-style: none; padding: 0; margin: 0; }
         .intro-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; color: var(--dark); }
         .intro-item i { color: #8c939d; font-size: 20px; }
-        .intro-item strong { font-weight: 600; }
 
         .profile-rating-section { background: #fffdf3; border: 1px solid #fbf1c9; padding: 15px; border-radius: 12px; margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
         .rating-title { font-size: 13px; font-weight: bold; color: #b78a00; text-transform: uppercase; }
@@ -218,22 +141,21 @@
         .post-meta-loc i { font-size: 12px; }
         .post-price-box { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; border-top: 1px solid #f5f5f5; padding-top: 6px; }
         .post-price-text { color: var(--success); font-size: 12px; font-weight: bold; margin: 0; }
-        
         .no-post { text-align: center; color: var(--gray); padding: 30px; font-weight: 500; width: 100%; background: white; border-radius: 8px; border: 1px solid var(--border); box-sizing: border-box; }
 
-        /* RESPONSIVE DESIGN */
-        @media (min-width:768px){
-            .container{ max-width:950px; }
-            .profile-cover-photo{ height:180px; }
-            .seller-posts-grid{ grid-template-columns:repeat(3,1fr); }
-            .seller-name{ font-size:28px; }
+        /* Responsive Styles */
+        @media (min-width: 768px) {
+            .container { max-width: 950px; }
+            .profile-cover-photo { height: 180px; }
+            .seller-posts-grid { grid-template-columns: repeat(3, 1fr); }
+            .seller-name { font-size: 28px; }
         }
-        @media (min-width:1024px){
-            .container{ max-width:1200px; }
-            .profile-cover-photo{ height:220px; }
-            .avatar-container{ width:130px; height:130px; }
-            .seller-name{ font-size:30px; }
-            .seller-posts-grid{ grid-template-columns:repeat(4,1fr); }
+        @media (min-width: 1024px) {
+            .container { max-width: 1200px; }
+            .profile-cover-photo { height: 220px; }
+            .avatar-container { width: 130px; height: 130px; }
+            .seller-name { font-size: 30px; }
+            .seller-posts-grid { grid-template-columns: repeat(4, 1fr); }
         }
     </style>
 </head>
@@ -274,22 +196,26 @@
                 <i class="material-icons">home</i> 
                 <span>আমার বাড়ি.কম</span>
             </a>
-            <a href="index.html" id="home-link-sidebar"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
-            <a href="post.html" class="sidebar-post-link" id="post-link-sidebar-menu"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
-            <a href="tips.html" id="tips-link-sidebar"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
-            <a href="privacy.html" id="privacy-link-sidebar"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
-            <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
-            <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
-            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            <a href="index.html"><i class="material-icons">dashboard</i> ড্যাশবোর্ড</a>
+            <a href="post.html"><i class="material-icons">add_home</i> প্রপার্টি যোগ করুন</a>
+            <a href="tips.html"><i class="material-icons">lightbulb</i> টিপস ও গাইড</a>
+            <a href="privacy.html"><i class="material-icons">security</i> প্রাইভেসি পলিসি</a>
+            <a href="about.html"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
+            <a href="contact.html"><i class="material-icons">mail</i> যোগাযোগ</a>
+            <a href="auth.html"><i class="material-icons">lock_open</i> লগইন</a>
         </nav>
     </div>
 
     <div class="container">
         <button class="btn-back" onclick="window.history.back()"><i class="material-icons">arrow_back</i> ফিরে যান</button>
 
+        <!-- 👑 মূল প্রোফাইল/পেজ কার্ড -->
         <div class="seller-premium-card">
-            <div class="profile-cover-photo">
+            <div class="profile-cover-photo" id="s-cover">
                 <div class="viral-badge-box">
+                    <div class="badge-item badge-page" id="badgePage" style="display: none;">
+                        <i class="material-icons" style="font-size:14px">flag</i> পেজ
+                    </div>
                     <div class="badge-item badge-verified" id="badgeVerified" style="display: none;">
                         <i class="material-icons" style="font-size:14px">verified</i> ভেরিফাইড
                     </div>
@@ -301,24 +227,26 @@
 
             <div class="profile-content-box">
                 <div class="avatar-container">
-                    <img id="s-avatar" class="seller-avatar" src="https://www.w3schools.com/howto/img_avatar.png" alt="Seller Avatar">
+                    <img id="s-avatar" class="seller-avatar" src="https://www.w3schools.com/howto/img_avatar.png" alt="Profile Avatar">
                     <div class="status-dot"></div>
                 </div>
+
                 <h1 id="s-name" class="seller-name">লোড হচ্ছে...</h1>
                 <p id="s-bio" class="seller-bio"></p>
             </div>
         </div>
 
+        <!-- 📋 পরিচিতি (Intro) বক্স -->
         <div class="facebook-intro-card">
-            <h3>পরিচিতি (Intro)</h3>
+            <h3 id="intro-heading">পরিচিতি (Intro)</h3>
             <ul class="intro-list">
-                <li class="intro-item">
-                    <i class="material-icons">work</i>
-                    <span>পেশা: <strong id="s-profession">যুক্ত করা নেই</strong></span>
+                <li class="intro-item" id="item-profession">
+                    <i class="material-icons" id="icon-profession">work</i>
+                    <span id="label-profession">পেশা:</span> <strong id="s-profession">যুক্ত করা নেই</strong>
                 </li>
                 <li class="intro-item">
                     <i class="material-icons">location_on</i>
-                    <span>বসবাস করেন: <strong id="s-location">যুক্ত করা নেই</strong></span>
+                    <span id="label-location">অবস্থান:</span> <strong id="s-location">যুক্ত করা নেই</strong>
                 </li>
                 <li class="intro-item" id="s-office-item" style="display: none;">
                     <i class="material-icons">business</i>
@@ -328,18 +256,23 @@
                     <i class="material-icons">phone</i>
                     <span>মোবাইল: <strong id="s-phone">গোপন রাখা হয়েছে</strong></span>
                 </li>
-                <li class="intro-item">
+                <li class="intro-item" id="item-email">
                     <i class="material-icons">mail</i>
                     <span>ইমেইল: <strong id="s-email">ইমেইল সরবরাহ করা হয়নি</strong></span>
                 </li>
-                <li class="intro-item">
+                <li class="intro-item" id="item-website" style="display: none;">
+                    <i class="material-icons">language</i>
+                    <span>ওয়েবসাইট: <strong id="s-website">...</strong></span>
+                </li>
+                <li class="intro-item" id="item-uid">
                     <i class="material-icons">assignment_ind</i>
-                    <span>মেম্বার আইডি: <strong id="s-uid-text">...</strong></span>
+                    <span id="label-uid">মেম্বার আইডি:</span> <strong id="s-uid-text">...</strong>
                 </li>
             </ul>
 
+            <!-- পাবলিক রেটিং সেকশন -->
             <div class="profile-rating-section">
-                <span class="rating-title" id="ratingHeader">এই পোস্টদাতাকে রেটিং দিন</span>
+                <span class="rating-title" id="ratingHeader">রেটিং দিন</span>
                 <div class="stars-display" id="profileStarsZone">
                     <i class="material-icons" data-star="1">star_border</i>
                     <i class="material-icons" data-star="2">star_border</i>
@@ -351,22 +284,47 @@
             </div>
         </div>
 
+        <!-- প্রপার্টি লিস্টিং -->
         <div class="list-title">
             <i class="material-icons" style="color:var(--primary)">maps_home_work</i> 
-            <span>এই বিজ্ঞাপনদাতার একটিভ প্রপার্টি সমূহ:</span>
+            <span id="posts-title">এক্টিভ প্রপার্টি সমূহ:</span>
         </div>
         
         <div class="seller-posts-grid" id="seller-listings"></div>
     </div>
 
-    <!-- স্ক্রিপ্টসমূহ -->
     <script src="seller-profile.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+
+            if (menuButton && sidebar && overlay) {
+                menuButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            document.getElementById('notificationButton')?.addEventListener('click', () => { window.location.href = 'notifications.html'; });
+            document.getElementById('headerPostButton')?.addEventListener('click', () => { window.location.href = 'post.html'; });
+            document.getElementById('messageButton')?.addEventListener('click', () => { window.location.href = 'messages.html'; });
+            document.getElementById('profileImageWrapper')?.addEventListener('click', () => { window.location.href = 'profile.html'; });
+        });
+    </script>
+
     <script src="notifications.js"></script> 
     <script src="header-sync.js"></script>
     
     <footer class="footer">
-        <div class="container" style="text-align: center; padding: 20px 0; color: var(--gray);">
-            <p>&copy; 2026 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        <div class="container" style="text-align: center; padding: 20px 0;">
+            <p>&copy; 2024 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
     </footer>
 </body>
