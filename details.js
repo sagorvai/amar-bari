@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = doc.data();
             renderDetails(data);
             loadRelatedPosts(data);
-            setupLikeSystem(data); 
+            setupLikeSystem(data);
         }
     } catch (e) {
         console.error("ডেটা লোড করতে সমস্যা:", e);
@@ -57,47 +57,51 @@ function renderDetails(data) {
             gallery.appendChild(div);
         });
 
+        // ফ্যান্সি-বক্স অ্যাক্টিভ করার কোড
         if (typeof Fancybox !== 'undefined') {
             Fancybox.bind("[data-fancybox='gallery']", {
-                Images: { Panzoom: { maxScale: 3 } },
+                Images: {
+                    Panzoom: {
+                        maxScale: 3, 
+                    },
+                },
             });
         }
     }
 
     // =======================================================
-    // 🏢/👤 পোস্টদাতার তথ্য ডাইনামিক লোড ও প্রোফাইল রিডাইরেক্ট
+    // 👤/🏢 পোস্টদাতার ডাটা লোড ও পেজ/প্রোফাইল মোড লজিক
     // =======================================================
-    const isCompanyPost = data.authorType === 'company' || data.ownerType === 'company' || !!data.companyId;
-    const companyId = data.companyId || data.ownerId || data.authorId;
-    const userId = data.userId || data.createdByUid || data.authorId;
     const authorTrigger = document.getElementById('authorProfileTrigger');
-
-    if (isCompanyPost && companyId) {
-        db.collection('companies').doc(companyId).get().then(compDoc => {
-            if (compDoc.exists) {
-                const compData = compDoc.data();
-                document.getElementById('pub-name').textContent = compData.companyName || compData.name || data.postedByName || "কোম্পানি/এজেন্সি";
-                if ((compData.logoUrl || compData.logo) && document.getElementById('pub-avatar')) {
-                    document.getElementById('pub-avatar').src = compData.logoUrl || compData.logo;
+    
+    // পেজ নাকি সাধারণ প্রোফাইল তা সনাক্ত করা
+    if (data.pageId || data.postedAsPage) {
+        const pageId = data.pageId || data.userId;
+        db.collection('pages').doc(pageId).get().then(pageDoc => {
+            if (pageDoc.exists) {
+                const pageData = pageDoc.data();
+                document.getElementById('pub-name').textContent = pageData.pageName || pageData.name || "অফিসিয়াল পেজ";
+                if (pageData.pageLogo || pageData.logo || pageData.profilePic) {
+                    document.getElementById('pub-avatar').src = pageData.pageLogo || pageData.logo || pageData.profilePic;
                 }
             } else {
-                document.getElementById('pub-name').textContent = data.postedByName || "কোম্পানি পেজ";
+                document.getElementById('pub-name').textContent = "বিজনেস পেজ";
             }
         }).catch(() => {
-            document.getElementById('pub-name').textContent = data.postedByName || "কোম্পানি পেজ";
+            document.getElementById('pub-name').textContent = "আমার বাড়ি প্ল্যাটফর্ম পেজ";
         });
 
         if (authorTrigger) {
             authorTrigger.onclick = () => {
-                window.location.href = `company-profile.html?companyId=${companyId}`;
+                window.location.href = `seller-profile.html?pageId=${pageId}&mode=page`;
             };
         }
-    } else if (userId) {
-        db.collection('users').doc(userId).get().then(userDoc => {
+    } else if (data.userId) {
+        db.collection('users').doc(data.userId).get().then(userDoc => {
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 document.getElementById('pub-name').textContent = userData.fullName || userData.name || "সম্মানিত বিক্রেতা";
-                if (userData.profilePic && document.getElementById('pub-avatar')) {
+                if (userData.profilePic) {
                     document.getElementById('pub-avatar').src = userData.profilePic;
                 }
             } else {
@@ -109,7 +113,7 @@ function renderDetails(data) {
 
         if (authorTrigger) {
             authorTrigger.onclick = () => {
-                window.location.href = `seller-profile.html?userId=${userId}`;
+                window.location.href = `seller-profile.html?userId=${data.userId}&mode=profile`;
             };
         }
     } else {
@@ -136,7 +140,7 @@ function renderDetails(data) {
         addRow(basicT, "ক্যাটাগরি", data.category);
         addRow(basicT, "টাইপ", data.type);
         addRow(basicT, "জমির ধরন", data.landType);
-        addRow(basicT, "প্রপার্টির বয়স", data.propertyAge? `${data.propertyAge} বছর` : "");
+        addRow(basicT, "প্রপার্টির বয়স", data.propertyAge ? `${data.propertyAge} বছর` : "");
         
         if (data.category === 'ভাড়া') {
             addRow(basicT, "ভাড়ার ধরন", data.rentType);
@@ -144,14 +148,14 @@ function renderDetails(data) {
             addRow(basicT, "অগ্রিম (এডভ্যান্স)", data.advance ? `৳ ${data.advance} টাকা` : "");
         }
 
-        addRow(basicT, "বেডরুম", data.bedrooms || data.rooms? `${data.rooms} টি` : "");
-        addRow(basicT, "ডাইনিং", data.dining? `${data.dining} টি` : "");
-        addRow(basicT, "বাথরুম", data.bathrooms? `${data.bathrooms} টি` : "");
-        addRow(basicT, "কিচেন", data.kitchen? `${data.kitchen} টি` : "");
-        addRow(basicT, "বেলকনি", data.balcony? `${data.balcony} টি` : "");
+        addRow(basicT, "বেডরুম", data.bedrooms || data.rooms ? `${data.rooms} টি` : "");
+        addRow(basicT, "ডাইনিং", data.dining ? `${data.dining} টি` : "");
+        addRow(basicT, "বাথরুম", data.bathrooms ? `${data.bathrooms} টি` : "");
+        addRow(basicT, "কিচেন", data.kitchen ? `${data.kitchen} টি` : "");
+        addRow(basicT, "বেলকনি", data.balcony ? `${data.balcony} টি` : "");
         addRow(basicT, "ফ্লোর নম্বর", data.floorNo || data.floorLevel);
         addRow(basicT, "রাস্তা", data.roadWidth ? `${data.roadWidth} ফিট` : "");
-        addRow(basicT, "ফেসিং", data.facing? `${data.facing} দিক` : "");
+        addRow(basicT, "ফেসিং", data.facing ? `${data.facing} দিক` : "");
         
         if (data.utilities && data.utilities.length > 0) {
             addRow(basicT, "সুবিধা সমূহ", Array.isArray(data.utilities) ? data.utilities.join(', ') : data.utilities);
@@ -202,7 +206,7 @@ function renderDetails(data) {
     }
 
     // =======================================================
-    // 📞 ৫. বাটন ও অ্যাকশন কন্ট্রোল
+    // 📞 ৫. বাটন ও অ্যাকশন কন্ট্রোল (ভিজিটর বনাম পোস্টদাতা)
     // =======================================================
     const conT = 'table-contact';
     if (document.getElementById(conT)) {
@@ -214,8 +218,9 @@ function renderDetails(data) {
         document.getElementById('p-call').href = `tel:${data.phoneNumber}`;
     }
 
+    // অথেনটিকেশন চেক করে বাটন টগল করা
     firebase.auth().onAuthStateChanged((currentUser) => {
-        const postOwnerUid = data.createdByUid || data.userId;
+        const sellerId = data.userId;
         
         const callBtn = document.getElementById('p-call');
         const msgBtn = document.getElementById('p-message');
@@ -225,7 +230,7 @@ function renderDetails(data) {
         const boostBtn = document.getElementById('p-boost');
         const deleteBtn = document.getElementById('p-delete');
 
-        if (currentUser && currentUser.uid === postOwnerUid) {
+        if (currentUser && currentUser.uid === sellerId) {
             if (callBtn) callBtn.style.display = 'none';
             if (msgBtn) msgBtn.style.display = 'none';
             if (saveBtn) saveBtn.style.display = 'none';
@@ -235,7 +240,9 @@ function renderDetails(data) {
             if (deleteBtn) deleteBtn.style.display = 'flex';
 
             if (editBtn) {
-                editBtn.onclick = () => { window.location.href = `post.html?edit=${postId}`; };
+                editBtn.onclick = () => {
+                    window.location.href = `post.html?edit=${postId}`;
+                };
             }
             if (boostBtn) {
                 boostBtn.onclick = (e) => {
@@ -257,6 +264,7 @@ function renderDetails(data) {
                     }
                 };
             }
+
         } else {
             if (callBtn && data.phoneNumber) callBtn.style.display = 'flex';
             if (msgBtn) msgBtn.style.display = 'flex';
@@ -268,6 +276,7 @@ function renderDetails(data) {
         }
     });
 
+    // মেসেজ বাটনের ক্লিকের মূল লজিক (ভিজিটরদের জন্য - পেজ ও প্রোফাইল উভয়ের ক্ষেত্রে কার্যকরী)
     const msgBtn = document.getElementById('p-message');
     if (msgBtn) {
         msgBtn.onclick = async () => {
@@ -278,7 +287,7 @@ function renderDetails(data) {
                 return; 
             }
 
-            const sellerId = data.companyId || data.ownerId || data.userId;
+            const sellerId = data.pageId || data.userId;
             if (!sellerId || !postId) {
                 alert("প্রপার্টি বা বিক্রেতার তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।");
                 return;
@@ -299,6 +308,7 @@ function renderDetails(data) {
                         postTitle: data.title || "প্রপার্টি চ্যাট",
                         lastMessage: "চ্যাট শুরু হয়েছে...",
                         senderId: currentUser.uid,
+                        chatType: data.pageId ? 'page_chat' : 'user_chat',
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 }
@@ -312,14 +322,16 @@ function renderDetails(data) {
         };
     }
     
-    // SEO
+    // =======================================================
+    // 🎯 আমার বাড়ি প্ল্যাটফর্ম - ডাইনামিক এসইও ইঞ্জিন
+    // =======================================================
     const currentUrl = window.location.href;
-    const village = data.location?.village || " can't find";
-    const thana = data.location?.thana || data.location?.upazila || "can't find";
-    const district = data.location?.district || "can't find";
-    const fullLocation = `${village}, ${thana}, ${district}`;
+    const village = data.location?.village || "";
+    const thana = data.location?.thana || data.location?.upazila || "";
+    const district = data.location?.district || "";
+    const fullLocation = `${village ? village + ', ' : ''}${thana ? thana + ', ' : ''}${district}`;
 
-    const seoTitle = `${data.title || "আমার বাড়ি প্ল্যাটফর্ম প্রপার্টি"} - ${thana}, ${district} | আমার বাড়ি প্ল্যাটফর্ম`;
+    const seoTitle = `${data.title || "আমার বাড়ি প্ল্যাটফর্ম প্রপার্টি"} - ${thana}, ${district} | আমার বাড়ি`;
     const seoDescription = `${fullLocation}-এ আকর্ষণীয় মূল্যে প্রপার্টি। মূল্য: ৳${data.category === 'বিক্রয়' ? (data.price || "আলোচনা সাপেক্ষ") : (data.monthlyRent || "আলোচনা সাপেক্ষ")} টাকা। বিস্তারিত তথ্য ও ছবির জন্য ভিজিট করুন আমার বাড়ি প্ল্যাটফর্ম।`;
     
     let firstImg = "https://i.postimg.cc/YSbRvftN/FB-IMG-1781692297303.jpg"; 
@@ -330,7 +342,9 @@ function renderDetails(data) {
     document.title = seoTitle; 
     
     const seoTitleTag = document.getElementById('seo-title');
-    if (seoTitleTag) seoTitleTag.innerText = seoTitle;
+    if (seoTitleTag) {
+        seoTitleTag.innerText = seoTitle;
+    }
     
     document.getElementById('seo-desc')?.setAttribute('content', seoDescription);
     document.getElementById('seo-canonical')?.setAttribute('href', currentUrl);
@@ -419,10 +433,10 @@ async function setupLikeSystem(postData) {
 
             if (isLiked) {
                 const currentUser = firebase.auth().currentUser;
-                const targetUserId = postData.companyId || postData.ownerId || postData.createdByUid || postData.userId;
-                if (currentUser && currentUser.uid !== targetUserId) {
+                const recipientId = postData.pageId || postData.userId;
+                if (currentUser && currentUser.uid !== recipientId) {
                     writeNotificationToFirestore(
-                        targetUserId,              
+                        recipientId,              
                         currentUser.uid,                
                         postId,                         
                         "লাইক পেয়েছেন! 👍",
@@ -471,15 +485,15 @@ function setupSaveAndShareSystem(postData) {
 
             if (isSaved) {
                 const currentUser = firebase.auth().currentUser;
-                const targetUserId = postData.companyId || postData.ownerId || postData.createdByUid || postData.userId;
+                const recipientId = postData.pageId || postData.userId;
                 if (currentUser) {
-                    if (currentUser.uid !== targetUserId) {
+                    if (currentUser.uid !== recipientId) {
                         writeNotificationToFirestore(
-                            targetUserId,
+                            recipientId,
                             currentUser.uid,
                             postId,
                             "বুকমার্ক অ্যালার্ট! ❤️",
-                            `একজন সম্ভাব্য ক্রেতা আপনার '${postData.title}' প্রপার্টিটি বুকমার্ক করে সেভ রেখেছেন। দ্রুত চ্যাট শুরু করতে পারেন!`,
+                            `একজন সম্ভাব্য ক্রেতা আপনার '${postData.title}' প্রপার্টিটি বুকমার্ক করে সেভ রেখেছেন।`,
                             "save"
                         );
                     }
@@ -515,6 +529,7 @@ function setupSaveAndShareSystem(postData) {
     }
 }
 
+// খতিয়ান ভেরিফিকেশন বাটন হ্যান্ডলার ও নোটিফিকেশন রাইটার
 document.addEventListener('DOMContentLoaded', () => {
     const khotiyanButton = document.getElementById('btn-verify-khotian');
     if (khotiyanButton) {
@@ -528,14 +543,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (doc.exists) {
                         const postData = doc.data();
                         const currentUser = firebase.auth().currentUser;
-                        const targetUserId = postData.companyId || postData.ownerId || postData.createdByUid || postData.userId;
-                        if (currentUser && currentUser.uid !== targetUserId) {
+                        const recipientId = postData.pageId || postData.userId;
+                        if (currentUser && currentUser.uid !== recipientId) {
                             writeNotificationToFirestore(
-                                targetUserId,
+                                recipientId,
                                 currentUser.uid,
                                 postId,
                                 "খতিয়ান যাচাই হচ্ছে! 🔍",
-                                `অভিনন্দন! একজন ক্রেতা আপনার '${postData.title}' প্রপার্টির খতিয়ান যাচাই করে দেখছেন। একটি বিশ্বস্ত এবং নিরাপদ ডিল সম্পন্ন হতে যাচ্ছে!`,
+                                `অভিনন্দন! একজন ক্রেতা আপনার '${postData.title}' প্রপার্টির খতিয়ান যাচাই করে দেখছেন।`,
                                 "khotian"
                             );
                         }
@@ -564,7 +579,11 @@ function formatPostTime(date) {
     if (diffWeek < 4) return `${diffWeek} সপ্তাহ আগে`;
     if (diffMonth < 3) return `${diffMonth} মাস আগে`;
 
-    return date.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
+    return date.toLocaleDateString('bn-BD', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
 }
 
 async function loadRelatedPosts(currentData) {
@@ -686,6 +705,9 @@ firebase.auth().onAuthStateChanged(async (user) => {
     }
 });
 
+/**
+ * ফায়ারস্টোরে নোটিফিকেশন লেখার কমন ফাংশন
+ */
 async function writeNotificationToFirestore(recipientId, senderId, postId, title, message, type) {
     try {
         const notifData = {
@@ -699,11 +721,15 @@ async function writeNotificationToFirestore(recipientId, senderId, postId, title
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
         await db.collection("notifications").add(notifData);
+        console.log("ফায়ারস্টোরে নোটিফিকেশন সফলভাবে লেখা হয়েছে।");
     } catch (error) {
         console.error("ফায়ারস্টোরে নোটিফিকেশন লিখতে ত্রুটি: ", error);
     }
 }
 
+/**
+ * গেস্ট ইউজারের লোকাল স্টোরেজে নোটিফিকেশন লেখার ফাংশন
+ */
 function writeNotificationToLocalStorage(postId, title, message, type) {
     let guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
     const newNotification = {
@@ -716,4 +742,5 @@ function writeNotificationToLocalStorage(postId, title, message, type) {
     };
     guestNotifications.unshift(newNotification);
     localStorage.setItem("guest_notifications", JSON.stringify(guestNotifications));
+    console.log("গেস্ট নোটিফিকেশন লোকাল স্টোরেজে লেখা হয়েছে।");
                 }
