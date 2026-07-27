@@ -696,23 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
 
-firebase.auth().onAuthStateChanged(async (user) => {
-    const headerProfileImg = document.querySelector('#profileImageWrapper img');
-    if (user && headerProfileImg) {
-        try {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().profilePic) {
-                headerProfileImg.src = userDoc.data().profilePic;
-            } else if (user.photoURL) {
-                headerProfileImg.src = user.photoURL;
-            } else {
-                headerProfileImg.src = 'assets/images/default-avatar.png';
-            }
-        } catch (error) {
-            console.error("হেডার প্রোফাইল পিকচার লোড করতে ব্যর্থ:", error);
-        }
-    }
-});
+
 
 /**
  * ফায়ারস্টোরে নোটিফিকেশন লেখার কমন ফাংশন
