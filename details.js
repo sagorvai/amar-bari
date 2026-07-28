@@ -286,7 +286,7 @@ function renderDetails(data) {
         }
     });
 
-    // 💬 মেসেজ বাটন লজিক (কোম্পানি এবং ইউজার উভয় ক্ষেত্রেই কাজ করবে)
+    // 💬 মেসেজ বাটন লজিক (header-sync অনুযায়ী Sender ID এবং পোস্টদাতা অনুযায়ী Receiver ID ডায়নামিক)
     const msgBtn = document.getElementById('p-message');
     if (msgBtn) {
         msgBtn.onclick = async () => {
@@ -297,20 +297,32 @@ function renderDetails(data) {
                 return; 
             }
 
+            // ১. header-sync.js অনুযায়ী প্রেরক (Sender ID) নির্ধারণ
+            const activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
+            let senderId = currentUser.uid;
+
+            if (activeIdentityType === 'company') {
+                const storedCompanyId = localStorage.getItem('activeCompanyId');
+                if (storedCompanyId) {
+                    senderId = storedCompanyId;
+                }
+            }
+
+            // ২. পোস্টদাতা অনুযায়ী প্রাপক (Receiver ID) নির্ধারণ
             const receiverId = isCompany ? companyId : userId;
+
             if (!receiverId || !postId) {
                 alert("প্রপার্টি বা বিক্রেতার তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।");
                 return;
             }
 
-            if (currentUser.uid === receiverId) {
+            if (senderId === receiverId) {
                 alert("আপনি নিজের পোস্টে মেসেজ পাঠাতে পারবেন না।");
                 return;
             }
 
-            // চ্যাট আইডি জেনারেশন (২ পার্ট)
-            const sortedUserIds = [currentUser.uid, receiverId].sort();
-            const chatId = `${sortedUserIds[0]}_${sortedUserIds[1]}`;
+            // ৩. ডায়নামিক চ্যাট আইডি জেনারেশন
+            const chatId = senderId < receiverId ? `${senderId}_${receiverId}` : `${receiverId}_${senderId}`;
 
             try {
                 const chatRef = db.collection('chats').doc(chatId);
@@ -319,18 +331,18 @@ function renderDetails(data) {
                 if (!chatDoc.exists) {
                     await chatRef.set({
                         chatId: chatId,
-                        participants: [currentUser.uid, receiverId],
+                        participants: [senderId, receiverId],
                         postId: postId,
                         postTitle: data.title || "প্রপার্টি চ্যাট",
                         lastMessage: "চ্যাট শুরু হয়েছে...",
-                        lastSenderId: currentUser.uid,
-                        senderId: currentUser.uid,
+                        lastSenderId: senderId,
+                        senderId: senderId,
                         isUnread: true,
-                        chatType: isCompany ? 'company_chat' : 'user_chat',
+                        chatType: activeIdentityType === 'company' ? 'company_chat' : 'user_chat',
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 } else {
-                    // চ্যাট আগে থেকে থাকলে পোস্ট আপডেট
+                    // চ্যাট আগে থেকে থাকলে পোস্ট আইডি আপডেট
                     await chatRef.update({
                         postId: postId,
                         postTitle: data.title || "প্রপার্টি চ্যাট"
