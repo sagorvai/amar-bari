@@ -286,51 +286,65 @@ function renderDetails(data) {
         }
     });
 
-    // মেসেজ বাটন লজিক (কোম্পানি এবং ইউজার উভয় ক্ষেত্রেই কাজ করবে)
-    const msgBtn = document.getElementById('p-message');
-    if (msgBtn) {
-        msgBtn.onclick = async () => {
-            const currentUser = firebase.auth().currentUser;
-            if (!currentUser) { 
-                alert("মেসেজ করতে প্রথমে লগইন করুন।"); 
-                window.location.href = "auth.html"; 
-                return; 
+    // মেসেজ বাটন লজিক (কোম্পানি এবং ইউজার উভয় ক্ষেত্রেই নিখুঁত কাজ করবে)
+const msgBtn = document.getElementById('p-message');
+if (msgBtn) {
+    msgBtn.onclick = async () => {
+        const currentUser = firebase.auth().currentUser;
+        if (!currentUser) { 
+            alert("মেসেজ করতে প্রথমে লগইন করুন।"); 
+            window.location.href = "auth.html"; 
+            return; 
+        }
+
+        const receiverId = isCompany ? companyId : userId;
+        if (!receiverId || !postId) {
+            alert("প্রপার্টি বা বিক্রেতার তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।");
+            return;
+        }
+
+        if (currentUser.uid === receiverId) {
+            alert("আপনি নিজের পোস্টে মেসেজ পাঠাতে পারবেন না।");
+            return;
+        }
+
+        // চ্যাট আইডিতে ২টি আইডি ব্যবহার করা (postId আলাদা প্যারামিটারে পাঠানো)
+        const sortedUserIds = [currentUser.uid, receiverId].sort();
+        const chatId = `${sortedUserIds[0]}_${sortedUserIds[1]}`;
+
+        try {
+            const chatRef = db.collection('chats').doc(chatId);
+            const chatDoc = await chatRef.get();
+
+            if (!chatDoc.exists) {
+                await chatRef.set({
+                    chatId: chatId,
+                    participants: [currentUser.uid, receiverId],
+                    postId: postId,
+                    postTitle: data.title || "প্রপার্টি চ্যাট",
+                    lastMessage: "চ্যাট শুরু হয়েছে...",
+                    lastSenderId: currentUser.uid, // 👈 lastSenderId যোগ করা হলো
+                    senderId: currentUser.uid,
+                    isUnread: true,
+                    chatType: isCompany ? 'company_chat' : 'user_chat',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } else {
+                // চ্যাট থেকে থাকলে পোস্ট আইডি আপডেট করে নেওয়া
+                await chatRef.update({
+                    postId: postId,
+                    postTitle: data.title || "প্রপার্টি চ্যাট"
+                });
             }
 
-            const receiverId = isCompany ? companyId : userId;
-            if (!receiverId || !postId) {
-                alert("প্রপার্টি বা বিক্রেতার তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।");
-                return;
-            }
+            window.location.href = `messages.html?chatId=${chatId}&postId=${postId}&action=direct`;
 
-            const sortedUserIds = [currentUser.uid, receiverId].sort();
-            const chatId = `${sortedUserIds[0]}_${sortedUserIds[1]}_${postId}`;
-
-            try {
-                const chatRef = db.collection('chats').doc(chatId);
-                const chatDoc = await chatRef.get();
-
-                if (!chatDoc.exists) {
-                    await chatRef.set({
-                        chatId: chatId,
-                        participants: [currentUser.uid, receiverId],
-                        postId: postId,
-                        postTitle: data.title || "প্রপার্টি চ্যাট",
-                        lastMessage: "চ্যাট শুরু হয়েছে...",
-                        senderId: currentUser.uid,
-                        chatType: isCompany ? 'company_chat' : 'user_chat',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                }
-
-                window.location.href = `messages.html?chatId=${chatId}&postId=${postId}&action=direct`;
-
-            } catch (error) {
-                console.error("ফায়ারস্টোর চ্যাট এরর ডিটেইলস:", error);
-                alert(`দুঃখিত, চ্যাট রুম তৈরি করা যায়নি।`);
-            }
-        };
-    }
+        } catch (error) {
+            console.error("ফায়ারস্টোর চ্যাট এরর ডিটেইলস:", error);
+            alert(`দুঃখিত, চ্যাট রুম তৈরি করা যায়নি।`);
+        }
+    };
+}
     
     // =======================================================
     // 🎯 আমার বাড়ি প্ল্যাটফর্ম - ডাইনামিক এসইও ইঞ্জিন
