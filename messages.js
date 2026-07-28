@@ -1,4 +1,4 @@
-// messages.js - ইউজার ও পেজের জন্য সম্পূর্ণ আলাদা মেসেজিং ইঞ্জিন
+// messages.js - রিয়েল-টাইম চ্যাট ইঞ্জিন (পার্সোনাল ও কোম্পানি মোড সাপোর্টসহ)
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -20,14 +20,17 @@ let currentUser = null;
 let activeIdentity = null; // { id: '...', name: '...', photo: '...', type: 'user'|'company' }
 let activeChatListener = null;
 
-// 🔄 ১. অ্যাক্টিভ মোড (ইউজার vs পেজ) নির্ধারণ ও ইনিশিয়ালাইজেশন
+function getChatId(uid1, uid2) {
+    return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+}
+
+// 🔄 ১. ইউজার ও কোম্পানি আইডেন্টিটি ইনিশিয়ালাইজেশন
 firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
         const activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
 
         if (activeIdentityType === 'company') {
-            // 🏢 পেজ মোড অ্যাক্টিভ
             try {
                 const compDoc = await db.collection('companies').doc(user.uid).get();
                 if (compDoc.exists) {
@@ -41,11 +44,11 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     };
                 }
             } catch (e) {
-                console.error("কোম্পানি প্রোফাইল লোড করতে সমস্যা:", e);
+                console.error("কোম্পানি প্রোফাইল লোড এরর:", e);
             }
         }
 
-        // 👤 পার্সোনাল ইউজার মোড অ্যাক্টিভ (অথবা কোম্পানির তথ্য না পাওয়া গেলে)
+        // কোম্পানি মোডে না থাকলে পার্সোনাল প্রোফাইল সেট হবে
         if (!activeIdentity) {
             let pName = "সম্মানিত ইউজার";
             let pPhoto = user.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
@@ -57,7 +60,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     pPhoto = uData.profilePic || pPhoto;
                 }
             } catch (e) {
-                console.error("ইউজার প্রোফাইল লোড করতে সমস্যা:", e);
+                console.error("ইউজার প্রোফাইল লোড এরর:", e);
             }
 
             activeIdentity = {
@@ -69,7 +72,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
             };
         }
 
-        // হেডারে অ্যাক্টিভ মোডের পিকচার সেট
+        // হেডার প্রোফাইল পিকচার সেট
         const headerProfileImg = document.getElementById('profileImage');
         if (headerProfileImg) {
             headerProfileImg.src = activeIdentity.photo;
@@ -98,20 +101,18 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. সম্পূর্ণ আলাদা চ্যাট লিস্ট লোড (Isolate Chat List)
+// 💬 ২. চ্যাট তালিকা লোড (ইউজার এবং কোম্পানি ফিল্টারিং সহ)
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer) return;
 
-    // শুধুমাত্র বর্তমান অ্যাক্টিভ আইডেন্টিটির (activeIdentity.id) চ্যাট ফেচ করা হবে
     db.collection('chats')
         .where('participants', 'array-contains', activeIdentity.id)
         .orderBy('timestamp', 'desc')
         .onSnapshot((snapshot) => {
             
             if (snapshot.empty) {
-                const modeText = activeIdentity.type === 'company' ? 'কোম্পানি পেজে' : 'ইউজার অ্যাকাউন্টে';
-                chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--gray);">আপনার ${modeText} কোনো মেসেজ পাওয়া যায়নি।</div>`;
+                chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--gray);">কোনো মেসেজ পাওয়া যায়নি।</div>`;
                 return;
             }
 
@@ -121,7 +122,6 @@ function loadChatList() {
                 const chatData = doc.data();
                 const chatId = doc.id;
                 
-                // নিজের আইডি বাদ দিয়ে অপর প্রান্তের আইডি (কাস্টমার বা বিক্রেতা) বের করা
                 const otherParticipantId = chatData.participants ? chatData.participants.find(id => id !== activeIdentity.id) : null;
                 const isUnreadMessage = chatData.isUnread && chatData.lastSenderId !== activeIdentity.id;
                 const unreadClass = isUnreadMessage ? 'unread-chat' : '';
@@ -197,7 +197,7 @@ function loadChatList() {
                                 await batch.commit();
 
                                 await db.collection('chats').doc(chatId).delete();
-                                alert("চ্যাটটি ডিলিট করা হয়েছে।");
+                                alert("চ্যাটটি সফলভাবে ডিলিট করা হয়েছে।");
                                 
                                 if (currentChatId === chatId) {
                                     currentChatId = null;
@@ -211,7 +211,7 @@ function loadChatList() {
                     };
                 }
 
-                // 👤/🏢 অপর পাশের প্রোফাইল তথ্য লোড
+                // 👤/🏢 অপর পাশের পার্টি চ্যাট ইনফো লোড
                 if (otherParticipantId) {
                     fetchParticipantDetails(otherParticipantId, `name_${chatId}`, `avatar_${chatId}`);
                 }
@@ -225,7 +225,7 @@ document.addEventListener('click', () => {
     document.querySelectorAll('.chat-dropdown').forEach(dd => dd.classList.remove('show'));
 });
 
-// ৩, messages.js-এর openChatBox ফাংশনের প্রথম অংশের সংশোধন
+// 📖 ৩. চ্যাট বক্স ওপেন ও মেসেজ ফেচিং
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
     
@@ -246,7 +246,6 @@ async function openChatBox(chatId, postId) {
         const chatDoc = await chatRef.get();
         if (!chatDoc.exists) {
             const parts = chatId.split('_');
-            // শুধুমাত্র প্রথম ২টি পার্ট আইডি হিসেবে গ্রহণ করা
             chatDocData = {
                 participants: [parts[0], parts[1]],
                 postId: postId || currentPostId || "",
@@ -264,10 +263,75 @@ async function openChatBox(chatId, postId) {
     } catch (e) {
         console.error("চ্যাট ইনিশিয়ালিং এরর:", e);
     }
-    
-    // ... বাকি অংশ অপরিবর্তিত থাকবে
 
-// ✉️ ৪. বর্তমান আইডেন্টিটি অনুযায়ী মেসেজ সেন্ড
+    loadPropertyContext(postId || currentPostId || (chatDocData ? chatDocData.postId : ""));
+
+    if (activeChatListener) activeChatListener();
+
+    const messagesDisplay = document.getElementById('messagesDisplay');
+    const quickRepliesContainer = document.querySelector('.quick-replies');
+
+    activeChatListener = db.collection('chats').doc(chatId).collection('messages')
+        .orderBy('timestamp', 'asc')
+        .onSnapshot((snapshot) => {
+            if (!messagesDisplay) return;
+            messagesDisplay.innerHTML = "";
+            
+            const hasMessages = !snapshot.empty;
+
+            snapshot.forEach(doc => {
+                const msg = doc.data();
+                const bubble = document.createElement('div');
+                const isIncoming = msg.senderId !== activeIdentity.id;
+                
+                bubble.className = `msg-bubble ${isIncoming ? 'incoming' : 'outgoing'}`;
+                
+                let timeString = "এইমাত্র";
+                if (msg.timestamp && typeof msg.timestamp.toDate === 'function') {
+                    try {
+                        const date = msg.timestamp.toDate();
+                        timeString = date.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+                    } catch(e) {
+                        timeString = "এইমাত্র";
+                    }
+                }
+
+                bubble.innerHTML = `${msg.text} <span class="msg-time">${timeString}</span>`;
+                messagesDisplay.appendChild(bubble);
+            });
+
+            messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
+
+            const targetPostId = postId || currentPostId || (chatDocData ? chatDocData.postId : "");
+            if (quickRepliesContainer) {
+                if (hasMessages || !targetPostId) {
+                    quickRepliesContainer.style.display = 'none';
+                } else {
+                    db.collection('properties').doc(targetPostId).get().then(pDoc => {
+                        if (pDoc.exists) {
+                            const propertyData = pDoc.data();
+                            if (propertyData.userId === currentUser.uid || propertyData.companyId === activeIdentity.id) {
+                                quickRepliesContainer.style.display = 'none';
+                            } else {
+                                quickRepliesContainer.style.display = 'flex';
+                            }
+                        } else {
+                            quickRepliesContainer.style.display = 'none';
+                        }
+                    }).catch(() => quickRepliesContainer.style.display = 'none');
+                }
+            }
+
+        }, (err) => console.error("মেসেজ লোড এরর:", err));
+
+    const parts = chatId.split('_');
+    const otherParticipantId = parts.find(id => id !== activeIdentity.id);
+    if (otherParticipantId) {
+        fetchParticipantDetails(otherParticipantId, 'activeChatUserName', null);
+    }
+}
+
+// ✉️ ৪. মেসেজ সেন্ডিং
 async function sendMessage(text) {
     if (!text.trim() || !currentChatId) return;
 
@@ -293,10 +357,10 @@ async function sendMessage(text) {
     }
 }
 
-// 🔍 ৫. প্রোফাইল ইনফো ফেচ হেল্পার (ইউজার নাকি পেজ সনাক্তকরণ)
+// 🔍 ৫. সাহায্যকারী সার্ভিস: ইউজার বা কোম্পানি ডাটা বের করা
 async function fetchParticipantDetails(participantId, nameElemId, avatarElemId) {
     try {
-        // ১. আগে ইউজার কালেকশনে খোঁজ করা
+        // ১. আগে ইউজার কালেকশনে খোঁজা
         let uDoc = await db.collection('users').doc(participantId).get();
         if (uDoc.exists) {
             const uData = uDoc.data();
@@ -305,7 +369,7 @@ async function fetchParticipantDetails(participantId, nameElemId, avatarElemId) 
             return;
         }
 
-        // ২. না পাওয়া গেলে কোম্পানি/পেজ কালেকশনে খোঁজ করা
+        // ২. না পাওয়া গেলে কোম্পানি কালেকশনে খোঁজা
         let cDoc = await db.collection('companies').doc(participantId).get();
         if (!cDoc.exists) {
             const qSnap = await db.collection('companies').where('companyId', '==', participantId).limit(1).get();
@@ -318,7 +382,7 @@ async function fetchParticipantDetails(participantId, nameElemId, avatarElemId) 
             if (avatarElemId && document.getElementById(avatarElemId) && cData.logo) document.getElementById(avatarElemId).src = cData.logo;
         }
     } catch (e) {
-        console.error("প্রোফাইল লোড সমস্যা:", e);
+        console.error("পার্টিসিপ্যান্ট তথ্য লোড সমস্যা:", e);
     }
 }
 
@@ -410,4 +474,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function sendQuickReply(text) {
     sendMessage(text);
-                                                         }
+                                   }
