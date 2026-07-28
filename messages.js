@@ -1,4 +1,4 @@
-// messages.js - রিয়েল-টাইম চ্যাট ইঞ্জিন (পার্সোনাল ও কোম্পানি মোড সাপোর্টসহ)
+// messages.js - রিয়েল-টাইম চ্যাট ইঞ্জিন (পার্সোনাল ও কোম্পানি মোড ফিক্সড)
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -24,7 +24,7 @@ function getChatId(uid1, uid2) {
     return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
 }
 
-// 🔄 ১. ইউজার ও কোম্পানি আইডেন্টিটি ইনিশিয়ালাইজেশন
+// 🔄 ১. ইউজার ও কোম্পানি আইডেন্টিটি ইনিশিয়ালাইজেশন (FIXED FOR COMPANY)
 firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
@@ -32,14 +32,29 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
         if (activeIdentityType === 'company') {
             try {
-                const compDoc = await db.collection('companies').doc(user.uid).get();
-                if (compDoc.exists) {
+                // ১. প্রথমে ডাইরেক্ট Doc ID চেক
+                let compDoc = await db.collection('companies').doc(user.uid).get();
+                
+                // ২. না পাওয়া গেলে ownerUid / userId দিয়ে কোম্পানি কালেকশন খোজা
+                if (!compDoc.exists) {
+                    let qSnap = await db.collection('companies').where('ownerUid', '==', user.uid).limit(1).get();
+                    if (qSnap.empty) {
+                        qSnap = await db.collection('companies').where('userId', '==', user.uid).limit(1).get();
+                    }
+                    if (!qSnap.empty) {
+                        compDoc = qSnap.docs[0];
+                    }
+                }
+
+                if (compDoc && compDoc.exists) {
                     const cData = compDoc.data();
+                    const realCompanyId = compDoc.id || cData.companyId || user.uid;
+                    
                     activeIdentity = {
-                        id: cData.companyId || user.uid,
+                        id: realCompanyId,
                         ownerUid: user.uid,
                         name: cData.name || cData.companyName || "অফিসিয়াল পেজ",
-                        photo: cData.logo || 'https://via.placeholder.com/45?text=Page',
+                        photo: cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page',
                         type: 'company'
                     };
                 }
@@ -48,7 +63,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
             }
         }
 
-        // কোম্পানি মোডে না থাকলে পার্সোনাল প্রোফাইল সেট হবে
+        // কোম্পানি না পাওয়া গেলে বা ইউজার মোড হলে পার্সোনাল প্রোফাইল সেট হবে
         if (!activeIdentity) {
             let pName = "সম্মানিত ইউজার";
             let pPhoto = user.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
@@ -101,10 +116,15 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. চ্যাট তালিকা লোড (ইউজার এবং কোম্পানি ফিল্টারিং সহ)
+// 💬 ২. চ্যাট তালিকা লোড
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer) return;
+
+    if (!activeIdentity || !activeIdentity.id) {
+        chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--gray);">আইডেন্টিটি নিশ্চিত করা যায়নি।</div>`;
+        return;
+    }
 
     db.collection('chats')
         .where('participants', 'array-contains', activeIdentity.id)
@@ -218,6 +238,7 @@ function loadChatList() {
             });
         }, (error) => {
             console.error("চ্যাট লিস্ট স্ন্যাপশট এরর:", error);
+            chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:red;">চ্যাট লোড করতে সমস্যা হয়েছে।</div>`;
         });
 }
 
@@ -357,19 +378,10 @@ async function sendMessage(text) {
     }
 }
 
-// 🔍 ৫. সাহায্যকারী সার্ভিস: ইউজার বা কোম্পানি ডাটা বের করা
+// 🔍 ৫. সাহায্যকারী সার্ভিস: ইউজার বা কোম্পানি ডাটা বের করা (FIXED)
 async function fetchParticipantDetails(participantId, nameElemId, avatarElemId) {
     try {
-        // ১. আগে ইউজার কালেকশনে খোঁজা
-        let uDoc = await db.collection('users').doc(participantId).get();
-        if (uDoc.exists) {
-            const uData = uDoc.data();
-            if (nameElemId && document.getElementById(nameElemId)) document.getElementById(nameElemId).textContent = uData.fullName || uData.name || "সম্মানিত ইউজার";
-            if (avatarElemId && document.getElementById(avatarElemId) && uData.profilePic) document.getElementById(avatarElemId).src = uData.profilePic;
-            return;
-        }
-
-        // ২. না পাওয়া গেলে কোম্পানি কালেকশনে খোঁজা
+        // ১. আগে কোম্পানি কালেকশনে চেক (কারণ ইউজার পেজ মোডে থাকতে পারে)
         let cDoc = await db.collection('companies').doc(participantId).get();
         if (!cDoc.exists) {
             const qSnap = await db.collection('companies').where('companyId', '==', participantId).limit(1).get();
@@ -378,9 +390,33 @@ async function fetchParticipantDetails(participantId, nameElemId, avatarElemId) 
 
         if (cDoc && cDoc.exists) {
             const cData = cDoc.data();
-            if (nameElemId && document.getElementById(nameElemId)) document.getElementById(nameElemId).textContent = cData.name || cData.companyName || "কোম্পানি পেজ";
-            if (avatarElemId && document.getElementById(avatarElemId) && cData.logo) document.getElementById(avatarElemId).src = cData.logo;
+            if (nameElemId && document.getElementById(nameElemId)) {
+                document.getElementById(nameElemId).textContent = cData.name || cData.companyName || "কোম্পানি পেজ";
+            }
+            if (avatarElemId && document.getElementById(avatarElemId)) {
+                document.getElementById(avatarElemId).src = cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page';
+            }
+            return;
         }
+
+        // ২. না পাওয়া গেলে ইউজার কালেকশনে খোঁজা
+        let uDoc = await db.collection('users').doc(participantId).get();
+        if (uDoc.exists) {
+            const uData = uDoc.data();
+            if (nameElemId && document.getElementById(nameElemId)) {
+                document.getElementById(nameElemId).textContent = uData.fullName || uData.name || "সম্মানিত ইউজার";
+            }
+            if (avatarElemId && document.getElementById(avatarElemId)) {
+                document.getElementById(avatarElemId).src = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
+            }
+            return;
+        }
+
+        // ৩. কোথাও না পাওয়া গেলে ডিফল্ট
+        if (nameElemId && document.getElementById(nameElemId)) {
+            document.getElementById(nameElemId).textContent = "ইউজার / পেজ";
+        }
+
     } catch (e) {
         console.error("পার্টিসিপ্যান্ট তথ্য লোড সমস্যা:", e);
     }
@@ -474,4 +510,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function sendQuickReply(text) {
     sendMessage(text);
-                                   }
+                    }
