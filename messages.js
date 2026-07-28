@@ -1,4 +1,4 @@
-// messages.js - রিয়েল-টাইম চ্যাট ইঞ্জিন (পার্সোনাল ও কোম্পানি মোড ফিক্সড)
+// messages.js - রিয়েল-টাইম চ্যাট ইঞ্জিন (ইনডেক্স এরর মুক্ত ও পেজ মোড ফিক্সড)
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -24,7 +24,7 @@ function getChatId(uid1, uid2) {
     return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
 }
 
-// 🔄 ১. ইউজার ও কোম্পানি আইডেন্টিটি ইনিশিয়ালাইজেশন (FIXED FOR COMPANY)
+// 🔄 ১. ইউজার ও কোম্পানি আইডেন্টিটি ইনিশিয়ালাইজেশন
 firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
@@ -32,7 +32,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
         if (activeIdentityType === 'company') {
             try {
-                // ১. প্রথমে ডাইরেক্ট Doc ID চেক
+                // ১. প্রথমে ডাইরেক্ট Doc ID দিয়ে চেক
                 let compDoc = await db.collection('companies').doc(user.uid).get();
                 
                 // ২. না পাওয়া গেলে ownerUid / userId দিয়ে কোম্পানি কালেকশন খোজা
@@ -116,7 +116,7 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. চ্যাট তালিকা লোড
+// 💬 ২. চ্যাট তালিকা লোড (ইনডেক্স এরর মুক্ত ও ক্লায়েন্ট-সাইড সর্টেড)
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer) return;
@@ -126,75 +126,7 @@ function loadChatList() {
         return;
     }
 
-    db.collection('chats')
-        .where('participants', 'array-contains', activeIdentity.id)
-        .orderBy('timestamp', 'desc')
-        .onSnapshot((snapshot) => {
-            
-            if (snapshot.empty) {
-                chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--gray);">কোনো মেসেজ পাওয়া যায়নি।</div>`;
-                return;
-            }
-
-            chatListContainer.innerHTML = "";
-            
-            snapshot.forEach((doc) => {
-                const chatData = doc.data();
-                const chatId = doc.id;
-                
-                const otherParticipantId = chatData.participants ? chatData.participants.find(id => id !== activeIdentity.id) : null;
-                const isUnreadMessage = chatData.isUnread && chatData.lastSenderId !== activeIdentity.id;
-                const unreadClass = isUnreadMessage ? 'unread-chat' : '';
-
-                const chatItemDiv = document.createElement('div');
-                chatItemDiv.className = `chat-item ${chatId === currentChatId ? 'active' : ''} ${unreadClass}`;
-                chatItemDiv.id = `item_${chatId}`;
-                
-                chatItemDiv.innerHTML = `
-                    <img src="https://via.placeholder.com/45/007bff/ffffff?text=U" id="avatar_${chatId}">
-                    <div class="chat-item-info">
-                        <h4 id="name_${chatId}">লোড হচ্ছে...</h4>
-                        <p id="msg_preview_${chatId}" style="${isUnreadMessage ? 'font-weight: bold; color: #1e293b;' : ''}">${chatData.lastMessage || "নতুন চ্যাট শুরু হয়েছে..."}</p>
-                    </div>
-                    
-                    ${isUnreadMessage ? `<span class="unread-dot" style="width: 8px; height: 8px; background-color: #007bff; border-radius: 50%; margin-right: 8px;"></span>` : ''}
-
-                    <button class="chat-item-menu-btn" id="menu_btn_${chatId}">
-                        <i class="material-icons" style="font-size: 20px;">more_vert</i>
-                    </button>
-                    
-                    <div class="chat-dropdown" id="dropdown_${chatId}">
-                        <button class="chat-dropdown-item" id="delete_btn_${chatId}">
-                            <i class="material-icons">delete</i> ডিলিট করুন
-                        </button>
-                    </div>
-                `;
-                
-                chatListContainer.appendChild(chatItemDiv);
-
-                chatItemDiv.onclick = (e) => {
-                    if (e.target.closest('.chat-item-menu-btn') || e.target.closest('.chat-dropdown')) {
-                        return; 
-                    }
-
-                    const sidebar = document.getElementById('chatSidebar');
-                    const mainBox = document.getElementById('chatMainBox');
-                    
-                    if (window.innerWidth <= 768) {
-                        if (sidebar) sidebar.classList.add('hidden');
-                        if (mainBox) mainBox.classList.add('active');
-
-                        // 💬 ২. চ্যাট তালিকা লোড (ইনডেক্স এরর মুক্ত ও নিরাপদ ভার্সন)
-function loadChatList() {
-    const chatListContainer = document.getElementById('chatListContainer');
-    if (!chatListContainer) return;
-
-    if (!activeIdentity || !activeIdentity.id) {
-        chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--gray);">আইডেন্টিটি নিশ্চিত করা যায়নি।</div>`;
-        return;
-    }
-
-    // orderBy না দিয়ে শুধু array-contains চালানো হচ্ছে যাতে Index Error না আসে
+    // orderBy বাদ দিয়ে শুধু array-contains ক্যোয়ারি করা হয়েছে
     db.collection('chats')
         .where('participants', 'array-contains', activeIdentity.id)
         .onSnapshot((snapshot) => {
@@ -206,20 +138,20 @@ function loadChatList() {
 
             chatListContainer.innerHTML = "";
             
-            // ১. ফায়ারস্টোর ডাটাগুলোকে জাভাস্ক্রিপ্ট অ্যারেতে নিয়ে আসা
+            // ফায়ারস্টোর ডাটা অ্যারেতে রূপান্তর
             let chatDocs = [];
             snapshot.forEach(doc => {
                 chatDocs.push({ id: doc.id, ...doc.data() });
             });
 
-            // ২. জাভাস্ক্রিপ্ট দিয়ে টাইমস্ট্যাম্প অনুযায়ী নতুন চ্যাটগুলো উপরে সর্ট করা
+            // ক্লায়েন্ট-সাইডে সর্বশেষ সময়ের মেসেজগুলো উপরে সর্টিং
             chatDocs.sort((a, b) => {
                 const timeA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
                 const timeB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
                 return timeB - timeA;
             });
 
-            // ৩. চ্যাট লিস্ট রেন্ডার করা
+            // চ্যাট এলিমেন্ট রেন্ডার
             chatDocs.forEach((chatData) => {
                 const chatId = chatData.id;
                 
@@ -312,17 +244,20 @@ function loadChatList() {
                     };
                 }
 
-                // 👤/🏢 অপর পাশের পার্টি চ্যাট ইনফো লোড
+                // 👤/🏢 অপর পাশের পার্টনার তথ্য লোড
                 if (otherParticipantId) {
                     fetchParticipantDetails(otherParticipantId, `name_${chatId}`, `avatar_${chatId}`);
                 }
             });
         }, (error) => {
             console.error("চ্যাট লিস্ট স্ন্যাপশট এরর:", error);
-            chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:red;">চ্যাট লোড করতে সমস্যা হয়েছে। (কনসোল চেক করুন)</div>`;
+            chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:red;">চ্যাট লোড করতে সমস্যা হয়েছে।</div>`;
         });
-            }
-                        
+}
+
+document.addEventListener('click', () => {
+    document.querySelectorAll('.chat-dropdown').forEach(dd => dd.classList.remove('show'));
+});
 
 // 📖 ৩. চ্যাট বক্স ওপেন ও মেসেজ ফেচিং
 async function openChatBox(chatId, postId) {
@@ -456,10 +391,10 @@ async function sendMessage(text) {
     }
 }
 
-// 🔍 ৫. সাহায্যকারী সার্ভিস: ইউজার বা কোম্পানি ডাটা বের করা (FIXED)
+// 🔍 ৫. সাহায্যকারী সার্ভিস: ইউজার বা কোম্পানি ডাটা বের করা
 async function fetchParticipantDetails(participantId, nameElemId, avatarElemId) {
     try {
-        // ১. আগে কোম্পানি কালেকশনে চেক (কারণ ইউজার পেজ মোডে থাকতে পারে)
+        // ১. আগে কোম্পানি কালেকশনে খোঁজা
         let cDoc = await db.collection('companies').doc(participantId).get();
         if (!cDoc.exists) {
             const qSnap = await db.collection('companies').where('companyId', '==', participantId).limit(1).get();
@@ -490,7 +425,7 @@ async function fetchParticipantDetails(participantId, nameElemId, avatarElemId) 
             return;
         }
 
-        // ৩. কোথাও না পাওয়া গেলে ডিফল্ট
+        // ৩. ডিফল্ট
         if (nameElemId && document.getElementById(nameElemId)) {
             document.getElementById(nameElemId).textContent = "ইউজার / পেজ";
         }
@@ -588,4 +523,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function sendQuickReply(text) {
     sendMessage(text);
-                    }
+    }
