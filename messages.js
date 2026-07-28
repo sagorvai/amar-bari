@@ -183,6 +183,87 @@ function loadChatList() {
                     if (window.innerWidth <= 768) {
                         if (sidebar) sidebar.classList.add('hidden');
                         if (mainBox) mainBox.classList.add('active');
+
+                        // 💬 ২. চ্যাট তালিকা লোড (ইনডেক্স এরর মুক্ত ও নিরাপদ ভার্সন)
+function loadChatList() {
+    const chatListContainer = document.getElementById('chatListContainer');
+    if (!chatListContainer) return;
+
+    if (!activeIdentity || !activeIdentity.id) {
+        chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--gray);">আইডেন্টিটি নিশ্চিত করা যায়নি।</div>`;
+        return;
+    }
+
+    // orderBy না দিয়ে শুধু array-contains চালানো হচ্ছে যাতে Index Error না আসে
+    db.collection('chats')
+        .where('participants', 'array-contains', activeIdentity.id)
+        .onSnapshot((snapshot) => {
+            
+            if (snapshot.empty) {
+                chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--gray);">কোনো মেসেজ পাওয়া যায়নি।</div>`;
+                return;
+            }
+
+            chatListContainer.innerHTML = "";
+            
+            // ১. ফায়ারস্টোর ডাটাগুলোকে জাভাস্ক্রিপ্ট অ্যারেতে নিয়ে আসা
+            let chatDocs = [];
+            snapshot.forEach(doc => {
+                chatDocs.push({ id: doc.id, ...doc.data() });
+            });
+
+            // ২. জাভাস্ক্রিপ্ট দিয়ে টাইমস্ট্যাম্প অনুযায়ী নতুন চ্যাটগুলো উপরে সর্ট করা
+            chatDocs.sort((a, b) => {
+                const timeA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
+                const timeB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
+                return timeB - timeA;
+            });
+
+            // ৩. চ্যাট লিস্ট রেন্ডার করা
+            chatDocs.forEach((chatData) => {
+                const chatId = chatData.id;
+                
+                const otherParticipantId = chatData.participants ? chatData.participants.find(id => id !== activeIdentity.id) : null;
+                const isUnreadMessage = chatData.isUnread && chatData.lastSenderId !== activeIdentity.id;
+                const unreadClass = isUnreadMessage ? 'unread-chat' : '';
+
+                const chatItemDiv = document.createElement('div');
+                chatItemDiv.className = `chat-item ${chatId === currentChatId ? 'active' : ''} ${unreadClass}`;
+                chatItemDiv.id = `item_${chatId}`;
+                
+                chatItemDiv.innerHTML = `
+                    <img src="https://via.placeholder.com/45/007bff/ffffff?text=U" id="avatar_${chatId}">
+                    <div class="chat-item-info">
+                        <h4 id="name_${chatId}">লোড হচ্ছে...</h4>
+                        <p id="msg_preview_${chatId}" style="${isUnreadMessage ? 'font-weight: bold; color: #1e293b;' : ''}">${chatData.lastMessage || "নতুন চ্যাট শুরু হয়েছে..."}</p>
+                    </div>
+                    
+                    ${isUnreadMessage ? `<span class="unread-dot" style="width: 8px; height: 8px; background-color: #007bff; border-radius: 50%; margin-right: 8px;"></span>` : ''}
+
+                    <button class="chat-item-menu-btn" id="menu_btn_${chatId}">
+                        <i class="material-icons" style="font-size: 20px;">more_vert</i>
+                    </button>
+                    
+                    <div class="chat-dropdown" id="dropdown_${chatId}">
+                        <button class="chat-dropdown-item" id="delete_btn_${chatId}">
+                            <i class="material-icons">delete</i> ডিলিট করুন
+                        </button>
+                    </div>
+                `;
+                
+                chatListContainer.appendChild(chatItemDiv);
+
+                chatItemDiv.onclick = (e) => {
+                    if (e.target.closest('.chat-item-menu-btn') || e.target.closest('.chat-dropdown')) {
+                        return; 
+                    }
+
+                    const sidebar = document.getElementById('chatSidebar');
+                    const mainBox = document.getElementById('chatMainBox');
+                    
+                    if (window.innerWidth <= 768) {
+                        if (sidebar) sidebar.classList.add('hidden');
+                        if (mainBox) mainBox.classList.add('active');
                         document.body.classList.add('chat-open');
                     }
                     
@@ -238,13 +319,10 @@ function loadChatList() {
             });
         }, (error) => {
             console.error("চ্যাট লিস্ট স্ন্যাপশট এরর:", error);
-            chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:red;">চ্যাট লোড করতে সমস্যা হয়েছে।</div>`;
+            chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:red;">চ্যাট লোড করতে সমস্যা হয়েছে। (কনসোল চেক করুন)</div>`;
         });
-}
-
-document.addEventListener('click', () => {
-    document.querySelectorAll('.chat-dropdown').forEach(dd => dd.classList.remove('show'));
-});
+            }
+                        
 
 // 📖 ৩. চ্যাট বক্স ওপেন ও মেসেজ ফেচিং
 async function openChatBox(chatId, postId) {
