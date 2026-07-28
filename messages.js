@@ -225,7 +225,7 @@ document.addEventListener('click', () => {
     document.querySelectorAll('.chat-dropdown').forEach(dd => dd.classList.remove('show'));
 });
 
-// 📖 ৩. ওপেন চ্যাট বক্স ও মেসেজ স্ট্রিম
+// ৩, messages.js-এর openChatBox ফাংশনের প্রথম অংশের সংশোধন
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
     
@@ -246,10 +246,12 @@ async function openChatBox(chatId, postId) {
         const chatDoc = await chatRef.get();
         if (!chatDoc.exists) {
             const parts = chatId.split('_');
+            // শুধুমাত্র প্রথম ২টি পার্ট আইডি হিসেবে গ্রহণ করা
             chatDocData = {
                 participants: [parts[0], parts[1]],
                 postId: postId || currentPostId || "",
                 lastMessage: "",
+                lastSenderId: activeIdentity.id,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
             await chatRef.set(chatDocData);
@@ -262,73 +264,8 @@ async function openChatBox(chatId, postId) {
     } catch (e) {
         console.error("চ্যাট ইনিশিয়ালিং এরর:", e);
     }
-
-    loadPropertyContext(postId || currentPostId || (chatDocData ? chatDocData.postId : ""));
-
-    if (activeChatListener) activeChatListener();
-
-    const messagesDisplay = document.getElementById('messagesDisplay');
-    const quickRepliesContainer = document.querySelector('.quick-replies');
-
-    activeChatListener = db.collection('chats').doc(chatId).collection('messages')
-        .orderBy('timestamp', 'asc')
-        .onSnapshot((snapshot) => {
-            if (!messagesDisplay) return;
-            messagesDisplay.innerHTML = "";
-            
-            const hasMessages = !snapshot.empty;
-
-            snapshot.forEach(doc => {
-                const msg = doc.data();
-                const bubble = document.createElement('div');
-                const isIncoming = msg.senderId !== activeIdentity.id;
-                
-                bubble.className = `msg-bubble ${isIncoming ? 'incoming' : 'outgoing'}`;
-                
-                let timeString = "এইমাত্র";
-                if (msg.timestamp && typeof msg.timestamp.toDate === 'function') {
-                    try {
-                        const date = msg.timestamp.toDate();
-                        timeString = date.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
-                    } catch(e) {
-                        timeString = "এইমাত্র";
-                    }
-                }
-
-                bubble.innerHTML = `${msg.text} <span class="msg-time">${timeString}</span>`;
-                messagesDisplay.appendChild(bubble);
-            });
-
-            messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
-
-            const targetPostId = postId || currentPostId || (chatDocData ? chatDocData.postId : "");
-            if (quickRepliesContainer) {
-                if (hasMessages || !targetPostId) {
-                    quickRepliesContainer.style.display = 'none';
-                } else {
-                    db.collection('properties').doc(targetPostId).get().then(pDoc => {
-                        if (pDoc.exists) {
-                            const propertyData = pDoc.data();
-                            if (propertyData.userId === currentUser.uid || propertyData.companyId === activeIdentity.id) {
-                                quickRepliesContainer.style.display = 'none';
-                            } else {
-                                quickRepliesContainer.style.display = 'flex';
-                            }
-                        } else {
-                            quickRepliesContainer.style.display = 'none';
-                        }
-                    }).catch(() => quickRepliesContainer.style.display = 'none');
-                }
-            }
-
-        }, (err) => console.error("মেসেজ লোড এরর:", err));
-
-    const parts = chatId.split('_');
-    const otherParticipantId = parts.find(id => id !== activeIdentity.id);
-    if (otherParticipantId) {
-        fetchParticipantDetails(otherParticipantId, 'activeChatUserName', null);
-    }
-}
+    
+    // ... বাকি অংশ অপরিবর্তিত থাকবে
 
 // ✉️ ৪. বর্তমান আইডেন্টিটি অনুযায়ী মেসেজ সেন্ড
 async function sendMessage(text) {
