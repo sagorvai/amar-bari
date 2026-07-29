@@ -39,7 +39,7 @@ const bdDistricts = {
     "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "কুমিল্লা", "ফেনী", "নোয়াখালী", "লক্ষ্মীপুর", "চাঁদপুর", "ব্রাহ্মণবাড়িয়া", "রাঙ্গামাটি", "বান্দরবান", "খাগড়াছড়ি"],
     "রাজশাহী": ["রাজশাহী", "বগুড়া", "পাবনা", "সিরাজগঞ্জ", "নওগাঁ", "নাটোর", "জয়পুরহাট", "চাপাইনবাবগঞ্জ"],
     "রংপুর": ["রংপুর", "দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "ঠাকুরগাঁও"],
-    "বরিশাল": ["বরিশাল", "পটুয়াখালী", "ভোলা", "পিরোজপুর", "বরগুনা", "ঝালকাঠি"],
+    "বরিশাল": ["বরিশাল", "পটুখালী", "ভোলা", "পিরোজপুর", "বরগুনা", "ঝালকাঠি"],
     "সিলেট": ["সিলেট", "মৌলভীবাজার", "হবিগঞ্জ", "সুনামগঞ্জ"],
     "ময়মনসিংহ": ["ময়মনসিংহ", "জামালপুর", "নেত্রকোনা", "শেরপুর"]
 };
@@ -246,7 +246,6 @@ function createFbPostHTML(docId, data) {
     let amount = category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let displayPrice = amount ? new Intl.NumberFormat('bn-BD').format(amount) : 'আলোচনা সাপেক্ষে';
 
-    // ডিফল্ট প্লেসহোল্ডার তথ্য
     const initialAuthorName = "লোডিং...";
     const initialAuthorPic = "https://via.placeholder.com/40?text=Pic";
 
@@ -424,64 +423,67 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
 }
 
 // ----------------------------------------------------
-// 📌 কোম্পানি (পেজ) এবং ইউজার মোড সাপোর্ট লোডার ফাংশন
+// 📌 কোম্পানি (পেজ) এবং ইউজার মোড সাপোর্ট লোডার ফাংশন (Updated)
 // ----------------------------------------------------
-function loadPostAuthorDetails(docId, postData = {}) {
+async function loadPostAuthorDetails(docId, postData = {}) {
     const nameEl = document.getElementById(`author-name-${docId}`);
     const picEl = document.getElementById(`author-pic-${docId}`);
 
-    // ১. কোম্পানি/পেজ মোড চেক: যদি পোস্টটি companyId থেকে করা হয়ে থাকে
-    if (postData.companyId) {
-        db.collection('companies').doc(postData.companyId).get().then(compDoc => {
+    if (!nameEl || !picEl) return;
+
+    // ১. কোম্পানি/পেজ আইডির ফিল্ড চেক (কোম্পানি পোস্ট প্রাধান্য পাবে)
+    const companyId = postData.companyId || postData.company_id || postData.pageId;
+
+    if (companyId) {
+        try {
+            const compDoc = await db.collection('companies').doc(companyId).get();
+            
             if (compDoc.exists) {
                 const compData = compDoc.data();
-                const compName = compData.companyName || compData.name || compData.title || "কোম্পানি পেজ";
-                const compLogo = compData.logo || compData.companyLogo || compData.photoURL;
+                
+                const companyName = compData.companyName || compData.name || compData.pageName || compData.title;
+                const companyLogo = compData.logo || compData.companyLogo || compData.photoURL || compData.image;
 
-                if (nameEl) nameEl.textContent = compName;
-                if (picEl && compLogo) picEl.src = compLogo;
-            } else {
-                fetchUserDataFallback(docId, postData.userId, nameEl, picEl);
+                if (companyName) nameEl.textContent = companyName;
+                if (companyLogo) picEl.src = companyLogo;
+                
+                return; // কোম্পানির ডাটা পাওয়া গেলে এখানেই শেষ হবে
             }
-        }).catch(err => {
-            console.error("কোম্পানি ডাটা লোড ত্রুটি:", err);
-            fetchUserDataFallback(docId, postData.userId, nameEl, picEl);
-        });
-        return;
-    }
-
-    // ২. ইউজার মোড: পোস্টটি যদি স্বাভাবিক userId থেকে হয়ে থাকে
-    fetchUserDataFallback(docId, postData.userId, nameEl, picEl, postData);
-}
-
-function fetchUserDataFallback(docId, userId, nameEl, picEl, postData = {}) {
-    // পোস্ট অবজেক্টে সরাসরি নাম থাকলে তা অগ্রাধিকার পাবে
-    if (postData.authorName || postData.userName || postData.user?.displayName) {
-        if (nameEl) nameEl.textContent = postData.authorName || postData.userName || postData.user?.displayName;
-        if (picEl && (postData.authorPic || postData.userProfilePic || postData.user?.photoURL)) {
-            picEl.src = postData.authorPic || postData.userProfilePic || postData.user?.photoURL;
+        } catch (err) {
+            console.error("কোম্পানির তথ্য লোড করতে ত্রুটি:", err);
         }
     }
 
-    if (!userId) {
-        if (nameEl && nameEl.textContent === "লোডিং...") nameEl.textContent = "আমার বাড়ি ইউজার";
-        return;
+    // ২. ইউজার মোড (যদি কোম্পানি আইডি না থাকে অথবা কোম্পানি ডাটা না পাওয়া যায়)
+    const userId = postData.userId || postData.user_id || postData.uid;
+
+    if (userId) {
+        try {
+            const userDoc = await db.collection('users').doc(userId).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                const userName = userData.fullName || userData.displayName || userData.name || userData.username;
+                const userPic = userData.profilePic || userData.photoURL || userData.avatar;
+
+                if (userName) nameEl.textContent = userName;
+                if (userPic) picEl.src = userPic;
+                return;
+            }
+        } catch (err) {
+            console.error("ইউজার তথ্য লোড করতে ত্রুটি:", err);
+        }
     }
 
-    db.collection('users').doc(userId).get().then(userDoc => {
-        if (userDoc.exists) {
-            const userData = userDoc.data();
-            const finalName = userData.fullName || userData.displayName || userData.name || userData.username;
-            const finalPic = userData.profilePic || userData.photoURL || userData.avatar;
+    // ৩. ফলব্যাক (পোস্ট অবজেক্টে সরাসরি নাম ও ছবি জমা থাকলে)
+    const fallbackName = postData.authorName || postData.userName || postData.companyName;
+    const fallbackPic = postData.authorPic || postData.userProfilePic || postData.companyLogo;
 
-            if (nameEl && finalName) nameEl.textContent = finalName;
-            if (picEl && finalPic) picEl.src = finalPic;
-        } else {
-            if (nameEl && nameEl.textContent === "লোডিং...") nameEl.textContent = "আমার বাড়ি ইউজার";
-        }
-    }).catch(err => {
-        if (nameEl && nameEl.textContent === "লোডিং...") nameEl.textContent = "আমার বাড়ি ইউজার";
-    });
+    if (fallbackName) nameEl.textContent = fallbackName;
+    if (fallbackPic) picEl.src = fallbackPic;
+
+    if (nameEl.textContent === "লোডিং...") {
+        nameEl.textContent = "আমার বাড়ি ইউজার";
+    }
 }
 
 function setupSliderAndLikeLogic() {
