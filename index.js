@@ -246,9 +246,9 @@ function createFbPostHTML(docId, data) {
     let amount = category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let displayPrice = amount ? new Intl.NumberFormat('bn-BD').format(amount) : 'আলোচনা সাপেক্ষে';
 
-    // ইউজারের নাম যদি ডাটাবেজের পোস্টের সাথে ফিল্ড আকারে থাকে
-    const initialAuthorName = data.authorName || data.userName || data.user?.displayName || "লোডিং...";
-    const initialAuthorPic = data.authorPic || data.userProfilePic || data.user?.photoURL || "https://via.placeholder.com/40?text=Pic";
+    // ডিফল্ট প্লেসহোল্ডার তথ্য
+    const initialAuthorName = "লোডিং...";
+    const initialAuthorPic = "https://via.placeholder.com/40?text=Pic";
 
     const verifiedBadge = data.documents ? `<span class="badge-verified">✓ ভেরিফাইড</span>` : '';
     const boostedBadge = isBoosted ? `<span class="badge-boosted"><i class="material-icons" style="font-size:11px;">bolt</i> স্পন্সরড</span>` : '';
@@ -378,7 +378,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         for (let i = 0; i < 2 && normalIdx < normalList.length; i++, normalIdx++) {
             const item = normalList[normalIdx];
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
-            loadPostAuthorDetails(item.id, item.data.userId, item.data);
+            loadPostAuthorDetails(item.id, item.data);
         }
 
         // ৪. ৫টি ফিচার্ড পোস্ট স্লাইডার
@@ -388,14 +388,14 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         for (let i = 0; i < 2 && normalIdx < normalList.length; i++, normalIdx++) {
             const item = normalList[normalIdx];
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
-            loadPostAuthorDetails(item.id, item.data.userId, item.data);
+            loadPostAuthorDetails(item.id, item.data);
         }
 
         // ৬. ১ম বুস্টেড পোস্ট (১টি)
         if (boostedList.length > 0 && boostedIdx < boostedList.length) {
             const bItem = boostedList[boostedIdx++];
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(bItem.id, bItem.data));
-            loadPostAuthorDetails(bItem.id, bItem.data.userId, bItem.data);
+            loadPostAuthorDetails(bItem.id, bItem.data);
         }
 
         // ৭. প্রতি ৪টি সাধারণ পোস্ট পরপর ১টি বুস্টেড পোস্ট
@@ -403,14 +403,14 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         while (normalIdx < normalList.length) {
             const item = normalList[normalIdx++];
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
-            loadPostAuthorDetails(item.id, item.data.userId, item.data);
+            loadPostAuthorDetails(item.id, item.data);
             countNormal++;
 
             if (countNormal % 4 === 0) {
                 if (boostedIdx < boostedList.length) {
                     const bItem = boostedList[boostedIdx++];
                     propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(bItem.id, bItem.data));
-                    loadPostAuthorDetails(bItem.id, bItem.data.userId, bItem.data);
+                    loadPostAuthorDetails(bItem.id, bItem.data);
                 }
             }
         }
@@ -423,12 +423,39 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
     }
 }
 
-// 📌 সংশোধনকৃত প্রোফাইল ডাটা লোডার ফাংশন
-function loadPostAuthorDetails(docId, userId, postData = {}) {
+// ----------------------------------------------------
+// 📌 কোম্পানি (পেজ) এবং ইউজার মোড সাপোর্ট লোডার ফাংশন
+// ----------------------------------------------------
+function loadPostAuthorDetails(docId, postData = {}) {
     const nameEl = document.getElementById(`author-name-${docId}`);
     const picEl = document.getElementById(`author-pic-${docId}`);
 
-    // ১. প্রথম চেক: পোস্টের অবজেক্টেই নাম ও প্রোফাইল ছবি আছে কিনা
+    // ১. কোম্পানি/পেজ মোড চেক: যদি পোস্টটি companyId থেকে করা হয়ে থাকে
+    if (postData.companyId) {
+        db.collection('companies').doc(postData.companyId).get().then(compDoc => {
+            if (compDoc.exists) {
+                const compData = compDoc.data();
+                const compName = compData.companyName || compData.name || compData.title || "কোম্পানি পেজ";
+                const compLogo = compData.logo || compData.companyLogo || compData.photoURL;
+
+                if (nameEl) nameEl.textContent = compName;
+                if (picEl && compLogo) picEl.src = compLogo;
+            } else {
+                fetchUserDataFallback(docId, postData.userId, nameEl, picEl);
+            }
+        }).catch(err => {
+            console.error("কোম্পানি ডাটা লোড ত্রুটি:", err);
+            fetchUserDataFallback(docId, postData.userId, nameEl, picEl);
+        });
+        return;
+    }
+
+    // ২. ইউজার মোড: পোস্টটি যদি স্বাভাবিক userId থেকে হয়ে থাকে
+    fetchUserDataFallback(docId, postData.userId, nameEl, picEl, postData);
+}
+
+function fetchUserDataFallback(docId, userId, nameEl, picEl, postData = {}) {
+    // পোস্ট অবজেক্টে সরাসরি নাম থাকলে তা অগ্রাধিকার পাবে
     if (postData.authorName || postData.userName || postData.user?.displayName) {
         if (nameEl) nameEl.textContent = postData.authorName || postData.userName || postData.user?.displayName;
         if (picEl && (postData.authorPic || postData.userProfilePic || postData.user?.photoURL)) {
@@ -436,7 +463,6 @@ function loadPostAuthorDetails(docId, userId, postData = {}) {
         }
     }
 
-    // ২. দ্বিতীয় চেক: Firestore users কালেকশন থেকে dynamic ডাটা টেনে আপডেট করা
     if (!userId) {
         if (nameEl && nameEl.textContent === "লোডিং...") nameEl.textContent = "আমার বাড়ি ইউজার";
         return;
@@ -445,24 +471,15 @@ function loadPostAuthorDetails(docId, userId, postData = {}) {
     db.collection('users').doc(userId).get().then(userDoc => {
         if (userDoc.exists) {
             const userData = userDoc.data();
-            // নাম খোঁজার জন্য একাধিক ফিল্ড ফিল্টার
             const finalName = userData.fullName || userData.displayName || userData.name || userData.username;
             const finalPic = userData.profilePic || userData.photoURL || userData.avatar;
 
-            if (nameEl && finalName) {
-                nameEl.textContent = finalName;
-            } else if (nameEl && nameEl.textContent === "লোডিং...") {
-                nameEl.textContent = "আমার বাড়ি ইউজার";
-            }
-
-            if (picEl && finalPic) {
-                picEl.src = finalPic;
-            }
+            if (nameEl && finalName) nameEl.textContent = finalName;
+            if (picEl && finalPic) picEl.src = finalPic;
         } else {
             if (nameEl && nameEl.textContent === "লোডিং...") nameEl.textContent = "আমার বাড়ি ইউজার";
         }
     }).catch(err => {
-        console.error("ইউজার লোড করতে ভুল হয়েছে:", err);
         if (nameEl && nameEl.textContent === "লোডিং...") nameEl.textContent = "আমার বাড়ি ইউজার";
     });
 }
