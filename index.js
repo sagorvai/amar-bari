@@ -13,6 +13,7 @@ const profileImage = document.getElementById('profileImage');
 const defaultProfileIcon = document.getElementById('defaultProfileIcon');
 
 let map;
+let currentUserData = null; // ইউজারের তথ্য ও পেড স্ট্যাটাস ক্যাশে রাখার জন্য
 
 // ----------------------------------------------------
 // 📸 ১. অটো-স্লাইড কভার ছবি লজিক (৩টি ছবি)
@@ -67,18 +68,22 @@ if (filterDivisionEl && filterDistrictEl) {
 }
 
 // ----------------------------------------------------
-// 👤 ৩. হেডারে ইউজার প্রোফাইল পিকচার লোডার
+// 👤 ৩. হেডারে ইউজার প্রোফাইল পিকচার ও ডাটা লোডার
 // ----------------------------------------------------
 function loadProfilePicture(user) {
     if (!user) return;
     db.collection('users').doc(user.uid).get().then(doc => {
-        if (doc.exists && doc.data().profilePic) {
-            profileImage.src = doc.data().profilePic;
-            profileImage.style.display = 'block';
-            if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-        } else {
-            if (profileImage) profileImage.style.display = 'none';
-            if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
+        if (doc.exists) {
+            currentUserData = doc.data();
+            const photo = currentUserData.profilePic || user.photoURL;
+            if (profileImage && photo) {
+                profileImage.src = photo;
+                profileImage.style.display = 'block';
+                if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
+            } else {
+                if (profileImage) profileImage.style.display = 'none';
+                if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
+            }
         }
     }).catch(err => {
         console.error("প্রোফাইল লোড ত্রুটি:", err);
@@ -88,12 +93,12 @@ function loadProfilePicture(user) {
 // ----------------------------------------------------
 // 🗺️ ৪. ম্যাপ ফিল্টারিং লজিক (Leaflet Map)
 // ----------------------------------------------------
-function createCustomMarker(category, type) {
-    const color = category === 'বিক্রয়' ? '#1877f2' : '#42b72a';
+function createCustomMarker(category, type, isPaid = false) {
+    const color = isPaid ? '#ff9800' : (category === 'বিক্রয়' ? '#1877f2' : '#42b72a');
     return L.divIcon({
-        html: `<div style="background:${color}; color:#fff; padding:3px 7px; border-radius:10px; font-size:11px; font-weight:bold; border:2px solid #fff; box-shadow:0 2px 4px rgba(0,0,0,0.3); white-space:nowrap;">${type}</div>`,
+        html: `<div style="background:${color}; color:#fff; padding:3px 7px; border-radius:10px; font-size:11px; font-weight:bold; border:2px solid #fff; box-shadow:0 2px 4px rgba(0,0,0,0.3); white-space:nowrap;">${type} ${isPaid ? '⭐' : ''}</div>`,
         className: 'fb-pin',
-        iconSize: [60, 26]
+        iconSize: [70, 26]
     });
 }
 
@@ -118,7 +123,7 @@ async function initMap(category) {
             const data = doc.data();
             if (data.location && data.location.lat && data.location.lng) {
                 const marker = L.marker([data.location.lat, data.location.lng], {
-                    icon: createCustomMarker(data.category, data.type || 'বাসা')
+                    icon: createCustomMarker(data.category, data.type || 'বাসা', data.isPaidPost)
                 }).addTo(map);
 
                 marker.bindPopup(`
@@ -236,16 +241,25 @@ function createFbPostHTML(docId, data) {
     
     const type = data.type || 'প্রপার্টি';
     const category = data.category || 'বিক্রয়';
-    const isBoosted = data.isBoosted === true;
+    const isBoosted = data.isBoosted === true || data.isPaidPost === true;
     
     let amount = category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let displayPrice = amount ? new Intl.NumberFormat('bn-BD').format(amount) : 'আলোচনা সাপেক্ষে';
 
+    // 👤 ইউজার অবজেক্ট থেকে প্রোফাইল পিক ও নেম রিড করা
+    const authorName = data.user?.displayName || "আমার বাড়ি ইউজার";
+    const authorPic = data.user?.photoURL || "https://via.placeholder.com/40?text=Pic";
+
     const verifiedBadge = data.documents ? `<span class="badge-verified">✓ ভেরিফাইড</span>` : '';
-    const boostedBadge = isBoosted ? `<span class="badge-boosted"><i class="material-icons" style="font-size:11px;">bolt</i> স্পন্সরড</span>` : '';
+    const boostedBadge = isBoosted ? `<span class="badge-boosted"><i class="material-icons" style="font-size:11px;">bolt</i> প্রিমিয়াম</span>` : '';
 
     let images = [];
-    if (data.images) data.images.forEach(img => images.push(img.url || img));
+    if (data.images) {
+        data.images.forEach(img => {
+            const url = typeof img === 'string' ? img : (img.url || '');
+            if (url) images.push(url);
+        });
+    }
     
     let mediaHTML = `<div class="fb-slide-item" style="background-image: url('https://via.placeholder.com/500x250?text=No+Photo'); display:block;"></div>`;
     if (images.length > 0) {
@@ -263,9 +277,9 @@ function createFbPostHTML(docId, data) {
         <div class="fb-feed-card ${isBoosted ? 'boosted-card' : ''}">
             <div class="card-author-header">
                 <div class="author-info">
-                    <img id="author-pic-${docId}" src="https://via.placeholder.com/40?text=Pic" class="fb-profile-pic" alt="pic">
+                    <img id="author-pic-${docId}" src="${authorPic}" class="fb-profile-pic" alt="pic">
                     <div class="author-meta">
-                        <h4 id="author-name-${docId}">আমার বাড়ি ইউজার</h4>
+                        <h4 id="author-name-${docId}">${authorName}</h4>
                         <p><i class="material-icons" style="font-size:12px;">place</i> ${village}, ${thana}, ${district}</p>
                     </div>
                 </div>
@@ -347,8 +361,8 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
             return;
         }
 
-        let boostedList = allDocs.filter(item => item.data.isBoosted === true);
-        let normalList = allDocs.filter(item => item.data.isBoosted !== true);
+        let boostedList = allDocs.filter(item => item.data.isBoosted === true || item.data.isPaidPost === true);
+        let normalList = allDocs.filter(item => !item.data.isBoosted && !item.data.isPaidPost);
         let featuredList = allDocs.slice(0, 5); 
 
         // ১. নীল পোস্ট বাটনের ব্যানার
@@ -364,7 +378,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         for (let i = 0; i < 2 && normalIdx < normalList.length; i++, normalIdx++) {
             const item = normalList[normalIdx];
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
-            loadPostAuthorDetails(item.id, item.data.userId);
+            loadPostAuthorDetails(item.id, item.data.userId, item.data.user);
         }
 
         // ৪. ৫টি ফিচার্ড পোস্ট স্লাইডার
@@ -374,14 +388,14 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         for (let i = 0; i < 2 && normalIdx < normalList.length; i++, normalIdx++) {
             const item = normalList[normalIdx];
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
-            loadPostAuthorDetails(item.id, item.data.userId);
+            loadPostAuthorDetails(item.id, item.data.userId, item.data.user);
         }
 
         // ৬. ১ম বুস্টেড পোস্ট (১টি)
         if (boostedList.length > 0 && boostedIdx < boostedList.length) {
             const bItem = boostedList[boostedIdx++];
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(bItem.id, bItem.data));
-            loadPostAuthorDetails(bItem.id, bItem.data.userId);
+            loadPostAuthorDetails(bItem.id, bItem.data.userId, bItem.data.user);
         }
 
         // ৭. প্রতি ৪টি সাধারণ পোস্ট পরপর ১টি বুস্টেড পোস্ট
@@ -389,14 +403,14 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         while (normalIdx < normalList.length) {
             const item = normalList[normalIdx++];
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
-            loadPostAuthorDetails(item.id, item.data.userId);
+            loadPostAuthorDetails(item.id, item.data.userId, item.data.user);
             countNormal++;
 
             if (countNormal % 4 === 0) {
                 if (boostedIdx < boostedList.length) {
                     const bItem = boostedList[boostedIdx++];
                     propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(bItem.id, bItem.data));
-                    loadPostAuthorDetails(bItem.id, bItem.data.userId);
+                    loadPostAuthorDetails(bItem.id, bItem.data.userId, bItem.data.user);
                 }
             }
         }
@@ -409,15 +423,25 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
     }
 }
 
-function loadPostAuthorDetails(docId, userId) {
+function loadPostAuthorDetails(docId, userId, embeddedUser = null) {
+    if (embeddedUser && embeddedUser.displayName) {
+        const nameEl = document.getElementById(`author-name-${docId}`);
+        const picEl = document.getElementById(`author-pic-${docId}`);
+        if (nameEl) nameEl.textContent = embeddedUser.displayName;
+        if (picEl && embeddedUser.photoURL) picEl.src = embeddedUser.photoURL;
+        return;
+    }
+
     if (!userId) return;
     db.collection('users').doc(userId).get().then(userDoc => {
         if (userDoc.exists) {
             const userData = userDoc.data();
             const nameEl = document.getElementById(`author-name-${docId}`);
             const picEl = document.getElementById(`author-pic-${docId}`);
-            if (nameEl) nameEl.textContent = userData.fullName || userData.name || "সম্মানিত বিক্রেতা";
-            if (picEl && userData.profilePic) picEl.src = userData.profilePic;
+            if (nameEl) nameEl.textContent = userData.fullName || userData.displayName || userData.name || "সম্মানিত বিক্রেতা";
+            if (picEl && (userData.profilePic || userData.photoURL)) {
+                picEl.src = userData.profilePic || userData.photoURL;
+            }
         }
     });
 }
@@ -499,5 +523,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
-
