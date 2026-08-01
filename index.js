@@ -423,7 +423,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
 }
 
 // ----------------------------------------------------
-// 📌 কোম্পানি (পেজ) এবং ইউজার মোড সাপোর্ট লোডার ফাংশন (Updated)
+// 📌 কোম্পানি (পেজ) এবং ইউজার মোড সাপোর্ট লোডার ফাংশন (details.js এর সাথে মিলিয়ে আপডেট করা)
 // ----------------------------------------------------
 async function loadPostAuthorDetails(docId, postData = {}) {
     const nameEl = document.getElementById(`author-name-${docId}`);
@@ -431,42 +431,49 @@ async function loadPostAuthorDetails(docId, postData = {}) {
 
     if (!nameEl || !picEl) return;
 
-    // ১. কোম্পানি/পেজ আইডির ফিল্ড চেক (কোম্পানি পোস্ট প্রাধান্য পাবে)
-    const companyId = postData.companyId || postData.company_id || postData.pageId;
+    // ১. কোম্পানি/পেজ চেক (details.js এর হুবহু লজিক)
+    const isCompany = postData.ownerType === 'company' || postData.authorType === 'company' || !!postData.companyId;
+    const companyId = postData.companyId || postData.ownerId || postData.authorId;
+    const userId = postData.userId || postData.createdByUid || postData.createdByUserId;
 
-    if (companyId) {
+    if (isCompany && companyId) {
         try {
             const compDoc = await db.collection('companies').doc(companyId).get();
-            
             if (compDoc.exists) {
                 const compData = compDoc.data();
-                
-                const companyName = compData.companyName || compData.name || compData.pageName || compData.title;
-                const companyLogo = compData.logo || compData.companyLogo || compData.photoURL || compData.image;
+                const companyName = compData.companyName || compData.name || postData.postedByName || "অফিসিয়াল কোম্পানি";
+                const companyLogo = compData.logo || compData.companyLogo || compData.profilePic || postData.postedByAvatar;
 
                 if (companyName) nameEl.textContent = companyName;
                 if (companyLogo) picEl.src = companyLogo;
-                
-                return; // কোম্পানির ডাটা পাওয়া গেলে এখানেই শেষ হবে
+                return;
+            } else {
+                if (postData.postedByName) nameEl.textContent = postData.postedByName;
+                if (postData.postedByAvatar) picEl.src = postData.postedByAvatar;
+                return;
             }
         } catch (err) {
             console.error("কোম্পানির তথ্য লোড করতে ত্রুটি:", err);
+            if (postData.postedByName) nameEl.textContent = postData.postedByName;
+            return;
         }
-    }
-
-    // ২. ইউজার মোড (যদি কোম্পানি আইডি না থাকে অথবা কোম্পানি ডাটা না পাওয়া যায়)
-    const userId = postData.userId || postData.user_id || postData.uid;
-
+    } 
+    
+    // ২. ইউজার মোড
     if (userId) {
         try {
             const userDoc = await db.collection('users').doc(userId).get();
             if (userDoc.exists) {
                 const userData = userDoc.data();
-                const userName = userData.fullName || userData.displayName || userData.name || userData.username;
-                const userPic = userData.profilePic || userData.photoURL || userData.avatar;
+                const userName = userData.fullName || userData.name || postData.postedByName || "সম্মানিত বিক্রেতা";
+                const userPic = userData.profilePic || postData.postedByAvatar;
 
                 if (userName) nameEl.textContent = userName;
                 if (userPic) picEl.src = userPic;
+                return;
+            } else {
+                if (postData.postedByName) nameEl.textContent = postData.postedByName;
+                if (postData.postedByAvatar) picEl.src = postData.postedByAvatar;
                 return;
             }
         } catch (err) {
@@ -474,12 +481,9 @@ async function loadPostAuthorDetails(docId, postData = {}) {
         }
     }
 
-    // ৩. ফলব্যাক (পোস্ট অবজেক্টে সরাসরি নাম ও ছবি জমা থাকলে)
-    const fallbackName = postData.authorName || postData.userName || postData.companyName;
-    const fallbackPic = postData.authorPic || postData.userProfilePic || postData.companyLogo;
-
-    if (fallbackName) nameEl.textContent = fallbackName;
-    if (fallbackPic) picEl.src = fallbackPic;
+    // ৩. ফলব্যাক
+    if (postData.postedByName) nameEl.textContent = postData.postedByName;
+    if (postData.postedByAvatar) picEl.src = postData.postedByAvatar;
 
     if (nameEl.textContent === "লোডিং...") {
         nameEl.textContent = "আমার বাড়ি ইউজার";
