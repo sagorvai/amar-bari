@@ -36,10 +36,10 @@ function initCoverSlider() {
 const bdDistricts = {
     "ঢাকা": ["ঢাকা", "গাজীপুর", "নারায়ণগঞ্জ", "টাঙ্গাইল", "মানিকগঞ্জ", "মুন্সিগঞ্জ", "রাজবাড়ী", "ফরিদপুর", "মাদারীপুর", "শরীয়তপুর", "গোপালগঞ্জ", "কিশোরগঞ্জ", "নরসিংদী"],
     "খুলনা": ["খুলনা", "যশোর", "সাতক্ষীরা", "বাগেরহাট", "ঝিনাইদহ", "কুষ্টিয়া", "মেহেরপুর", "চুয়াডাঙ্গা", "মাগুরা", "নড়াইল"],
-    "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "কুমিল্লা", "ফেনী", "নোয়াখালী", "লক্ষ্মীপুর", "চাঁদপুর", "ব্রাহ্মণবাড়িয়া", "রাঙ্গামাটি", "বান্দরবান", "খাগড়াছড়ি"],
+    "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "কুমিল্লা", "ফেনী", "নোখালী", "লক্ষ্মীপুর", "চাঁদপুর", "ব্রাহ্মণবাড়িয়া", "রাঙ্গামাটি", "বান্দরবান", "খাগড়াছড়ি"],
     "রাজশাহী": ["রাজশাহী", "বগুড়া", "পাবনা", "সিরাজগঞ্জ", "নওগাঁ", "নাটোর", "জয়পুরহাট", "চাপাইনবাবগঞ্জ"],
     "রংপুর": ["রংপুর", "দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "ঠাকুরগাঁও"],
-    "বরিশাল": ["বরিশাল", "পটুখালী", "ভোলা", "পিরোজপুর", "বরগুনা", "ঝালকাঠি"],
+    "বরিশাল": ["বরিশাল", "পটুয়াখালী", "ভোলা", "পিরোজপুর", "বরগুনা", "ঝালকাঠি"],
     "সিলেট": ["সিলেট", "মৌলভীবাজার", "হবিগঞ্জ", "সুনামগঞ্জ"],
     "ময়মনসিংহ": ["ময়মনসিংহ", "জামালপুর", "নেত্রকোনা", "শেরপুর"]
 };
@@ -140,7 +140,63 @@ async function initMap(category) {
 }
 
 // ----------------------------------------------------
-// 🔵 ৫. নীল পোস্ট বাটন, ব্যানার এবং ফিচার্ড টেমপ্লেটসমূহ
+// 🏢 🏢 ৫. ফিল্টার করা কোম্পানির হরিজোন্টাল স্লাইডার HTML
+// ----------------------------------------------------
+async function generateCompanySliderHTML(allMatchedDocs) {
+    // সার্চ রেজাল্টের কোম্পানিগুলো আইডি বের করা
+    const companyIds = new Set();
+    allMatchedDocs.forEach(item => {
+        const data = item.data;
+        const isCompany = data.ownerType === 'company' || data.authorType === 'company' || !!data.companyId;
+        const cId = data.companyId || data.ownerId || data.authorId;
+        if (isCompany && cId) {
+            companyIds.add(cId);
+        }
+    });
+
+    if (companyIds.size === 0) return '';
+
+    // সকল কোম্পানির ডাটা ফায়ারবেস থেকে ফেচ করা
+    const companyCards = [];
+    for (const cId of companyIds) {
+        try {
+            const compDoc = await db.collection('companies').doc(cId).get();
+            if (compDoc.exists) {
+                const compData = compDoc.data();
+                const name = compData.companyName || compData.name || "কোম্পানি প্রোফাইল";
+                const logo = compData.logo || compData.companyLogo || compData.profilePic || "https://via.placeholder.com/60?text=Company";
+
+                companyCards.push(`
+                    <div onclick="window.location.href='seller-profile.html?id=${cId}'" style="min-width: 90px; width: 90px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; flex-shrink: 0; background: #fff; padding: 8px 6px; border-radius: 10px; border: 1px solid #e4e6eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <img src="${logo}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #1877f2;" alt="${name}">
+                        <span style="font-size: 11px; font-weight: 600; color: #050505; margin-top: 5px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${name}</span>
+                    </div>
+                `);
+            }
+        } catch (e) {
+            console.error("কোম্পানি লোড ত্রুটি:", e);
+        }
+    }
+
+    if (companyCards.length === 0) return '';
+
+    return `
+        <div class="fb-feed-card" style="background: #ffffff; padding: 10px 12px; margin-bottom: 12px; border-radius: 12px; border: 1px solid #e4e6eb;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 700; font-size: 12.5px; color: #1877f2; display: flex; align-items: center; gap: 4px;">
+                    <i class="material-icons" style="font-size: 16px;">business</i> রেজিস্টার্ড কোম্পানি / এজেন্সিসমূহ
+                </span>
+                <span style="font-size: 10.5px; color: #65676b;">স্ক্রোল করুন ➔</span>
+            </div>
+            <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
+                ${companyCards.join('')}
+            </div>
+        </div>
+    `;
+}
+
+// ----------------------------------------------------
+// 🔵 ৬. নীল পোস্ট বাটন, ব্যানার এবং ফিচার্ড টেমপ্লেটসমূহ
 // ----------------------------------------------------
 function createBluePostPromptHTML() {
     return `
@@ -320,7 +376,7 @@ function createFbPostHTML(docId, data) {
 }
 
 // ----------------------------------------------------
-// 🚀 ৬. সিকোয়েন্স রেন্ডারিং ফিড লজিক
+// 🚀 ৭. সিকোয়েন্স রেন্ডারিং ফিড লজিক (কোম্পানি স্লাইডারসহ)
 // ----------------------------------------------------
 async function fetchAndDisplayProperties(category, searchFilter = '') {
     if (!propertyG) return;
@@ -364,40 +420,46 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         let normalList = allDocs.filter(item => !item.data.isBoosted && !item.data.isPaidPost);
         let featuredList = allDocs.slice(0, 5); 
 
-        // ১. নীল পোস্ট বাটনের ব্যানার
+        // 🌟 ১. কোম্পানি স্লাইডার (যদি ফিল্টার্ড সার্চে কোনো কোম্পানি থাকে)
+        const companySliderHTML = await generateCompanySliderHTML(allDocs);
+        if (companySliderHTML) {
+            propertyG.insertAdjacentHTML('beforeend', companySliderHTML);
+        }
+
+        // ২. নীল পোস্ট বাটনের ব্যানার
         propertyG.insertAdjacentHTML('beforeend', createBluePostPromptHTML());
 
-        // ২. ব্যানার স্লাইডার (JPG) + (+) বাটন
+        // ৩. ব্যানার স্লাইডার (JPG) + (+) বাটন
         propertyG.insertAdjacentHTML('beforeend', createImageBannerSliderHTML());
 
         let normalIdx = 0;
         let boostedIdx = 0;
 
-        // ৩. ২টি সাধারণ পোস্ট
+        // ৪. ২টি সাধারণ পোস্ট
         for (let i = 0; i < 2 && normalIdx < normalList.length; i++, normalIdx++) {
             const item = normalList[normalIdx];
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
             loadPostAuthorDetails(item.id, item.data);
         }
 
-        // ৪. ৫টি ফিচার্ড পোস্ট স্লাইডার
+        // ৫. ৫টি ফিচার্ড পোস্ট স্লাইডার
         propertyG.insertAdjacentHTML('beforeend', createLargeFeaturedPostsHTML(featuredList));
 
-        // ৫. আরও ২টি সাধারণ পোস্ট
+        // ৬. আরও ২টি সাধারণ পোস্ট
         for (let i = 0; i < 2 && normalIdx < normalList.length; i++, normalIdx++) {
             const item = normalList[normalIdx];
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
             loadPostAuthorDetails(item.id, item.data);
         }
 
-        // ৬. ১ম বুস্টেড পোস্ট (১টি)
+        // ৭. ১ম বুস্টেড পোস্ট (১টি)
         if (boostedList.length > 0 && boostedIdx < boostedList.length) {
             const bItem = boostedList[boostedIdx++];
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(bItem.id, bItem.data));
             loadPostAuthorDetails(bItem.id, bItem.data);
         }
 
-        // ৭. প্রতি ৪টি সাধারণ পোস্ট পরপর ১টি বুস্টেড পোস্ট
+        // ৮. প্রতি ৪টি সাধারণ পোস্ট পরপর ১টি বুস্টেড পোস্ট
         let countNormal = 0;
         while (normalIdx < normalList.length) {
             const item = normalList[normalIdx++];
@@ -423,7 +485,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
 }
 
 // ----------------------------------------------------
-// 📌 কোম্পানি (পেজ) এবং ইউজার মোড সাপোর্ট লোডার ফাংশন (details.js এর সাথে মিলিয়ে আপডেট করা)
+// 📌 কোম্পানি (পেজ) এবং ইউজার মোড সাপোর্ট লোডার ফাংশন
 // ----------------------------------------------------
 async function loadPostAuthorDetails(docId, postData = {}) {
     const nameEl = document.getElementById(`author-name-${docId}`);
@@ -431,7 +493,6 @@ async function loadPostAuthorDetails(docId, postData = {}) {
 
     if (!nameEl || !picEl) return;
 
-    // ১. কোম্পানি/পেজ চেক (details.js এর হুবহু লজিক)
     const isCompany = postData.ownerType === 'company' || postData.authorType === 'company' || !!postData.companyId;
     const companyId = postData.companyId || postData.ownerId || postData.authorId;
     const userId = postData.userId || postData.createdByUid || postData.createdByUserId;
@@ -459,7 +520,6 @@ async function loadPostAuthorDetails(docId, postData = {}) {
         }
     } 
     
-    // ২. ইউজার মোড
     if (userId) {
         try {
             const userDoc = await db.collection('users').doc(userId).get();
@@ -481,7 +541,6 @@ async function loadPostAuthorDetails(docId, postData = {}) {
         }
     }
 
-    // ৩. ফলব্যাক
     if (postData.postedByName) nameEl.textContent = postData.postedByName;
     if (postData.postedByAvatar) picEl.src = postData.postedByAvatar;
 
