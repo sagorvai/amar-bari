@@ -317,13 +317,11 @@ document.addEventListener('DOMContentLoaded', function() {
         isCompanyMode = toCompany;
 
         if (toCompany && companyData) {
-            // কোম্পানি মোড অ্যাক্টিভ থাকলে LocalStorage-এ পেজের তথ্য সেভ হবে
             localStorage.setItem('activeIdentityType', 'company');
             localStorage.setItem('activeCompanyId', companyData.companyId);
             localStorage.setItem('activeName', companyData.name);
             localStorage.setItem('activeAvatar', companyData.logo || '');
         } else {
-            // পার্সোনাল মোডে ফেরত গেলে কোম্পানি তথ্য রিমুভ হবে
             localStorage.setItem('activeIdentityType', 'user');
             localStorage.removeItem('activeCompanyId');
             if (currentUserData) {
@@ -334,7 +332,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         renderProfileView();
         
-        // হেডার ও নোটিফিকেশন সিস্টেম সিঙ্ক করার জন্য ইভেন্ট ট্রিগার
         window.dispatchEvent(new Event('identityChanged'));
     };
 
@@ -427,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
         directPostBtn.onclick = () => { window.location.href = 'post.html'; };
     }
     
-    // ৭. পার্সোনাল প্রপার্টি লোড
+    // 🎯 🎯 🎯 ৭. পার্সোনাল প্রপার্টি লোড (সংশোধিত) 🎯 🎯 🎯
     async function loadUserProperties(userId) {
         if(!propertiesList) return;
         propertiesList.innerHTML = '<p style="text-align:center; width:100%;">খোঁজা হচ্ছে...</p>';
@@ -442,7 +439,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     .get();
             }
 
-            renderPropertiesGrid(snapshot);
+            // 🎯 শুধুমাত্র পোস্টগুলো ফিল্টার করে যেসব পোস্টে কোম্পানি পেজের কন্টেন্ট নাই সেগুলো ফিল্টার করা
+            let userDocs = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                // যদি পোস্টে postedBy === 'company' অথবা কোম্পানি আইডি থেকে থাকে, তবে সেটি ইউজার মোডে দেখাবে না
+                if (data.postedBy !== 'company' && !data.companyId) {
+                    userDocs.push(doc);
+                }
+            });
+
+            renderFilteredPropertiesGrid(userDocs);
         } catch (e) { 
             console.error("Properties list fetch error:", e);
         }
@@ -457,25 +464,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 .where('companyId', '==', companyId)
                 .get();
 
-            renderPropertiesGrid(snapshot);
+            let companyDocs = [];
+            snapshot.forEach(doc => companyDocs.push(doc));
+
+            renderFilteredPropertiesGrid(companyDocs);
         } catch (e) {
             console.error("Company properties fetch error:", e);
         }
     }
 
-    // ৯. প্রপার্টি কার্ড গ্রিড রেন্ডার
-    function renderPropertiesGrid(snapshot) {
+    // 🎯 ৯. ফিল্টার করা প্রপার্টি কার্ড গ্রিড রেন্ডার
+    function renderFilteredPropertiesGrid(docs) {
         propertiesList.innerHTML = '';
-        if(totalPostsEl) totalPostsEl.textContent = snapshot.size;
+        if(totalPostsEl) totalPostsEl.textContent = docs.length;
 
-        if (snapshot.empty) {
+        if (docs.length === 0) {
             if(document.getElementById('empty-posts-message')) document.getElementById('empty-posts-message').style.display = 'block';
             return;
         } else {
             if(document.getElementById('empty-posts-message')) document.getElementById('empty-posts-message').style.display = 'none';
         }
 
-        snapshot.forEach(doc => {
+        docs.forEach(doc => {
             const p = doc.data();
             const card = document.createElement('div');
             card.className = 'property-card';
