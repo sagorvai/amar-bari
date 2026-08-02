@@ -36,7 +36,7 @@ function initCoverSlider() {
 const bdDistricts = {
     "ঢাকা": ["ঢাকা", "গাজীপুর", "নারায়ণগঞ্জ", "টাঙ্গাইল", "মানিকগঞ্জ", "মুন্সিগঞ্জ", "রাজবাড়ী", "ফরিদপুর", "মাদারীপুর", "শরীয়তপুর", "গোপালগঞ্জ", "কিশোরগঞ্জ", "নরসিংদী"],
     "খুলনা": ["খুলনা", "যশোর", "সাতক্ষীরা", "বাগেরহাট", "ঝিনাইদহ", "কুষ্টিয়া", "মেহেরপুর", "চুয়াডাঙ্গা", "মাগুরা", "নড়াইল"],
-    "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "কুমিল্লা", "ফেনী", "নোয়াখালী", "লক্ষ্মীপুর", "চাঁদপুর", "ব্রাহ্মণবাড়িয়া", "রাঙ্গামাটি", "বান্দরবান", "খাগড়াছড়ি"],
+    "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "কুমিল্লা", "ফেনী", "নোখালী", "লক্ষ্মীপুর", "চাঁদপুর", "ব্রাহ্মণবাড়িয়া", "রাঙ্গামাটি", "বান্দরবান", "খাগড়াছড়ি"],
     "রাজশাহী": ["রাজশাহী", "বগুড়া", "পাবনা", "সিরাজগঞ্জ", "নওগাঁ", "নাটোর", "জয়পুরহাট", "চাপাইনবাবগঞ্জ"],
     "রংপুর": ["রংপুর", "দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "ঠাকুরগাঁও"],
     "বরিশাল": ["বরিশাল", "পটুয়াখালী", "ভোলা", "পিরোজপুর", "বরগুনা", "ঝালকাঠি"],
@@ -68,12 +68,11 @@ if (filterDivisionEl && filterDistrictEl) {
 }
 
 // ----------------------------------------------------
-// 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার (Page Mode Compliant)
+// 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার
 // ----------------------------------------------------
 function loadProfilePicture(user) {
     if (!user) return;
     
-    // লোকাল স্টোরেজ থেকে এক্টিভ পেজ আইডি চেক (header-sync.js সাপোর্টের জন্য)
     const activePageId = localStorage.getItem('activePageId');
 
     if (activePageId) {
@@ -115,14 +114,14 @@ function loadUserDefaultPic(user) {
 }
 
 // ----------------------------------------------------
-// 🗺️ ৪. ম্যাপ ফিল্টারিং লজিক (বিক্রয় ও ভাড়া আলাদা শো করবে)
+// 🗺️ ৪. ম্যাপ ফিল্টারিং লজিক
 // ----------------------------------------------------
 function createCustomMarker(category, type, isPaid = false) {
     const color = isPaid ? '#ff9800' : (category === 'বিক্রয়' ? '#1877f2' : '#2e7d32');
     return L.divIcon({
         html: `<div style="background:${color}; color:#fff; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:bold; border:2px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,0.4); white-space:nowrap;">${type} (${category}) ${isPaid ? '⭐' : ''}</div>`,
         className: 'fb-pin',
-        iconSize: [80, 26]
+        iconSize: [85, 26]
     });
 }
 
@@ -142,11 +141,6 @@ async function initMap(category = 'বিক্রয়') {
             .where('category', '==', category)
             .where('status', '==', 'published')
             .get();
-
-        if (snap.empty) {
-            console.log("ম্যাপের জন্য কোনো তথ্য পাওয়া যায়নি: " + category);
-            return;
-        }
 
         snap.forEach(doc => {
             const data = doc.data();
@@ -170,22 +164,22 @@ async function initMap(category = 'বিক্রয়') {
 }
 
 // ----------------------------------------------------
-// 🏢 ৫. রেজিস্টার্ড কোম্পানি / এজেন্সি স্লাইডার HTML (ফন্ট ফিক্সড)
+// 🏢 ৫. রেজিস্টার্ড কোম্পানি / এজেন্সি স্লাইডার HTML
 // ----------------------------------------------------
 async function generateCompanySliderHTML(allMatchedDocs) {
     const companiesMap = new Map();
     
     allMatchedDocs.forEach(item => {
         const data = item.data;
-        const isCompany = data.ownerType === 'company' || data.authorType === 'company' || !!data.companyId || !!data.pageName;
-        const cId = data.companyId || data.ownerId || data.authorId || data.userId || data.createdByUid;
+        const isCompany = data.ownerType === 'company' || data.authorType === 'company' || data.postAsPage === true || !!data.companyId;
+        const cId = data.companyId || data.ownerId || data.authorId;
         
         if (isCompany && cId) {
             if (!companiesMap.has(cId)) {
                 companiesMap.set(cId, {
                     id: cId,
-                    fallbackName: data.postedByName || data.companyName || data.pageName || "",
-                    fallbackLogo: data.postedByAvatar || data.companyLogo || data.logo || ""
+                    fallbackName: data.companyName || data.pageName || data.postedByName || "",
+                    fallbackLogo: data.companyLogo || data.logo || data.postedByAvatar || ""
                 });
             }
         }
@@ -206,13 +200,6 @@ async function generateCompanySliderHTML(allMatchedDocs) {
                 const cData = compDoc.data();
                 name = cData.companyName || cData.name || cData.pageName || name;
                 logo = cData.logo || cData.companyLogo || cData.profilePic || cData.photoURL || logo;
-            } else {
-                const userDoc = await db.collection('users').doc(cId).get();
-                if (userDoc.exists) {
-                    const uData = userDoc.data();
-                    name = name || uData.companyName || uData.pageName || uData.fullName || uData.name;
-                    logo = logo || uData.companyLogo || uData.logo || uData.profilePic || uData.photoURL;
-                }
             }
 
             if (!name) name = "রেজিস্টার্ড পেজ";
@@ -220,7 +207,6 @@ async function generateCompanySliderHTML(allMatchedDocs) {
                 logo = "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=1877f2&color=fff";
             }
 
-            // ই-কার কাটিং রুখতে line-height ও padding ফিক্স করা হয়েছে
             companyCards.push(`
                 <div onclick="window.location.href='${redirectUrl}'" style="min-width: 95px; width: 95px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; flex-shrink: 0; background: #fff; padding: 8px 5px; border-radius: 10px; border: 1px solid #e4e6eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <img src="${logo}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1877f2&color=fff';" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #1877f2;" alt="${name}">
@@ -356,9 +342,6 @@ function createFbPostHTML(docId, data) {
     let amount = category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let displayPrice = amount ? new Intl.NumberFormat('bn-BD').format(amount) : 'আলোচনা সাপেক্ষে';
 
-    const initialAuthorName = data.postedByName || data.companyName || data.pageName || "লোডিং...";
-    const initialAuthorPic = data.postedByAvatar || data.companyLogo || "https://via.placeholder.com/40?text=Pic";
-
     const verifiedBadge = data.documents ? `<span class="badge-verified">✓ ভেরিফাইড</span>` : '';
     const boostedBadge = isBoosted ? `<span class="badge-boosted"><i class="material-icons" style="font-size:11px;">bolt</i> স্পন্সরড</span>` : '';
 
@@ -386,9 +369,9 @@ function createFbPostHTML(docId, data) {
         <div class="fb-feed-card ${isBoosted ? 'boosted-card' : ''}">
             <div class="card-author-header">
                 <div class="author-info">
-                    <img id="author-pic-${docId}" src="${initialAuthorPic}" class="fb-profile-pic" alt="pic">
+                    <img id="author-pic-${docId}" src="https://via.placeholder.com/40?text=..." class="fb-profile-pic" alt="pic">
                     <div class="author-meta">
-                        <h4 id="author-name-${docId}" style="line-height:1.3; font-size:14px;">${initialAuthorName}</h4>
+                        <h4 id="author-name-${docId}" style="line-height:1.3; font-size:14px;">লোডিং...</h4>
                         <p><i class="material-icons" style="font-size:12px;">place</i> ${village}, ${thana}, ${district}</p>
                     </div>
                 </div>
@@ -539,7 +522,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
 }
 
 // ----------------------------------------------------
-// 📌 পোস্টে পেজের নাম ও ছবি লোড নিশ্চিতকরণ ফাংশন
+// 📌 নির্ভুল ইউজার/পেজ পোস্ট ডিক্লেয়ারেশন লোডার
 // ----------------------------------------------------
 async function loadPostAuthorDetails(docId, postData = {}) {
     const nameEl = document.getElementById(`author-name-${docId}`);
@@ -547,54 +530,48 @@ async function loadPostAuthorDetails(docId, postData = {}) {
 
     if (!nameEl || !picEl) return;
 
+    // ১. চেক করা যে পোস্টটি সরাসরি পেজ হিসেবে করা হয়েছিল কি না
+    const isCompanyPost = postData.postAsPage === true || postData.ownerType === 'company' || postData.authorType === 'company';
     const companyId = postData.companyId || postData.ownerId || postData.authorId;
     const userId = postData.userId || postData.createdByUid;
 
-    // ১. কোম্পানি/পেজ তথ্য খোঁজা
-    if (companyId) {
+    // A. যদি পোস্টটি কোম্পানির/পেজের হয়ে থাকে
+    if (isCompanyPost && companyId) {
         try {
             const compDoc = await db.collection('companies').doc(companyId).get();
             if (compDoc.exists) {
-                const compData = compDoc.data();
-                const pageName = compData.companyName || compData.name || compData.pageName;
-                const pageLogo = compData.logo || compData.companyLogo || compData.profilePic;
-
-                if (pageName) nameEl.textContent = pageName;
-                if (pageLogo) picEl.src = pageLogo;
+                const cData = compDoc.data();
+                nameEl.textContent = cData.companyName || cData.name || cData.pageName || postData.companyName || "অফিসিয়াল কোম্পানি";
+                picEl.src = cData.logo || cData.companyLogo || cData.profilePic || postData.companyLogo || "https://ui-avatars.com/api/?name=Company";
                 return;
             }
         } catch (e) {
-            console.error("কোম্পানি ফেচ ত্রুটি:", e);
+            console.error("কোম্পানি ফেচিং ভুল:", e);
         }
     }
 
-    // ২. ইউজার তথ্য খোঁজা
+    // B. যদি পোস্টটি সাধারণ ইউজারের হয়
     if (userId) {
         try {
             const userDoc = await db.collection('users').doc(userId).get();
             if (userDoc.exists) {
                 const uData = userDoc.data();
-                const uName = uData.companyName || uData.pageName || uData.fullName || uData.name;
-                const uPic = uData.companyLogo || uData.logo || uData.profilePic || uData.photoURL;
-
-                if (uName) nameEl.textContent = uName;
-                if (uPic) picEl.src = uPic;
+                nameEl.textContent = uData.fullName || uData.name || postData.postedByName || "সম্মানিত ইউজার";
+                picEl.src = uData.profilePic || uData.photoURL || postData.postedByAvatar || "https://ui-avatars.com/api/?name=User";
                 return;
             }
         } catch (e) {
-            console.error("ইউজার ফেচ ত্রুটি:", e);
+            console.error("ইউজার ফেচিং ভুল:", e);
         }
     }
 
-    // ৩. ব্যাকআপ ডাটা
-    if (postData.postedByName || postData.companyName) {
-        nameEl.textContent = postData.companyName || postData.postedByName;
+    // C. ব্যাকআপ ডাটা রেন্ডার
+    if (isCompanyPost) {
+        nameEl.textContent = postData.companyName || postData.pageName || "রেজিস্টার্ড পেজ";
+        picEl.src = postData.companyLogo || postData.logo || "https://ui-avatars.com/api/?name=Page";
     } else {
-        nameEl.textContent = "আমার বাড়ি ইউজার";
-    }
-
-    if (postData.postedByAvatar) {
-        picEl.src = postData.postedByAvatar;
+        nameEl.textContent = postData.postedByName || "আমার বাড়ি ইউজার";
+        picEl.src = postData.postedByAvatar || "https://ui-avatars.com/api/?name=User";
     }
 }
 
@@ -616,21 +593,20 @@ function setupSliderAndLikeLogic() {
 }
 
 // ----------------------------------------------------
-// 🔝 ৮. স্ক্রোল টু টপ (Scroll To Top) বাটন তৈরি
+// 🔝 ৮. স্ক্রোল টু টপ বাটন
 // ----------------------------------------------------
 function setupScrollToTop() {
     const scrollTopBtn = document.createElement('button');
     scrollTopBtn.id = 'scrollTopBtn';
     scrollTopBtn.innerHTML = '<i class="material-icons" style="font-size:24px;">keyboard_arrow_up</i>';
     
-    // বাটন স্টাইলিং (ঝাপসা ট্রান্সপারেন্ট ও সুন্দর অ্যানিমেশন)
     Object.assign(scrollTopBtn.style, {
         position: 'fixed',
         bottom: '25px',
         right: '20px',
         width: '42px',
         height: '42px',
-        backgroundColor: 'rgba(24, 119, 242, 0.65)',
+        backgroundColor: 'rgba(24, 119, 242, 0.75)',
         color: '#ffffff',
         border: 'none',
         borderRadius: '50%',
@@ -676,37 +652,40 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.onclick = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
     }
 
-    // ট্যাবে ক্লিক করলে নিউজফিড এবং ম্যাপ ফিল্টারিং একসাথে আপডেট হওয়া
+    // 🔄 বিক্রির পোস্ট / ভাড়ার পোস্ট ট্যাবে ক্লিক করলে নিউজফিডে ব্যাক করা
     navButtons.forEach(btn => {
         btn.onclick = function() {
             navButtons.forEach(b => b.classList.remove('active'));
+            document.getElementById('mapViewToggleBtn')?.classList.remove('active');
             this.classList.add('active');
             
             const selectedCategory = this.getAttribute('data-category');
             
-            const isMapActive = document.getElementById('mapViewToggleBtn')?.classList.contains('active');
-            if (isMapActive) {
-                initMap(selectedCategory);
-            } else {
-                document.getElementById('property-grid-container').style.display = 'block';
-                document.getElementById('map-section').style.display = 'none';
-                fetchAndDisplayProperties(selectedCategory, globalSearchInput?.value || '');
-            }
+            // ম্যাপ সেকশন পুরোপুরি বন্ধ করে নিউজফিড শো করা
+            const mapSection = document.getElementById('map-section');
+            const propertyContainer = document.getElementById('property-grid-container');
+
+            if (mapSection) mapSection.style.display = 'none';
+            if (propertyContainer) propertyContainer.style.display = 'block';
+
+            fetchAndDisplayProperties(selectedCategory, globalSearchInput?.value || '');
         };
     });
 
+    // 🗺️ "ম্যাপে দেখুন" বাটনে ক্লিক করলে কেবল ম্যাপ শো করা
     const mapViewToggleBtn = document.getElementById('mapViewToggleBtn');
     if (mapViewToggleBtn) {
         mapViewToggleBtn.onclick = function() {
             navButtons.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             
-            document.getElementById('property-grid-container').style.display = 'none';
-            document.getElementById('map-section').style.display = 'block';
+            const mapSection = document.getElementById('map-section');
+            const propertyContainer = document.getElementById('property-grid-container');
+
+            if (propertyContainer) propertyContainer.style.display = 'none';
+            if (mapSection) mapSection.style.display = 'block';
             
-            // এক্টিভ ক্যাটাগরি ধরে ম্যাপ ইনিশিলাইজ করা
-            const activeNavBtn = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
-            const currentCat = activeNavBtn ? activeNavBtn.getAttribute('data-category') : 'বিক্রয়';
+            const currentCat = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)')?.getAttribute('data-category') || 'বিক্রয়';
             initMap(currentCat);
         };
     }
@@ -720,7 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // ডিফল্ট লোড
+    // ডিফল্ট নিউজফিড লোড
     fetchAndDisplayProperties('বিক্রয়', ''); 
 
     auth.onAuthStateChanged(user => {
