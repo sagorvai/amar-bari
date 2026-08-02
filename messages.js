@@ -1,4 +1,4 @@
-// messages.js - রিয়েল-টাইম চ্যাট ইঞ্জিন (Header Sync, Mode-Based Filtering & Dual-Level Delete)
+// messages.js - Fixed Mode Filtering, Participant Fetch & Delete UI
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -17,10 +17,10 @@ let currentPostId = urlParams.get('postId');
 let currentAction = urlParams.get('action'); 
 
 let currentUser = null;
-let activeIdentity = null; // { id: '...', name: '...', photo: '...', type: 'user'|'company' }
+let activeIdentity = null; 
 let activeChatListener = null;
 
-// 🔄 ১. header-sync.js-এর সাথে সামঞ্জস্য রেখে আইডেন্টিটি লোড
+// 🔄 ১. অ্যাক্টিভ আইডেন্টিটি সঠিক ভাবে নির্ধারণ
 firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
@@ -47,12 +47,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
                 if (compDoc && compDoc.exists) {
                     const cData = compDoc.data();
-                    const realCompanyId = compDoc.id;
-                    
-                    localStorage.setItem('activeCompanyId', realCompanyId);
-
                     activeIdentity = {
-                        id: realCompanyId,
+                        id: compDoc.id,
                         ownerUid: user.uid,
                         name: cData.name || cData.companyName || "কোম্পানি পেজ",
                         photo: cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page',
@@ -60,10 +56,11 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     };
                 }
             } catch (e) {
-                console.error("কোম্পানি প্রোফাইল লোড এরর:", e);
+                console.error("কোম্পানি প্রোফাইল লোড সমস্যা:", e);
             }
         }
 
+        // যদি ইউজার মোড হয় বা কোনো কোম্পানি না পাওয়া যায়
         if (!activeIdentity) {
             let pName = user.displayName || "সম্মানিত ইউজার";
             let pPhoto = user.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
@@ -75,7 +72,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     pPhoto = uData.profilePic || pPhoto;
                 }
             } catch (e) {
-                console.error("ইউজার প্রোফাইল লোড এরর:", e);
+                console.error("ইউজার প্রোফাইল লোড সমস্যা:", e);
             }
 
             activeIdentity = {
@@ -115,7 +112,7 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. চ্যাট তালিকা লোড (মোড ভিত্তিক এবং সফট ডিলিট ফিল্টারসহ)
+// 💬 ২. চ্যাট লিস্ট লোড এবং ফিল্টারিং
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer) return;
@@ -125,6 +122,7 @@ function loadChatList() {
         return;
     }
 
+    // ফিল্টার: শুধুমাত্র বর্তমান সক্রিয় আইডেন্টিটির (ইউজার আইডি অথবা পেজ আইডি) চ্যাট দেখাবে
     db.collection('chats')
         .where('participants', 'array-contains', activeIdentity.id)
         .onSnapshot((snapshot) => {
@@ -134,7 +132,6 @@ function loadChatList() {
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                // যদি সক্রিয় আইডেন্টিটির জন্য মেসেজটি ডিলিট না হয়ে থাকে তবেই দেখাবে
                 if (!data.deletedBy || !data.deletedBy.includes(activeIdentity.id)) {
                     chatDocs.push({ id: doc.id, ...data });
                 }
@@ -145,11 +142,7 @@ function loadChatList() {
                 return;
             }
 
-            chatDocs.sort((a, b) => {
-                const timeA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
-                const timeB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
-                return timeB - timeA;
-            });
+            chatDocs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
 
             chatDocs.forEach((chatData) => {
                 const chatId = chatData.id;
@@ -161,16 +154,14 @@ function loadChatList() {
                 chatItemDiv.id = `item_${chatId}`;
                 
                 chatItemDiv.innerHTML = `
-                    <img src="https://via.placeholder.com/45/007bff/ffffff?text=U" id="avatar_${chatId}">
+                    <img src="https://via.placeholder.com/45?text=U" id="avatar_${chatId}">
                     <div class="chat-item-info">
                         <h4 id="name_${chatId}">লোড হচ্ছে...</h4>
                         <p id="msg_preview_${chatId}" style="${isUnreadMessage ? 'font-weight: bold; color: #1e293b;' : ''}">${chatData.lastMessage || "নতুন চ্যাট..."}</p>
                     </div>
                     
-                    ${isUnreadMessage ? `<span class="unread-dot" style="width: 8px; height: 8px; background-color: #007bff; border-radius: 50%; margin-right: 8px;"></span>` : ''}
-
                     <button class="chat-item-menu-btn" onclick="toggleDropdown(event, '${chatId}')">
-                        <i class="material-icons" style="font-size: 20px;">more_vert</i>
+                        <i class="material-icons">more_vert</i>
                     </button>
                     
                     <div class="chat-dropdown" id="dropdown_${chatId}">
@@ -201,13 +192,10 @@ function loadChatList() {
                     fetchParticipantDetails(otherParticipantId, `name_${chatId}`, `avatar_${chatId}`);
                 }
             });
-        }, (error) => {
-            console.error("চ্যাট স্ন্যাপশট এরর:", error);
-            chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:red;">চ্যাট লোড করতে সমস্যা হয়েছে।</div>`;
         });
 }
 
-// 🔘 থ্রি-ডট ড্রপডাউন টগল
+// 🔘 ড্রপডাউন টগল
 function toggleDropdown(event, chatId) {
     event.stopPropagation();
     document.querySelectorAll('.chat-dropdown').forEach(dd => {
@@ -217,7 +205,7 @@ function toggleDropdown(event, chatId) {
     if (dropdown) dropdown.classList.toggle('show');
 }
 
-// 🗑️ ২-লেভেল সফট/পার্মানেন্ট ডিলিট লজিক
+// 🗑️ ডিলিট চ্যাট লজিক
 async function deleteChatForUser(event, chatId) {
     event.stopPropagation();
     document.querySelectorAll('.chat-dropdown').forEach(dd => dd.classList.remove('show'));
@@ -237,21 +225,16 @@ async function deleteChatForUser(event, chatId) {
             deletedBy.push(activeIdentity.id);
         }
 
-        // ২ জনই ডিলিট করেছে কিনা তা যাচাই
         const bothDeleted = data.participants.every(id => deletedBy.includes(id));
 
         if (bothDeleted) {
-            // ২ জনই ডিলিট করলে স্থায়ীভাবে ফায়ারস্টোর থেকে মুছে ফেলা হবে
             const messagesSnapshot = await chatRef.collection('messages').get();
             const batch = db.batch();
             messagesSnapshot.forEach(mDoc => batch.delete(mDoc.ref));
             batch.delete(chatRef);
             await batch.commit();
-            alert("চ্যাটটি সম্পূর্ণভাবে ডিলিট করা হয়েছে।");
         } else {
-            // ১ জন ডিলিট করলে শুধুমাত্র নিজের তালিকা থেকে মুছে যাবে
             await chatRef.update({ deletedBy: deletedBy });
-            alert("চ্যাটটি আপনার ইনবক্স থেকে সরিয়ে দেওয়া হয়েছে।");
         }
 
         if (currentChatId === chatId) {
@@ -260,7 +243,7 @@ async function deleteChatForUser(event, chatId) {
             document.getElementById('activeChatContent').style.display = 'none';
         }
     } catch (error) {
-        console.error("ডিলিট করতে ত্রুটি:", error);
+        console.error("ডিলিট করতে সমস্যা হয়েছে:", error);
     }
 }
 
@@ -268,7 +251,7 @@ document.addEventListener('click', () => {
     document.querySelectorAll('.chat-dropdown').forEach(dd => dd.classList.remove('show'));
 });
 
-// 📖 ৩. চ্যাট বক্স ওপেন ও মেসেজ লোডিং
+// 📖 ৩. চ্যাট বক্স ওপেন
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
     
@@ -305,7 +288,7 @@ async function openChatBox(chatId, postId) {
             }
         }
     } catch (e) {
-        console.error("চ্যাট ক্রিয়েশন এরর:", e);
+        console.error("চ্যাট শুরু করতে সমস্যা:", e);
     }
 
     loadPropertyContext(postId || currentPostId || (chatDocData ? chatDocData.postId : ""));
@@ -339,7 +322,7 @@ async function openChatBox(chatId, postId) {
             });
 
             messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
-        }, (err) => console.error("মেসেজ এরর:", err));
+        });
 
     const parts = chatId.split('_');
     const otherParticipantId = parts.find(id => id !== activeIdentity.id);
@@ -348,7 +331,7 @@ async function openChatBox(chatId, postId) {
     }
 }
 
-// ✉️ ৪. মেসেজ সেন্ড (মেসেজ পাঠালে রি-ওপেন লজিক সহ)
+// ✉️ ৪. মেসেজ সেন্ড
 async function sendMessage(text) {
     if (!text.trim() || !currentChatId) return;
 
@@ -363,7 +346,6 @@ async function sendMessage(text) {
     try {
         await db.collection('chats').doc(currentChatId).collection('messages').add(messageData);
         
-        // মেসেজ পাঠালে এটি অপর পক্ষের deletedBy ফিল্টার থেকে মুছে মেসেজটি পুনরায় দেখা যাবে
         await db.collection('chats').doc(currentChatId).update({
             lastMessage: cleanText,
             lastSenderId: activeIdentity.id,             
@@ -372,43 +354,43 @@ async function sendMessage(text) {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch (error) {
-        console.error("মেসেজ সেন্ড এরর:", error);
+        console.error("মেসেজ পাঠাতে সমস্যা:", error);
     }
 }
 
-// 🔍 ৫. সাহায্যকারী সার্ভিস: ইউজার বা কোম্পানির নাম ও ছবি লোড
+// 🔍 ৫. নাম এবং প্রোফাইল পিকচার ফেচ করা (ইউজার ও পেজ উভয় চেক করবে)
 async function fetchParticipantDetails(participantId, nameElemId, avatarElemId) {
+    if (!participantId) return;
     try {
-        let cDoc = await db.collection('companies').doc(participantId).get();
-        if (cDoc.exists) {
-            const cData = cDoc.data();
-            if (nameElemId && document.getElementById(nameElemId)) {
-                document.getElementById(nameElemId).textContent = cData.name || cData.companyName || "কোম্পানি পেজ";
-            }
-            if (avatarElemId && document.getElementById(avatarElemId)) {
-                document.getElementById(avatarElemId).src = cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page';
-            }
-            return;
-        }
-
+        // ১. প্রথমে 'users' কালেকশনে সার্চ করবে
         let uDoc = await db.collection('users').doc(participantId).get();
         if (uDoc.exists) {
             const uData = uDoc.data();
-            if (nameElemId && document.getElementById(nameElemId)) {
-                document.getElementById(nameElemId).textContent = uData.fullName || uData.name || "সম্মানিত ইউজার";
-            }
-            if (avatarElemId && document.getElementById(avatarElemId)) {
-                document.getElementById(avatarElemId).src = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
-            }
+            const uName = uData.fullName || uData.name || "ইউজার";
+            const uPic = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
+            
+            if (nameElemId && document.getElementById(nameElemId)) document.getElementById(nameElemId).textContent = uName;
+            if (avatarElemId && document.getElementById(avatarElemId)) document.getElementById(avatarElemId).src = uPic;
             return;
         }
 
-        if (nameElemId && document.getElementById(nameElemId)) {
-            document.getElementById(nameElemId).textContent = "ইউজার / পেজ";
+        // ২. না পাওয়া গেলে 'companies' কালেকশনে সার্চ করবে
+        let cDoc = await db.collection('companies').doc(participantId).get();
+        if (cDoc.exists) {
+            const cData = cDoc.data();
+            const cName = cData.name || cData.companyName || "কোম্পানি পেজ";
+            const cLogo = cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page';
+            
+            if (nameElemId && document.getElementById(nameElemId)) document.getElementById(nameElemId).textContent = cName;
+            if (avatarElemId && document.getElementById(avatarElemId)) document.getElementById(avatarElemId).src = cLogo;
+            return;
         }
 
+        // ৩. ব্যাকআপ fallback
+        if (nameElemId && document.getElementById(nameElemId)) document.getElementById(nameElemId).textContent = "সদস্য";
+
     } catch (e) {
-        console.error("ডিটেইলস লোড সমস্যা:", e);
+        console.error("পার্টিসিপেন্ট ডিটেইলস এরর:", e);
     }
 }
 
@@ -466,7 +448,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // কুইক রিপ্লাই বাটন সার্ভিস
     document.querySelectorAll('.quick-btn').forEach(btn => {
         btn.onclick = () => {
             sendMessage(btn.textContent);
