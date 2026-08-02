@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
-    <!-- Firebase SDKs (সিনক্রোনাইজড লোডিং) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -34,15 +34,16 @@
             display: flex; 
             flex-direction: column; 
             overflow: hidden;
+            padding-top: 60px;
         }
 
         /* হেডার ফিক্সড পজিশনিং */
         .main-header {
-             position: fixed; 
-             top: 0; left: 0; right: 0;
-             background-color: white; 
-             box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
-             z-index: 1000; 
+            position: fixed; 
+            top: 0; left: 0; right: 0;
+            background-color: white; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
+            z-index: 1000; 
         }
         
         /* সাইডবার */
@@ -60,24 +61,17 @@
             padding-top: 50px; 
         }
         
-        .sidebar.active {
-            left: 0; 
-        }
+        .sidebar.active { left: 0; }
         
         .overlay {
             position: fixed; 
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.5); 
             z-index: 1040; 
             display: none; 
         }
         
-        .overlay.active {
-            display: block; 
-        }
+        .overlay.active { display: block; }
         
         .sidebar a {
             color: #ffffff; 
@@ -88,14 +82,8 @@
             font-weight: 500;
         }
 
-        .sidebar a i.material-icons {
-            color: #ffffff; 
-            margin-right: 10px;
-        }
-
-        .sidebar a:hover {
-            background-color: #3e5369; 
-        }
+        .sidebar a i.material-icons { color: #ffffff; margin-right: 10px; }
+        .sidebar a:hover { background-color: #3e5369; }
         
         .sidebar-logo {
             padding: 15px;
@@ -122,54 +110,39 @@
 
         .profile-image-wrapper { cursor: pointer; width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; }
         .profile-image-wrapper img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
-
-        body { 
-            padding-top: 60px; 
-        }
         
         @media (max-width: 600px) {
             .logo-title { font-size: 1.2em; }
             .header-actions { gap: 8px; }
         }
 
-        /* 🔙 ব্যাক বাটন ও সেকশন এরিয়া */
-        .back-bar-container {
-            background-color: white;
-            padding: 10px 15px;
-            border-bottom: 1px solid #eef2f5;
+        /* 🔙 প্রোফাইল পেজের মতো স্বাভাবিক ব্যাক বাটন স্টাইল */
+        .simple-back-bar {
+            padding: 12px 15px;
+            background: transparent;
             display: flex;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            z-index: 99;
         }
 
-        .btn-back { 
-            background: #fff; 
-            border: 1.5px solid var(--primary); 
-            color: var(--primary); 
-            padding: 8px 18px; 
-            border-radius: 30px; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            gap: 6px; 
-            font-weight: 700; 
-            font-size: 13px; 
-            box-shadow: var(--card-shadow); 
-            transition: all 0.3s ease; 
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 700;
         }
-        
-        .btn-back:hover { 
-            background: var(--primary); 
-            color: white; 
-            transform: translateY(-1px);
-        }
-        
+
+        .back-link i { font-size: 22px; }
+
+        /* 📦 চ্যাট কন্টেইনার ফ্রেম ফিক্স */
         .main-content-area {
             flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            height: calc(100vh - 120px);
         }
 
         .chat-container { 
@@ -181,6 +154,8 @@
             background: white; 
             overflow: hidden; 
             height: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
         }
         
         /* 👥 বামপাশ: চ্যাট লিস্ট */
@@ -201,10 +176,7 @@
             background: #fafbfc;
         }
         
-        .chat-list { 
-            flex: 1; 
-            overflow-y: auto; 
-        }
+        .chat-list { flex: 1; overflow-y: auto; }
         
         .chat-item { 
             display: flex; 
@@ -214,16 +186,12 @@
             cursor: pointer; 
             border-bottom: 1px solid #f7fafc; 
             transition: all 0.25s ease; 
+            position: relative;
+            padding-right: 45px;
         }
         
-        .chat-item:hover { 
-            background: #f8faff; 
-        }
-        
-        .chat-item.active { 
-            background: var(--primary-light); 
-            border-left: 4px solid var(--primary);
-        }
+        .chat-item:hover { background: #f8faff; }
+        .chat-item.active { background: var(--primary-light); border-left: 4px solid var(--primary); }
         
         .chat-item img { 
             width: 48px; 
@@ -234,29 +202,9 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         
-        .chat-item-info { 
-            flex: 1; 
-            overflow: hidden; 
-        }
-        
-        .chat-item-info h4 { 
-            margin: 0 0 5px 0; 
-            font-size: 15px; 
-            font-weight: 600;
-            color: var(--dark); 
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-        }
-        
-        .chat-item-info p { 
-            margin: 0; 
-            font-size: 13px; 
-            color: var(--gray); 
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-        }
+        .chat-item-info { flex: 1; overflow: hidden; }
+        .chat-item-info h4 { margin: 0 0 5px 0; font-size: 15px; font-weight: 600; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-item-info p { margin: 0; font-size: 13px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         /* 💬 ডানপাশ: চ্যাট বক্স */
         .chat-main { 
@@ -276,13 +224,8 @@
             color: var(--gray); 
         }
         
-        .chat-empty-state i { 
-            font-size: 56px; 
-            color: #cbd5e1;
-            margin-bottom: 15px; 
-        }
+        .chat-empty-state i { font-size: 56px; color: #cbd5e1; margin-bottom: 15px; }
 
-        /* চ্যাট হেডার */
         .chat-box-header { 
             padding: 12px 20px; 
             background: white; 
@@ -293,20 +236,9 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.01);
         }
         
-        .active-user-details { 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-        }
+        .active-user-details { display: flex; align-items: center; gap: 12px; }
+        .active-user-details h3 { margin: 0; font-size: 16px; font-weight: bold; color: var(--dark); }
         
-        .active-user-details h3 { 
-            margin: 0; 
-            font-size: 16px; 
-            font-weight: bold;
-            color: var(--dark); 
-        }
-        
-        /* মিনি প্রপার্টি কার্ড */
         .property-mini-card { 
             display: flex; 
             align-items: center; 
@@ -321,34 +253,11 @@
             transition: all 0.2s;
         }
         
-        .property-mini-card:hover {
-            border-color: var(--primary);
-            background: white;
-        }
-        
-        .property-mini-card img { 
-            width: 38px; 
-            height: 38px; 
-            border-radius: 6px; 
-            object-fit: cover; 
-        }
-        
-        .property-mini-info h5 { 
-            margin: 0; 
-            font-size: 12px; 
-            color: var(--dark); 
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-        }
-        
-        .property-mini-info span { 
-            font-size: 11px; 
-            color: var(--success); 
-            font-weight: bold; 
-        }
+        .property-mini-card:hover { border-color: var(--primary); background: white; }
+        .property-mini-card img { width: 38px; height: 38px; border-radius: 6px; object-fit: cover; }
+        .property-mini-info h5 { margin: 0; font-size: 12px; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .property-mini-info span { font-size: 11px; color: var(--success); font-weight: bold; }
 
-        /* মেসেজ বাবল ও এরিয়া */
         .messages-display { 
             flex: 1; 
             padding: 20px; 
@@ -369,29 +278,10 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
         
-        .msg-bubble.incoming { 
-            background: white; 
-            align-self: flex-start; 
-            border-top-left-radius: 4px; 
-            color: #333; 
-        }
-        
-        .msg-bubble.outgoing { 
-            background: var(--primary); 
-            color: white; 
-            align-self: flex-end; 
-            border-top-right-radius: 4px; 
-        }
-        
-        .msg-time { 
-            font-size: 9px; 
-            display: block; 
-            margin-top: 5px; 
-            text-align: right; 
-            opacity: 0.7; 
-        }
+        .msg-bubble.incoming { background: white; align-self: flex-start; border-top-left-radius: 4px; color: #333; }
+        .msg-bubble.outgoing { background: var(--primary); color: white; align-self: flex-end; border-top-right-radius: 4px; }
+        .msg-time { font-size: 9px; display: block; margin-top: 5px; text-align: right; opacity: 0.7; }
 
-        /* কুইক রিপ্লাই */
         .quick-replies { 
             padding: 10px 20px; 
             display: flex; 
@@ -411,16 +301,10 @@
             cursor: pointer; 
             color: var(--dark); 
             transition: all 0.25s; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
         }
         
-        .quick-btn:hover { 
-            border-color: var(--primary); 
-            color: var(--primary); 
-            background: var(--primary-light);
-        }
+        .quick-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 
-        /* ইনপুট এরিয়া */
         .chat-input-area { 
             padding: 15px 20px; 
             background: white; 
@@ -441,11 +325,7 @@
             background: #f8fafc;
         }
         
-        .chat-input-area input:focus { 
-            border-color: var(--primary); 
-            background: white;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-        }
+        .chat-input-area input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1); }
         
         .btn-send { 
             background: var(--primary); 
@@ -462,41 +342,82 @@
             transition: all 0.2s;
         }
         
-        .btn-send:hover { 
-            background: #0056b3; 
-            transform: scale(1.05);
-        }
+        .btn-send:hover { background: #0056b3; transform: scale(1.05); }
 
-        /* ফুটার */
+        /* 🔻 ফুটার নির্দিষ্ট স্টাইলিং */
         .footer {
             background: white;
             border-top: 1px solid #edf2f7;
-            padding: 15px 0;
+            padding: 12px 0;
             text-align: center;
             font-size: 13px;
             color: var(--gray);
+            flex-shrink: 0;
         }
 
-        /* ========================================================
-           📱 মোবাইল রেসপন্সিভনেস, কিবোর্ড ফিক্স এবং বাটন হাইড লজিক 
-        ======================================================== */
+        /* ⚙️ থ্রি-ডট ও ড্রপডাউন মেনু */
+        .chat-item-menu-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, color 0.2s;
+            z-index: 10;
+        }
+
+        .chat-item-menu-btn:hover { background: rgba(0, 0, 0, 0.05); color: var(--dark); }
+
+        .chat-dropdown {
+            display: none;
+            position: absolute;
+            right: 15px;
+            top: 75%;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 20;
+            min-width: 120px;
+            overflow: hidden;
+        }
+
+        .chat-dropdown.show { display: block; }
+
+        .chat-dropdown-item {
+            width: 100%;
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            text-align: left;
+            font-size: 13px;
+            color: #e53e3e;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .chat-dropdown-item:hover { background: #fff5f5; }
+
+        /* 📱 মোবাইল ভিউ ফিক্স */
         @media (max-width: 768px) {
-            body {
-                height: 100vh;
-                height: -webkit-fill-available;
-            }
+            body { height: 100vh; height: -webkit-fill-available; }
 
-            .main-content-area {
-                height: calc(100vh - 60px);
-                position: relative;
-            }
+            .main-content-area { height: calc(100vh - 120px); position: relative; }
 
-            /* মোবাইলে চ্যাট ওপেন থাকলে প্রধান ব্যাক বাটন গায়েব */
-            body.chat-open .back-bar-container {
-                display: none !important;
-            }
+            body.chat-open .simple-back-bar { display: none !important; }
 
-            /* ক্রোমে কিবোর্ডের জন্য পারফেক্ট svh ভিউপোর্ট ফিক্স */
             .chat-main { 
                 display: none; 
                 position: fixed; 
@@ -510,22 +431,11 @@
                 background: #f4f7f9; 
             }
             
-            .chat-main.active { 
-                display: flex; 
-            }
+            .chat-main.active { display: flex; }
+            .chat-sidebar.hidden { display: none; }
             
-            .chat-sidebar.hidden { 
-                display: none; 
-            }
-            
-            .back-to-list { 
-                display: block !important; 
-                margin-right: 10px; 
-                cursor: pointer; 
-                color: var(--dark); 
-            }
+            .back-to-list { display: block !important; margin-right: 10px; cursor: pointer; color: var(--dark); }
 
-            /* ৩টি প্রশ্ন পাশাপাশি স্ক্রোল না হয়ে উপর-নিচ হবে */
             .quick-replies {
                 flex-direction: column;
                 white-space: normal;
@@ -534,94 +444,9 @@
                 gap: 6px;
             }
 
-            .quick-btn {
-                width: 100%;
-                text-align: left;
-                padding: 10px 14px;
-                font-size: 13px;
-                border-radius: 12px;
-            }
-            
-            .chat-input-area {
-                padding: 10px 15px;
-                background: white;
-            }
+            .quick-btn { width: 100%; text-align: left; padding: 10px 14px; font-size: 13px; border-radius: 12px; }
+            .chat-input-area { padding: 10px 15px; background: white; }
         }
-
-        /* চ্যাট আইটেমকে রিলেটিভ করা যাতে থ্রি-ডট ডানপাশে সেট করা যায় */
-.chat-item {
-    position: relative;
-    padding-right: 45px; /* থ্রি-ডটের জন্য ডানপাশে কিছুটা জায়গা খালি রাখা */
-}
-
-/* থ্রি-ডট বাটন স্টাইল */
-.chat-item-menu-btn {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-    border: none;
-    color: var(--gray);
-    cursor: pointer;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s, color 0.2s;
-    z-index: 10; /* যাতে চ্যাট আইটেমের ক্লিকে সমস্যা না করে */
-}
-
-.chat-item-menu-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: var(--dark);
-}
-
-/* ড্রপডাউন মেনু কন্টেইনার */
-.chat-dropdown {
-    display: none;
-    position: absolute;
-    right: 15px;
-    top: 75%;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    z-index: 20;
-    min-width: 120px;
-    overflow: hidden;
-}
-
-.chat-dropdown.show {
-    display: block;
-}
-
-/* ড্রপডাউনের ভেতরের বাটন (ডিলিট বাটন) */
-.chat-dropdown-item {
-    width: 100%;
-    padding: 10px 15px;
-    background: none;
-    border: none;
-    text-align: left;
-    font-size: 13px;
-    color: #e53e3e; /* লাল রঙ ডিলিটের জন্য */
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-}
-
-.chat-dropdown-item:hover {
-    background: #fff5f5;
-}
-
-.chat-dropdown-item i {
-    font-size: 16px;
-                }
-        
     </style>
 </head>
 <body>
@@ -671,11 +496,12 @@
     </div>
     <div class="overlay" id="overlay"></div>
 
-    <!-- 🔙 প্রধান ব্যাক বাটন -->
-    <div class="back-bar-container">
-        <button class="btn-back" onclick="window.history.back()">
-            <i class="material-icons">arrow_back</i> ফিরে যান
-        </button>
+    <!-- 🔙 প্রোফাইল পেজের মতো স্বাভাবিক ব্যাক বাটন -->
+    <div class="simple-back-bar">
+        <div class="back-link" onclick="window.history.back()">
+            <i class="material-icons">arrow_back</i>
+            <span>ফিরে যান</span>
+        </div>
     </div> 
     
     <div class="main-content-area">
@@ -764,21 +590,9 @@
             if (messageButton) messageButton.addEventListener('click', () => { window.location.href = 'messages.html'; });
             if (profileImageWrapper) profileImageWrapper.addEventListener('click', () => { window.location.href = 'profile.html'; });
         });
-
-        function openTab(evt, tabName) {
-            let i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) { tabcontent[i].classList.remove("active"); }
-            tablinks = document.getElementsByClassName("tab-btn");
-            for (i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
-        }
     </script>
 
     <script src="notifications.js"></script> 
-    
-    <!-- 🎯 আমাদের নতুন লাইভ হেডার সিঙ্ক স্ক্রিপ্ট -->
     <script src="header-sync.js"></script> 
 </body>
-</html>
+    </html>
