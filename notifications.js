@@ -1,18 +1,22 @@
-// notifications.js - সর্বজনীন স্মার্ট নোটিফিকেশন ইঞ্জিন (ইউজার ও পেজ মোড সাপোর্ট সহ)
+// notifications.js - সম্পূর্ণ ডায়নামিক ও স্মার্ট নোটিফিকেশন ইঞ্জিন
 const db = firebase.firestore();
 const auth = firebase.auth();
 const messaging = firebase.messaging(); 
 
 const VAPID_KEY = "BIWyqUvtwx7iH6nKiZRVCNl7ihTsFn40IJ1LVp58RYIFDEbHrWBSYnVVQ2iA5m9d7tmbNngRPvAhPDEW34SBoLg"; 
 
-let currentNotifUnsubscribe = null; // লাইভ লিসেনার বন্ধ করার জন্য
+let currentNotifUnsubscribe = null; // মেমোরি লিক রোধ করতে লাইভ লিসেনার ট্র্যাকার
 
 document.addEventListener("DOMContentLoaded", () => {
     initGlobalNotificationSystem();
 
-    // ⚡ প্রোফাইল/হেডার থেকে ইউজার ↔ পেজ মোড সুইচ করলে লাইভ নোটিফিকেশন লিস্ট চেঞ্জ হবে
-    window.addEventListener('identityChanged', () => {
+    // ⚡ মোড সুইচ (ইউজার ↔ কোম্পানি) হলে স্বয়ংক্রিয়ভাবে নোটিফিকেশন লিস্ট ও ওয়েলকাম মেসেজ আপডেট হবে
+    window.addEventListener('identityChanged', async () => {
         if (auth.currentUser) {
+            const activeIdentity = typeof window.getActiveIdentity === 'function' ? window.getActiveIdentity() : null;
+            if (activeIdentity) {
+                await ensureWelcomeNotification(activeIdentity);
+            }
             loadNotificationsForActiveIdentity();
         }
     });
@@ -23,18 +27,66 @@ function initGlobalNotificationSystem() {
         if (user) {
             console.log("🔓 রেজিস্টার্ড ইউজার একটিভ আছেন।");
             await syncGuestTokenToUser(user.uid);
-            await ensureUserWelcomeNotification(user.uid);
             
-            // অ্যাক্টিভ আইডি (ইউজার নাকি কোম্পানি) অনুসারে নোটিফিকেশন লোড
+            // বর্তমান সক্রিয় প্রোফাইল (ইউজার নাকি কোম্পানি) সংগ্রহ
+            const activeIdentity = typeof window.getActiveIdentity === 'function' ? window.getActiveIdentity() : null;
+            
+            if (activeIdentity) {
+                await ensureWelcomeNotification(activeIdentity);
+            }
+            
             loadNotificationsForActiveIdentity();
         } else {
-            console.log("🌐 গেস্ট ইউজার ব্রাউজ করছেন। নোটিফিকেশন পেজ উন্মুক্ত।");
+            console.log("🌐 গেস্ট ইউজার ব্রাউজ করছেন।");
             showGuestMessage();
         }
     });
 }
 
-// 🎯 ১. বর্তমান অ্যাক্টিভ আইডি (ইউজার বা পেজ) অনুযায়ী নোটিফিকেশন ফিল্টার
+// 🎯 ১. ইউজার বা পেজের জন্য ডায়নামিক ওয়েলকাম নোটিফিকেশন নিশ্চিতকরণ
+async function ensureWelcomeNotification(activeIdentity) {
+    if (!activeIdentity || !activeIdentity.id) return;
+
+    try {
+        const notifRef = db.collection("notifications");
+        const snapshot = await notifRef.where("userId", "==", activeIdentity.id).get();
+
+        let hasWelcome = false;
+        snapshot.forEach((doc) => {
+            if (doc.data().type === "welcome") hasWelcome = true;
+        });
+
+        if (!hasWelcome) {
+            const isCompany = activeIdentity.type === 'company';
+            
+            // নাম না থাকলে "সম্মানিত গ্রাহক" ফলব্যাক
+            const targetName = activeIdentity.name || "সম্মানিত গ্রাহক";
+
+            const titleText = isCompany 
+                ? `🏢 ${targetName}-এ আপনাকে স্বাগতম!`
+                : `👋 ${targetName}, আমার বাড়ি প্ল্যাটফর্মে আপনাকে স্বাগত!`;
+
+            const messageText = isCompany
+                ? `আপনার কোম্পানি/পেজ প্রোফাইলটি সফলভাবে সক্রিয় হয়েছে। কাস্টমারদের চ্যাট, মেসেজ ও প্রপার্টি সম্পর্কিত লাইভ আপডেট এখানে দেখতে পাবেন।`
+                : `আমাদের সাথে যুক্ত হওয়ার জন্য আপনাকে আন্তরিক ধন্যবাদ। সেরা প্রপার্টি ডিল এবং রিয়েল-টাইম আপডেট পেতে আমাদের সাথেই থাকুন।`;
+
+            await notifRef.add({
+                userId: activeIdentity.id,
+                title: titleText,
+                message: messageText,
+                type: "welcome",
+                senderName: targetName,
+                isRead: false,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            console.log(`✅ ${activeIdentity.type} (${targetName})-এর জন্য স্বাগতম নোটিফিকেশন তৈরি হয়েছে।`);
+        }
+    } catch (error) {
+        console.error("স্বাগত নোটিফিকেশন তৈরিতে সমস্যা: ", error);
+    }
+}
+
+// 🎯 ২. একটিভ আইডেন্টিটি ফিল্টার করে নোটিফিকেশন লোড
 function loadNotificationsForActiveIdentity() {
     const activeIdentity = typeof window.getActiveIdentity === 'function' 
         ? window.getActiveIdentity() 
@@ -42,7 +94,8 @@ function loadNotificationsForActiveIdentity() {
 
     if (!activeIdentity) return;
 
-    console.log(`🔔 নোটিফিকেশন লোড হচ্ছে বর্তমান আইডির জন্য: ${activeIdentity.name} (${activeIdentity.id}) [টাইপ: ${activeIdentity.type}]`);
+    const currentName = activeIdentity.name || "সম্মানিত গ্রাহক";
+    console.log(`🔔 নোটিফিকেশন লোড হচ্ছে: ${currentName} (${activeIdentity.id}) [টাইপ: ${activeIdentity.type}]`);
     
     listenForNotifications(activeIdentity.id);
 }
@@ -68,7 +121,7 @@ function showGuestMessage() {
                 পারমিশন অ্যালাউ করার জন্য ধন্যবাদ!
             </h3>
             <p style="color: #7f8c8d; font-size: 14px; line-height: 1.6; margin: 0 0 25px 0;">
-                আপনার কাঙ্ক্ষিত প্লট, বাড়ি বা ফ্ল্যাটের সর্বশেষ লাইভ আপডেট ও ক্রেতা-বিক্রেতাদের চ্যাট মেসেজের রিয়েল-টাইম নোটিফিকেশন দেখতে দয়া করে আপনার অ্যাকাউন্টে লগইন করুন।
+                আপনার কাঙ্ক্ষিত প্রপার্টির লাইভ আপডেট ও ক্রেতা-বিক্রেতাদের মেসেজের নোটিফিকেশন পেতে দয়া করে অ্যাকাউন্টে লগইন করুন।
             </p>
             <a href="auth.html" style="
                 background: #1877f2; 
@@ -110,7 +163,7 @@ async function syncGuestTokenToUser(uid) {
             showPermissionDeniedBanner();
         }
     } catch (error) {
-        console.error("💥 টোকেন সংগ্রহ বা পারমিশন রিকভারিতে সমস্যা: ", error);
+        console.error("💥 টোকেন সিঙ্ক এরর: ", error);
     }
 }
 
@@ -130,9 +183,9 @@ function showEnableNotificationButton(uid) {
     banner.style = `background: #e8f0fe; color: #1a73e8; padding: 15px; border: 1px solid #d2e3fc; border-radius: 10px; margin-bottom: 20px; text-align: center; font-family: 'Hind Siliguri', sans-serif;`;
     banner.innerHTML = `
         <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">
-            🚀 লাইভ আপডেট ও চ্যাট নোটিফিকেশন মিস করতে না চাইলে পুশ নোটিফিকেশন সচল করুন!
+            🚀 লাইভ আপডেট ও চ্যাট নোটিফিকেশন পেতে পুশ নোটিফিকেশন সচল করুন!
         </p>
-        <button id="btn-grant-now" style="background: #1a73e8; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer;">নোটিফিকেশন চালু করুন</button>
+        <button id="btn-grant-now" style="background: #1a73e8; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer;">নোটিফিকেশন चालू করুন</button>
     `;
 
     listContainer.parentNode.insertBefore(banner, listContainer);
@@ -143,7 +196,7 @@ function showEnableNotificationButton(uid) {
             if (token) {
                 await saveTokenToFirestore(uid, token);
                 banner.remove();
-                alert("🎉 নোটিফিকেশন সফলভাবে চালু হয়েছে!");
+                alert("🎉 নোটিফিকেশন চালু হয়েছে!");
                 location.reload(); 
             }
         } catch (err) {
@@ -160,43 +213,17 @@ function showPermissionDeniedBanner() {
     const alertBanner = document.createElement("div");
     alertBanner.id = "permission-denied-alert";
     alertBanner.style = `background: #fff3cd; color: #856404; padding: 12px; border: 1px solid #ffeeba; border-radius: 8px; margin-bottom: 15px; font-size: 13px; text-align: center; font-family: 'Hind Siliguri', sans-serif;`;
-    alertBanner.innerHTML = `<strong>বিজ্ঞপ্তি:</strong> আপনার ব্রাউজারে নোটিফিকেশন ব্লক করা আছে। লাইভ চ্যাট ও প্রপার্টি আপডেট পেতে ব্রাউজারের লক (🔒) আইকনে ক্লিক করে নোটিফিকেশন <strong>Allow</strong> করে দিন।`;
+    alertBanner.innerHTML = `<strong>বিজ্ঞপ্তি:</strong> আপনার ব্রাউজারে নোটিফিকেশন ব্লক করা আছে। লাইভ আপডেট পেতে লক (🔒) আইকনে ক্লিক করে নোটিফিকেশন <strong>Allow</strong> করে দিন।`;
     listContainer.parentNode.insertBefore(alertBanner, listContainer);
 }
 
-async function ensureUserWelcomeNotification(uid) {
-    try {
-        const notifRef = db.collection("notifications");
-        const snapshot = await notifRef.where("userId", "==", uid).get();
-
-        let hasWelcome = false;
-        snapshot.forEach((doc) => {
-            if (doc.data().type === "welcome") hasWelcome = true;
-        });
-
-        if (!hasWelcome) {
-            await notifRef.add({
-                userId: uid,
-                title: "👋 আমার বাড়ি প্ল্যাটফর্মে আপনাকে স্বাগত!",
-                message: "আমাদের সাথে যুক্ত হওয়ার জন্য আপনাকে আন্তরিক ধন্যবাদ। সেরা সব প্রপার্টি ডিল এবং ক্রেতা-বিক্রেতার চ্যাট মেসেজের লাইভ আপডেট পেতে এই মেসেজটিতে ক্লিক করে নোটিফিকেশন সচল করুন।",
-                type: "welcome",
-                isRead: false,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-    } catch (error) {
-        console.error("স্বাগত নোটিফিকেশন তৈরিতে ব্যর্থ: ", error);
-    }
-}
-
-// 🎯 ২. ডাইনামিক লাইভ লিসেনার (targetId = User UID অথবা Company ID)
+// 🎯 ৩. রিয়েলটাইম লিসেনার
 function listenForNotifications(targetId) {
     const notificationContainer = document.getElementById("notifications-list");
     if (!notificationContainer) return;
 
-    // আগের লিসেনার চালু থাকলে তা বন্ধ করা (যেন মেমোরি লিক বা ডুপ্লিকেট না হয়)
     if (currentNotifUnsubscribe) {
-        currentNotifUnsubscribe();
+        currentNotifUnsubscribe(); // পূর্বের লিসেনার বন্ধ
     }
 
     currentNotifUnsubscribe = db.collection("notifications")
@@ -214,7 +241,7 @@ function listenForNotifications(targetId) {
                 docsArray.push({ id: doc.id, data: doc.data() });
             });
 
-            // টাইমস্ট্যাম্প অনুযায়ী সর্টিং
+            // তারিখ অনুসারে সর্ট করা
             docsArray.sort((a, b) => {
                 const tA = a.data.timestamp ? (a.data.timestamp.seconds || new Date(a.data.timestamp).getTime()) : 0;
                 const tB = b.data.timestamp ? (b.data.timestamp.seconds || new Date(b.data.timestamp).getTime()) : 0;
@@ -231,6 +258,7 @@ function listenForNotifications(targetId) {
         });
 }
 
+// 🎯 ৪. নোটিফিকেশন কার্ড রেন্ডারিং (নাম এবং ফলব্যাক লজিক সহ)
 function createNotificationCard(docId, notif) {
     const li = document.createElement("li");
     li.className = `notification-item ${notif.isRead ? 'read' : 'unread'}`;
@@ -248,10 +276,15 @@ function createNotificationCard(docId, notif) {
         }
     }
 
+    // 💡 নাম চেক লজিক: senderName -> title -> "সম্মানিত গ্রাহক"
+    const displayName = notif.senderName || notif.title || "সম্মানিত গ্রাহক";
+
     li.innerHTML = `
         <i class="material-icons notification-icon-large">${iconName}</i>
         <div class="notif-content">
-            <h4 style="margin: 0 0 5px 0; color: #2c3e50; font-size: 16px;">${notif.title}</h4>
+            <h4 style="margin: 0 0 5px 0; color: #2c3e50; font-size: 16px; font-weight: 600;">
+                ${displayName}
+            </h4>
             <p class="notif-text">${notif.message}</p>
         </div>
         <span class="notif-time">${dateStr}</span>
@@ -276,4 +309,4 @@ async function markAsRead(docId) {
     } catch (error) {
         console.error("রিড স্টেট আপডেট এরর: ", error);
     }
-    }
+                }
