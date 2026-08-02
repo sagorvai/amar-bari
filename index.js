@@ -36,7 +36,7 @@ function initCoverSlider() {
 const bdDistricts = {
     "ঢাকা": ["ঢাকা", "গাজীপুর", "নারায়ণগঞ্জ", "টাঙ্গাইল", "মানিকগঞ্জ", "মুন্সিগঞ্জ", "রাজবাড়ী", "ফরিদপুর", "মাদারীপুর", "শরীয়তপুর", "গোপালগঞ্জ", "কিশোরগঞ্জ", "নরসিংদী"],
     "খুলনা": ["খুলনা", "যশোর", "সাতক্ষীরা", "বাগেরহাট", "ঝিনাইদহ", "কুষ্টিয়া", "মেহেরপুর", "চুয়াডাঙ্গা", "মাগুরা", "নড়াইল"],
-    "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "কুমিল্লা", "ফেনী", "নোখালী", "লক্ষ্মীপুর", "চাঁদপুর", "ব্রাহ্মণবাড়িয়া", "রাঙ্গামাটি", "বান্দরবান", "খাগড়াছড়ি"],
+    "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "কুমিল্লা", "ফেনী", "নোয়াখালী", "লক্ষ্মীপুর", "চাঁদপুর", "ব্রাহ্মণবাড়িয়া", "রাঙ্গামাটি", "বান্দরবান", "খাগড়াছড়ি"],
     "রাজশাহী": ["রাজশাহী", "বগুড়া", "পাবনা", "সিরাজগঞ্জ", "নওগাঁ", "নাটোর", "জয়পুরহাট", "চাপাইনবাবগঞ্জ"],
     "রংপুর": ["রংপুর", "দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "ঠাকুরগাঁও"],
     "বরিশাল": ["বরিশাল", "পটুয়াখালী", "ভোলা", "পিরোজপুর", "বরগুনা", "ঝালকাঠি"],
@@ -140,15 +140,16 @@ async function initMap(category) {
 }
 
 // ----------------------------------------------------
-// 🏢 🏢 ৫. ফিল্টার করা কোম্পানির হরিজোন্টাল স্লাইডার HTML
+// 🏢 ৫. ফিল্টার করা কোম্পানির হরিজোন্টাল স্লাইডার HTML (আপডেটেড)
 // ----------------------------------------------------
 async function generateCompanySliderHTML(allMatchedDocs) {
-    // সার্চ রেজাল্টের কোম্পানিগুলো আইডি বের করা
     const companyIds = new Set();
+    
     allMatchedDocs.forEach(item => {
         const data = item.data;
         const isCompany = data.ownerType === 'company' || data.authorType === 'company' || !!data.companyId;
-        const cId = data.companyId || data.ownerId || data.authorId;
+        const cId = data.companyId || data.ownerId || data.authorId || data.userId || data.createdByUid;
+        
         if (isCompany && cId) {
             companyIds.add(cId);
         }
@@ -156,25 +157,40 @@ async function generateCompanySliderHTML(allMatchedDocs) {
 
     if (companyIds.size === 0) return '';
 
-    // সকল কোম্পানির ডাটা ফায়ারবেস থেকে ফেচ করা
     const companyCards = [];
     for (const cId of companyIds) {
         try {
+            let name = "";
+            let logo = "";
+            let redirectUrl = `seller-profile.html?id=${cId}&companyId=${cId}&type=company`;
+
+            // ১. 'companies' কালেকশন থেকে চেক
             const compDoc = await db.collection('companies').doc(cId).get();
             if (compDoc.exists) {
                 const compData = compDoc.data();
-                const name = compData.companyName || compData.name || "কোম্পানি প্রোফাইল";
-                const logo = compData.logo || compData.companyLogo || compData.profilePic || "https://via.placeholder.com/60?text=Company";
-
-                companyCards.push(`
-                    <div onclick="window.location.href='seller-profile.html?id=${cId}'" style="min-width: 90px; width: 90px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; flex-shrink: 0; background: #fff; padding: 8px 6px; border-radius: 10px; border: 1px solid #e4e6eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                        <img src="${logo}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #1877f2;" alt="${name}">
-                        <span style="font-size: 11px; font-weight: 600; color: #050505; margin-top: 5px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${name}</span>
-                    </div>
-                `);
+                name = compData.companyName || compData.name;
+                logo = compData.logo || compData.companyLogo || compData.profilePic;
+            } else {
+                // ২. যদি companies কালেকশনে না থাকে তবে 'users' কালেকশনে পেজ হিসেবে চেক
+                const userDoc = await db.collection('users').doc(cId).get();
+                if (userDoc.exists) {
+                    const uData = userDoc.data();
+                    name = uData.companyName || uData.pageName || uData.fullName || uData.name;
+                    logo = uData.companyLogo || uData.logo || uData.profilePic;
+                }
             }
+
+            if (!name) name = "রেজিস্টার্ড পেজ";
+            if (!logo) logo = "https://via.placeholder.com/60?text=Page";
+
+            companyCards.push(`
+                <div onclick="window.location.href='${redirectUrl}'" style="min-width: 90px; width: 90px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; flex-shrink: 0; background: #fff; padding: 8px 6px; border-radius: 10px; border: 1px solid #e4e6eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <img src="${logo}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #1877f2;" alt="${name}">
+                    <span style="font-size: 11px; font-weight: 600; color: #050505; margin-top: 5px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${name}</span>
+                </div>
+            `);
         } catch (e) {
-            console.error("কোম্পানি লোড ত্রুটি:", e);
+            console.error("কোম্পানি ডাটা লোড ত্রুটি:", e);
         }
     }
 
@@ -420,7 +436,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
         let normalList = allDocs.filter(item => !item.data.isBoosted && !item.data.isPaidPost);
         let featuredList = allDocs.slice(0, 5); 
 
-        // 🌟 ১. কোম্পানি স্লাইডার (যদি ফিল্টার্ড সার্চে কোনো কোম্পানি থাকে)
+        // 🌟 ১. কোম্পানি স্লাইডার
         const companySliderHTML = await generateCompanySliderHTML(allDocs);
         if (companySliderHTML) {
             propertyG.insertAdjacentHTML('beforeend', companySliderHTML);
@@ -509,14 +525,17 @@ async function loadPostAuthorDetails(docId, postData = {}) {
                 if (companyLogo) picEl.src = companyLogo;
                 return;
             } else {
-                if (postData.postedByName) nameEl.textContent = postData.postedByName;
-                if (postData.postedByAvatar) picEl.src = postData.postedByAvatar;
-                return;
+                // কোম্পানির ডকুমেন্ট না পেলে ইউজার ডকুমেন্ট চেক
+                const uDoc = await db.collection('users').doc(companyId).get();
+                if (uDoc.exists) {
+                    const uData = uDoc.data();
+                    if (uData.companyName || uData.pageName) nameEl.textContent = uData.companyName || uData.pageName;
+                    if (uData.companyLogo || uData.profilePic) picEl.src = uData.companyLogo || uData.profilePic;
+                    return;
+                }
             }
         } catch (err) {
             console.error("কোম্পানির তথ্য লোড করতে ত্রুটি:", err);
-            if (postData.postedByName) nameEl.textContent = postData.postedByName;
-            return;
         }
     } 
     
@@ -530,10 +549,6 @@ async function loadPostAuthorDetails(docId, postData = {}) {
 
                 if (userName) nameEl.textContent = userName;
                 if (userPic) picEl.src = userPic;
-                return;
-            } else {
-                if (postData.postedByName) nameEl.textContent = postData.postedByName;
-                if (postData.postedByAvatar) picEl.src = postData.postedByAvatar;
                 return;
             }
         } catch (err) {
