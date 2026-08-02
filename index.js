@@ -819,3 +819,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ডিফল্ট লোড
     fetchAndDisplayProperties('বিক্রয়', ''); 
 
+    
+    // লোকাল স্টোরেজে অ্যাকাউন্ট/পেজ চেঞ্জ হলে তাৎক্ষণিক হেডার প্রোফাইল পিক আপডেট লিসেনার
+    window.addEventListener('storage', () => {
+        const user = auth.currentUser;
+        if (user) loadProfilePicture(user);
+    });
+});
