@@ -39,7 +39,7 @@ const bdDistricts = {
     "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "কুমিল্লা", "ফেনী", "নোয়াখালী", "লক্ষ্মীপুর", "চাঁদপুর", "ব্রাহ্মণবাড়িয়া", "রাঙ্গামাটি", "বান্দরবান", "খাগড়াছড়ি"],
     "রাজশাহী": ["রাজশাহী", "বগুড়া", "পাবনা", "সিরাজগঞ্জ", "নওগাঁ", "নাটোর", "জয়পুরহাট", "চাপাইনবাবগঞ্জ"],
     "রংপুর": ["রংপুর", "দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "ঠাকুরগাঁও"],
-    "বরিশাল": ["বরিশাল", "পটুয়াখালী", "ভোলা", "পিরোজপুর", "বরগুনা", "ঝালকাঠি"],
+    "বরিশাল": ["বরিশাল", "পটুখালী", "ভোলা", "পিরোজপুর", "বরগুনা", "ঝালকাঠি"],
     "সিলেট": ["সিলেট", "মৌলভীবাজার", "হবিগঞ্জ", "সুনামগঞ্জ"],
     "ময়মনসিংহ": ["ময়মনসিংহ", "জামালপুর", "নেত্রকোনা", "শেরপুর"]
 };
@@ -68,29 +68,47 @@ if (filterDivisionEl && filterDistrictEl) {
 }
 
 // ----------------------------------------------------
-// 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার
+// 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার (Updated & Fixed)
 // ----------------------------------------------------
-function loadProfilePicture(user) {
-    if (!user) return;
-    const activePageId = localStorage.getItem('activePageId');
+async function loadProfilePicture(user) {
+    if (!user) {
+        if (profileImage) profileImage.style.display = 'none';
+        if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
+        return;
+    }
 
-    if (activePageId) {
-        db.collection('companies').doc(activePageId).get().then(doc => {
-            if (doc.exists) {
-                const cData = doc.data();
-                const photo = cData.logo || cData.companyLogo || cData.profilePic;
+    // localStorage থেকে সক্রিয় মোড ও আইডি চেক
+    const activeMode = localStorage.getItem('activeMode'); // 'company' অথবা 'user'
+    const activeCompanyId = localStorage.getItem('activeCompanyId') || localStorage.getItem('activePageId');
+    const activeAvatar = localStorage.getItem('activeAvatar');
+
+    // ১. যদি পেজ/কোম্পানি মোড সক্রিয় থাকে
+    if ((activeMode === 'company' || activePageIdCheck()) && activeCompanyId) {
+        try {
+            const compDoc = await db.collection('companies').doc(activeCompanyId).get();
+            if (compDoc.exists) {
+                const cData = compDoc.data();
+                const photo = cData.logo || cData.companyLogo || cData.profilePic || activeAvatar;
                 if (profileImage && photo) {
                     profileImage.src = photo;
                     profileImage.style.display = 'block';
                     if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-                    return;
+                    return; // পেজের ছবি লোড সফল হলে এখানেই সমাপ্ত
                 }
             }
-            loadUserDefaultPic(user);
-        }).catch(() => loadUserDefaultPic(user));
-    } else {
-        loadUserDefaultPic(user);
+        } catch (err) {
+            console.error("কোম্পানি প্রোফাইল লোড ত্রুটি:", err);
+        }
     }
+
+    // ২. যদি পেজ মোড সক্রিয় না থাকে অথবা পেজ লোগো না পাওয়া যায়, তবে ইউজারের নিজস্ব ছবি লোড হবে
+    loadUserDefaultPic(user);
+}
+
+// হেল্পার ফাংশন: পুরনো 'activePageId' চেক করার জন্য
+function activePageIdCheck() {
+    const activeMode = localStorage.getItem('activeMode');
+    return activeMode ? activeMode === 'company' : !!localStorage.getItem('activePageId');
 }
 
 function loadUserDefaultPic(user) {
@@ -106,8 +124,21 @@ function loadUserDefaultPic(user) {
                 if (profileImage) profileImage.style.display = 'none';
                 if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
             }
+        } else {
+            if (profileImage && user.photoURL) {
+                profileImage.src = user.photoURL;
+                profileImage.style.display = 'block';
+                if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
+            }
         }
-    }).catch(err => console.error("প্রোফাইল লোড ত্রুটি:", err));
+    }).catch(err => {
+        console.error("ইউজার প্রোফাইল লোড ত্রুটি:", err);
+        if (profileImage && user.photoURL) {
+            profileImage.src = user.photoURL;
+            profileImage.style.display = 'block';
+            if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
+        }
+    });
 }
 
 // ----------------------------------------------------
@@ -788,6 +819,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ডিফল্ট লোড
     fetchAndDisplayProperties('বিক্রয়', ''); 
 
+    // ফায়ারবেস অথ লিসেনার
     auth.onAuthStateChanged(user => {
         if (user) {
             loadProfilePicture(user);
@@ -795,5 +827,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (profileImage) profileImage.style.display = 'none';
             if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
         }
+    });
+
+    // লোকাল স্টোরেজে অ্যাকাউন্ট/পেজ চেঞ্জ হলে তাৎক্ষণিক হেডার প্রোফাইল পিক আপডেট লিসেনার
+    window.addEventListener('storage', () => {
+        const user = auth.currentUser;
+        if (user) loadProfilePicture(user);
     });
 });
