@@ -731,38 +731,38 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.onclick = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
     }
 
-    // ট্যাবে ক্লিক করলে লিস্টিং ও ম্যাপ ডাটা রিফ্রেশ
+    // ট্যাবে ক্লিক করলে লিস্টিং ও ম্যাপ ডাটা রিফ্রেশ লজিক
     navButtons.forEach(btn => {
         btn.onclick = function() {
             navButtons.forEach(b => b.classList.remove('active'));
-            document.getElementById('mapViewToggleBtn')?.classList.remove('active');
             this.classList.add('active');
             
             const selectedCategory = this.getAttribute('data-category');
             const mapSection = document.getElementById('map-section');
             const propertyContainer = document.getElementById('property-grid-container');
 
-            updateMapBackButton(false);
-
-            if (mapSection) mapSection.style.display = 'none';
-            if (propertyContainer) propertyContainer.style.display = 'block';
-
-            fetchAndDisplayProperties(selectedCategory, globalSearchInput?.value || '');
+            // যদি স্ক্রিনে ম্যাপ ভিউ অন থাকে, তবে ম্যাপ ডাটা ফিল্টার হবে
+            if (mapSection && mapSection.style.display !== 'none') {
+                initMap(selectedCategory);
+            } else {
+                // নতুবা সাধারণ নিউজফিড লিস্ট ফিল্টার হবে
+                updateMapBackButton(false);
+                if (propertyContainer) propertyContainer.style.display = 'block';
+                fetchAndDisplayProperties(selectedCategory, globalSearchInput?.value || '');
+            }
         };
     });
 
     const mapViewToggleBtn = document.getElementById('mapViewToggleBtn');
     if (mapViewToggleBtn) {
         mapViewToggleBtn.onclick = function() {
-            navButtons.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            
             const mapSection = document.getElementById('map-section');
             const propertyContainer = document.getElementById('property-grid-container');
 
             if (propertyContainer) propertyContainer.style.display = 'none';
             if (mapSection) mapSection.style.display = 'block';
             
+            // বর্তমানে যে ট্যাব সিলেক্টেড আছে (বিক্রয় নাকি ভাড়া) সেটার ডাটা ম্যাপে লোড করবে
             const activeNavBtn = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
             const currentCat = activeNavBtn ? activeNavBtn.getAttribute('data-category') : 'বিক্রয়';
             initMap(currentCat);
@@ -772,7 +772,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnAdvancedSearch = document.getElementById('btnAdvancedSearch');
     if (btnAdvancedSearch) {
         btnAdvancedSearch.onclick = () => {
-            const isMapActive = document.getElementById('mapViewToggleBtn')?.classList.contains('active');
+            const mapSection = document.getElementById('map-section');
+            const isMapActive = mapSection && mapSection.style.display !== 'none';
             const activeNavBtn = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
             const category = activeNavBtn ? activeNavBtn.getAttribute('data-category') : 'বিক্রয়';
 
