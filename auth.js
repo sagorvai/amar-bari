@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ২. ইউজার সাইনআপ হ্যান্ডেল (স্বাগত নোটিফিকেশন ফিচারসহ আপডেটেড)
+    // ২. ইউজার সাইনআপ হ্যান্ডেল (স্বাগত নোটিফিকেশন ও প্রোফাইল এডিট ফ্লোসহ আপডেটেড)
     if (signupForm) {
         signupForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -71,20 +71,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 console.log("সফলভাবে অ্যাকাউন্ট তৈরি হয়েছে। UID:", user.uid);
 
-                // 🎯 আপনার পরিকল্পনা অনুযায়ী ফায়ারস্টোরে ইন-অ্যাপ স্বাগত নোটিফিকেশন পাঠানো হচ্ছে
+                // ফায়ারস্টোরে ইন-অ্যাপ স্বাগত নোটিফিকেশন পাঠানো
                 await db.collection("notifications").add({
                     userId: user.uid,
                     title: "🏡 আমার বাড়ি.কম-এ আপনাকে স্বাগতম!",
                     message: "সেরা সব প্রপার্টি ডিল এবং ক্রেতা-বিক্রেতার চ্যাট মেসেজের লাইভ আপডেট পেতে এই মেসেজটিতে ক্লিক করে নোটিফিকেশন সচল করুন।",
-                    type: "welcome", // টাইপ স্বাগত নির্ধারণ করা হলো
+                    type: "welcome",
                     isRead: false,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
                 console.log("স্বাগত নোটিফিকেশন ফায়ারস্টোরে যুক্ত হয়েছে।");
                 
-                alert('সফলভাবে সাইনআপ করা হয়েছে!');
-                window.location.href = 'index.html';
+                alert('সফলভাবে সাইনআপ করা হয়েছে! অনুগ্রহ করে আপনার তথ্যগুলো আপডেট করুন।');
+                // 🎯 সাইনআপের পর ইউজারকে ইউআরএল প্যারামিটারসহ প্রোফাইল পেজে রিডাইরেক্ট করা হচ্ছে
+                window.location.href = 'profile.html?openEdit=true';
+
             } catch (error) {
                 console.error("সাইনআপ ব্যর্থ হয়েছে:", error);
                 let errorMessage = "সাইনআপ ব্যর্থ হয়েছে।";
@@ -103,23 +105,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // **প্রোফাইল আইকন ফাংশনালিটি (শুধুমাত্র profile.html এ যাবে)**
     if (profileButton) {
         profileButton.addEventListener('click', () => {
-            // প্রোফাইল আইকনে ক্লিক করলে সরাসরি 'profile.html' পেজে নিয়ে যাওয়া হবে।
             window.location.href = 'profile.html'; 
         });
     }
 
     // ৩. অথেন্টিকেশন স্টেট পরিবর্তন (Auth state change handler)
-    // এই অংশটি সব পেজেই লগইন স্ট্যাটাস বজায় রাখবে এবং সাইডবার লিঙ্ক আপডেট করবে।
     auth.onAuthStateChanged(user => {
         if (user) {
-            // ইউজার লগইন থাকলে
             if (postLinkSidebar) postLinkSidebar.style.display = 'flex';
             
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগআউট';
                 loginLinkSidebar.href = '#';
                 
-                // লগআউট ইভেন্ট হ্যান্ডেলার সেট করা
                 loginLinkSidebar.onclick = async (e) => {
                     e.preventDefault();
                     await auth.signOut();
@@ -128,13 +126,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
             }
         } else {
-            // ইউজার লগইন না থাকলে
             if (postLinkSidebar) postLinkSidebar.style.display = 'none';
             
             if (loginLinkSidebar) {
                 loginLinkSidebar.textContent = 'লগইন';
                 loginLinkSidebar.href = 'auth.html';
-                loginLinkSidebar.onclick = null; // লগইন লিঙ্কে ক্লিক করলে auth.html এ যাবে
+                loginLinkSidebar.onclick = null;
             }
         }
     });
