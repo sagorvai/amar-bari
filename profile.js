@@ -115,6 +115,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const companyLogoInput = document.getElementById('company-logo-file');
     const companyLogoPreview = document.getElementById('company-logo-preview');
 
+    // 🎯 ইউআরএল চেক করা (নতুন সাইনআপ ইউজারদের এডিট মডাল সরাসরি দেখানোর জন্য)
+    const urlParams = new URLSearchParams(window.location.search);
+    const shouldOpenEdit = urlParams.get('openEdit');
+
+    if (shouldOpenEdit === 'true' && editModal) {
+        editModal.style.display = 'block';
+    }
+
     // ১. অথেনটিকেশন চেক ও ডাটা লোড
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -312,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // ⚡ ⭐ ফেসবুকের মতো অ্যাক্টিভ প্রোফাইল গ্লোবালি সুইচ করার লজিক ⭐
+    // ⚡ ⭐ অ্যাক্টিভ প্রোফাইল গ্লোবালি সুইচ করার লজিক ⭐
     window.switchMode = function(toCompany) {
         isCompanyMode = toCompany;
 
@@ -424,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
         directPostBtn.onclick = () => { window.location.href = 'post.html'; };
     }
     
-    // 🎯 🎯 🎯 ৭. পার্সোনাল প্রপার্টি লোড (সংশোধিত) 🎯 🎯 🎯
+    // 🎯 ৭. পার্সোনাল প্রপার্টি লোড
     async function loadUserProperties(userId) {
         if(!propertiesList) return;
         propertiesList.innerHTML = '<p style="text-align:center; width:100%;">খোঁজা হচ্ছে...</p>';
@@ -439,11 +447,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     .get();
             }
 
-            // 🎯 শুধুমাত্র পোস্টগুলো ফিল্টার করে যেসব পোস্টে কোম্পানি পেজের কন্টেন্ট নাই সেগুলো ফিল্টার করা
             let userDocs = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
-                // যদি পোস্টে postedBy === 'company' অথবা কোম্পানি আইডি থেকে থাকে, তবে সেটি ইউজার মোডে দেখাবে না
                 if (data.postedBy !== 'company' && !data.companyId) {
                     userDocs.push(doc);
                 }
@@ -528,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ১০. পার্সোনাল প্রোফাইল এডিট সাবমিট
+    // 🎯 ১০. পার্সোনাল প্রোফাইল এডিট সাবমিট (তথ্য সেভের পর ইন্ডেক্স পেজে নেওয়ার লজিকসহ আপডেটেড)
     if (editForm) {
         editForm.onsubmit = async (e) => {
             e.preventDefault();
@@ -571,7 +577,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 await db.collection('users').doc(user.uid).set(updateData, { merge: true });
                 alert('আপনার তথ্য সফলভাবে আপডেট হয়েছে!');
                 if(editModal) editModal.style.display = 'none';
-                location.reload();
+                
+                // 🎯 তথ্য সফলভাবে জমা হওয়ার পর ইন্ডেক্স পেজে নিয়ে যাওয়া হবে
+                window.location.href = 'index.html';
                 
             } catch (error) {
                 console.error("Update profile error:", error);
@@ -644,4 +652,4 @@ async function loadSavedProperties(userId) {
         console.error("Saved properties error:", error);
         savedListEl.innerHTML = '<p style="text-align:center; color:red; padding:20px;">বুকমার্ক লোড করতে সমস্যা হয়েছে।</p>';
     }
-            }
+                                         }
