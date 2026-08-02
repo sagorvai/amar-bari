@@ -1,4 +1,4 @@
-// messages.js - Fixed Mode Filtering, Participant Fetch & Delete UI
+// messages.js - Clean Identity & Mode-Based Messaging System
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -14,131 +14,108 @@ const db = firebase.firestore();
 const urlParams = new URLSearchParams(window.location.search);
 let currentChatId = urlParams.get('chatId');
 let currentPostId = urlParams.get('postId');
-let currentAction = urlParams.get('action'); 
 
 let currentUser = null;
-let activeIdentity = null; 
+let activeSender = null; // প্রেরক (Sender): বর্তমান মোড অনুযায়ী ID, Name, Photo, Type থাকবে
 let activeChatListener = null;
 
-// 🔄 ১. অ্যাক্টিভ আইডেন্টিটি সঠিক ভাবে নির্ধারণ
+// 🔄 ১. অ্যাক্টিভ প্রেরক (Sender Identity) নির্ধারণ
 firebase.auth().onAuthStateChanged(async (user) => {
-    if (user) {
-        currentUser = user;
-        const activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
+    if (!user) {
+        alert("মেসেজ দেখতে লগইন করুন।");
+        window.location.href = "auth.html";
+        return;
+    }
 
-        if (activeIdentityType === 'company') {
-            let savedCompanyId = localStorage.getItem('activeCompanyId');
-            
-            try {
-                let compDoc = null;
-                if (savedCompanyId) {
-                    compDoc = await db.collection('companies').doc(savedCompanyId).get();
-                }
-                
-                if (!compDoc || !compDoc.exists) {
-                    let qSnap = await db.collection('companies').where('ownerUid', '==', user.uid).limit(1).get();
-                    if (qSnap.empty) {
-                        qSnap = await db.collection('companies').where('userId', '==', user.uid).limit(1).get();
-                    }
-                    if (!qSnap.empty) {
-                        compDoc = qSnap.docs[0];
-                    }
-                }
+    currentUser = user;
+    const activeMode = localStorage.getItem('activeIdentityType') || 'user'; // 'user' অথবা 'company'
 
-                if (compDoc && compDoc.exists) {
-                    const cData = compDoc.data();
-                    activeIdentity = {
-                        id: compDoc.id,
-                        ownerUid: user.uid,
-                        name: cData.name || cData.companyName || "কোম্পানি পেজ",
-                        photo: cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page',
-                        type: 'company'
-                    };
-                }
-            } catch (e) {
-                console.error("কোম্পানি প্রোফাইল লোড সমস্যা:", e);
-            }
+    if (activeMode === 'company') {
+        const savedCompanyId = localStorage.getItem('activeCompanyId');
+        let compDoc = null;
+
+        if (savedCompanyId) {
+            compDoc = await db.collection('companies').doc(savedCompanyId).get();
         }
 
-        // যদি ইউজার মোড হয় বা কোনো কোম্পানি না পাওয়া যায়
-        if (!activeIdentity) {
-            let pName = user.displayName || "সম্মানিত ইউজার";
-            let pPhoto = user.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
-            try {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const uData = userDoc.data();
-                    pName = uData.fullName || uData.name || pName;
-                    pPhoto = uData.profilePic || pPhoto;
-                }
-            } catch (e) {
-                console.error("ইউজার প্রোফাইল লোড সমস্যা:", e);
-            }
+        if (!compDoc || !compDoc.exists) {
+            const qSnap = await db.collection('companies').where('ownerUid', '==', user.uid).limit(1).get();
+            if (!qSnap.empty) compDoc = qSnap.docs[0];
+        }
 
-            activeIdentity = {
-                id: user.uid,
-                ownerUid: user.uid,
-                name: pName,
-                photo: pPhoto,
-                type: 'user'
+        if (compDoc && compDoc.exists) {
+            const cData = compDoc.data();
+            activeSender = {
+                id: compDoc.id,
+                type: 'company',
+                name: cData.name || cData.companyName || "কোম্পানি পেজ",
+                photo: cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page'
             };
         }
+    }
 
-        const headerProfileImg = document.getElementById('profileImage');
-        if (headerProfileImg) {
-            headerProfileImg.src = activeIdentity.photo;
+    // কোম্পানি না হলে বা ইউজার মোড থাকলে ইউজার আইডেন্টিটি সেট হবে
+    if (!activeSender) {
+        let pName = user.displayName || "ইউজার";
+        let pPhoto = user.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
+
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+            const uData = userDoc.data();
+            pName = uData.fullName || uData.name || pName;
+            pPhoto = uData.profilePic || pPhoto;
         }
 
-        initChatSystem();
-    } else {
-        alert("মেসেজ দেখতে প্রথমে লগইন করুন।");
-        window.location.href = "auth.html";
+        activeSender = {
+            id: user.uid,
+            type: 'user',
+            name: pName,
+            photo: pPhoto
+        };
     }
+
+    // হেডার প্রোফাইল আপডেট
+    const headerProfileImg = document.getElementById('profileImage');
+    if (headerProfileImg) headerProfileImg.src = activeSender.photo;
+
+    // সিস্টেম স্টার্ট
+    initChatSystem();
 });
 
 function initChatSystem() {
     loadChatList();
 
     if (currentChatId) {
-        if (currentAction === 'direct' || window.innerWidth <= 768) {
-            const sidebar = document.getElementById('chatSidebar');
-            const mainBox = document.getElementById('chatMainBox');
-            if (sidebar) sidebar.classList.add('hidden');
-            if (mainBox) mainBox.classList.add('active');
-            
+        if (window.innerWidth <= 768) {
+            document.getElementById('chatSidebar')?.classList.add('hidden');
+            document.getElementById('chatMainBox')?.classList.add('active');
             document.body.classList.add('chat-open');
         }
         openChatBox(currentChatId, currentPostId);
     }
 }
 
-// 💬 ২. চ্যাট লিস্ট লোড এবং ফিল্টারিং
+// 💬 ২. মোড অনুযায়ী চ্যাট লিস্ট ফিল্টারিং
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
-    if (!chatListContainer) return;
+    if (!chatListContainer || !activeSender) return;
 
-    if (!activeIdentity || !activeIdentity.id) {
-        chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--gray);">আইডেন্টিটি পাওয়া যায়নি।</div>`;
-        return;
-    }
-
-    // ফিল্টার: শুধুমাত্র বর্তমান সক্রিয় আইডেন্টিটির (ইউজার আইডি অথবা পেজ আইডি) চ্যাট দেখাবে
+    // শুধুমাত্র বর্তমান প্রেরক (activeSender.id) যেখানে অংশগ্রহণকারী, সেই চ্যাটগুলো আনবে
     db.collection('chats')
-        .where('participants', 'array-contains', activeIdentity.id)
+        .where('participants', 'array-contains', activeSender.id)
         .onSnapshot((snapshot) => {
-            
             chatListContainer.innerHTML = "";
             let chatDocs = [];
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                if (!data.deletedBy || !data.deletedBy.includes(activeIdentity.id)) {
+                if (!data.deletedBy || !data.deletedBy.includes(activeSender.id)) {
                     chatDocs.push({ id: doc.id, ...data });
                 }
             });
 
             if (chatDocs.length === 0) {
-                chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--gray);">কোনো মেসেজ পাওয়া যায়নি।</div>`;
+                chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:#7f8c8d;">কোনো মেসেজ পাওয়া যায়নি।</div>`;
                 return;
             }
 
@@ -146,261 +123,223 @@ function loadChatList() {
 
             chatDocs.forEach((chatData) => {
                 const chatId = chatData.id;
-                const otherParticipantId = chatData.participants ? chatData.participants.find(id => id !== activeIdentity.id) : null;
-                const isUnreadMessage = chatData.isUnread && chatData.lastSenderId !== activeIdentity.id;
+                
+                // 🎯 প্রাপক (Recipient ID) নির্ধারণ
+                const recipientId = chatData.participants ? chatData.participants.find(id => id !== activeSender.id) : null;
+                const isUnread = chatData.isUnread && chatData.lastSenderId !== activeSender.id;
 
                 const chatItemDiv = document.createElement('div');
                 chatItemDiv.className = `chat-item ${chatId === currentChatId ? 'active' : ''}`;
                 chatItemDiv.id = `item_${chatId}`;
-                
+
                 chatItemDiv.innerHTML = `
-                    <img src="https://via.placeholder.com/45?text=U" id="avatar_${chatId}">
+                    <img src="https://via.placeholder.com/45?text=..." id="avatar_${chatId}">
                     <div class="chat-item-info">
                         <h4 id="name_${chatId}">লোড হচ্ছে...</h4>
-                        <p id="msg_preview_${chatId}" style="${isUnreadMessage ? 'font-weight: bold; color: #1e293b;' : ''}">${chatData.lastMessage || "নতুন চ্যাট..."}</p>
+                        <p style="${isUnread ? 'font-weight: bold; color: #1e293b;' : ''}">${chatData.lastMessage || "নতুন চ্যাট..."}</p>
                     </div>
-                    
                     <button class="chat-item-menu-btn" onclick="toggleDropdown(event, '${chatId}')">
                         <i class="material-icons">more_vert</i>
                     </button>
-                    
                     <div class="chat-dropdown" id="dropdown_${chatId}">
                         <button class="chat-dropdown-item" onclick="deleteChatForUser(event, '${chatId}')">
                             <i class="material-icons">delete</i> ডিলিট করুন
                         </button>
                     </div>
                 `;
-                
+
                 chatListContainer.appendChild(chatItemDiv);
 
                 chatItemDiv.onclick = (e) => {
                     if (e.target.closest('.chat-item-menu-btn') || e.target.closest('.chat-dropdown')) return;
 
-                    const sidebar = document.getElementById('chatSidebar');
-                    const mainBox = document.getElementById('chatMainBox');
-                    
                     if (window.innerWidth <= 768) {
-                        if (sidebar) sidebar.classList.add('hidden');
-                        if (mainBox) mainBox.classList.add('active');
+                        document.getElementById('chatSidebar')?.classList.add('hidden');
+                        document.getElementById('chatMainBox')?.classList.add('active');
                         document.body.classList.add('chat-open');
                     }
-                    
                     openChatBox(chatId, chatData.postId);
                 };
 
-                if (otherParticipantId) {
-                    fetchParticipantDetails(otherParticipantId, `name_${chatId}`, `avatar_${chatId}`);
+                // প্রাপকের তথ্য (User/Company) দিয়ে UI ফিল করবে
+                if (recipientId) {
+                    fetchIdentityDetails(recipientId, `name_${chatId}`, `avatar_${chatId}`);
                 }
             });
         });
 }
 
-// 🔘 ড্রপডাউন টগল
-function toggleDropdown(event, chatId) {
-    event.stopPropagation();
-    document.querySelectorAll('.chat-dropdown').forEach(dd => {
-        if (dd.id !== `dropdown_${chatId}`) dd.classList.remove('show');
-    });
-    const dropdown = document.getElementById(`dropdown_${chatId}`);
-    if (dropdown) dropdown.classList.toggle('show');
-}
-
-// 🗑️ ডিলিট চ্যাট লজিক
-async function deleteChatForUser(event, chatId) {
-    event.stopPropagation();
-    document.querySelectorAll('.chat-dropdown').forEach(dd => dd.classList.remove('show'));
-
-    if (!confirm("আপনি কি নিশ্চিতভাবে এই চ্যাটটি ডিলিট করতে চান?")) return;
-
-    const chatRef = db.collection('chats').doc(chatId);
+// 👤 ৩. আইডেন্টিটি চেক (User নাকি Company তা চেক করে নাম ও ছবি বসাবে)
+async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
+    if (!targetId) return;
 
     try {
-        const doc = await chatRef.get();
-        if (!doc.exists) return;
-
-        const data = doc.data();
-        let deletedBy = data.deletedBy || [];
-
-        if (!deletedBy.includes(activeIdentity.id)) {
-            deletedBy.push(activeIdentity.id);
+        // ১. আগে 'users' কালেকশনে চেক
+        let uDoc = await db.collection('users').doc(targetId).get();
+        if (uDoc.exists) {
+            const uData = uDoc.data();
+            if (nameElemId && document.getElementById(nameElemId)) {
+                document.getElementById(nameElemId).textContent = uData.fullName || uData.name || "ইউজার";
+            }
+            if (avatarElemId && document.getElementById(avatarElemId)) {
+                document.getElementById(avatarElemId).src = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
+            }
+            return;
         }
 
-        const bothDeleted = data.participants.every(id => deletedBy.includes(id));
-
-        if (bothDeleted) {
-            const messagesSnapshot = await chatRef.collection('messages').get();
-            const batch = db.batch();
-            messagesSnapshot.forEach(mDoc => batch.delete(mDoc.ref));
-            batch.delete(chatRef);
-            await batch.commit();
-        } else {
-            await chatRef.update({ deletedBy: deletedBy });
+        // ২. না পাওয়া গেলে 'companies' কালেকশনে চেক
+        let cDoc = await db.collection('companies').doc(targetId).get();
+        if (cDoc.exists) {
+            const cData = cDoc.data();
+            if (nameElemId && document.getElementById(nameElemId)) {
+                document.getElementById(nameElemId).textContent = cData.name || cData.companyName || "কোম্পানি পেজ";
+            }
+            if (avatarElemId && document.getElementById(avatarElemId)) {
+                document.getElementById(avatarElemId).src = cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page';
+            }
+            return;
         }
 
-        if (currentChatId === chatId) {
-            currentChatId = null;
-            document.getElementById('emptyState').style.display = 'flex';
-            document.getElementById('activeChatContent').style.display = 'none';
+        // ৩. ব্যাকআপ নাম
+        if (nameElemId && document.getElementById(nameElemId)) {
+            document.getElementById(nameElemId).textContent = "প্রাপক";
         }
-    } catch (error) {
-        console.error("ডিলিট করতে সমস্যা হয়েছে:", error);
+    } catch (err) {
+        console.error("প্রোফাইল লোড ত্রুটি:", err);
     }
 }
 
-document.addEventListener('click', () => {
-    document.querySelectorAll('.chat-dropdown').forEach(dd => dd.classList.remove('show'));
-});
-
-// 📖 ৩. চ্যাট বক্স ওপেন
+// 📖 ৪. চ্যাট বক্স ওপেন
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
-    
-    const emptyState = document.getElementById('emptyState');
-    const activeChatContent = document.getElementById('activeChatContent');
-    
-    if (emptyState) emptyState.style.display = 'none';
-    if (activeChatContent) activeChatContent.style.display = 'flex';
-    
+
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('activeChatContent').style.display = 'flex';
+
     document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
-    const currentItem = document.getElementById(`item_${chatId}`);
-    if (currentItem) currentItem.classList.add('active');
+    document.getElementById(`item_${chatId}`)?.classList.add('active');
 
     const chatRef = db.collection('chats').doc(chatId);
-    let chatDocData = null;
+    let chatDoc = await chatRef.get();
 
-    try {
-        const chatDoc = await chatRef.get();
-        if (!chatDoc.exists) {
-            const parts = chatId.split('_');
-            chatDocData = {
-                participants: [parts[0], parts[1]],
-                postId: postId || currentPostId || "",
-                lastMessage: "",
-                lastSenderId: activeIdentity.id,
-                deletedBy: [],
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            await chatRef.set(chatDocData);
-        } else {
-            chatDocData = chatDoc.data();
-            if (chatDocData.isUnread && chatDocData.lastSenderId !== activeIdentity.id) {
-                await chatRef.update({ isUnread: false });
-            }
-        }
-    } catch (e) {
-        console.error("চ্যাট শুরু করতে সমস্যা:", e);
+    if (!chatDoc.exists) {
+        const parts = chatId.split('_');
+        await chatRef.set({
+            participants: [parts[0], parts[1]],
+            postId: postId || currentPostId || "",
+            lastMessage: "",
+            lastSenderId: activeSender.id,
+            deletedBy: [],
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } else if (chatDoc.data().isUnread && chatDoc.data().lastSenderId !== activeSender.id) {
+        await chatRef.update({ isUnread: false });
     }
 
-    loadPropertyContext(postId || currentPostId || (chatDocData ? chatDocData.postId : ""));
+    // প্রাপকের নাম চ্যাট হেডার-এ দেখানো
+    const recipientId = chatId.split('_').find(id => id !== activeSender.id);
+    if (recipientId) {
+        fetchIdentityDetails(recipientId, 'activeChatUserName', null);
+    }
 
+    loadPropertyContext(postId || (chatDoc.exists ? chatDoc.data().postId : ""));
+
+    // রিয়েলটাইম মেসেজ লোড
     if (activeChatListener) activeChatListener();
 
     const messagesDisplay = document.getElementById('messagesDisplay');
-
     activeChatListener = db.collection('chats').doc(chatId).collection('messages')
         .orderBy('timestamp', 'asc')
         .onSnapshot((snapshot) => {
-            if (!messagesDisplay) return;
             messagesDisplay.innerHTML = "";
-
             snapshot.forEach(doc => {
                 const msg = doc.data();
                 const bubble = document.createElement('div');
-                const isIncoming = msg.senderId !== activeIdentity.id;
-                
+                const isIncoming = msg.senderId !== activeSender.id;
+
                 bubble.className = `msg-bubble ${isIncoming ? 'incoming' : 'outgoing'}`;
-                
-                let timeString = "এইমাত্র";
-                if (msg.timestamp && typeof msg.timestamp.toDate === 'function') {
-                    try {
-                        timeString = msg.timestamp.toDate().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
-                    } catch(e) {}
+
+                let timeStr = "এইমাত্র";
+                if (msg.timestamp?.toDate) {
+                    timeStr = msg.timestamp.toDate().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
                 }
 
-                bubble.innerHTML = `${msg.text} <span class="msg-time">${timeString}</span>`;
+                bubble.innerHTML = `${msg.text} <span class="msg-time">${timeStr}</span>`;
                 messagesDisplay.appendChild(bubble);
             });
-
             messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
         });
-
-    const parts = chatId.split('_');
-    const otherParticipantId = parts.find(id => id !== activeIdentity.id);
-    if (otherParticipantId) {
-        fetchParticipantDetails(otherParticipantId, 'activeChatUserName', null);
-    }
 }
 
-// ✉️ ৪. মেসেজ সেন্ড
+// ✉️ ৫. মেসেজ সেন্ড লজিক
 async function sendMessage(text) {
-    if (!text.trim() || !currentChatId) return;
+    if (!text.trim() || !currentChatId || !activeSender) return;
 
     const cleanText = text.trim();
-    const messageData = {
-        senderId: activeIdentity.id,
-        senderType: activeIdentity.type,
-        text: cleanText,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    };
 
     try {
-        await db.collection('chats').doc(currentChatId).collection('messages').add(messageData);
-        
-        await db.collection('chats').doc(currentChatId).update({
-            lastMessage: cleanText,
-            lastSenderId: activeIdentity.id,             
-            isUnread: true,
-            deletedBy: [], 
+        await db.collection('chats').doc(currentChatId).collection('messages').add({
+            senderId: activeSender.id,
+            senderType: activeSender.type,
+            text: cleanText,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
-    } catch (error) {
-        console.error("মেসেজ পাঠাতে সমস্যা:", error);
+
+        await db.collection('chats').doc(currentChatId).update({
+            lastMessage: cleanText,
+            lastSenderId: activeSender.id,
+            isUnread: true,
+            deletedBy: [],
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (e) {
+        console.error("মেসেজ সেন্ড সমস্যা:", e);
     }
 }
 
-// 🔍 ৫. নাম এবং প্রোফাইল পিকচার ফেচ করা (ইউজার ও পেজ উভয় চেক করবে)
-async function fetchParticipantDetails(participantId, nameElemId, avatarElemId) {
-    if (!participantId) return;
-    try {
-        // ১. প্রথমে 'users' কালেকশনে সার্চ করবে
-        let uDoc = await db.collection('users').doc(participantId).get();
-        if (uDoc.exists) {
-            const uData = uDoc.data();
-            const uName = uData.fullName || uData.name || "ইউজার";
-            const uPic = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
-            
-            if (nameElemId && document.getElementById(nameElemId)) document.getElementById(nameElemId).textContent = uName;
-            if (avatarElemId && document.getElementById(avatarElemId)) document.getElementById(avatarElemId).src = uPic;
-            return;
-        }
+// 🔘 ডিলিট এবং ইউটিলিটি
+function toggleDropdown(e, chatId) {
+    e.stopPropagation();
+    document.querySelectorAll('.chat-dropdown').forEach(d => {
+        if (d.id !== `dropdown_${chatId}`) d.classList.remove('show');
+    });
+    document.getElementById(`dropdown_${chatId}`)?.classList.toggle('show');
+}
 
-        // ২. না পাওয়া গেলে 'companies' কালেকশনে সার্চ করবে
-        let cDoc = await db.collection('companies').doc(participantId).get();
-        if (cDoc.exists) {
-            const cData = cDoc.data();
-            const cName = cData.name || cData.companyName || "কোম্পানি পেজ";
-            const cLogo = cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page';
-            
-            if (nameElemId && document.getElementById(nameElemId)) document.getElementById(nameElemId).textContent = cName;
-            if (avatarElemId && document.getElementById(avatarElemId)) document.getElementById(avatarElemId).src = cLogo;
-            return;
-        }
+async function deleteChatForUser(e, chatId) {
+    e.stopPropagation();
+    if (!confirm("চ্যাটটি মুছে ফেলতে চান?")) return;
 
-        // ৩. ব্যাকআপ fallback
-        if (nameElemId && document.getElementById(nameElemId)) document.getElementById(nameElemId).textContent = "সদস্য";
+    const chatRef = db.collection('chats').doc(chatId);
+    const doc = await chatRef.get();
+    if (!doc.exists) return;
 
-    } catch (e) {
-        console.error("পার্টিসিপেন্ট ডিটেইলস এরর:", e);
+    let deletedBy = doc.data().deletedBy || [];
+    if (!deletedBy.includes(activeSender.id)) deletedBy.push(activeSender.id);
+
+    const bothDeleted = doc.data().participants.every(id => deletedBy.includes(id));
+
+    if (bothDeleted) {
+        const msgs = await chatRef.collection('messages').get();
+        const batch = db.batch();
+        msgs.forEach(m => batch.delete(m.ref));
+        batch.delete(chatRef);
+        await batch.commit();
+    } else {
+        await chatRef.update({ deletedBy });
+    }
+
+    if (currentChatId === chatId) {
+        currentChatId = null;
+        document.getElementById('emptyState').style.display = 'flex';
+        document.getElementById('activeChatContent').style.display = 'none';
     }
 }
 
 function loadPropertyContext(postId) {
     const card = document.getElementById('activePropertyCard');
-    if (!card) return;
-    if (!postId) {
-        card.style.display = 'none';
-        return;
-    }
+    if (!card || !postId) { if(card) card.style.display = 'none'; return; }
+
     card.style.display = 'flex';
     card.href = `details.html?id=${postId}`;
 
@@ -408,49 +347,38 @@ function loadPropertyContext(postId) {
         if (doc.exists) {
             const data = doc.data();
             document.getElementById('activePropertyTitle').textContent = data.title || "প্রপার্টি";
-            let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
-            document.getElementById('activePropertyPrice').textContent = amount ? `৳ ${amount}` : "আলোচনা সাপেক্ষ";
-            
-            if (data.images && data.images.length > 0) {
-                const firstImg = data.images[0];
-                document.getElementById('activePropertyImg').src = firstImg.url || firstImg;
+            const amt = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
+            document.getElementById('activePropertyPrice').textContent = amt ? `৳ ${amt}` : "আলোচনা সাপেক্ষ";
+            if (data.images?.[0]) {
+                document.getElementById('activePropertyImg').src = data.images[0].url || data.images[0];
             }
-        } else {
-            card.style.display = 'none';
-        }
+        } else card.style.display = 'none';
     }).catch(() => card.style.display = 'none');
 }
 
+document.addEventListener('click', () => {
+    document.querySelectorAll('.chat-dropdown').forEach(d => d.classList.remove('show'));
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     const sendBtn = document.getElementById('sendMessageBtn');
-    const inputField = document.getElementById('messageInputField');
+    const input = document.getElementById('messageInputField');
 
-    if (sendBtn && inputField) {
-        sendBtn.onclick = () => {
-            sendMessage(inputField.value);
-            inputField.value = "";
-        };
-
-        inputField.onkeypress = (e) => {
-            if (e.key === 'Enter') {
-                sendMessage(inputField.value);
-                inputField.value = "";
-            }
-        };
+    if (sendBtn && input) {
+        sendBtn.onclick = () => { sendMessage(input.value); input.value = ""; };
+        input.onkeypress = (e) => { if (e.key === 'Enter') { sendMessage(input.value); input.value = ""; } };
     }
 
     const backBtn = document.getElementById('backToListBtn');
     if (backBtn) {
         backBtn.onclick = () => {
-            document.getElementById('chatMainBox').classList.remove('active');
-            document.getElementById('chatSidebar').classList.remove('hidden');
+            document.getElementById('chatMainBox')?.classList.remove('active');
+            document.getElementById('chatSidebar')?.classList.remove('hidden');
             document.body.classList.remove('chat-open');
         };
     }
 
     document.querySelectorAll('.quick-btn').forEach(btn => {
-        btn.onclick = () => {
-            sendMessage(btn.textContent);
-        };
+        btn.onclick = () => sendMessage(btn.textContent);
     });
 });
