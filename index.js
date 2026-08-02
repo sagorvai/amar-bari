@@ -68,12 +68,11 @@ if (filterDivisionEl && filterDistrictEl) {
 }
 
 // ----------------------------------------------------
-// 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার (Page Mode Compliant)
+// 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার
 // ----------------------------------------------------
 function loadProfilePicture(user) {
     if (!user) return;
     
-    // লোকাল স্টোরেজ থেকে এক্টিভ পেজ আইডি চেক (header-sync.js সাপোর্টের জন্য)
     const activePageId = localStorage.getItem('activePageId');
 
     if (activePageId) {
@@ -115,20 +114,61 @@ function loadUserDefaultPic(user) {
 }
 
 // ----------------------------------------------------
-// 🗺️ ৪. ম্যাপ ফিল্টারিং লজিক (বিক্রয় ও ভাড়া আলাদা শো করবে)
+// 🗺️ ৪. ম্যাপ ফিল্টারিং ও ব্যাক বাটন লজিক
 // ----------------------------------------------------
 function createCustomMarker(category, type, isPaid = false) {
     const color = isPaid ? '#ff9800' : (category === 'বিক্রয়' ? '#1877f2' : '#2e7d32');
     return L.divIcon({
         html: `<div style="background:${color}; color:#fff; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:bold; border:2px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,0.4); white-space:nowrap;">${type} (${category}) ${isPaid ? '⭐' : ''}</div>`,
         className: 'fb-pin',
-        iconSize: [80, 26]
+        iconSize: [85, 26]
     });
+}
+
+// ম্যাপ থেকে ব্যাক বাটন যুক্ত করার হেলপার ফাংশন
+function addMapBackButton() {
+    const mapSection = document.getElementById('map-section');
+    if (!mapSection) return;
+
+    let backBtn = document.getElementById('mapBackToFeedBtn');
+    if (!backBtn) {
+        backBtn = document.createElement('button');
+        backBtn.id = 'mapBackToFeedBtn';
+        backBtn.innerHTML = '<i class="material-icons" style="font-size:16px;">arrow_back</i> পোস্ট লিস্টে ফিরে যান';
+        Object.assign(backBtn.style, {
+            position: 'absolute',
+            top: '12px',
+            left: '12px',
+            zIndex: '1000',
+            backgroundColor: '#1877f2',
+            color: '#ffffff',
+            border: 'none',
+            padding: '8px 14px',
+            borderRadius: '20px',
+            fontWeight: 'bold',
+            fontSize: '12px',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+        });
+
+        backBtn.onclick = () => {
+            const activeNavBtn = document.querySelector('.fb-tabs .fb-tab-btn:not(#mapViewToggleBtn).active') || document.querySelector('.fb-tabs .fb-tab-btn:not(#mapViewToggleBtn)');
+            if (activeNavBtn) activeNavBtn.click();
+        };
+
+        mapSection.style.position = 'relative';
+        mapSection.appendChild(backBtn);
+    }
 }
 
 async function initMap(category = 'বিক্রয়') {
     const mapSection = document.getElementById('map-section');
     if (!mapSection || mapSection.style.display === 'none') return;
+
+    addMapBackButton();
 
     if (map) { map.remove(); }
     
@@ -138,18 +178,22 @@ async function initMap(category = 'বিক্রয়') {
     }).addTo(map);
 
     try {
-        const snap = await db.collection('properties')
-            .where('category', '==', category)
-            .where('status', '==', 'published')
-            .get();
+        const filterType = document.getElementById('filterType')?.value || '';
+        const filterDistrict = document.getElementById('filterDistrict')?.value || '';
 
-        if (snap.empty) {
-            console.log("ম্যাপের জন্য কোনো তথ্য পাওয়া যায়নি: " + category);
-            return;
-        }
+        let query = db.collection('properties')
+            .where('category', '==', category)
+            .where('status', '==', 'published');
+
+        const snap = await query.get();
 
         snap.forEach(doc => {
             const data = doc.data();
+
+            // ক্লায়েন্ট ফিল্টারিং (টাইপ ও জেলা অনুযায়ী)
+            if (filterType && data.type !== filterType) return;
+            if (filterDistrict && data.location?.district !== filterDistrict) return;
+
             if (data.location && data.location.lat && data.location.lng) {
                 const marker = L.marker([data.location.lat, data.location.lng], {
                     icon: createCustomMarker(data.category, data.type || 'প্রপার্টি', data.isPaidPost)
@@ -170,22 +214,22 @@ async function initMap(category = 'বিক্রয়') {
 }
 
 // ----------------------------------------------------
-// 🏢 ৫. রেজিস্টার্ড কোম্পানি / এজেন্সি স্লাইডার HTML (ফন্ট ফিক্সড)
+// 🏢 ৫. রেজিস্টার্ড কোম্পানি / এজেন্সি স্লাইডার HTML
 // ----------------------------------------------------
 async function generateCompanySliderHTML(allMatchedDocs) {
     const companiesMap = new Map();
     
     allMatchedDocs.forEach(item => {
         const data = item.data;
-        const isCompany = data.ownerType === 'company' || data.authorType === 'company' || !!data.companyId || !!data.pageName;
-        const cId = data.companyId || data.ownerId || data.authorId || data.userId || data.createdByUid;
+        const isCompany = data.ownerType === 'company' || data.authorType === 'company' || data.postAsPage === true || !!data.companyId;
+        const cId = data.companyId || data.ownerId || data.authorId;
         
         if (isCompany && cId) {
             if (!companiesMap.has(cId)) {
                 companiesMap.set(cId, {
                     id: cId,
-                    fallbackName: data.postedByName || data.companyName || data.pageName || "",
-                    fallbackLogo: data.postedByAvatar || data.companyLogo || data.logo || ""
+                    fallbackName: data.companyName || data.pageName || data.postedByName || "",
+                    fallbackLogo: data.companyLogo || data.logo || data.postedByAvatar || ""
                 });
             }
         }
@@ -206,13 +250,6 @@ async function generateCompanySliderHTML(allMatchedDocs) {
                 const cData = compDoc.data();
                 name = cData.companyName || cData.name || cData.pageName || name;
                 logo = cData.logo || cData.companyLogo || cData.profilePic || cData.photoURL || logo;
-            } else {
-                const userDoc = await db.collection('users').doc(cId).get();
-                if (userDoc.exists) {
-                    const uData = userDoc.data();
-                    name = name || uData.companyName || uData.pageName || uData.fullName || uData.name;
-                    logo = logo || uData.companyLogo || uData.logo || uData.profilePic || uData.photoURL;
-                }
             }
 
             if (!name) name = "রেজিস্টার্ড পেজ";
@@ -220,7 +257,6 @@ async function generateCompanySliderHTML(allMatchedDocs) {
                 logo = "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=1877f2&color=fff";
             }
 
-            // ই-কার কাটিং রুখতে line-height ও padding ফিক্স করা হয়েছে
             companyCards.push(`
                 <div onclick="window.location.href='${redirectUrl}'" style="min-width: 95px; width: 95px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; flex-shrink: 0; background: #fff; padding: 8px 5px; border-radius: 10px; border: 1px solid #e4e6eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <img src="${logo}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1877f2&color=fff';" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #1877f2;" alt="${name}">
@@ -356,9 +392,6 @@ function createFbPostHTML(docId, data) {
     let amount = category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let displayPrice = amount ? new Intl.NumberFormat('bn-BD').format(amount) : 'আলোচনা সাপেক্ষে';
 
-    const initialAuthorName = data.postedByName || data.companyName || data.pageName || "লোডিং...";
-    const initialAuthorPic = data.postedByAvatar || data.companyLogo || "https://via.placeholder.com/40?text=Pic";
-
     const verifiedBadge = data.documents ? `<span class="badge-verified">✓ ভেরিফাইড</span>` : '';
     const boostedBadge = isBoosted ? `<span class="badge-boosted"><i class="material-icons" style="font-size:11px;">bolt</i> স্পন্সরড</span>` : '';
 
@@ -386,9 +419,9 @@ function createFbPostHTML(docId, data) {
         <div class="fb-feed-card ${isBoosted ? 'boosted-card' : ''}">
             <div class="card-author-header">
                 <div class="author-info">
-                    <img id="author-pic-${docId}" src="${initialAuthorPic}" class="fb-profile-pic" alt="pic">
+                    <img id="author-pic-${docId}" src="https://via.placeholder.com/40?text=..." class="fb-profile-pic" alt="pic">
                     <div class="author-meta">
-                        <h4 id="author-name-${docId}" style="line-height:1.3; font-size:14px;">${initialAuthorName}</h4>
+                        <h4 id="author-name-${docId}" style="line-height:1.3; font-size:14px;">লোডিং...</h4>
                         <p><i class="material-icons" style="font-size:12px;">place</i> ${village}, ${thana}, ${district}</p>
                     </div>
                 </div>
@@ -539,7 +572,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
 }
 
 // ----------------------------------------------------
-// 📌 পোস্টে পেজের নাম ও ছবি লোড নিশ্চিতকরণ ফাংশন
+// 📌 পোস্টে পেজ/ইউজার নাম এবং লোগো ফেচিং (Details.js অনুসারী)
 // ----------------------------------------------------
 async function loadPostAuthorDetails(docId, postData = {}) {
     const nameEl = document.getElementById(`author-name-${docId}`);
@@ -547,54 +580,54 @@ async function loadPostAuthorDetails(docId, postData = {}) {
 
     if (!nameEl || !picEl) return;
 
+    // ১. চেক করা যে পোস্টটি পেজের পক্ষ থেকে কি না
+    const isCompanyPost = postData.postAsPage === true || postData.ownerType === 'company' || postData.authorType === 'company';
     const companyId = postData.companyId || postData.ownerId || postData.authorId;
     const userId = postData.userId || postData.createdByUid;
 
-    // ১. কোম্পানি/পেজ তথ্য খোঁজা
-    if (companyId) {
+    // A. যদি পোস্টটি পেজ/কোম্পানির হয়
+    if (isCompanyPost && companyId) {
         try {
             const compDoc = await db.collection('companies').doc(companyId).get();
             if (compDoc.exists) {
-                const compData = compDoc.data();
-                const pageName = compData.companyName || compData.name || compData.pageName;
-                const pageLogo = compData.logo || compData.companyLogo || compData.profilePic;
+                const cData = compDoc.data();
+                const pName = cData.companyName || cData.name || cData.pageName || postData.companyName || postData.pageName;
+                const pLogo = cData.logo || cData.companyLogo || cData.profilePic || postData.companyLogo;
 
-                if (pageName) nameEl.textContent = pageName;
-                if (pageLogo) picEl.src = pageLogo;
+                if (pName) nameEl.textContent = pName;
+                if (pLogo) picEl.src = pLogo;
                 return;
             }
         } catch (e) {
-            console.error("কোম্পানি ফেচ ত্রুটি:", e);
+            console.error("কোম্পানি ফেচিং ভুল:", e);
         }
     }
 
-    // ২. ইউজার তথ্য খোঁজা
-    if (userId) {
+    // B. যদি পোস্টটি সাধারণ ইউজারের হয়
+    if (userId && !isCompanyPost) {
         try {
             const userDoc = await db.collection('users').doc(userId).get();
             if (userDoc.exists) {
                 const uData = userDoc.data();
-                const uName = uData.companyName || uData.pageName || uData.fullName || uData.name;
-                const uPic = uData.companyLogo || uData.logo || uData.profilePic || uData.photoURL;
+                const uName = uData.fullName || uData.name || postData.postedByName;
+                const uPic = uData.profilePic || uData.photoURL || postData.postedByAvatar;
 
                 if (uName) nameEl.textContent = uName;
                 if (uPic) picEl.src = uPic;
                 return;
             }
         } catch (e) {
-            console.error("ইউজার ফেচ ত্রুটি:", e);
+            console.error("ইউজার ফেচিং ভুল:", e);
         }
     }
 
-    // ৩. ব্যাকআপ ডাটা
-    if (postData.postedByName || postData.companyName) {
-        nameEl.textContent = postData.companyName || postData.postedByName;
+    // C. ব্যাকআপ ডাটা রেন্ডার (যদি অনলাইন ফেচ না কাজ করে)
+    if (isCompanyPost) {
+        nameEl.textContent = postData.companyName || postData.pageName || "রেজিস্টার্ড পেজ";
+        picEl.src = postData.companyLogo || postData.logo || "https://ui-avatars.com/api/?name=Page";
     } else {
-        nameEl.textContent = "আমার বাড়ি ইউজার";
-    }
-
-    if (postData.postedByAvatar) {
-        picEl.src = postData.postedByAvatar;
+        nameEl.textContent = postData.postedByName || "আমার বাড়ি ইউজার";
+        picEl.src = postData.postedByAvatar || "https://ui-avatars.com/api/?name=User";
     }
 }
 
@@ -623,14 +656,13 @@ function setupScrollToTop() {
     scrollTopBtn.id = 'scrollTopBtn';
     scrollTopBtn.innerHTML = '<i class="material-icons" style="font-size:24px;">keyboard_arrow_up</i>';
     
-    // বাটন স্টাইলিং (ঝাপসা ট্রান্সপারেন্ট ও সুন্দর অ্যানিমেশন)
     Object.assign(scrollTopBtn.style, {
         position: 'fixed',
         bottom: '25px',
         right: '20px',
         width: '42px',
         height: '42px',
-        backgroundColor: 'rgba(24, 119, 242, 0.65)',
+        backgroundColor: 'rgba(24, 119, 242, 0.75)',
         color: '#ffffff',
         border: 'none',
         borderRadius: '50%',
@@ -676,22 +708,23 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.onclick = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
     }
 
-    // ট্যাবে ক্লিক করলে নিউজফিড এবং ম্যাপ ফিল্টারিং একসাথে আপডেট হওয়া
+    // ট্যাবে ক্লিক করলে নিউজফিড ও ম্যাপের সুইচিং ও ফিল্টারিং হ্যান্ডলিং
     navButtons.forEach(btn => {
         btn.onclick = function() {
             navButtons.forEach(b => b.classList.remove('active'));
+            document.getElementById('mapViewToggleBtn')?.classList.remove('active');
             this.classList.add('active');
             
             const selectedCategory = this.getAttribute('data-category');
             
-            const isMapActive = document.getElementById('mapViewToggleBtn')?.classList.contains('active');
-            if (isMapActive) {
-                initMap(selectedCategory);
-            } else {
-                document.getElementById('property-grid-container').style.display = 'block';
-                document.getElementById('map-section').style.display = 'none';
-                fetchAndDisplayProperties(selectedCategory, globalSearchInput?.value || '');
-            }
+            const mapSection = document.getElementById('map-section');
+            const propertyContainer = document.getElementById('property-grid-container');
+
+            // লিস্টিং এ ফিরে যাবে
+            if (mapSection) mapSection.style.display = 'none';
+            if (propertyContainer) propertyContainer.style.display = 'block';
+
+            fetchAndDisplayProperties(selectedCategory, globalSearchInput?.value || '');
         };
     });
 
@@ -701,10 +734,12 @@ document.addEventListener('DOMContentLoaded', () => {
             navButtons.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             
-            document.getElementById('property-grid-container').style.display = 'none';
-            document.getElementById('map-section').style.display = 'block';
+            const mapSection = document.getElementById('map-section');
+            const propertyContainer = document.getElementById('property-grid-container');
+
+            if (propertyContainer) propertyContainer.style.display = 'none';
+            if (mapSection) mapSection.style.display = 'block';
             
-            // এক্টিভ ক্যাটাগরি ধরে ম্যাপ ইনিশিলাইজ করা
             const activeNavBtn = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
             const currentCat = activeNavBtn ? activeNavBtn.getAttribute('data-category') : 'বিক্রয়';
             initMap(currentCat);
@@ -714,9 +749,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnAdvancedSearch = document.getElementById('btnAdvancedSearch');
     if (btnAdvancedSearch) {
         btnAdvancedSearch.onclick = () => {
+            const isMapActive = document.getElementById('mapViewToggleBtn')?.classList.contains('active');
             const activeNavBtn = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
             const category = activeNavBtn ? activeNavBtn.getAttribute('data-category') : 'বিক্রয়';
-            fetchAndDisplayProperties(category, globalSearchInput?.value || '');
+
+            if (isMapActive) {
+                initMap(category);
+            } else {
+                fetchAndDisplayProperties(category, globalSearchInput?.value || '');
+            }
         };
     }
 
