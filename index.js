@@ -819,6 +819,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // ডিফল্ট লোড
     fetchAndDisplayProperties('বিক্রয়', ''); 
 
+    // ফায়ারবেস অথ লিসেনার
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            loadProfilePicture(user);
+        } else {
+            if (profileImage) profileImage.style.display = 'none';
+            if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
+        }
+    });
     
     // লোকাল স্টোরেজে অ্যাকাউন্ট/পেজ চেঞ্জ হলে তাৎক্ষণিক হেডার প্রোফাইল পিক আপডেট লিসেনার
     window.addEventListener('storage', () => {
