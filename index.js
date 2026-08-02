@@ -67,6 +67,79 @@ if (filterDivisionEl && filterDistrictEl) {
     });
 }
 
+// ----------------------------------------------------
+// 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার (Updated & Fixed)
+// ----------------------------------------------------
+async function loadProfilePicture(user) {
+    if (!user) {
+        if (profileImage) profileImage.style.display = 'none';
+        if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
+        return;
+    }
+
+    // localStorage থেকে সক্রিয় মোড ও আইডি চেক
+    const activeMode = localStorage.getItem('activeMode'); // 'company' অথবা 'user'
+    const activeCompanyId = localStorage.getItem('activeCompanyId') || localStorage.getItem('activePageId');
+    const activeAvatar = localStorage.getItem('activeAvatar');
+
+    // ১. যদি পেজ/কোম্পানি মোড সক্রিয় থাকে
+    if ((activeMode === 'company' || activePageIdCheck()) && activeCompanyId) {
+        try {
+            const compDoc = await db.collection('companies').doc(activeCompanyId).get();
+            if (compDoc.exists) {
+                const cData = compDoc.data();
+                const photo = cData.logo || cData.companyLogo || cData.profilePic || activeAvatar;
+                if (profileImage && photo) {
+                    profileImage.src = photo;
+                    profileImage.style.display = 'block';
+                    if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
+                    return; // পেজের ছবি লোড সফল হলে এখানেই সমাপ্ত
+                }
+            }
+        } catch (err) {
+            console.error("কোম্পানি প্রোফাইল লোড ত্রুটি:", err);
+        }
+    }
+
+    // ২. যদি পেজ মোড সক্রিয় না থাকে অথবা পেজ লোগো না পাওয়া যায়, তবে ইউজারের নিজস্ব ছবি লোড হবে
+    loadUserDefaultPic(user);
+}
+
+// হেল্পার ফাংশন: পুরনো 'activePageId' চেক করার জন্য
+function activePageIdCheck() {
+    const activeMode = localStorage.getItem('activeMode');
+    return activeMode ? activeMode === 'company' : !!localStorage.getItem('activePageId');
+}
+
+function loadUserDefaultPic(user) {
+    db.collection('users').doc(user.uid).get().then(doc => {
+        if (doc.exists) {
+            currentUserData = doc.data();
+            const photo = currentUserData.profilePic || currentUserData.photoURL || user.photoURL;
+            if (profileImage && photo) {
+                profileImage.src = photo;
+                profileImage.style.display = 'block';
+                if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
+            } else {
+                if (profileImage) profileImage.style.display = 'none';
+                if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
+            }
+        } else {
+            if (profileImage && user.photoURL) {
+                profileImage.src = user.photoURL;
+                profileImage.style.display = 'block';
+                if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
+            }
+        }
+    }).catch(err => {
+        console.error("ইউজার প্রোফাইল লোড ত্রুটি:", err);
+        if (profileImage && user.photoURL) {
+            profileImage.src = user.photoURL;
+            profileImage.style.display = 'block';
+            if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
+        }
+    });
+}
 
 // ----------------------------------------------------
 // 🗺️ ৪. ম্যাপ ফিল্টারিং ও ব্যাক বাটন লজিক (ঠিক ট্যাবের উপরে)
@@ -746,19 +819,3 @@ document.addEventListener('DOMContentLoaded', () => {
     // ডিফল্ট লোড
     fetchAndDisplayProperties('বিক্রয়', ''); 
 
-    // ফায়ারবেস অথ লিসেনার
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            loadProfilePicture(user);
-        } else {
-            if (profileImage) profileImage.style.display = 'none';
-            if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
-        }
-    });
-
-    // লোকাল স্টোরেজে অ্যাকাউন্ট/পেজ চেঞ্জ হলে তাৎক্ষণিক হেডার প্রোফাইল পিক আপডেট লিসেনার
-    window.addEventListener('storage', () => {
-        const user = auth.currentUser;
-        if (user) loadProfilePicture(user);
-    });
-});
