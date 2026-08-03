@@ -1,4 +1,4 @@
-// messages.js - Clean Identity & Mode-Based Messaging System
+// messages.js - Dual Mode (User & Company) Isolated Messaging System
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -16,10 +16,10 @@ let currentChatId = urlParams.get('chatId');
 let currentPostId = urlParams.get('postId');
 
 let currentUser = null;
-let activeSender = null; // প্রেরক (Sender): বর্তমান মোড অনুযায়ী ID, Name, Photo, Type থাকবে
+let activeSender = null; // বর্তমান সক্রিয় আইডেন্টিটি (User নাকি Company)
 let activeChatListener = null;
 
-// 🔄 ১. অ্যাক্টিভ প্রেরক (Sender Identity) নির্ধারণ
+// 🔄 ১. অ্যাক্টিভ প্রেরক (Active Sender Identity) নির্ধারণ
 firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) {
         alert("মেসেজ দেখতে লগইন করুন।");
@@ -54,7 +54,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
     }
 
-    // কোম্পানি না হলে বা ইউজার মোড থাকলে ইউজার আইডেন্টিটি সেট হবে
+    // কোম্পানি মোড না থাকলে বা ডাটা না পেলে ইউজার মোড সেট হবে
     if (!activeSender) {
         let pName = user.displayName || "ইউজার";
         let pPhoto = user.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
@@ -78,9 +78,29 @@ firebase.auth().onAuthStateChanged(async (user) => {
     const headerProfileImg = document.getElementById('profileImage');
     if (headerProfileImg) headerProfileImg.src = activeSender.photo;
 
-    // সিস্টেম স্টার্ট
+    // ইউজারকে সচেতন করতে মেসেজ ইনপুট এরিয়ায় একটিভ আইডেন্টিটি ইন্ডিকেটর তৈরি
+    renderIdentityBadge();
+
+    // চ্যাট সিস্টেম চালু
     initChatSystem();
 });
+
+// 📌 সক্রিয় আইডেন্টিটি ইন্ডিকেটর ব্যাজ রেন্ডার (যেমন: "আপনি 'খুলনা প্রপার্টিজ' হিসেবে মেসেজ পাঠাচ্ছেন")
+function renderIdentityBadge() {
+    const chatInputArea = document.querySelector('.chat-input-area') || document.getElementById('messageInputField')?.parentElement;
+    if (!chatInputArea) return;
+
+    let badge = document.getElementById('activeIdentityBadge');
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'activeIdentityBadge';
+        badge.style.cssText = "font-size: 11px; color: #64748b; background: #f1f5f9; padding: 4px 10px; border-radius: 4px; margin-bottom: 6px; display: inline-flex; align-items: center; gap: 5px; border-left: 3px solid #007bff;";
+        chatInputArea.parentNode.insertBefore(badge, chatInputArea);
+    }
+
+    const typeLabel = activeSender.type === 'company' ? 'কোম্পানি/পেজ' : 'ব্যক্তিগত প্রোফাইল';
+    badge.innerHTML = `<i class="material-icons" style="font-size: 13px;">account_circle</i> আপনি বর্তমানে <b>${activeSender.name}</b> (${typeLabel}) হিসেবে মেসেজ পাঠাচ্ছেন।`;
+}
 
 function initChatSystem() {
     loadChatList();
@@ -95,12 +115,11 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. মোড অনুযায়ী চ্যাট লিস্ট ফিল্টারিং
+// 💬 ২. মোড অনুযায়ী চ্যাট লিস্ট ফিল্টারিং (Strict Mode Isolation)
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer || !activeSender) return;
 
-    // শুধুমাত্র বর্তমান প্রেরক (activeSender.id) যেখানে অংশগ্রহণকারী, সেই চ্যাটগুলো আনবে
     db.collection('chats')
         .where('participants', 'array-contains', activeSender.id)
         .onSnapshot((snapshot) => {
@@ -110,17 +129,17 @@ function loadChatList() {
             snapshot.forEach(doc => {
                 const data = doc.data();
                 
-                // 🎯 কঠোর মোড ফিল্টার: বর্তমান একটিভ আইডি (User UID নাকি Company ID) তার সাথে মিললেই কেবল চ্যাট দেখাবে
-                const isUserModeMatch = activeSender.type === 'user' && (data.senderUserUid === activeSender.id || (data.senderId === activeSender.id && data.senderType === 'user') || (data.receiverId === activeSender.id && data.receiverType === 'user'));
-                const isCompanyModeMatch = activeSender.type === 'company' && (data.senderId === activeSender.id || data.receiverId === activeSender.id || data.companyId === activeSender.id);
+                // শুধুমাত্র সক্রিয় আইডি (User UID নাকি Company ID)-র জন্য নির্দিষ্ট চ্যাটগুলো ফিল্টার করা হবে
+                const isUserMatch = activeSender.type === 'user' && (data.senderUserUid === activeSender.id || (data.senderId === activeSender.id && data.senderType === 'user') || (data.receiverId === activeSender.id && data.receiverType === 'user'));
+                const isCompanyMatch = activeSender.type === 'company' && (data.senderId === activeSender.id || data.receiverId === activeSender.id || data.companyId === activeSender.id);
 
-                if ((isUserModeMatch || isCompanyModeMatch) && (!data.deletedBy || !data.deletedBy.includes(activeSender.id))) {
+                if ((isUserMatch || isCompanyMatch) && (!data.deletedBy || !data.deletedBy.includes(activeSender.id))) {
                     chatDocs.push({ id: doc.id, ...data });
                 }
             });
 
             if (chatDocs.length === 0) {
-                chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:#7f8c8d;">কোনো মেসেজ পাওয়া যায়নি।</div>`;
+                chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:#7f8c8d; font-size:14px;">কোনো মেসেজ পাওয়া যায়নি।</div>`;
                 return;
             }
 
@@ -174,7 +193,7 @@ function loadChatList() {
                     openChatBox(chatId, chatData.postId);
                 };
 
-                // প্রাপকের তথ্য (User/Company) দিয়ে UI ফিল করবে
+                // প্রাপকের তথ্য (User/Company) দিয়ে UI আপডেট করা
                 if (recipientId) {
                     fetchIdentityDetails(recipientId, `name_${chatId}`, `avatar_${chatId}`);
                 }
@@ -182,12 +201,12 @@ function loadChatList() {
         });
 }
 
-// 👤 ৩. আইডেন্টিটি চেক (User নাকি Company তা সুন্দরভাবে রেন্ডার করবে)
+// 👤 ৩. আইডেন্টিটি চেকার (Company/User কালেকশন থেকে ডাটা ফেচিং)
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
     try {
-        // ১. আগে 'companies' কালেকশনে চেক (যেহেতু কোম্পানি প্রোফাইল পাওয়া যাচ্ছিল না)
+        // ১. আগে 'companies' কালেকশনে চেক
         let cDoc = await db.collection('companies').doc(targetId).get();
         if (cDoc.exists) {
             const cData = cDoc.data();
@@ -203,7 +222,7 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // ২. না পাওয়া গেলে 'users' কালেকশনে চেক
+        // ২. কোম্পানি না পাওয়া গেলে 'users' কালেকশনে চেক
         let uDoc = await db.collection('users').doc(targetId).get();
         if (uDoc.exists) {
             const uData = uDoc.data();
@@ -219,7 +238,7 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // ৩. ব্যাকআপ নাম
+        // ৩. কোথাও পাওয়া না গেলে সাধারণ ব্যাকআপ নাম
         if (nameElemId && document.getElementById(nameElemId)) {
             document.getElementById(nameElemId).textContent = "বিজ্ঞাপনদাতা";
         }
@@ -243,13 +262,15 @@ async function openChatBox(chatId, postId) {
 
     if (!chatDoc.exists) {
         const parts = chatId.split('_');
+        const recipientId = parts.find(id => id !== activeSender.id) || parts[1];
+
         await chatRef.set({
             chatId: chatId,
             participants: Array.from(new Set([currentUser.uid, activeSender.id, parts[0], parts[1]])),
             senderId: activeSender.id,
             senderType: activeSender.type,
             senderUserUid: currentUser.uid,
-            receiverId: parts.find(id => id !== activeSender.id) || parts[1],
+            receiverId: recipientId,
             postId: postId || currentPostId || "",
             lastMessage: "",
             lastSenderId: activeSender.id,
@@ -261,7 +282,7 @@ async function openChatBox(chatId, postId) {
         await chatRef.update({ isUnread: false });
     }
 
-    // প্রাপকের নাম চ্যাট হেডার-এ দেখানো
+    // প্রাপকের নাম ও ছবি চ্যাট হেডার-এ আপডেট
     let recipientId = null;
     if (chatDoc.exists) {
         const cData = chatDoc.data();
