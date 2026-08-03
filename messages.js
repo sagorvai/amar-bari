@@ -48,8 +48,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
             activeSender = {
                 id: compDoc.id,
                 type: 'company',
-                name: cData.name || cData.companyName || "কোম্পানি পেজ",
-                photo: cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page'
+                name: cData.companyName || cData.name || "কোম্পানি পেজ",
+                photo: cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page'
             };
         }
     }
@@ -59,11 +59,15 @@ firebase.auth().onAuthStateChanged(async (user) => {
         let pName = user.displayName || "ইউজার";
         let pPhoto = user.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
 
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        if (userDoc.exists) {
-            const uData = userDoc.data();
-            pName = uData.fullName || uData.name || pName;
-            pPhoto = uData.profilePic || pPhoto;
+        try {
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                const uData = userDoc.data();
+                pName = uData.fullName || uData.name || pName;
+                pPhoto = uData.profilePic || pPhoto;
+            }
+        } catch (e) {
+            console.log("ইউজার ডাটা লোড সমস্যা:", e);
         }
 
         activeSender = {
@@ -98,24 +102,29 @@ function initChatSystem() {
 // 💬 ২. মোড অনুযায়ী চ্যাট লিস্ট ফিল্টারিং
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
-    if (!chatListContainer || !activeSender) return;
+    if (!chatListContainer || !activeSender || !currentUser) return;
 
-    // শুধুমাত্র বর্তমান প্রেরক (activeSender.id) যেখানে অংশগ্রহণকারী, সেই চ্যাটগুলো আনবে
+    // ফায়ারস্টোর রুলস পাসের জন্য auth.uid দিয়ে সার্চ করা হচ্ছে
     db.collection('chats')
-        .where('participants', 'array-contains', activeSender.id)
+        .where('participants', 'array-contains', currentUser.uid)
         .onSnapshot((snapshot) => {
             chatListContainer.innerHTML = "";
             let chatDocs = [];
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                if (!data.deletedBy || !data.deletedBy.includes(activeSender.id)) {
+                
+                // শুধুমাত্র সক্রিয় মোড (User or Page)-এর চ্যাট দেখাবে
+                const isRelevantToActiveMode = (data.senderId === activeSender.id || data.receiverId === activeSender.id);
+                const isDeleted = data.deletedBy && data.deletedBy.includes(activeSender.id);
+
+                if (isRelevantToActiveMode && !isDeleted) {
                     chatDocs.push({ id: doc.id, ...data });
                 }
             });
 
             if (chatDocs.length === 0) {
-                chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:#7f8c8d;">কোনো মেসেজ পাওয়া যায়নি।</div>`;
+                chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:#7f8c8d; font-size:14px;">কোনো ইনবক্স মেসেজ নেই।</div>`;
                 return;
             }
 
@@ -124,8 +133,8 @@ function loadChatList() {
             chatDocs.forEach((chatData) => {
                 const chatId = chatData.id;
                 
-                // 🎯 প্রাপক (Recipient ID) নির্ধারণ
-                const recipientId = chatData.participants ? chatData.participants.find(id => id !== activeSender.id) : null;
+                // 🎯 অপর পক্ষের ID (Recipient ID) নির্ধারণ
+                const recipientId = (chatData.senderId === activeSender.id) ? chatData.receiverId : chatData.senderId;
                 const isUnread = chatData.isUnread && chatData.lastSenderId !== activeSender.id;
 
                 const chatItemDiv = document.createElement('div');
@@ -161,11 +170,13 @@ function loadChatList() {
                     openChatBox(chatId, chatData.postId);
                 };
 
-                // প্রাপকের তথ্য (User/Company) দিয়ে UI ফিল করবে
+                // প্রাপকের তথ্য (Company/User) দিয়ে UI লোড করা
                 if (recipientId) {
                     fetchIdentityDetails(recipientId, `name_${chatId}`, `avatar_${chatId}`);
                 }
             });
+        }, (error) => {
+            console.error("ইনবক্স লোড এরর:", error);
         });
 }
 
@@ -173,37 +184,30 @@ function loadChatList() {
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
-    try {
-        // ১. আগে 'users' কালেকশনে চেক
-        let uDoc = await db.collection('users').doc(targetId).get();
-        if (uDoc.exists) {
-            const uData = uDoc.data();
-            if (nameElemId && document.getElementById(nameElemId)) {
-                document.getElementById(nameElemId).textContent = uData.fullName || uData.name || "ইউজার";
-            }
-            if (avatarElemId && document.getElementById(avatarElemId)) {
-                document.getElementById(avatarElemId).src = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
-            }
-            return;
-        }
+    const nameElem = document.getElementById(nameElemId);
+    const avatarElem = document.getElementById(avatarElemId);
 
-        // ২. না পাওয়া গেলে 'companies' কালেকশনে চেক
+    try {
+        // ১. আগে 'companies' কালেকশনে চেক
         let cDoc = await db.collection('companies').doc(targetId).get();
         if (cDoc.exists) {
             const cData = cDoc.data();
-            if (nameElemId && document.getElementById(nameElemId)) {
-                document.getElementById(nameElemId).textContent = cData.name || cData.companyName || "কোম্পানি পেজ";
-            }
-            if (avatarElemId && document.getElementById(avatarElemId)) {
-                document.getElementById(avatarElemId).src = cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page';
-            }
+            if (nameElem) nameElem.textContent = cData.companyName || cData.name || "কোম্পানি পেজ";
+            if (avatarElem) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
             return;
         }
 
-        // ৩. ব্যাকআপ নাম
-        if (nameElemId && document.getElementById(nameElemId)) {
-            document.getElementById(nameElemId).textContent = "প্রাপক";
+        // ২. না পাওয়া গেলে 'users' কালেকশনে চেক
+        let uDoc = await db.collection('users').doc(targetId).get();
+        if (uDoc.exists) {
+            const uData = uDoc.data();
+            if (nameElem) nameElem.textContent = uData.fullName || uData.name || "ইউজার";
+            if (avatarElem) avatarElem.src = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
+            return;
         }
+
+        if (nameElem) nameElem.textContent = "বিজ্ঞাপনদাতা";
+        if (avatarElem) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
     } catch (err) {
         console.error("প্রোফাইল লোড ত্রুটি:", err);
     }
@@ -213,8 +217,11 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
 
-    document.getElementById('emptyState').style.display = 'none';
-    document.getElementById('activeChatContent').style.display = 'flex';
+    const emptyState = document.getElementById('emptyState');
+    const activeChatContent = document.getElementById('activeChatContent');
+
+    if (emptyState) emptyState.style.display = 'none';
+    if (activeChatContent) activeChatContent.style.display = 'flex';
 
     document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
     document.getElementById(`item_${chatId}`)?.classList.add('active');
@@ -224,25 +231,34 @@ async function openChatBox(chatId, postId) {
 
     if (!chatDoc.exists) {
         const parts = chatId.split('_');
+        const otherPartyId = parts.find(id => id !== activeSender.id) || parts[1];
+
         await chatRef.set({
-            participants: [parts[0], parts[1]],
+            chatId: chatId,
+            participants: Array.from(new Set([activeSender.id, otherPartyId, currentUser.uid])),
+            senderId: activeSender.id,
+            senderType: activeSender.type,
+            receiverId: otherPartyId,
             postId: postId || currentPostId || "",
             lastMessage: "",
             lastSenderId: activeSender.id,
             deletedBy: [],
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
+        chatDoc = await chatRef.get();
     } else if (chatDoc.data().isUnread && chatDoc.data().lastSenderId !== activeSender.id) {
         await chatRef.update({ isUnread: false });
     }
 
-    // প্রাপকের নাম চ্যাট হেডার-এ দেখানো
-    const recipientId = chatId.split('_').find(id => id !== activeSender.id);
-    if (recipientId) {
-        fetchIdentityDetails(recipientId, 'activeChatUserName', null);
+    const cData = chatDoc.data();
+    const otherPartyId = (cData.senderId === activeSender.id) ? cData.receiverId : cData.senderId;
+
+    // প্রাপকের নাম চ্যাট হেডারে দেখানো
+    if (otherPartyId) {
+        fetchIdentityDetails(otherPartyId, 'activeChatUserName', null);
     }
 
-    loadPropertyContext(postId || (chatDoc.exists ? chatDoc.data().postId : ""));
+    loadPropertyContext(postId || cData.postId);
 
     // রিয়েলটাইম মেসেজ লোড
     if (activeChatListener) activeChatListener();
@@ -251,6 +267,7 @@ async function openChatBox(chatId, postId) {
     activeChatListener = db.collection('chats').doc(chatId).collection('messages')
         .orderBy('timestamp', 'asc')
         .onSnapshot((snapshot) => {
+            if (!messagesDisplay) return;
             messagesDisplay.innerHTML = "";
             snapshot.forEach(doc => {
                 const msg = doc.data();
@@ -338,7 +355,7 @@ async function deleteChatForUser(e, chatId) {
 
 function loadPropertyContext(postId) {
     const card = document.getElementById('activePropertyCard');
-    if (!card || !postId) { if(card) card.style.display = 'none'; return; }
+    if (!card || !postId) { if (card) card.style.display = 'none'; return; }
 
     card.style.display = 'flex';
     card.href = `details.html?id=${postId}`;
@@ -346,14 +363,18 @@ function loadPropertyContext(postId) {
     db.collection('properties').doc(postId).get().then(doc => {
         if (doc.exists) {
             const data = doc.data();
-            document.getElementById('activePropertyTitle').textContent = data.title || "প্রপার্টি";
+            const pTitle = document.getElementById('activePropertyTitle');
+            const pPrice = document.getElementById('activePropertyPrice');
+            const pImg = document.getElementById('activePropertyImg');
+
+            if (pTitle) pTitle.textContent = data.title || "প্রপার্টি";
             const amt = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
-            document.getElementById('activePropertyPrice').textContent = amt ? `৳ ${amt}` : "আলোচনা সাপেক্ষ";
-            if (data.images?.[0]) {
-                document.getElementById('activePropertyImg').src = data.images[0].url || data.images[0];
+            if (pPrice) pPrice.textContent = amt ? `৳ ${amt}` : "আলোচনা সাপেক্ষ";
+            if (pImg && data.images?.[0]) {
+                pImg.src = data.images[0].url || data.images[0];
             }
         } else card.style.display = 'none';
-    }).catch(() => card.style.display = 'none');
+    }).catch(() => { if (card) card.style.display = 'none'; });
 }
 
 document.addEventListener('click', () => {
