@@ -1,4 +1,4 @@
-// messages.js - Realtime Mode Synchronized Messaging System
+// messages.js - Optimized Dual-Mode Realtime Messaging Engine
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -11,18 +11,24 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// URL Parameters
 const urlParams = new URLSearchParams(window.location.search);
 let currentChatId = urlParams.get('chatId');
 let currentPostId = urlParams.get('postId');
 
+// Global States
 let currentUser = null;
-let activeSender = null; // প্রেরক (Sender): বর্তমান মোড অনুযায়ী ID, Name, Photo, Type থাকবে
+let activeSender = null; // { id: string, type: 'user'|'company', name: string, photo: string }
 let activeChatListener = null;
-let inboxListListener = null;
 
-// 🔄 ১. অ্যাক্টিভ প্রেরক (Sender Identity) নির্ধারণ ও সেটআপ
-async function setupActiveSenderIdentity(user) {
-    activeSender = null;
+// 🚀 ১. বর্তমান ব্যবহারকারীর মোড ও সক্রিয় প্রেরক (Sender) আইডেন্টিটি নির্ধারণ
+firebase.auth().onAuthStateChanged(async (user) => {
+    if (!user) {
+        window.location.href = "auth.html";
+        return;
+    }
+
+    currentUser = user;
     const activeMode = localStorage.getItem('activeIdentityType') || 'user'; // 'user' অথবা 'company'
 
     if (activeMode === 'company') {
@@ -49,7 +55,7 @@ async function setupActiveSenderIdentity(user) {
         }
     }
 
-    // কোম্পানি মোড না থাকলে বা ডাটা না পেলে ইউজার মোড সেট হবে
+    // পেজ মোড না থাকলে বা ইউজার মোডে থাকলে
     if (!activeSender) {
         let pName = user.displayName || "ইউজার";
         let pPhoto = user.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
@@ -62,7 +68,7 @@ async function setupActiveSenderIdentity(user) {
                 pPhoto = uData.profilePic || pPhoto;
             }
         } catch (e) {
-            console.log("ইউজার ডাটা লোড সমস্যা:", e);
+            console.log("ইউজার ডাটা ফেচিং ট্র্যাকিং:", e);
         }
 
         activeSender = {
@@ -77,42 +83,43 @@ async function setupActiveSenderIdentity(user) {
     const headerProfileImg = document.getElementById('profileImage');
     if (headerProfileImg) headerProfileImg.src = activeSender.photo;
 
-    // আইডেন্টিটি অনুযায়ী চ্যাট সিস্টেম পুনরায় চালু
+    renderIdentityBadge();
     initChatSystem();
-}
-
-firebase.auth().onAuthStateChanged(async (user) => {
-    if (!user) {
-        alert("মেসেজ দেখতে লগইন করুন।");
-        window.location.href = "auth.html";
-        return;
-    }
-    currentUser = user;
-    await setupActiveSenderIdentity(user);
 });
+
+// 📌 মোড নির্দেশক ব্যাজ
+function renderIdentityBadge() {
+    const chatInputArea = document.querySelector('.chat-input-area') || document.getElementById('messageInputField')?.parentElement;
+    if (!chatInputArea) return;
+
+    let badge = document.getElementById('activeIdentityBadge');
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'activeIdentityBadge';
+        badge.style.cssText = "font-size: 11px; color: #475569; background: #e2e8f0; padding: 4px 10px; border-radius: 4px; margin-bottom: 6px; display: inline-flex; align-items: center; gap: 5px; border-left: 3px solid #007bff;";
+        chatInputArea.parentNode.insertBefore(badge, chatInputArea);
+    }
+
+    const typeLabel = activeSender.type === 'company' ? 'কোম্পানি পেজ' : 'ইউজার অ্যাকাউন্ট';
+    badge.innerHTML = `<i class="material-icons" style="font-size: 13px;">account_circle</i> আপনি <b>${activeSender.name}</b> (${typeLabel}) মোডে আছেন।`;
+}
 
 function initChatSystem() {
     loadChatList();
 
     if (currentChatId) {
-        if (window.innerWidth <= 768) {
-            document.getElementById('chatSidebar')?.classList.add('hidden');
-            document.getElementById('chatMainBox')?.classList.add('active');
-            document.body.classList.add('chat-open');
-        }
+        handleMobileLayout();
         openChatBox(currentChatId, currentPostId);
     }
 }
 
-// 💬 ২. মোড অনুযায়ী ইনবক্স চ্যাট লিস্ট ফিল্টারিং
+// 💬 ২. ইনবক্স ফিল্টারিং (লগইন করা ইউজারের Auth UID দিয়ে নিরাপদ কোয়েরি)
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer || !activeSender || !currentUser) return;
 
-    if (inboxListListener) inboxListListener(); // আগের লিসেনার বন্ধ করা
-
-    // সিকিউরিটি রুলস পাসের জন্য auth.uid দিয়ে সার্চ
-    inboxListListener = db.collection('chats')
+    // Security Rule পাসের জন্য সর্বদাই currentUser.uid দিয়ে Query করা হবে
+    db.collection('chats')
         .where('participants', 'array-contains', currentUser.uid)
         .onSnapshot((snapshot) => {
             chatListContainer.innerHTML = "";
@@ -120,8 +127,10 @@ function loadChatList() {
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                
-                // শুধুমাত্র বর্তমান মোড (User or Page)-এর আইডি সম্বলিত চ্যাট ফিল্টার হবে
+
+                // 🎯 কঠোর মোড লজিক: 
+                // ইউজার মোডে থাকলে চ্যাটে activeSender.id (userId) প্রেরক বা প্রাপক হতে হবে।
+                // পেজ মোডে থাকলে চ্যাটে activeSender.id (companyId) প্রেরক বা প্রাপক হতে হবে।
                 const isRelevantToActiveMode = (data.senderId === activeSender.id || data.receiverId === activeSender.id);
                 const isDeleted = data.deletedBy && data.deletedBy.includes(activeSender.id);
 
@@ -135,13 +144,14 @@ function loadChatList() {
                 return;
             }
 
+            // সময় অনুযায়ী সাজানো
             chatDocs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
 
             chatDocs.forEach((chatData) => {
                 const chatId = chatData.id;
-                
-                // 🎯 অপর পক্ষের ID (Recipient ID) নির্ধারণ
-                const recipientId = (chatData.senderId === activeSender.id) ? chatData.receiverId : chatData.senderId;
+
+                // অপর পক্ষের ID (সে ইউজার বা কোম্পানি যাই হোক)
+                const otherPartyId = (chatData.senderId === activeSender.id) ? chatData.receiverId : chatData.senderId;
                 const isUnread = chatData.isUnread && chatData.lastSenderId !== activeSender.id;
 
                 const chatItemDiv = document.createElement('div');
@@ -152,7 +162,7 @@ function loadChatList() {
                     <img src="https://via.placeholder.com/45?text=..." id="avatar_${chatId}">
                     <div class="chat-item-info">
                         <h4 id="name_${chatId}">লোড হচ্ছে...</h4>
-                        <p style="${isUnread ? 'font-weight: bold; color: #1e293b;' : ''}">${chatData.lastMessage || "নতুন চ্যাট..."}</p>
+                        <p style="${isUnread ? 'font-weight: bold; color: #0f172a;' : ''}">${chatData.lastMessage || "নতুন বার্তা..."}</p>
                     </div>
                     <button class="chat-item-menu-btn" onclick="toggleDropdown(event, '${chatId}')">
                         <i class="material-icons">more_vert</i>
@@ -168,26 +178,20 @@ function loadChatList() {
 
                 chatItemDiv.onclick = (e) => {
                     if (e.target.closest('.chat-item-menu-btn') || e.target.closest('.chat-dropdown')) return;
-
-                    if (window.innerWidth <= 768) {
-                        document.getElementById('chatSidebar')?.classList.add('hidden');
-                        document.getElementById('chatMainBox')?.classList.add('active');
-                        document.body.classList.add('chat-open');
-                    }
+                    handleMobileLayout();
                     openChatBox(chatId, chatData.postId);
                 };
 
-                // অপর পক্ষের প্রোফাইল ডায়নামিকালি লোড
-                if (recipientId) {
-                    fetchIdentityDetails(recipientId, `name_${chatId}`, `avatar_${chatId}`);
-                }
+                // অপর পক্ষের প্রফেশনাল নাম ও ছবি ফেচ করা
+                fetchIdentityDetails(otherPartyId, `name_${chatId}`, `avatar_${chatId}`);
             });
         }, (error) => {
-            console.error("ইনবক্স লোড এরর:", error);
+            console.error("চ্যাট লোড করার এরর:", error);
+            chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:red; font-size:13px;">মেসেজ লোড করতে সমস্যা হয়েছে।</div>`;
         });
 }
 
-// 👤 ৩. নাম ও ছবি নির্ধারণ (Company vs User)
+// 👤 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার স্মার্ট ফাংশন (Company vs User)
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
@@ -195,7 +199,7 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     const avatarElem = document.getElementById(avatarElemId);
 
     try {
-        // ১. কোম্পানি পেজ চেক
+        // ১. আগে 'companies' কালেকশনে চেক করবে (companyId কিনা)
         let cDoc = await db.collection('companies').doc(targetId).get();
         if (cDoc.exists) {
             const cData = cDoc.data();
@@ -204,11 +208,11 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // ২. ইউজার প্রোফাইল চেক
+        // ২. না পেলে 'users' কালেকশনে চেক করবে (userId কিনা)
         let uDoc = await db.collection('users').doc(targetId).get();
         if (uDoc.exists) {
             const uData = uDoc.data();
-            if (nameElem) nameElem.textContent = uData.fullName || uData.name || "ইউজার";
+            if (nameElem) nameElem.textContent = uData.fullName || uData.name || "গ্রাহক";
             if (avatarElem) avatarElem.src = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
             return;
         }
@@ -216,11 +220,11 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
         if (nameElem) nameElem.textContent = "বিজ্ঞাপনদাতা";
         if (avatarElem) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
     } catch (err) {
-        console.error("প্রোফাইল তথ্য পেতে সমস্যা:", err);
+        if (nameElem) nameElem.textContent = "গ্রাহক";
     }
 }
 
-// 📖 ৪. চ্যাট বক্স ওপেন করা
+// 📖 ৪. চ্যাট বক্স ওপেন ও রিয়েলটাইম মেসেজ প্রদর্শন
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
 
@@ -260,12 +264,13 @@ async function openChatBox(chatId, postId) {
     const cData = chatDoc.data();
     const otherPartyId = (cData.senderId === activeSender.id) ? cData.receiverId : cData.senderId;
 
-    if (otherPartyId) {
-        fetchIdentityDetails(otherPartyId, 'activeChatUserName', null);
-    }
+    // হেডার প্রোফাইল আপডেট
+    fetchIdentityDetails(otherPartyId, 'activeChatUserName', null);
 
+    // প্রপার্টি ইনফরমেশন লোড
     loadPropertyContext(postId || cData.postId);
 
+    // মেসেজ সাবস্ক্রিপশন
     if (activeChatListener) activeChatListener();
 
     const messagesDisplay = document.getElementById('messagesDisplay');
@@ -276,9 +281,9 @@ async function openChatBox(chatId, postId) {
             messagesDisplay.innerHTML = "";
             snapshot.forEach(doc => {
                 const msg = doc.data();
-                const bubble = document.createElement('div');
                 const isIncoming = msg.senderId !== activeSender.id;
 
+                const bubble = document.createElement('div');
                 bubble.className = `msg-bubble ${isIncoming ? 'incoming' : 'outgoing'}`;
 
                 let timeStr = "এইমাত্র";
@@ -293,7 +298,7 @@ async function openChatBox(chatId, postId) {
         });
 }
 
-// ✉️ ৫. মেসেজ সেন্ড লজিক
+// ✉️ ৫. মেসেজ সেন্ড করার লজিক
 async function sendMessage(text) {
     if (!text.trim() || !currentChatId || !activeSender) return;
 
@@ -319,56 +324,7 @@ async function sendMessage(text) {
     }
 }
 
-// 🔁 ৬. header-sync.js থেকে মোড সুইচিং ট্র্যাক করার লিসেনার
-window.addEventListener('storage', (e) => {
-    if ((e.key === 'activeIdentityType' || e.key === 'activeCompanyId') && currentUser) {
-        setupActiveSenderIdentity(currentUser);
-    }
-});
-
-window.addEventListener('identityChanged', () => {
-    if (currentUser) setupActiveSenderIdentity(currentUser);
-});
-
-// 🔘 ডিলিট ও ইউটিলিটি ফাংশন
-function toggleDropdown(e, chatId) {
-    e.stopPropagation();
-    document.querySelectorAll('.chat-dropdown').forEach(d => {
-        if (d.id !== `dropdown_${chatId}`) d.classList.remove('show');
-    });
-    document.getElementById(`dropdown_${chatId}`)?.classList.toggle('show');
-}
-
-async function deleteChatForUser(e, chatId) {
-    e.stopPropagation();
-    if (!confirm("চ্যাটটি মুছে ফেলতে চান?")) return;
-
-    const chatRef = db.collection('chats').doc(chatId);
-    const doc = await chatRef.get();
-    if (!doc.exists) return;
-
-    let deletedBy = doc.data().deletedBy || [];
-    if (!deletedBy.includes(activeSender.id)) deletedBy.push(activeSender.id);
-
-    const bothDeleted = doc.data().participants.every(id => deletedBy.includes(id));
-
-    if (bothDeleted) {
-        const msgs = await chatRef.collection('messages').get();
-        const batch = db.batch();
-        msgs.forEach(m => batch.delete(m.ref));
-        batch.delete(chatRef);
-        await batch.commit();
-    } else {
-        await chatRef.update({ deletedBy });
-    }
-
-    if (currentChatId === chatId) {
-        currentChatId = null;
-        document.getElementById('emptyState').style.display = 'flex';
-        document.getElementById('activeChatContent').style.display = 'none';
-    }
-}
-
+// 🏢 প্রপার্টি কার্ড ডিসপ্লে
 function loadPropertyContext(postId) {
     const card = document.getElementById('activePropertyCard');
     if (!card || !postId) { if (card) card.style.display = 'none'; return; }
@@ -393,10 +349,50 @@ function loadPropertyContext(postId) {
     }).catch(() => { if (card) card.style.display = 'none'; });
 }
 
+// 📱 মোবাইল লেআউট কন্ট্রোল
+function handleMobileLayout() {
+    if (window.innerWidth <= 768) {
+        document.getElementById('chatSidebar')?.classList.add('hidden');
+        document.getElementById('chatMainBox')?.classList.add('active');
+        document.body.classList.add('chat-open');
+    }
+}
+
+function toggleDropdown(e, chatId) {
+    e.stopPropagation();
+    document.querySelectorAll('.chat-dropdown').forEach(d => {
+        if (d.id !== `dropdown_${chatId}`) d.classList.remove('show');
+    });
+    document.getElementById(`dropdown_${chatId}`)?.classList.toggle('show');
+}
+
+async function deleteChatForUser(e, chatId) {
+    e.stopPropagation();
+    if (!confirm("মেসেজটি ডিলিট করতে চান?")) return;
+
+    const chatRef = db.collection('chats').doc(chatId);
+    const doc = await chatRef.get();
+    if (!doc.exists) return;
+
+    let deletedBy = doc.data().deletedBy || [];
+    if (!deletedBy.includes(activeSender.id)) deletedBy.push(activeSender.id);
+
+    await chatRef.update({ deletedBy });
+
+    if (currentChatId === chatId) {
+        currentChatId = null;
+        const emptyState = document.getElementById('emptyState');
+        const activeChatContent = document.getElementById('activeChatContent');
+        if (emptyState) emptyState.style.display = 'flex';
+        if (activeChatContent) activeChatContent.style.display = 'none';
+    }
+}
+
 document.addEventListener('click', () => {
     document.querySelectorAll('.chat-dropdown').forEach(d => d.classList.remove('show'));
 });
 
+// ⌨️ DOM Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
     const sendBtn = document.getElementById('sendMessageBtn');
     const input = document.getElementById('messageInputField');
