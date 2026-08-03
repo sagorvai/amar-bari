@@ -1,4 +1,4 @@
-// messages.js - Clean Identity & Mode-Based Messaging System
+// messages.js - Realtime Mode Synchronized Messaging System
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -18,16 +18,11 @@ let currentPostId = urlParams.get('postId');
 let currentUser = null;
 let activeSender = null; // প্রেরক (Sender): বর্তমান মোড অনুযায়ী ID, Name, Photo, Type থাকবে
 let activeChatListener = null;
+let inboxListListener = null;
 
-// 🔄 ১. অ্যাক্টিভ প্রেরক (Sender Identity) নির্ধারণ
-firebase.auth().onAuthStateChanged(async (user) => {
-    if (!user) {
-        alert("মেসেজ দেখতে লগইন করুন।");
-        window.location.href = "auth.html";
-        return;
-    }
-
-    currentUser = user;
+// 🔄 ১. অ্যাক্টিভ প্রেরক (Sender Identity) নির্ধারণ ও সেটআপ
+async function setupActiveSenderIdentity(user) {
+    activeSender = null;
     const activeMode = localStorage.getItem('activeIdentityType') || 'user'; // 'user' অথবা 'company'
 
     if (activeMode === 'company') {
@@ -54,7 +49,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
     }
 
-    // কোম্পানি না হলে বা ইউজার মোড থাকলে ইউজার আইডেন্টিটি সেট হবে
+    // কোম্পানি মোড না থাকলে বা ডাটা না পেলে ইউজার মোড সেট হবে
     if (!activeSender) {
         let pName = user.displayName || "ইউজার";
         let pPhoto = user.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
@@ -78,12 +73,22 @@ firebase.auth().onAuthStateChanged(async (user) => {
         };
     }
 
-    // হেডার প্রোফাইল আপডেট
+    // হেডার প্রোফাইল ছবি আপডেট
     const headerProfileImg = document.getElementById('profileImage');
     if (headerProfileImg) headerProfileImg.src = activeSender.photo;
 
-    // সিস্টেম স্টার্ট
+    // আইডেন্টিটি অনুযায়ী চ্যাট সিস্টেম পুনরায় চালু
     initChatSystem();
+}
+
+firebase.auth().onAuthStateChanged(async (user) => {
+    if (!user) {
+        alert("মেসেজ দেখতে লগইন করুন।");
+        window.location.href = "auth.html";
+        return;
+    }
+    currentUser = user;
+    await setupActiveSenderIdentity(user);
 });
 
 function initChatSystem() {
@@ -99,13 +104,15 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. মোড অনুযায়ী চ্যাট লিস্ট ফিল্টারিং
+// 💬 ২. মোড অনুযায়ী ইনবক্স চ্যাট লিস্ট ফিল্টারিং
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer || !activeSender || !currentUser) return;
 
-    // ফায়ারস্টোর রুলস পাসের জন্য auth.uid দিয়ে সার্চ করা হচ্ছে
-    db.collection('chats')
+    if (inboxListListener) inboxListListener(); // আগের লিসেনার বন্ধ করা
+
+    // সিকিউরিটি রুলস পাসের জন্য auth.uid দিয়ে সার্চ
+    inboxListListener = db.collection('chats')
         .where('participants', 'array-contains', currentUser.uid)
         .onSnapshot((snapshot) => {
             chatListContainer.innerHTML = "";
@@ -114,7 +121,7 @@ function loadChatList() {
             snapshot.forEach(doc => {
                 const data = doc.data();
                 
-                // শুধুমাত্র সক্রিয় মোড (User or Page)-এর চ্যাট দেখাবে
+                // শুধুমাত্র বর্তমান মোড (User or Page)-এর আইডি সম্বলিত চ্যাট ফিল্টার হবে
                 const isRelevantToActiveMode = (data.senderId === activeSender.id || data.receiverId === activeSender.id);
                 const isDeleted = data.deletedBy && data.deletedBy.includes(activeSender.id);
 
@@ -170,7 +177,7 @@ function loadChatList() {
                     openChatBox(chatId, chatData.postId);
                 };
 
-                // প্রাপকের তথ্য (Company/User) দিয়ে UI লোড করা
+                // অপর পক্ষের প্রোফাইল ডায়নামিকালি লোড
                 if (recipientId) {
                     fetchIdentityDetails(recipientId, `name_${chatId}`, `avatar_${chatId}`);
                 }
@@ -180,7 +187,7 @@ function loadChatList() {
         });
 }
 
-// 👤 ৩. আইডেন্টিটি চেক (User নাকি Company তা চেক করে নাম ও ছবি বসাবে)
+// 👤 ৩. নাম ও ছবি নির্ধারণ (Company vs User)
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
@@ -188,7 +195,7 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     const avatarElem = document.getElementById(avatarElemId);
 
     try {
-        // ১. আগে 'companies' কালেকশনে চেক
+        // ১. কোম্পানি পেজ চেক
         let cDoc = await db.collection('companies').doc(targetId).get();
         if (cDoc.exists) {
             const cData = cDoc.data();
@@ -197,7 +204,7 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // ২. না পাওয়া গেলে 'users' কালেকশনে চেক
+        // ২. ইউজার প্রোফাইল চেক
         let uDoc = await db.collection('users').doc(targetId).get();
         if (uDoc.exists) {
             const uData = uDoc.data();
@@ -209,11 +216,11 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
         if (nameElem) nameElem.textContent = "বিজ্ঞাপনদাতা";
         if (avatarElem) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
     } catch (err) {
-        console.error("প্রোফাইল লোড ত্রুটি:", err);
+        console.error("প্রোফাইল তথ্য পেতে সমস্যা:", err);
     }
 }
 
-// 📖 ৪. চ্যাট বক্স ওপেন
+// 📖 ৪. চ্যাট বক্স ওপেন করা
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
 
@@ -253,14 +260,12 @@ async function openChatBox(chatId, postId) {
     const cData = chatDoc.data();
     const otherPartyId = (cData.senderId === activeSender.id) ? cData.receiverId : cData.senderId;
 
-    // প্রাপকের নাম চ্যাট হেডারে দেখানো
     if (otherPartyId) {
         fetchIdentityDetails(otherPartyId, 'activeChatUserName', null);
     }
 
     loadPropertyContext(postId || cData.postId);
 
-    // রিয়েলটাইম মেসেজ লোড
     if (activeChatListener) activeChatListener();
 
     const messagesDisplay = document.getElementById('messagesDisplay');
@@ -310,11 +315,22 @@ async function sendMessage(text) {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch (e) {
-        console.error("মেসেজ সেন্ড সমস্যা:", e);
+        console.error("মেসেজ পাঠাতে সমস্যা:", e);
     }
 }
 
-// 🔘 ডিলিট এবং ইউটিলিটি
+// 🔁 ৬. header-sync.js থেকে মোড সুইচিং ট্র্যাক করার লিসেনার
+window.addEventListener('storage', (e) => {
+    if ((e.key === 'activeIdentityType' || e.key === 'activeCompanyId') && currentUser) {
+        setupActiveSenderIdentity(currentUser);
+    }
+});
+
+window.addEventListener('identityChanged', () => {
+    if (currentUser) setupActiveSenderIdentity(currentUser);
+});
+
+// 🔘 ডিলিট ও ইউটিলিটি ফাংশন
 function toggleDropdown(e, chatId) {
     e.stopPropagation();
     document.querySelectorAll('.chat-dropdown').forEach(d => {
