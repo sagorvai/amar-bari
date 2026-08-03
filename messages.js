@@ -48,8 +48,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
             activeSender = {
                 id: compDoc.id,
                 type: 'company',
-                name: cData.name || cData.companyName || "কোম্পানি পেজ",
-                photo: cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page'
+                name: cData.companyName || cData.name || "কোম্পানি পেজ",
+                photo: cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page'
             };
         }
     }
@@ -109,7 +109,12 @@ function loadChatList() {
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                if (!data.deletedBy || !data.deletedBy.includes(activeSender.id)) {
+                
+                // 🎯 কঠোর মোড ফিল্টার: বর্তমান একটিভ আইডি (User UID নাকি Company ID) তার সাথে মিললেই কেবল চ্যাট দেখাবে
+                const isUserModeMatch = activeSender.type === 'user' && (data.senderUserUid === activeSender.id || (data.senderId === activeSender.id && data.senderType === 'user') || (data.receiverId === activeSender.id && data.receiverType === 'user'));
+                const isCompanyModeMatch = activeSender.type === 'company' && (data.senderId === activeSender.id || data.receiverId === activeSender.id || data.companyId === activeSender.id);
+
+                if ((isUserModeMatch || isCompanyModeMatch) && (!data.deletedBy || !data.deletedBy.includes(activeSender.id))) {
                     chatDocs.push({ id: doc.id, ...data });
                 }
             });
@@ -124,7 +129,7 @@ function loadChatList() {
             chatDocs.forEach((chatData) => {
                 const chatId = chatData.id;
                 
-                // 🎯 প্রাপক (Recipient ID) সঠিকভাবে নির্ধারণ
+                // 🎯 প্রাপক (Recipient ID) নির্ধারণ
                 let recipientId = null;
                 if (chatData.senderId === activeSender.id) {
                     recipientId = chatData.receiverId;
@@ -177,40 +182,46 @@ function loadChatList() {
         });
 }
 
-// 👤 ৩. আইডেন্টিটি চেক (User নাকি Company তা চেক করে নাম ও ছবি বসাবে)
+// 👤 ৩. আইডেন্টিটি চেক (User নাকি Company তা সুন্দরভাবে রেন্ডার করবে)
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
     try {
-        // ১. আগে 'users' কালেকশনে চেক
-        let uDoc = await db.collection('users').doc(targetId).get();
-        if (uDoc.exists) {
-            const uData = uDoc.data();
+        // ১. আগে 'companies' কালেকশনে চেক (যেহেতু কোম্পানি প্রোফাইল পাওয়া যাচ্ছিল না)
+        let cDoc = await db.collection('companies').doc(targetId).get();
+        if (cDoc.exists) {
+            const cData = cDoc.data();
+            const cName = cData.companyName || cData.name || "অফিসিয়াল কোম্পানি";
+            const cLogo = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
+
             if (nameElemId && document.getElementById(nameElemId)) {
-                document.getElementById(nameElemId).textContent = uData.fullName || uData.name || "ইউজার";
+                document.getElementById(nameElemId).textContent = cName;
             }
             if (avatarElemId && document.getElementById(avatarElemId)) {
-                document.getElementById(avatarElemId).src = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
+                document.getElementById(avatarElemId).src = cLogo;
             }
             return;
         }
 
-        // ২. না পাওয়া গেলে 'companies' কালেকশনে চেক
-        let cDoc = await db.collection('companies').doc(targetId).get();
-        if (cDoc.exists) {
-            const cData = cDoc.data();
+        // ২. না পাওয়া গেলে 'users' কালেকশনে চেক
+        let uDoc = await db.collection('users').doc(targetId).get();
+        if (uDoc.exists) {
+            const uData = uDoc.data();
+            const uName = uData.fullName || uData.name || "সম্মানিত ইউজার";
+            const uAvatar = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
+
             if (nameElemId && document.getElementById(nameElemId)) {
-                document.getElementById(nameElemId).textContent = cData.name || cData.companyName || "কোম্পানি পেজ";
+                document.getElementById(nameElemId).textContent = uName;
             }
             if (avatarElemId && document.getElementById(avatarElemId)) {
-                document.getElementById(avatarElemId).src = cData.logo || cData.companyLogo || 'https://via.placeholder.com/45?text=Page';
+                document.getElementById(avatarElemId).src = uAvatar;
             }
             return;
         }
 
         // ৩. ব্যাকআপ নাম
         if (nameElemId && document.getElementById(nameElemId)) {
-            document.getElementById(nameElemId).textContent = "প্রাপক";
+            document.getElementById(nameElemId).textContent = "বিজ্ঞাপনদাতা";
         }
     } catch (err) {
         console.error("প্রোফাইল লোড ত্রুটি:", err);
