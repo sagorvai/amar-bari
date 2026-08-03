@@ -124,8 +124,16 @@ function loadChatList() {
             chatDocs.forEach((chatData) => {
                 const chatId = chatData.id;
                 
-                // 🎯 প্রাপক (Recipient ID) নির্ধারণ
-                const recipientId = chatData.participants ? chatData.participants.find(id => id !== activeSender.id) : null;
+                // 🎯 প্রাপক (Recipient ID) সঠিকভাবে নির্ধারণ
+                let recipientId = null;
+                if (chatData.senderId === activeSender.id) {
+                    recipientId = chatData.receiverId;
+                } else if (chatData.receiverId === activeSender.id) {
+                    recipientId = chatData.senderId;
+                } else {
+                    recipientId = chatData.participants ? chatData.participants.find(id => id !== activeSender.id && id !== currentUser.uid) : null;
+                }
+
                 const isUnread = chatData.isUnread && chatData.lastSenderId !== activeSender.id;
 
                 const chatItemDiv = document.createElement('div');
@@ -225,19 +233,33 @@ async function openChatBox(chatId, postId) {
     if (!chatDoc.exists) {
         const parts = chatId.split('_');
         await chatRef.set({
-            participants: [parts[0], parts[1]],
+            chatId: chatId,
+            participants: Array.from(new Set([currentUser.uid, activeSender.id, parts[0], parts[1]])),
+            senderId: activeSender.id,
+            senderType: activeSender.type,
+            senderUserUid: currentUser.uid,
+            receiverId: parts.find(id => id !== activeSender.id) || parts[1],
             postId: postId || currentPostId || "",
             lastMessage: "",
             lastSenderId: activeSender.id,
             deletedBy: [],
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
+        chatDoc = await chatRef.get();
     } else if (chatDoc.data().isUnread && chatDoc.data().lastSenderId !== activeSender.id) {
         await chatRef.update({ isUnread: false });
     }
 
     // প্রাপকের নাম চ্যাট হেডার-এ দেখানো
-    const recipientId = chatId.split('_').find(id => id !== activeSender.id);
+    let recipientId = null;
+    if (chatDoc.exists) {
+        const cData = chatDoc.data();
+        recipientId = (cData.senderId === activeSender.id) ? cData.receiverId : cData.senderId;
+    } 
+    if (!recipientId) {
+        recipientId = chatId.split('_').find(id => id !== activeSender.id);
+    }
+
     if (recipientId) {
         fetchIdentityDetails(recipientId, 'activeChatUserName', null);
     }
@@ -317,7 +339,12 @@ async function deleteChatForUser(e, chatId) {
     let deletedBy = doc.data().deletedBy || [];
     if (!deletedBy.includes(activeSender.id)) deletedBy.push(activeSender.id);
 
-    const bothDeleted = doc.data().participants.every(id => deletedBy.includes(id));
+    const mainParticipants = [
+        doc.data().senderId || doc.data().participants?.[0], 
+        doc.data().receiverId || doc.data().participants?.[1]
+    ].filter(Boolean);
+
+    const bothDeleted = mainParticipants.length > 0 && mainParticipants.every(id => deletedBy.includes(id));
 
     if (bothDeleted) {
         const msgs = await chatRef.collection('messages').get();
