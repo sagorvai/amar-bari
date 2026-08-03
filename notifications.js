@@ -185,7 +185,7 @@ function showEnableNotificationButton(uid) {
         <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">
             🚀 লাইভ আপডেট ও চ্যাট নোটিফিকেশন পেতে পুশ নোটিফিকেশন সচল করুন!
         </p>
-        <button id="btn-grant-now" style="background: #1a73e8; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer;">নোটিফিকেশন चालू করুন</button>
+        <button id="btn-grant-now" style="background: #1a73e8; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer;">নোটিফিকেশন চালু করুন</button>
     `;
 
     listContainer.parentNode.insertBefore(banner, listContainer);
