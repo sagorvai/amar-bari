@@ -29,59 +29,58 @@ firebase.auth().onAuthStateChanged(async (user) => {
     }
 
     currentUser = user;
-    const activeMode = localStorage.getItem('activeIdentityType') || 'user'; // 'user' অথবা 'company'
 
-    if (activeMode === 'company') {
-        const savedCompanyId = localStorage.getItem('activeCompanyId');
-        let compDoc = null;
-
-        if (savedCompanyId) {
-            compDoc = await db.collection('companies').doc(savedCompanyId).get();
-        }
-
-        if (!compDoc || !compDoc.exists) {
-            const qSnap = await db.collection('companies').where('ownerUid', '==', user.uid).limit(1).get();
-            if (!qSnap.empty) compDoc = qSnap.docs[0];
-        }
-
-        if (compDoc && compDoc.exists) {
-            const cData = compDoc.data();
+    // header-sync.js এর গ্লোবাল এক্টিভ আইডেন্টিটি ব্যবহার করা হচ্ছে
+    if (typeof window.getActiveIdentity === 'function') {
+        const identity = window.getActiveIdentity();
+        if (identity) {
             activeSender = {
-                id: compDoc.id,
-                type: 'company',
-                name: cData.companyName || cData.name || "কোম্পানি পেজ",
-                photo: cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page'
+                id: identity.id,
+                type: identity.type,
+                name: identity.name,
+                photo: identity.avatar || 'https://www.w3schools.com/howto/img_avatar.png'
             };
         }
     }
 
-    // পেজ মোড না থাকলে বা ইউজার মোডে থাকলে
+    // ব্যাকআপ fallback (যদি header-sync লোড না হয়)
     if (!activeSender) {
-        let pName = user.displayName || "ইউজার";
-        let pPhoto = user.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
-
-        try {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists) {
-                const uData = userDoc.data();
-                pName = uData.fullName || uData.name || pName;
-                pPhoto = uData.profilePic || pPhoto;
+        const activeMode = localStorage.getItem('activeIdentityType') || 'user';
+        if (activeMode === 'company') {
+            const savedCompanyId = localStorage.getItem('activeCompanyId');
+            if (savedCompanyId) {
+                try {
+                    const compDoc = await db.collection('companies').doc(savedCompanyId).get();
+                    if (compDoc.exists) {
+                        const cData = compDoc.data();
+                        activeSender = {
+                            id: compDoc.id,
+                            type: 'company',
+                            name: cData.companyName || cData.name || "কোম্পানি পেজ",
+                            photo: cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page'
+                        };
+                    }
+                } catch (e) {
+                    console.error("কোম্পানি ডাটা লোড সমস্যা:", e);
+                }
             }
-        } catch (e) {
-            console.log("ইউজার ডাটা ফেচিং ট্র্যাকিং:", e);
         }
 
-        activeSender = {
-            id: user.uid,
-            type: 'user',
-            name: pName,
-            photo: pPhoto
-        };
+        if (!activeSender) {
+            activeSender = {
+                id: user.uid,
+                type: 'user',
+                name: user.displayName || "ইউজার",
+                photo: user.photoURL || 'https://www.w3schools.com/howto/img_avatar.png'
+            };
+        }
     }
 
     // হেডার প্রোফাইল ছবি আপডেট
     const headerProfileImg = document.getElementById('profileImage');
-    if (headerProfileImg) headerProfileImg.src = activeSender.photo;
+    if (headerProfileImg && activeSender.photo) {
+        headerProfileImg.src = activeSender.photo;
+    }
 
     renderIdentityBadge();
     initChatSystem();
@@ -90,7 +89,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
 // 📌 মোড নির্দেশক ব্যাজ
 function renderIdentityBadge() {
     const chatInputArea = document.querySelector('.chat-input-area') || document.getElementById('messageInputField')?.parentElement;
-    if (!chatInputArea) return;
+    if (!chatInputArea || !activeSender) return;
 
     let badge = document.getElementById('activeIdentityBadge');
     if (!badge) {
@@ -113,7 +112,7 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. ইনবক্স ফিল্টারিং (লগইন করা ইউজারের Auth UID দিয়ে নিরাপদ কোয়েরি)
+// 💬 ২. ইনবক্স ফিল্টারিং (লগইন করা ইউজারের Auth UID ও Active ID দিয়ে নিরাপদ ফিল্টারিং)
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer || !activeSender || !currentUser) return;
@@ -128,9 +127,8 @@ function loadChatList() {
             snapshot.forEach(doc => {
                 const data = doc.data();
 
-                // 🎯 কঠোর মোড লজিক: 
-                // ইউজার মোডে থাকলে চ্যাটে activeSender.id (userId) প্রেরক বা প্রাপক হতে হবে।
-                // পেজ মোডে থাকলে চ্যাটে activeSender.id (companyId) প্রেরক বা প্রাপক হতে হবে।
+                // 🎯 নিখুঁত মোড লজিক:
+                // বর্তমান activeSender.id চ্যাটের senderId অথবা receiverId এর সাথে মিলতে হবে।
                 const isRelevantToActiveMode = (data.senderId === activeSender.id || data.receiverId === activeSender.id);
                 const isDeleted = data.deletedBy && data.deletedBy.includes(activeSender.id);
 
@@ -150,7 +148,7 @@ function loadChatList() {
             chatDocs.forEach((chatData) => {
                 const chatId = chatData.id;
 
-                // অপর পক্ষের ID (সে ইউজার বা কোম্পানি যাই হোক)
+                // অপর পক্ষের ID সঠিকভাবে নির্ধারণ
                 const otherPartyId = (chatData.senderId === activeSender.id) ? chatData.receiverId : chatData.senderId;
                 const isUnread = chatData.isUnread && chatData.lastSenderId !== activeSender.id;
 
@@ -191,7 +189,7 @@ function loadChatList() {
         });
 }
 
-// 👤 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার স্মার্ট ফাংশন (Company vs User)
+// 👤 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার সংশোধনকৃত ফাংশন (User Priority First)
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
@@ -199,26 +197,26 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     const avatarElem = document.getElementById(avatarElemId);
 
     try {
-        // ১. আগে 'companies' কালেকশনে চেক করবে (companyId কিনা)
-        let cDoc = await db.collection('companies').doc(targetId).get();
-        if (cDoc.exists) {
-            const cData = cDoc.data();
-            if (nameElem) nameElem.textContent = cData.companyName || cData.name || "কোম্পানি পেজ";
-            if (avatarElem) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
-            return;
-        }
-
-        // ২. না পেলে 'users' কালেকশনে চেক করবে (userId কিনা)
+        // ১. আগে 'users' কালেকশনে চেক করবে (যেহেতু অধিকাংশ ID ইউজারের UID)
         let uDoc = await db.collection('users').doc(targetId).get();
         if (uDoc.exists) {
             const uData = uDoc.data();
             if (nameElem) nameElem.textContent = uData.fullName || uData.name || "গ্রাহক";
-            if (avatarElem) avatarElem.src = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
+            if (avatarElem && avatarElemId) avatarElem.src = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
+            return;
+        }
+
+        // ২. না পেলে 'companies' কালেকশনে চেক করবে (কোম্পানি/পেজ ID কিনা)
+        let cDoc = await db.collection('companies').doc(targetId).get();
+        if (cDoc.exists) {
+            const cData = cDoc.data();
+            if (nameElem) nameElem.textContent = cData.companyName || cData.name || "কোম্পানি পেজ";
+            if (avatarElem && avatarElemId) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
             return;
         }
 
         if (nameElem) nameElem.textContent = "বিজ্ঞাপনদাতা";
-        if (avatarElem) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
+        if (avatarElem && avatarElemId) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
     } catch (err) {
         if (nameElem) nameElem.textContent = "গ্রাহক";
     }
@@ -241,36 +239,27 @@ async function openChatBox(chatId, postId) {
     let chatDoc = await chatRef.get();
 
     if (!chatDoc.exists) {
-        const parts = chatId.split('_');
-        const otherPartyId = parts.find(id => id !== activeSender.id) || parts[1];
-
-        await chatRef.set({
-            chatId: chatId,
-            participants: Array.from(new Set([activeSender.id, otherPartyId, currentUser.uid])),
-            senderId: activeSender.id,
-            senderType: activeSender.type,
-            receiverId: otherPartyId,
-            postId: postId || currentPostId || "",
-            lastMessage: "",
-            lastSenderId: activeSender.id,
-            deletedBy: [],
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        chatDoc = await chatRef.get();
-    } else if (chatDoc.data().isUnread && chatDoc.data().lastSenderId !== activeSender.id) {
-        await chatRef.update({ isUnread: false });
+        console.warn("চ্যাট রুম পাওয়া যায়নি। সঠিক আইডি লিংক ব্যবহার করুন।");
+        return;
     }
 
     const cData = chatDoc.data();
+
+    // চ্যাট পড়া হয়ে গেলে isUnread আপডেট
+    if (cData.isUnread && cData.lastSenderId !== activeSender.id) {
+        await chatRef.update({ isUnread: false });
+    }
+
+    // অপর পক্ষের আইডি বের করা
     const otherPartyId = (cData.senderId === activeSender.id) ? cData.receiverId : cData.senderId;
 
-    // হেডার প্রোফাইল আপডেট
+    // হেডার প্রোফাইল নাম আপডেট
     fetchIdentityDetails(otherPartyId, 'activeChatUserName', null);
 
     // প্রপার্টি ইনফরমেশন লোড
     loadPropertyContext(postId || cData.postId);
 
-    // মেসেজ সাবস্ক্রিপশন
+    // মেসেজ সাবস্ক্রিপশন (রিয়েলটাইম শুনবে)
     if (activeChatListener) activeChatListener();
 
     const messagesDisplay = document.getElementById('messagesDisplay');
