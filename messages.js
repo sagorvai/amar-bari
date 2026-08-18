@@ -308,13 +308,14 @@ async function openChatBox(chatId, postId) {
         });
 }
 
-// ✉️ ৫. মেসেজ সেন্ড করার লজিক
+// ✉️ ৫. মেসেজ সেন্ড ও স্মার্ট পুশ নোটিফিকেশন লজিক
 async function sendMessage(text) {
     if (!text.trim() || !currentChatId || !activeSender) return;
 
     const cleanText = text.trim();
 
     try {
+        // ১. মেসেজ সাব-কালেকশনে যোগ করা
         await db.collection('chats').doc(currentChatId).collection('messages').add({
             senderId: activeSender.id,
             senderType: activeSender.type,
@@ -322,17 +323,81 @@ async function sendMessage(text) {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        await db.collection('chats').doc(currentChatId).update({
+        // ২. চ্যাট ডকুমেন্টের লাস্ট মেসেজ আপডেট
+        const chatDocRef = db.collection('chats').doc(currentChatId);
+        const chatSnapshot = await chatDocRef.get();
+        
+        if (!chatSnapshot.exists) return;
+        const chatData = chatSnapshot.data();
+
+        await chatDocRef.update({
             lastMessage: cleanText,
             lastSenderId: activeSender.id,
             isUnread: true,
             deletedBy: [],
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
+
+        // ৩. প্রাপকের (Receiver) সঠিক আইডি বের করা
+        const receiverId = (chatData.senderId === activeSender.id) ? chatData.receiverId : chatData.senderId;
+
+        // ৪. অ্যাপের ভেতরে ইন-অ্যাপ নোটিফিকেশন সংরক্ষণ করা (notifications কালেকশন)
+        await db.collection("notifications").add({
+            userId: receiverId,                  // কোম্পানি বা ইউজার যার কাছে যাবে
+            title: activeSender.name,             // 🎯 সঠিক নাম (কোম্পানি হলে কোম্পানির নাম, ইউজার হলে ইউজারের নাম)
+            message: cleanText,
+            type: "chat",
+            chatId: currentChatId,
+            postId: chatData.postId || '',
+            senderName: activeSender.name,       // 🎯 প্রেরকের নাম
+            isRead: false,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // 🎯 ৫. পুশ নোটিফিকেশনের জন্য প্রাপকের মূল User UID ও FCM Token বের করা
+        let targetUserUid = receiverId;
+
+        // যদি প্রাপক একটি কোম্পানি আইডি হয়, তবে তার ownerUid খুঁজে বের করবে
+        const compDoc = await db.collection('companies').doc(receiverId).get();
+        if (compDoc.exists) {
+            targetUserUid = compDoc.data().ownerUid || receiverId;
+        }
+
+        // মূল ইউজারের প্রোফাইল থেকে FCM Token সংগ্রহ
+        const userDoc = await db.collection('users').doc(targetUserUid).get();
+        if (userDoc.exists && userDoc.data().fcmToken) {
+            const fcmToken = userDoc.data().fcmToken;
+            
+            // পুশ নোটিফিকেশন ফাংশন কল (Cloud Function বা আপনার FCM API Trigger)
+            sendPushNotificationTrigger(fcmToken, activeSender.name, cleanText, currentChatId, chatData.postId);
+        }
+
     } catch (e) {
         console.error("মেসেজ পাঠাতে সমস্যা:", e);
     }
 }
+
+// 🚀 FCM পুশ নোটিফিকেশন পাঠানোর হেলপার ফাংশন
+function sendPushNotificationTrigger(token, title, body, chatId, postId) {
+    // যদি আপনার ব্যাকএন্ড/ক্লাউড ফাংশন থাকে বা সরাসরি API কল করেন:
+    console.log(`📡 পুশ নোটিফিকেশন পাঠানো হচ্ছে -> টোকেন: ${token}`);
+    console.log(`🏷️ টাইটেল/নাম: ${title}`);
+    console.log(`💬 মেসেজ: ${body}`);
+    
+    /* 
+       উদাহরণ (যদি কোনো API বা Cloud Function URL থাকে):
+       fetch('https://your-cloud-function-url/sendPush', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+               token: token,
+               title: title, // এখানে কোম্পানির নাম বা প্রেরকের নাম যাবে
+               body: body,
+               clickAction: `messages.html?chatId=${chatId}&postId=${postId || ''}`
+           })
+       });
+    */
+        }
 
 // 🏢 প্রপার্টি কার্ড ডিসপ্লে
 function loadPropertyContext(postId) {
