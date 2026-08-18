@@ -189,7 +189,7 @@ function loadChatList() {
         });
 }
 
-// 👤 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার সংশোধনকৃত ফাংশন (User Priority First)
+// 👤/🏢 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার সম্পূর্ণ নিখুঁত ফাংশন
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
@@ -197,30 +197,51 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     const avatarElem = document.getElementById(avatarElemId);
 
     try {
-        // ১. আগে 'users' কালেকশনে চেক করবে (যেহেতু অধিকাংশ ID ইউজারের UID)
+        // 🔹 ধাপ ১: আগে 'users' কালেকশনে চেক করা (User Document ID দিয়ে)
         let uDoc = await db.collection('users').doc(targetId).get();
         if (uDoc.exists) {
             const uData = uDoc.data();
-            if (nameElem) nameElem.textContent = uData.fullName || uData.name || "গ্রাহক";
-            if (avatarElem && avatarElemId) avatarElem.src = uData.profilePic || 'https://www.w3schools.com/howto/img_avatar.png';
+            if (nameElem) nameElem.textContent = uData.fullName || uData.name || uData.displayName || "গ্রাহক";
+            if (avatarElem && avatarElemId) avatarElem.src = uData.profilePic || uData.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
             return;
         }
 
-        // ২. না পেলে 'companies' কালেকশনে চেক করবে (কোম্পানি/পেজ ID কিনা)
+        // 🔹 ধাপ ২: 'companies' কালেকশনে সরাসরি Document ID দিয়ে চেক করা
         let cDoc = await db.collection('companies').doc(targetId).get();
         if (cDoc.exists) {
             const cData = cDoc.data();
-            if (nameElem) nameElem.textContent = cData.companyName || cData.name || "কোম্পানি পেজ";
+            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
             if (avatarElem && avatarElemId) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
             return;
         }
 
+        // 🔹 ধাপ ৩: কোম্পানি কালেকশনের ভেতর 'companyId' ফিল্ডের সাথে মিল থাকলে
+        let compQueryById = await db.collection('companies').where('companyId', '==', targetId).limit(1).get();
+        if (!compQueryById.empty) {
+            const cData = compQueryById.docs[0].data();
+            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
+            if (avatarElem && avatarElemId) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
+            return;
+        }
+
+        // 🔹 ধাপ ৪: 'ownerUid' (মালিকের UID) দিয়ে কোম্পানি খোঁজা
+        let compQueryByOwner = await db.collection('companies').where('ownerUid', '==', targetId).limit(1).get();
+        if (!compQueryByOwner.empty) {
+            const cData = compQueryByOwner.docs[0].data();
+            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
+            if (avatarElem && avatarElemId) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
+            return;
+        }
+
+        // 🔹 ধাপ ৫: যদি কিছুই না পাওয়া যায়
         if (nameElem) nameElem.textContent = "বিজ্ঞাপনদাতা";
         if (avatarElem && avatarElemId) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
+
     } catch (err) {
+        console.error("আইডেন্টিটি ফেচিং ত্রুটি:", err);
         if (nameElem) nameElem.textContent = "গ্রাহক";
     }
-}
+        }
 
 // 📖 ৪. চ্যাট বক্স ওপেন ও রিয়েলটাইম মেসেজ প্রদর্শন
 async function openChatBox(chatId, postId) {
