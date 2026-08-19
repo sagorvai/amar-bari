@@ -48,14 +48,9 @@ async function ensureWelcomeNotification(activeIdentity) {
 
     try {
         const notifRef = db.collection("notifications");
-        const snapshot = await notifRef.where("userId", "==", activeIdentity.id).get();
+        const snapshot = await notifRef.where("userId", "==", activeIdentity.id).limit(1).get();
 
-        let hasWelcome = false;
-        snapshot.forEach((doc) => {
-            if (doc.data().type === "welcome") hasWelcome = true;
-        });
-
-        if (!hasWelcome) {
+        if (snapshot.empty) {
             const isCompany = activeIdentity.type === 'company';
             const targetName = activeIdentity.name || "সম্মানিত গ্রাহক";
 
@@ -116,7 +111,7 @@ function loadNotificationsForActiveIdentity() {
 
     const currentName = activeIdentity.name || "সম্মানিত গ্রাহক";
     console.log(`🔔 নোটিফিকেশন লোড হচ্ছে: ${currentName} (${activeIdentity.id}) [টাইপ: ${activeIdentity.type}]`);
-    listenForNotifications(activeIdentity.id);
+    listenForNotifications(activeIdentity);
 }
 
 function showGuestMessage() {
@@ -170,10 +165,8 @@ async function syncGuestTokenToUser(uid) {
         }
 
         if (currentToken) {
-            // ইউজারের প্রোফাইলে সেভ
             await saveTokenToFirestore("users", uid, currentToken);
             
-            // যদি পেজ/কোম্পানি মোডে থাকে, পেজের প্রোফাইলেও টোকেন সেভ করবে
             if (activeIdentity && activeIdentity.type === 'company' && activeIdentity.id) {
                 await saveTokenToFirestore("companies", activeIdentity.id, currentToken);
             }
@@ -210,7 +203,7 @@ function showEnableNotificationButton(uid) {
         <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">
             🚀 লাইভ আপডেট ও চ্যাট নোটিফিকেশন পেতে পুশ নোটিফিকেশন সচল করুন!
         </p>
-        <button id="btn-grant-now" style="background: #1a73e8; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer;">নোটিফিকেশন চালু করুন</button>
+        <button id="btn-grant-now" style="background: #1a73e8; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer;">নোটিফিকেশন चालू করুন</button>
     `;
 
     listContainer.parentNode.insertBefore(banner, listContainer);
@@ -242,8 +235,8 @@ function showPermissionDeniedBanner() {
     listContainer.parentNode.insertBefore(alertBanner, listContainer);
 }
 
-// 🎯 ৪. রিয়েলটাইম লিসেনার (ইউজার এবং পেজ উভয়ের জন্য সাপোর্ট)
-function listenForNotifications(targetId) {
+// 🎯 ৪. রিয়েলটাইম লিসেনার (কোম্পানি এবং ইউজারের সিকিউরিটি এরর হ্যান্ডলিং সহ)
+function listenForNotifications(activeIdentity) {
     const notificationContainer = document.getElementById("notifications-list");
     if (!notificationContainer) return;
 
@@ -251,56 +244,78 @@ function listenForNotifications(targetId) {
         currentNotifUnsubscribe(); // পূর্বের লিসেনার বন্ধ
     }
 
-    currentNotifUnsubscribe = db.collection("notifications")
-        .where("userId", "==", targetId)
-        .onSnapshot((snapshot) => {
-            notificationContainer.innerHTML = "";
+    const targetId = typeof activeIdentity === 'object' ? activeIdentity.id : activeIdentity;
+    const currentUserUid = auth.currentUser ? auth.currentUser.uid : targetId;
 
-            if (snapshot.empty) {
-                notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">এই অ্যাকাউন্টের জন্য কোনো নোটিফিকেশন নেই।</p>`;
-                return;
-            }
+    // প্রাথমিক ফায়ারস্টোর কোয়েরি
+    let query = db.collection("notifications").where("userId", "==", targetId);
 
-            let docsArray = [];
-            snapshot.forEach((doc) => {
-                docsArray.push({ id: doc.id, data: doc.data() });
-            });
+    const handleSnapshot = (snapshot) => {
+        notificationContainer.innerHTML = "";
 
-            // তারিখ সর্টিং (createdAt & timestamp দুটি ফোলব্যাক সহ)
-            docsArray.sort((a, b) => {
-                const getMillis = (d) => {
-                    if (!d) return 0;
-                    if (d.seconds) return d.seconds * 1000;
-                    return new Date(d).getTime() || 0;
-                };
-                const tA = getMillis(a.data.createdAt || a.data.timestamp);
-                const tB = getMillis(b.data.createdAt || b.data.timestamp);
-                return tB - tA;
-            });
+        if (snapshot.empty) {
+            notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">এই অ্যাকাউন্টের জন্য কোনো নোটিফিকেশন নেই।</p>`;
+            return;
+        }
 
-            docsArray.forEach((item) => {
-                const notif = item.data;
-                const notifItem = createNotificationCard(item.id, notif);
-                notificationContainer.appendChild(notifItem);
-            });
-
-            const unreadCount = docsArray.reduce((n, item) => n + (item.data.isRead === false ? 1 : 0), 0);
-            try {
-                if (window.AndroidBridge && typeof window.AndroidBridge.setPendingNotificationCount === 'function') {
-                    window.AndroidBridge.setPendingNotificationCount(unreadCount);
-                }
-            } catch (e) {
-                console.warn('Android notification badge sync unavailable:', e);
-            }
-        }, (error) => {
-            console.error("নোটিফিকেশন লোড এরর: ", error);
-            notificationContainer.innerHTML = `
-                <div style="text-align:center;color:#dc3545;padding:25px;">
-                    <div style="font-size:34px;margin-bottom:8px;">⚠️</div>
-                    <p style="margin:0 0 8px;">নোটিফিকেশন লোড করা যায়নি।</p>
-                    <small style="color:#777;">ইন্টারনেট/অ্যাকাউন্ট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</small>
-                </div>`;
+        let docsArray = [];
+        snapshot.forEach((doc) => {
+            docsArray.push({ id: doc.id, data: doc.data() });
         });
+
+        docsArray.sort((a, b) => {
+            const getMillis = (d) => {
+                if (!d) return 0;
+                if (d.seconds) return d.seconds * 1000;
+                return new Date(d).getTime() || 0;
+            };
+            const tA = getMillis(a.data.createdAt || a.data.timestamp);
+            const tB = getMillis(b.data.createdAt || b.data.timestamp);
+            return tB - tA;
+        });
+
+        docsArray.forEach((item) => {
+            const notif = item.data;
+            const notifItem = createNotificationCard(item.id, notif);
+            notificationContainer.appendChild(notifItem);
+        });
+
+        const unreadCount = docsArray.reduce((n, item) => n + (item.data.isRead === false ? 1 : 0), 0);
+        try {
+            if (window.AndroidBridge && typeof window.AndroidBridge.setPendingNotificationCount === 'function') {
+                window.AndroidBridge.setPendingNotificationCount(unreadCount);
+            }
+        } catch (e) {
+            console.warn('Android notification badge sync unavailable:', e);
+        }
+    };
+
+    const handleError = (error) => {
+        console.warn("নোটিফিকেশন পারমিশন/লোড এরর, ইউজারের Auth UID দিয়ে ফলব্যাক চেষ্টা করা হচ্ছে...", error);
+        
+        // যদি কোম্পানির ID দিয়ে পারমিশন না দেয়, ইউজারের Auth UID দিয়ে লোড করবে
+        if (targetId !== currentUserUid) {
+            currentNotifUnsubscribe = db.collection("notifications")
+                .where("userId", "==", currentUserUid)
+                .onSnapshot(handleSnapshot, (err) => {
+                    console.error("ফলব্যাক লোডও ব্যর্থ: ", err);
+                    showErrorUI(notificationContainer);
+                });
+        } else {
+            showErrorUI(notificationContainer);
+        }
+    };
+
+    currentNotifUnsubscribe = query.onSnapshot(handleSnapshot, handleError);
+}
+
+function showErrorUI(container) {
+    container.innerHTML = `
+        <div style="text-align:center;color:#dc3545;padding:25px;">
+            <div style="font-size:34px;margin-bottom:8px;">⚠️</div>
+            <p style="margin:0 0 8px;">নোটিফিকেশন লোড করা যায়নি।</p>
+            <small style="color:#777;">ইন্টারনেট/অ্যাকাউন্ট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</small>
+        </div>`;
 }
 
 // 🎯 ৫. নোটিফিকেশন কার্ড রেন্ডারিং
