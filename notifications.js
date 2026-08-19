@@ -10,11 +10,12 @@ let currentNotifUnsubscribe = null; // মেমোরি লিক রোধ �
 document.addEventListener("DOMContentLoaded", () => {
     initGlobalNotificationSystem();
 
-    // ⚡ মোড সুইচ (ইউজার ↔ কোম্পানি) হলে স্বয়ংক্রিয়ভাবে নোটিফিকেশন লিস্ট ও ওয়েলকাম মেসেজ আপডেট হবে
+    // ⚡ মোড সুইচ (ইউজার ↔ কোম্পানি) হলে স্বয়ংক্রিয়ভাবে নোটিফিকেশন লিস্ট ও টোকেন আপডেট হবে
     window.addEventListener('identityChanged', async () => {
         if (auth.currentUser) {
             const activeIdentity = typeof window.getActiveIdentity === 'function' ? window.getActiveIdentity() : null;
             if (activeIdentity) {
+                await syncGuestTokenToUser(auth.currentUser.uid);
                 await ensureWelcomeNotification(activeIdentity);
             }
             loadNotificationsForActiveIdentity();
@@ -28,9 +29,7 @@ function initGlobalNotificationSystem() {
             console.log("🔓 রেজিস্টার্ড ইউজার একটিভ আছেন।");
             await syncGuestTokenToUser(user.uid);
             
-            // বর্তমান সক্রিয় প্রোফাইল (ইউজার নাকি কোম্পানি) সংগ্রহ
             const activeIdentity = typeof window.getActiveIdentity === 'function' ? window.getActiveIdentity() : null;
-            
             if (activeIdentity) {
                 await ensureWelcomeNotification(activeIdentity);
             }
@@ -58,8 +57,6 @@ async function ensureWelcomeNotification(activeIdentity) {
 
         if (!hasWelcome) {
             const isCompany = activeIdentity.type === 'company';
-            
-            // নাম না থাকলে "সম্মানিত গ্রাহক" ফলব্যাক
             const targetName = activeIdentity.name || "সম্মানিত গ্রাহক";
 
             const titleText = isCompany 
@@ -77,6 +74,7 @@ async function ensureWelcomeNotification(activeIdentity) {
                 type: "welcome",
                 senderName: targetName,
                 isRead: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
             console.log(`✅ ${activeIdentity.type} (${targetName})-এর জন্য স্বাগতম নোটিফিকেশন তৈরি হয়েছে।`);
@@ -88,8 +86,6 @@ async function ensureWelcomeNotification(activeIdentity) {
 
 // 🎯 ২. একটিভ আইডেন্টিটি ফিল্টার করে নোটিফিকেশন লোড
 function loadNotificationsForActiveIdentity() {
-    // Android WebView-এ getActiveIdentity() কখনও Firebase Auth ready হওয়ার আগে null হতে পারে।
-    // তাই authenticated Firebase user-কে নিরাপদ fallback হিসেবে ব্যবহার করা হচ্ছে।
     let activeIdentity = null;
     try {
         activeIdentity = typeof window.getActiveIdentity === 'function'
@@ -114,7 +110,6 @@ function loadNotificationsForActiveIdentity() {
     if (!activeIdentity || !activeIdentity.id) {
         if (container) {
             container.innerHTML = `<p style="text-align:center;color:#7f8c8d;padding:20px;">অ্যাকাউন্ট যাচাই হচ্ছে...</p>`;
-            // Auth event আবার এলে loadNotificationsForActiveIdentity() পুনরায় চলবে।
         }
         return;
     }
@@ -164,26 +159,32 @@ function showGuestMessage() {
     if (headerBadge) headerBadge.style.display = "none";
 }
 
+// 🎯 ৩. টোকেন সিঙ্ক (ইউজার এবং পেজ/কোম্পানি উভয়ের জন্য টোকেন সেভ করবে)
 async function syncGuestTokenToUser(uid) {
     try {
-        const localToken = localStorage.getItem("my_fcm_token");
-        if (localToken) {
-            await saveTokenToFirestore(uid, localToken);
-            await db.collection("anonymous_tokens").doc(localToken).delete();
-            localStorage.removeItem("my_fcm_token");
-            return;
+        const activeIdentity = typeof window.getActiveIdentity === 'function' ? window.getActiveIdentity() : null;
+        let currentToken = localStorage.getItem("my_fcm_token");
+
+        if (!currentToken && Notification.permission === "granted") {
+            currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
         }
 
-        if (Notification.permission === "granted") {
-            const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
-            if (currentToken) {
-                await saveTokenToFirestore(uid, currentToken);
+        if (currentToken) {
+            // ইউজারের প্রোফাইলে সেভ
+            await saveTokenToFirestore("users", uid, currentToken);
+            
+            // যদি পেজ/কোম্পানি মোডে থাকে, পেজের প্রোফাইলেও টোকেন সেভ করবে
+            if (activeIdentity && activeIdentity.type === 'company' && activeIdentity.id) {
+                await saveTokenToFirestore("companies", activeIdentity.id, currentToken);
             }
-        } 
-        else if (Notification.permission === "default") {
+
+            if (localStorage.getItem("my_fcm_token")) {
+                await db.collection("anonymous_tokens").doc(currentToken).delete().catch(()=>{});
+                localStorage.removeItem("my_fcm_token");
+            }
+        } else if (Notification.permission === "default") {
             showEnableNotificationButton(uid);
-        }
-        else if (Notification.permission === "denied") {
+        } else if (Notification.permission === "denied") {
             showPermissionDeniedBanner();
         }
     } catch (error) {
@@ -191,8 +192,8 @@ async function syncGuestTokenToUser(uid) {
     }
 }
 
-async function saveTokenToFirestore(uid, token) {
-    await db.collection("users").doc(uid).set({
+async function saveTokenToFirestore(collectionName, id, token) {
+    await db.collection(collectionName).doc(id).set({
         fcmToken: token,
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
@@ -218,7 +219,7 @@ function showEnableNotificationButton(uid) {
         try {
             const token = await messaging.getToken({ vapidKey: VAPID_KEY });
             if (token) {
-                await saveTokenToFirestore(uid, token);
+                await syncGuestTokenToUser(uid);
                 banner.remove();
                 alert("🎉 নোটিফিকেশন চালু হয়েছে!");
                 location.reload(); 
@@ -241,7 +242,7 @@ function showPermissionDeniedBanner() {
     listContainer.parentNode.insertBefore(alertBanner, listContainer);
 }
 
-// 🎯 ৩. রিয়েলটাইম লিসেনার
+// 🎯 ৪. রিয়েলটাইম লিসেনার (ইউজার এবং পেজ উভয়ের জন্য সাপোর্ট)
 function listenForNotifications(targetId) {
     const notificationContainer = document.getElementById("notifications-list");
     if (!notificationContainer) return;
@@ -265,10 +266,15 @@ function listenForNotifications(targetId) {
                 docsArray.push({ id: doc.id, data: doc.data() });
             });
 
-            // তারিখ অনুসারে সর্ট করা
+            // তারিখ সর্টিং (createdAt & timestamp দুটি ফোলব্যাক সহ)
             docsArray.sort((a, b) => {
-                const tA = a.data.timestamp ? (a.data.timestamp.seconds || new Date(a.data.timestamp).getTime()) : 0;
-                const tB = b.data.timestamp ? (b.data.timestamp.seconds || new Date(b.data.timestamp).getTime()) : 0;
+                const getMillis = (d) => {
+                    if (!d) return 0;
+                    if (d.seconds) return d.seconds * 1000;
+                    return new Date(d).getTime() || 0;
+                };
+                const tA = getMillis(a.data.createdAt || a.data.timestamp);
+                const tB = getMillis(b.data.createdAt || b.data.timestamp);
                 return tB - tA;
             });
 
@@ -278,7 +284,6 @@ function listenForNotifications(targetId) {
                 notificationContainer.appendChild(notifItem);
             });
 
-            // Page-এর বর্তমান unread state-ও Android launcher badge-এ প্রতিফলিত করি।
             const unreadCount = docsArray.reduce((n, item) => n + (item.data.isRead === false ? 1 : 0), 0);
             try {
                 if (window.AndroidBridge && typeof window.AndroidBridge.setPendingNotificationCount === 'function') {
@@ -298,7 +303,7 @@ function listenForNotifications(targetId) {
         });
 }
 
-// 🎯 ৪. নোটিফিকেশন কার্ড রেন্ডারিং (নাম এবং ফলব্যাক লজিক সহ)
+// 🎯 ৫. নোটিফিকেশন কার্ড রেন্ডারিং
 function createNotificationCard(docId, notif) {
     const li = document.createElement("li");
     li.className = `notification-item ${notif.isRead ? 'read' : 'unread'}`;
@@ -306,18 +311,18 @@ function createNotificationCard(docId, notif) {
     let iconName = "notifications";
     if (notif.type === "welcome") iconName = "celebration";
     else if (notif.type === "like") iconName = "thumb_up";
-    else if (notif.type === "chat") iconName = "chat";
+    else if (notif.type === "chat" || notif.type === "message") iconName = "chat";
 
     let dateStr = "এইমাত্র";
-    if (notif.timestamp) {
-        let dateObj = notif.timestamp.toDate ? notif.timestamp.toDate() : new Date(notif.timestamp.seconds * 1000 || notif.timestamp);
+    const timeField = notif.createdAt || notif.timestamp;
+    if (timeField) {
+        let dateObj = timeField.toDate ? timeField.toDate() : new Date(timeField.seconds ? timeField.seconds * 1000 : timeField);
         if (!isNaN(dateObj.getTime())) {
             dateStr = dateObj.toLocaleDateString('bn-BD', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
     }
 
-    // 💡 নাম চেক লজিক: senderName -> title -> "সম্মানিত গ্রাহক"
-    const displayName = notif.senderName || notif.title || "সম্মানিত গ্রাহক";
+    const displayName = notif.title || notif.senderName || "সম্মানিত গ্রাহক";
 
     li.innerHTML = `
         <i class="material-icons notification-icon-large">${iconName}</i>
@@ -325,7 +330,7 @@ function createNotificationCard(docId, notif) {
             <h4 style="margin: 0 0 5px 0; color: #2c3e50; font-size: 16px; font-weight: 600;">
                 ${displayName}
             </h4>
-            <p class="notif-text">${notif.message}</p>
+            <p class="notif-text">${notif.message || notif.body}</p>
         </div>
         <span class="notif-time">${dateStr}</span>
     `;
@@ -333,7 +338,7 @@ function createNotificationCard(docId, notif) {
     li.addEventListener("click", async () => {
         await markAsRead(docId);
         
-        if (notif.type === "chat" && notif.chatId) {
+        if ((notif.type === "chat" || notif.type === "message") && notif.chatId) {
             window.location.href = `messages.html?chatId=${notif.chatId}&postId=${notif.postId || ''}&action=direct`;
         } else if (notif.postId) {
             window.location.href = `details.html?id=${notif.postId}`;
@@ -349,4 +354,4 @@ async function markAsRead(docId) {
     } catch (error) {
         console.error("রিড স্টেট আপডেট এরর: ", error);
     }
-                }
+        }
