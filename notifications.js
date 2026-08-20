@@ -1,11 +1,11 @@
-// notifications.js - সম্পূর্ণ ডায়নামিক ও স্মার্ট নোটিফিকেশন ইঞ্জিন
+// notifications.js - সম্পূর্ণ ডায়নামিক ও স্মার্ট নোটিফিকেশন ইঞ্জিন (ডুপ্লিকেট নোটিফিকেশন ফিক্সড)
 const db = firebase.firestore();
 const auth = firebase.auth();
 const messaging = firebase.messaging(); 
 
 const VAPID_KEY = "BIWyqUvtwx7iH6nKiZRVCNl7ihTsFn40IJ1LVp58RYIFDEbHrWBSYnVVQ2iA5m9d7tmbNngRPvAhPDEW34SBoLg"; 
 
-let currentNotifUnsubscribe = null; // মেমোরি লিক রোধ করতে লাইভ লিসেনার ট্র্যাকার
+let currentNotifUnsubscribe = null; // মেমোরি লিক ও ডুপ্লিকেট লিসেনার রোধ করতে ট্র্যাকার
 
 document.addEventListener("DOMContentLoaded", () => {
     initGlobalNotificationSystem();
@@ -235,19 +235,25 @@ function showPermissionDeniedBanner() {
     listContainer.parentNode.insertBefore(alertBanner, listContainer);
 }
 
-// 🎯 ৪. রিয়েলটাইম লিসেনার (প্রেরক ফিল্টার ও ডুপ্লিকেট প্রতিরোধ সহ)
+function showErrorUI(container) {
+    if (!container) return;
+    container.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">নোটিফিকেশন লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে পেজটি রিফ্রেশ করুন।</p>`;
+}
+
+// 🎯 ৪. রিয়েলটাইম লিসেনার (স্মার্ট ডুপ্লিকেট ফিল্টারিং সহ)
 function listenForNotifications(activeIdentity) {
     const notificationContainer = document.getElementById("notifications-list");
     if (!notificationContainer) return;
 
+    // ১. পূর্বের লিসেনার বন্ধ নিশ্চিত করা
     if (currentNotifUnsubscribe) {
-        currentNotifUnsubscribe(); // পূর্বের লিসেনার বন্ধ
+        currentNotifUnsubscribe();
+        currentNotifUnsubscribe = null;
     }
 
     const targetId = typeof activeIdentity === 'object' ? activeIdentity.id : activeIdentity;
     const currentUserUid = auth.currentUser ? auth.currentUser.uid : targetId;
 
-    // প্রাথমিক ফায়ারস্টোর কোয়েরি
     let query = db.collection("notifications").where("userId", "==", targetId);
 
     const handleSnapshot = (snapshot) => {
@@ -258,32 +264,42 @@ function listenForNotifications(activeIdentity) {
             return;
         }
 
-        let docsArray = [];
-        const seenKeys = new Set(); // 🎯 ডুপ্লিকেট ফিল্টারের জন্য সেট
+        const uniqueNotifsMap = new Map();
 
         snapshot.forEach((doc) => {
             const data = doc.data();
             
-            // 🚨 ফিল্টার ১: প্রেরক যদি নিজেই বর্তমানে এক্টিভ থাকে, তবে নোটিফিকেশনটি স্কিপ করবে
+            // 🚨 ফিল্টার ১: প্রেরক যদি নিজেই বর্তমানে এক্টিভ থাকে, তবে নোটিফিকেশন স্কিপ করবে
             if (data.senderId && String(data.senderId) === String(targetId)) {
-                return; 
-            }
-
-            // 🎯 ফিল্টার ২: একই মেসেজের ডুপ্লিকেট নোটিফিকেশন প্রতিরোধ
-            const uniqueKey = data.messageId ? `${data.chatId}_${data.messageId}` : doc.id;
-            if (seenKeys.has(uniqueKey)) {
                 return;
             }
-            seenKeys.add(uniqueKey);
+
+            // 🚨 ফিল্টার ২: ডুপ্লিকেট নোটিফিকেশন শনাক্তকরণ (chatId, message ও টাইপ মিলিয়ে একটি ইউনিক কী তৈরি করা)
+            const msgContent = (data.message || data.body || '').trim();
+            const notifType = data.type || 'general';
             
-            docsArray.push({ id: doc.id, data: data });
+            // যদি chatId থাকে তবে এটি দিয়ে কী তৈরি হবে, অন্যথায় বার্তা এবং সময়কাল
+            let uniqueKey = doc.id;
+            if (data.chatId && msgContent) {
+                uniqueKey = `${data.chatId}_${msgContent}_${notifType}`;
+            } else if (msgContent) {
+                uniqueKey = `${msgContent}_${notifType}`;
+            }
+
+            // যদি ম্যাপে পূর্বে সংরক্ষণ না থাকে তবেই যোগ করবে
+            if (!uniqueNotifsMap.has(uniqueKey)) {
+                uniqueNotifsMap.set(uniqueKey, { id: doc.id, data: data });
+            }
         });
+
+        let docsArray = Array.from(uniqueNotifsMap.values());
 
         if (docsArray.length === 0) {
             notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">এই অ্যাকাউন্টের জন্য কোনো নতুন নোটিফিকেশন নেই।</p>`;
             return;
         }
 
+        // সময়ের ভিত্তিতে সাজানো (নতুনগুলো আগে থাকবে)
         docsArray.sort((a, b) => {
             const getMillis = (d) => {
                 if (!d) return 0;
@@ -295,12 +311,13 @@ function listenForNotifications(activeIdentity) {
             return tB - tA;
         });
 
+        // কার্ড তৈরি করে DOM-এ অ্যাপেন্ড করা
         docsArray.forEach((item) => {
-            const notif = item.data;
-            const notifItem = createNotificationCard(item.id, notif);
+            const notifItem = createNotificationCard(item.id, item.data);
             notificationContainer.appendChild(notifItem);
         });
 
+        // অ্যান্ড্রেয়েড অ্যাপ নোটিফিকেশন ব্যাজ আপডেট
         const unreadCount = docsArray.reduce((n, item) => n + (item.data.isRead === false ? 1 : 0), 0);
         try {
             if (window.AndroidBridge && typeof window.AndroidBridge.setPendingNotificationCount === 'function') {
@@ -327,15 +344,6 @@ function listenForNotifications(activeIdentity) {
     };
 
     currentNotifUnsubscribe = query.onSnapshot(handleSnapshot, handleError);
-}
-
-function showErrorUI(container) {
-    container.innerHTML = `
-        <div style="text-align:center;color:#dc3545;padding:25px;">
-            <div style="font-size:34px;margin-bottom:8px;">⚠️</div>
-            <p style="margin:0 0 8px;">নোটিফিকেশন লোড করা যায়নি।</p>
-            <small style="color:#777;">ইন্টারনেট/অ্যাকাউন্ট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</small>
-        </div>`;
 }
 
 // 🎯 ৫. নোটিফিকেশন কার্ড রেন্ডারিং
