@@ -377,18 +377,6 @@ firebase.auth().onAuthStateChanged(async (user) => {
     }
 });
 
-// ফাংশন ২: লগআউট হ্যান্ডেলার
-const handleLogout = async (e) => {
-    e.preventDefault();
-    try {
-        await auth.signOut(); 
-        alert('সফলভাবে লগআউট করা হয়েছে!');
-        window.location.href = 'index.html'; 
-    } catch (error) {
-        console.error("লগআউট ব্যর্থ হয়েছে:", error);
-        alert("লগআউট ব্যর্থ হয়েছে।");
-    }
-};
 
 
 document.addEventListener('DOMContentLoaded', function() {
