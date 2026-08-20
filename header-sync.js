@@ -178,3 +178,53 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
         if (unreadMsgListener) { unreadMsgListener(); unreadMsgListener = null; }
     }
 })();
+
+// =======================================================
+// 🚪 গ্লোবাল লগআউট ও অথ স্টেট হ্যান্ডলার (Header Sync)
+// =======================================================
+
+// ১. অথ স্টেট পরিবর্তনের সাথে সাথে সাইডবার বাটন আপডেট
+if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged((user) => {
+        const loginBtn = document.getElementById('login-link-sidebar');
+        const logoutBtn = document.getElementById('logout-link-sidebar');
+
+        if (user) {
+            // ইউজার লগইন থাকলে লগইন বাটন হাইড ও লগআউট বাটন শো করবে
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'flex';
+        } else {
+            // ইউজার লগআউট থাকলে লগইন বাটন শো ও লগআউট বাটন হাইড করবে
+            if (loginBtn) loginBtn.style.display = 'flex';
+            if (logoutBtn) logoutBtn.style.display = 'none';
+        }
+    });
+}
+
+// ২. লগআউট ক্লিক ইভেন্ট হ্যান্ডলার
+document.addEventListener('DOMContentLoaded', () => {
+    const logoutBtn = document.getElementById('logout-link-sidebar');
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            if (confirm("আপনি কি নিশ্চিত যে লগআউট করতে চান?")) {
+                firebase.auth().signOut().then(() => {
+                    // স্টোরেজ ক্লিন করা
+                    localStorage.removeItem('activeIdentityType');
+                    localStorage.removeItem('activeCompanyId');
+                    localStorage.removeItem('activeName');
+                    localStorage.removeItem('activeAvatar');
+                    sessionStorage.clear();
+
+                    alert("সফলভাবে লগআউট হয়েছে।");
+                    window.location.href = 'auth.html';
+                }).catch((error) => {
+                    console.error("লগআউট ত্রুটি:", error);
+                    alert("লগআউট হতে সমস্যা হয়েছে: " + error.message);
+                });
+            }
+        });
+    }
+});
