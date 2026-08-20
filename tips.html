@@ -305,9 +305,10 @@
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
             <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
             
-            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-            
-        </nav>
+            <!-- 🎯 নতুন যুক্ত করুন: লগইন ও লগআউট বাটন -->
+        <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+        <a href="#" id="logout-link-sidebar" style="display: none; color: #ff4d4d;"><i class="material-icons">exit_to_app</i> লগআউট</a>
+    </nav>
     </div>
 
     <div class="overlay" id="overlay"></div>
@@ -369,18 +370,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
     }
 });
 
-// ফাংশন ২: লগআউট হ্যান্ডেলার
-const handleLogout = async (e) => {
-    e.preventDefault();
-    try {
-        await auth.signOut(); 
-        alert('সফলভাবে লগআউট করা হয়েছে!');
-        window.location.href = 'index.html'; 
-    } catch (error) {
-        console.error("লগআউট ব্যর্থ হয়েছে:", error);
-        alert("লগআউট ব্যর্থ হয়েছে।");
-    }
-};
+
 
 
 document.addEventListener('DOMContentLoaded', function() {
