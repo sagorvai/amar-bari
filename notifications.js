@@ -235,7 +235,7 @@ function showPermissionDeniedBanner() {
     listContainer.parentNode.insertBefore(alertBanner, listContainer);
 }
 
-// 🎯 ৪. রিয়েলটাইম লিসেনার (কোম্পানি এবং ইউজারের সিকিউরিটি এরর হ্যান্ডলিং সহ)
+// 🎯 ৪. রিয়েলটাইম লিসেনার (প্রেরকের নিজের নোটিফিকেশন ফিল্টার সহ)
 function listenForNotifications(activeIdentity) {
     const notificationContainer = document.getElementById("notifications-list");
     if (!notificationContainer) return;
@@ -260,8 +260,20 @@ function listenForNotifications(activeIdentity) {
 
         let docsArray = [];
         snapshot.forEach((doc) => {
-            docsArray.push({ id: doc.id, data: doc.data() });
+            const data = doc.data();
+            
+            // 🚨 ফিল্টার: প্রেরক যদি নিজেই বর্তমানে এক্টিভ থাকে, তবে নোটিফিকেশনটি শো করবে না
+            if (data.senderId && String(data.senderId) === String(targetId)) {
+                return; // প্রেরকের জন্য তৈরি নোটিফিকেশন স্কিপ করবে
+            }
+            
+            docsArray.push({ id: doc.id, data: data });
         });
+
+        if (docsArray.length === 0) {
+            notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">এই অ্যাকাউন্টের জন্য কোনো নতুন নোটিফিকেশন নেই।</p>`;
+            return;
+        }
 
         docsArray.sort((a, b) => {
             const getMillis = (d) => {
@@ -293,7 +305,6 @@ function listenForNotifications(activeIdentity) {
     const handleError = (error) => {
         console.warn("নোটিফিকেশন পারমিশন/লোড এরর, ইউজারের Auth UID দিয়ে ফলব্যাক চেষ্টা করা হচ্ছে...", error);
         
-        // যদি কোম্পানির ID দিয়ে পারমিশন না দেয়, ইউজারের Auth UID দিয়ে লোড করবে
         if (targetId !== currentUserUid) {
             currentNotifUnsubscribe = db.collection("notifications")
                 .where("userId", "==", currentUserUid)
@@ -307,15 +318,6 @@ function listenForNotifications(activeIdentity) {
     };
 
     currentNotifUnsubscribe = query.onSnapshot(handleSnapshot, handleError);
-}
-
-function showErrorUI(container) {
-    container.innerHTML = `
-        <div style="text-align:center;color:#dc3545;padding:25px;">
-            <div style="font-size:34px;margin-bottom:8px;">⚠️</div>
-            <p style="margin:0 0 8px;">নোটিফিকেশন লোড করা যায়নি।</p>
-            <small style="color:#777;">ইন্টারনেট/অ্যাকাউন্ট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</small>
-        </div>`;
 }
 
 // 🎯 ৫. নোটিফিকেশন কার্ড রেন্ডারিং
