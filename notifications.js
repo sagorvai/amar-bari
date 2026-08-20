@@ -370,3 +370,39 @@ async function markAsRead(docId) {
         console.error("রিড স্টেট আপডেট এরর: ", error);
     }
         }
+
+// =======================================================
+// 🚪 লগআউট হ্যান্ডলার (Logout Handler)
+// =======================================================
+window.handleUserLogout = function() {
+    if (confirm("আপনি কি নিশ্চিত যে লগআউট করতে চান?")) {
+        auth.signOut().then(() => {
+            // ১. লোকাল স্টোরেজের সক্রিয় আইডেন্টিটি ডেটা মুছে ফেলা
+            localStorage.removeItem('activeIdentityType');
+            localStorage.removeItem('activeCompanyId');
+            localStorage.removeItem('activeName');
+            localStorage.removeItem('activeAvatar');
+            
+            // ২. সেশন স্টোরেজের কোনো অস্থায়ী ডেটা থাকলে তা ক্লিয়ার করা
+            sessionStorage.clear();
+
+            alert("সফলভাবে লগআউট হয়েছে।");
+            // ৩. লগইন/অথ পেজে নিয়ে যাওয়া
+            window.location.href = 'auth.html';
+        }).catch((error) => {
+            console.error("লগআউট করতে সমস্যা হয়েছে:", error);
+            alert("লগআউট করা যাচ্ছে না: " + error.message);
+        });
+    }
+};
+
+// হেডার বা ড্রপডাউনের লগআউট বাটনে অটোমেটিক ইভেন্ট লিসেনার সেটআপ
+document.addEventListener('DOMContentLoaded', () => {
+    const logoutBtn = document.getElementById('logout-btn'); // তোমার HTML-এর লগআউট বাটনের ID
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.handleUserLogout();
+        });
+    }
+});
