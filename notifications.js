@@ -203,7 +203,7 @@ function showEnableNotificationButton(uid) {
         <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">
             🚀 লাইভ আপডেট ও চ্যাট নোটিফিকেশন পেতে পুশ নোটিফিকেশন সচল করুন!
         </p>
-        <button id="btn-grant-now" style="background: #1a73e8; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer;">নোটিফিকেশন चालू করুন</button>
+        <button id="btn-grant-now" style="background: #1a73e8; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer;">নোটিফিকেশন চালু করুন</button>
     `;
 
     listContainer.parentNode.insertBefore(banner, listContainer);
@@ -235,7 +235,7 @@ function showPermissionDeniedBanner() {
     listContainer.parentNode.insertBefore(alertBanner, listContainer);
 }
 
-// 🎯 ৪. রিয়েলটাইম লিসেনার (প্রেরকের নিজের নোটিফিকেশন ফিল্টার সহ)
+// 🎯 ৪. রিয়েলটাইম লিসেনার (প্রেরক ফিল্টার ও ডুপ্লিকেট প্রতিরোধ সহ)
 function listenForNotifications(activeIdentity) {
     const notificationContainer = document.getElementById("notifications-list");
     if (!notificationContainer) return;
@@ -259,13 +259,22 @@ function listenForNotifications(activeIdentity) {
         }
 
         let docsArray = [];
+        const seenKeys = new Set(); // 🎯 ডুপ্লিকেট ফিল্টারের জন্য সেট
+
         snapshot.forEach((doc) => {
             const data = doc.data();
             
-            // 🚨 ফিল্টার: প্রেরক যদি নিজেই বর্তমানে এক্টিভ থাকে, তবে নোটিফিকেশনটি শো করবে না
+            // 🚨 ফিল্টার ১: প্রেরক যদি নিজেই বর্তমানে এক্টিভ থাকে, তবে নোটিফিকেশনটি স্কিপ করবে
             if (data.senderId && String(data.senderId) === String(targetId)) {
-                return; // প্রেরকের জন্য তৈরি নোটিফিকেশন স্কিপ করবে
+                return; 
             }
+
+            // 🎯 ফিল্টার ২: একই মেসেজের ডুপ্লিকেট নোটিফিকেশন প্রতিরোধ
+            const uniqueKey = data.messageId ? `${data.chatId}_${data.messageId}` : doc.id;
+            if (seenKeys.has(uniqueKey)) {
+                return;
+            }
+            seenKeys.add(uniqueKey);
             
             docsArray.push({ id: doc.id, data: data });
         });
@@ -320,6 +329,15 @@ function listenForNotifications(activeIdentity) {
     currentNotifUnsubscribe = query.onSnapshot(handleSnapshot, handleError);
 }
 
+function showErrorUI(container) {
+    container.innerHTML = `
+        <div style="text-align:center;color:#dc3545;padding:25px;">
+            <div style="font-size:34px;margin-bottom:8px;">⚠️</div>
+            <p style="margin:0 0 8px;">নোটিফিকেশন লোড করা যায়নি।</p>
+            <small style="color:#777;">ইন্টারনেট/অ্যাকাউন্ট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</small>
+        </div>`;
+}
+
 // 🎯 ৫. নোটিফিকেশন কার্ড রেন্ডারিং
 function createNotificationCard(docId, notif) {
     const li = document.createElement("li");
@@ -371,5 +389,4 @@ async function markAsRead(docId) {
     } catch (error) {
         console.error("রিড স্টেট আপডেট এরর: ", error);
     }
-        }
-
+                }
