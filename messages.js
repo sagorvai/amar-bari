@@ -112,12 +112,11 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. ইনবক্স ফিল্টারিং (লগইন করা ইউজারের Auth UID ও Active ID দিয়ে নিরাপদ ফিল্টারিং)
+// 💬 ২. ইনবক্স ফিল্টারিং
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer || !activeSender || !currentUser) return;
 
-    // Security Rule পাসের জন্য সর্বদাই currentUser.uid দিয়ে Query করা হবে
     db.collection('chats')
         .where('participants', 'array-contains', currentUser.uid)
         .onSnapshot((snapshot) => {
@@ -126,9 +125,6 @@ function loadChatList() {
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-
-                // 🎯 নিখুঁত মোড লজিক:
-                // বর্তমান activeSender.id চ্যাটের senderId অথবা receiverId এর সাথে মিলতে হবে।
                 const isRelevantToActiveMode = (data.senderId === activeSender.id || data.receiverId === activeSender.id);
                 const isDeleted = data.deletedBy && data.deletedBy.includes(activeSender.id);
 
@@ -142,13 +138,10 @@ function loadChatList() {
                 return;
             }
 
-            // সময় অনুযায়ী সাজানো
             chatDocs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
 
             chatDocs.forEach((chatData) => {
                 const chatId = chatData.id;
-
-                // অপর পক্ষের ID সঠিকভাবে নির্ধারণ
                 const otherPartyId = (chatData.senderId === activeSender.id) ? chatData.receiverId : chatData.senderId;
                 const isUnread = chatData.isUnread && chatData.lastSenderId !== activeSender.id;
 
@@ -180,7 +173,6 @@ function loadChatList() {
                     openChatBox(chatId, chatData.postId);
                 };
 
-                // অপর পক্ষের প্রফেশনাল নাম ও ছবি ফেচ করা
                 fetchIdentityDetails(otherPartyId, `name_${chatId}`, `avatar_${chatId}`);
             });
         }, (error) => {
@@ -189,7 +181,7 @@ function loadChatList() {
         });
 }
 
-// 👤/🏢 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার সম্পূর্ণ নিখুঁত ফাংশন
+// 👤/🏢 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার ফাংশন
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
@@ -197,7 +189,6 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     const avatarElem = document.getElementById(avatarElemId);
 
     try {
-        // 🔹 ধাপ ১: আগে 'users' কালেকশনে চেক করা (User Document ID দিয়ে)
         let uDoc = await db.collection('users').doc(targetId).get();
         if (uDoc.exists) {
             const uData = uDoc.data();
@@ -206,7 +197,6 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // 🔹 ধাপ ২: 'companies' কালেকশনে সরাসরি Document ID দিয়ে চেক করা
         let cDoc = await db.collection('companies').doc(targetId).get();
         if (cDoc.exists) {
             const cData = cDoc.data();
@@ -215,7 +205,6 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // 🔹 ধাপ ৩: কোম্পানি কালেকশনের ভেতর 'companyId' ফিল্ডের সাথে মিল থাকলে
         let compQueryById = await db.collection('companies').where('companyId', '==', targetId).limit(1).get();
         if (!compQueryById.empty) {
             const cData = compQueryById.docs[0].data();
@@ -224,7 +213,6 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // 🔹 ধাপ ৪: 'ownerUid' (মালিকের UID) দিয়ে কোম্পানি খোঁজা
         let compQueryByOwner = await db.collection('companies').where('ownerUid', '==', targetId).limit(1).get();
         if (!compQueryByOwner.empty) {
             const cData = compQueryByOwner.docs[0].data();
@@ -233,7 +221,6 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // 🔹 ধাপ ৫: যদি কিছুই না পাওয়া যায়
         if (nameElem) nameElem.textContent = "বিজ্ঞাপনদাতা";
         if (avatarElem && avatarElemId) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
 
@@ -241,7 +228,7 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
         console.error("আইডেন্টিটি ফেচিং ত্রুটি:", err);
         if (nameElem) nameElem.textContent = "গ্রাহক";
     }
-        }
+}
 
 // 📖 ৪. চ্যাট বক্স ওপেন ও রিয়েলটাইম মেসেজ প্রদর্শন
 async function openChatBox(chatId, postId) {
@@ -259,28 +246,17 @@ async function openChatBox(chatId, postId) {
     const chatRef = db.collection('chats').doc(chatId);
     let chatDoc = await chatRef.get();
 
-    if (!chatDoc.exists) {
-        console.warn("চ্যাট রুম পাওয়া যায়নি। সঠিক আইডি লিংক ব্যবহার করুন।");
-        return;
-    }
-
+    if (!chatDoc.exists) return;
     const cData = chatDoc.data();
 
-    // চ্যাট পড়া হয়ে গেলে isUnread আপডেট
     if (cData.isUnread && cData.lastSenderId !== activeSender.id) {
         await chatRef.update({ isUnread: false });
     }
 
-    // অপর পক্ষের আইডি বের করা
     const otherPartyId = (cData.senderId === activeSender.id) ? cData.receiverId : cData.senderId;
-
-    // হেডার প্রোফাইল নাম আপডেট
     fetchIdentityDetails(otherPartyId, 'activeChatUserName', null);
-
-    // প্রপার্টি ইনফরমেশন লোড
     loadPropertyContext(postId || cData.postId);
 
-    // মেসেজ সাবস্ক্রিপশন (রিয়েলটাইম শুনবে)
     if (activeChatListener) activeChatListener();
 
     const messagesDisplay = document.getElementById('messagesDisplay');
@@ -308,7 +284,7 @@ async function openChatBox(chatId, postId) {
         });
 }
 
-// ✉️ ৫. মেসেজ সেন্ড ও স্মার্ট পুশ নোটিফিকেশন লজিক
+// ✉️ ৫. মেসেজ সেন্ড লজিক (ডুপ্লিকেট নোটিফিকেশন রিমুভড)
 async function sendMessage(text) {
     if (!text.trim() || !currentChatId || !activeSender) return;
 
@@ -323,13 +299,9 @@ async function sendMessage(text) {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // ২. চ্যাট ডকুমেন্টের লাস্ট মেসেজ আপডেট
+        // ২. চ্যাট ডকুমেন্টের লাস্ট মেসেজ আপডেট করা
+        // ⚡ (নোটিফিকেশন তৈরির বাকি পুরো কাজ ব্যাকএন্ডের Cloud Function সমাধান করবে)
         const chatDocRef = db.collection('chats').doc(currentChatId);
-        const chatSnapshot = await chatDocRef.get();
-        
-        if (!chatSnapshot.exists) return;
-        const chatData = chatSnapshot.data();
-
         await chatDocRef.update({
             lastMessage: cleanText,
             lastSenderId: activeSender.id,
@@ -338,66 +310,10 @@ async function sendMessage(text) {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // ৩. প্রাপকের (Receiver) সঠিক আইডি বের করা
-        const receiverId = (chatData.senderId === activeSender.id) ? chatData.receiverId : chatData.senderId;
-
-        // ৪. অ্যাপের ভেতরে ইন-অ্যাপ নোটিফিকেশন সংরক্ষণ করা (notifications কালেকশন)
-        await db.collection("notifications").add({
-            userId: receiverId,                  // কোম্পানি বা ইউজার যার কাছে যাবে
-            title: activeSender.name,             // 🎯 সঠিক নাম (কোম্পানি হলে কোম্পানির নাম, ইউজার হলে ইউজারের নাম)
-            message: cleanText,
-            type: "chat",
-            chatId: currentChatId,
-            postId: chatData.postId || '',
-            senderName: activeSender.name,       // 🎯 প্রেরকের নাম
-            isRead: false,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        // 🎯 ৫. পুশ নোটিফিকেশনের জন্য প্রাপকের মূল User UID ও FCM Token বের করা
-        let targetUserUid = receiverId;
-
-        // যদি প্রাপক একটি কোম্পানি আইডি হয়, তবে তার ownerUid খুঁজে বের করবে
-        const compDoc = await db.collection('companies').doc(receiverId).get();
-        if (compDoc.exists) {
-            targetUserUid = compDoc.data().ownerUid || receiverId;
-        }
-
-        // মূল ইউজারের প্রোফাইল থেকে FCM Token সংগ্রহ
-        const userDoc = await db.collection('users').doc(targetUserUid).get();
-        if (userDoc.exists && userDoc.data().fcmToken) {
-            const fcmToken = userDoc.data().fcmToken;
-            
-            // পুশ নোটিফিকেশন ফাংশন কল (Cloud Function বা আপনার FCM API Trigger)
-            sendPushNotificationTrigger(fcmToken, activeSender.name, cleanText, currentChatId, chatData.postId);
-        }
-
     } catch (e) {
         console.error("মেসেজ পাঠাতে সমস্যা:", e);
     }
 }
-
-// 🚀 FCM পুশ নোটিফিকেশন পাঠানোর হেলপার ফাংশন
-function sendPushNotificationTrigger(token, title, body, chatId, postId) {
-    // যদি আপনার ব্যাকএন্ড/ক্লাউড ফাংশন থাকে বা সরাসরি API কল করেন:
-    console.log(`📡 পুশ নোটিফিকেশন পাঠানো হচ্ছে -> টোকেন: ${token}`);
-    console.log(`🏷️ টাইটেল/নাম: ${title}`);
-    console.log(`💬 মেসেজ: ${body}`);
-    
-    /* 
-       উদাহরণ (যদি কোনো API বা Cloud Function URL থাকে):
-       fetch('https://your-cloud-function-url/sendPush', {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({
-               token: token,
-               title: title, // এখানে কোম্পানির নাম বা প্রেরকের নাম যাবে
-               body: body,
-               clickAction: `messages.html?chatId=${chatId}&postId=${postId || ''}`
-           })
-       });
-    */
-        }
 
 // 🏢 প্রপার্টি কার্ড ডিসপ্লে
 function loadPropertyContext(postId) {
