@@ -75,6 +75,25 @@
             position: relative; text-decoration: none; color: var(--text-main);
         }
 
+        /* 🔴 নোটিফিকেশন ও মেসেজ কাউন্টার ব্যাজ স্টাইল */
+        .notification-count {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            background-color: #e41e3f;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 5px;
+            font-size: 0.7em;
+            font-weight: bold;
+            min-width: 16px;
+            height: 16px;
+            text-align: center;
+            line-height: 12px;
+            display: none;
+            border: 2px solid #ffffff;
+        }
+
         .fb-profile-pic { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--fb-blue); cursor: pointer; }
 
         /* সাইডবার */
@@ -193,16 +212,21 @@
             </div>
             
             <div class="header-actions">
-                <a href="notifications.html" class="fb-icon-circle" title="নোটিফিকেশন">
+                <!-- 🔔 নোটিফিকেশন বাটন ও লাল ব্যাজ -->
+                <a href="notifications.html" class="fb-icon-circle" id="notificationButton" title="নোটিফিকেশন">
                     <i class="material-icons">notifications</i>
+                    <span class="notification-count" id="notification-count"></span>
                 </a>
                 
+                <!-- ➕ প্রপার্টি পোস্ট বাটন -->
                 <a href="post.html" class="fb-icon-circle" title="প্রপার্টি পোস্ট">
                     <i class="material-icons" style="color: var(--success);">add_circle</i>
                 </a>
                 
-                <a href="messages.html" class="fb-icon-circle" title="মেসেজ">
+                <!-- 💬 মেসেজ বাটন ও লাল ব্যাজ -->
+                <a href="messages.html" class="fb-icon-circle" id="messageButton" title="মেসেজ">
                     <i class="material-icons">chat</i>
+                    <span class="notification-count" id="message-count"></span>
                 </a>
                 
                 <!-- 👤 ডায়নামিক প্রোফাইল পিকচার -->
@@ -222,10 +246,10 @@
         <a href="messages.html"><i class="material-icons">chat</i> মেসেজ সমূহ</a>
         <a href="boost.html"><i class="material-icons" style="color: var(--boost-gold);">bolt</i> পোস্ট বুস্ট করুন</a>
         <a href="tips.html"><i class="material-icons">sticky_note_2</i> আবাসন গাইডলাইন</a>
-        <!-- 🎯 নতুন যুক্ত করুন: লগইন ও লগআউট বাটন -->
+        
+        <!-- 🎯 নতুন যুক্ত করা লগইন ও লগআউট বাটন -->
         <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
         <a href="#" id="logout-link-sidebar" style="display: none; color: #ff4d4d;"><i class="material-icons">exit_to_app</i> লগআউট</a>
-    </nav>
     </div>
     
     <div class="overlay" id="overlay"></div>
@@ -316,7 +340,7 @@
         </div>
     </footer>
 
-    <!-- 🎯 আমাদের নতুন লাইভ হেডার সিঙ্ক স্ক্রিপ্ট -->
+    <!-- 🎯 লাইভ হেডার সিঙ্ক স্ক্রিপ্ট -->
     <script src="header-sync.js"></script>
     
     <script src="index.js"></script>
