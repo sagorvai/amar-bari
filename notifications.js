@@ -1,4 +1,4 @@
-// notifications.js - Mode Isolated Realtime Notification Engine
+// notifications.js - Strict Mode Isolated Notification Engine
 const db = firebase.firestore();
 const auth = firebase.auth();
 const messaging = firebase.messaging(); 
@@ -6,15 +6,13 @@ const messaging = firebase.messaging();
 const VAPID_KEY = "BIWyqUvtwx7iH6nKiZRVCNl7ihTsFn40IJ1LVp58RYIFDEbHrWBSYnVVQ2iA5m9d7tmbNngRPvAhPDEW34SBoLg"; 
 
 let currentNotifUnsubscribe = null; 
-let activeIdentity = null; // { id: string, type: 'user'|'company', name: string }
 
 document.addEventListener("DOMContentLoaded", () => {
     initGlobalNotificationSystem();
 
-    // ⚡ মোড সুইচ হলে (User ↔ Page) নোটিফিকেশন স্বয়ংক্রিয়ভাবে ফিল্টার হবে
+    // ⚡ মোড সুইচ হলে (User ↔ Company/Page) সাথে সাথে ডাটা ফিল্টার রিফ্রেশ হবে
     window.addEventListener('identityChanged', async () => {
         if (auth.currentUser) {
-            resolveActiveIdentity();
             loadNotificationsForActiveIdentity();
         }
     });
@@ -23,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
 function initGlobalNotificationSystem() {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
-            resolveActiveIdentity();
             await syncGuestTokenToUser(user.uid);
             loadNotificationsForActiveIdentity();
         } else {
@@ -32,11 +29,11 @@ function initGlobalNotificationSystem() {
     });
 }
 
-// 🎯 messages.js-এর মতো সক্রিয় আইডেন্টিটি বের করার লজিক
-function resolveActiveIdentity() {
-    activeIdentity = null;
+// 🎯 messages.js-এর হুবহু আইডেন্টিটি রেজোলিউশন লজিক
+function getActiveIdentityData() {
+    let activeIdentity = null;
 
-    // ১. header-sync.js এর গ্লোবাল এক্টিভ আইডেন্টিটি চেক
+    // ১. header-sync.js এর এক্টিভ আইডেন্টিটি
     if (typeof window.getActiveIdentity === 'function') {
         const identity = window.getActiveIdentity();
         if (identity && identity.id) {
@@ -48,7 +45,7 @@ function resolveActiveIdentity() {
         }
     }
 
-    // ২. ব্যাকআপ fallback (যদি header-sync লোড না থাকে)
+    // ২. localStorage ব্যাকআপ
     if (!activeIdentity) {
         const activeMode = localStorage.getItem('activeIdentityType') || 'user';
         if (activeMode === 'company') {
@@ -63,7 +60,7 @@ function resolveActiveIdentity() {
         }
     }
 
-    // ৩. ডিফল্ট ইউজার মোড
+    // ৩. ফলব্যাক ডিফল্ট ইউজার মোড
     if (!activeIdentity && auth.currentUser) {
         activeIdentity = {
             id: auth.currentUser.uid,
@@ -71,9 +68,12 @@ function resolveActiveIdentity() {
             name: auth.currentUser.displayName || 'ইউজার'
         };
     }
+
+    return activeIdentity;
 }
 
 function loadNotificationsForActiveIdentity() {
+    const activeIdentity = getActiveIdentityData();
     const container = document.getElementById('notifications-list');
 
     if (!activeIdentity || !activeIdentity.id) {
@@ -86,8 +86,8 @@ function loadNotificationsForActiveIdentity() {
     listenForNotifications(activeIdentity);
 }
 
-// 🎯 শুধুমাত্র বর্তমান সক্রিয় মোডের ID (userId / companyId) অনুযায়ী নোটিফিকেশন লোড
-function listenForNotifications(identity) {
+// 🎯 মোড অনুযায়ী কঠোরভাবে নোটিফিকেশন ফিল্টারিং লজিক
+function listenForNotifications(activeIdentity) {
     const notificationContainer = document.getElementById("notifications-list");
 
     if (currentNotifUnsubscribe) {
@@ -95,19 +95,15 @@ function listenForNotifications(identity) {
         currentNotifUnsubscribe = null;
     }
 
-    const targetId = identity.id;
+    const targetId = activeIdentity.id;
 
-    // ফায়ারস্টোর ফিল্টারিং: userId == targetId
+    // 🚨 userId এবং receiverId উভয় ফিল্ড চেক করতে ফায়ারস্টোর কোয়েরি
     currentNotifUnsubscribe = db.collection("notifications")
-        .where("userId", "==", targetId)
         .onSnapshot((snapshot) => {
             if (notificationContainer) notificationContainer.innerHTML = "";
 
             if (snapshot.empty) {
-                if (notificationContainer) {
-                    notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">এই অ্যাকাউন্টের জন্য কোনো নোটিফিকেশন নেই।</p>`;
-                }
-                updateHeaderBadge(0);
+                showEmptyState(notificationContainer);
                 return;
             }
 
@@ -116,10 +112,14 @@ function listenForNotifications(identity) {
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 
-                // নিজের পাঠানো নোটিফিকেশন বাদ দেওয়া
-                if (data.senderId && String(data.senderId) === String(targetId)) {
-                    return;
-                }
+                // 🔒 Strict Identity Check: নোটিফিকেশনের প্রাপক (userId বা receiverId) বর্তমান একটিভ আইডি-র সাথে মিলতে হবে
+                const isTargetForThisIdentity = (data.userId === targetId || data.receiverId === targetId);
+                
+                // 🚨 ১. অন্য মোডের নোটিফিকেশন হলে স্কিপ করো
+                if (!isTargetForThisIdentity) return;
+
+                // 🚨 ২. নিজের পাঠানো কোনো নোটিফিকেশন থাকলে স্কিপ করো
+                if (data.senderId && String(data.senderId) === String(targetId)) return;
 
                 const msgContent = (data.message || data.body || '').trim();
                 const notifType = data.type || 'general';
@@ -139,14 +139,11 @@ function listenForNotifications(identity) {
             let docsArray = Array.from(uniqueNotifsMap.values());
 
             if (docsArray.length === 0) {
-                if (notificationContainer) {
-                    notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">কোনো নতুন নোটিফিকেশন নেই।</p>`;
-                }
-                updateHeaderBadge(0);
+                showEmptyState(notificationContainer);
                 return;
             }
 
-            // টাইমস্ট্যাম্প অনুযায়ী সর্টিং
+            // নতুন নোটিফিকেশন সবার উপরে দেখানোর সর্টিং
             docsArray.sort((a, b) => {
                 const getMillis = (d) => {
                     if (!d) return 0;
@@ -163,17 +160,23 @@ function listenForNotifications(identity) {
                 });
             }
 
-            // আনরিড ব্যাজ আপডেট
+            // ব্যাজ আপডেট
             const unreadCount = docsArray.reduce((n, item) => n + (item.data.isRead === false ? 1 : 0), 0);
             updateHeaderBadge(unreadCount);
 
         }, (error) => {
             console.error("নোটিফিকেশন লোড এরর: ", error);
-            if (notificationContainer) {
-                notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">নোটিফিকেশন দেখতে সমস্যা হচ্ছে।</p>`;
-            }
-            updateHeaderBadge(0);
+            showEmptyState(notificationContainer);
         });
+}
+
+function showEmptyState(container) {
+    if (container) {
+        const activeIdentity = getActiveIdentityData();
+        const label = activeIdentity?.type === 'company' ? 'পেজের' : 'ইউজারের';
+        container.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">এই ${label} জন্য কোনো নোটিফিকেশন নেই।</p>`;
+    }
+    updateHeaderBadge(0);
 }
 
 function updateHeaderBadge(count) {
@@ -268,8 +271,9 @@ async function syncGuestTokenToUser(uid) {
         if (!currentToken && Notification.permission === "granted") {
             currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
         }
-        if (currentToken && activeIdentity) {
-            const targetCol = activeIdentity.type === 'company' ? 'companies' : 'users';
+        if (currentToken) {
+            const activeIdentity = getActiveIdentityData();
+            const targetCol = activeIdentity?.type === 'company' ? 'companies' : 'users';
             await db.collection(targetCol).doc(activeIdentity.id).set({
                 fcmToken: currentToken,
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
@@ -278,4 +282,4 @@ async function syncGuestTokenToUser(uid) {
     } catch (e) {
         console.error("Token Sync Error:", e);
     }
-            }
+    }
