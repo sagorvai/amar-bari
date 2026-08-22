@@ -1,4 +1,4 @@
-// notifications.js - Fully Isolated & Secure Notification Engine
+// notifications.js - Strict Prefix-based Mode Separation
 const db = firebase.firestore();
 const auth = firebase.auth();
 const messaging = firebase.messaging(); 
@@ -10,10 +10,10 @@ let currentNotifUnsubscribe = null;
 document.addEventListener("DOMContentLoaded", () => {
     initGlobalNotificationSystem();
 
-    // ⚡ মোড সুইচ হলে (User ↔ Company/Page) সাথে সাথে সঠিক নোটিফিকেশন লোড হবে
-    window.addEventListener('identityChanged', async () => {
+    // ⚡ মোড সুইচ হলে (User ↔ Page) সাথে সাথে ফিল্টার আপডেট হবে
+    window.addEventListener('identityChanged', () => {
         if (auth.currentUser) {
-            loadNotificationsForActiveIdentity();
+            loadNotificationsForActiveMode();
         }
     });
 });
@@ -22,72 +22,66 @@ function initGlobalNotificationSystem() {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             await syncGuestTokenToUser(user.uid);
-            loadNotificationsForActiveIdentity();
+            loadNotificationsForActiveMode();
         } else {
             showGuestMessage();
         }
     });
 }
 
-// 🎯 সক্রিয় আইডেন্টিটি রেজোলিউশন লজিক
-function getActiveIdentityData() {
-    let activeIdentity = null;
+// 🎯 বর্তমান অ্যাক্টিভ মোড চেক (User নাকি Page)
+function getActiveModeDetails() {
+    const user = auth.currentUser;
+    if (!user) return null;
+
+    let isCompanyMode = false;
+    let companyId = null;
 
     // ১. header-sync.js এর এক্টিভ আইডেন্টিটি চেক
     if (typeof window.getActiveIdentity === 'function') {
         const identity = window.getActiveIdentity();
-        if (identity && identity.id) {
-            activeIdentity = {
-                id: identity.id,
-                type: identity.type || 'user',
-                name: identity.name || 'ইউজার'
-            };
+        if (identity && identity.type === 'company') {
+            isCompanyMode = true;
+            companyId = identity.id;
         }
     }
 
-    // ২. localStorage ব্যাকআপ
-    if (!activeIdentity) {
-        const activeMode = localStorage.getItem('activeIdentityType') || 'user';
+    // ২. localStorage চেক
+    if (!isCompanyMode) {
+        const activeMode = localStorage.getItem('activeIdentityType');
         if (activeMode === 'company') {
-            const savedCompanyId = localStorage.getItem('activeCompanyId');
-            if (savedCompanyId) {
-                activeIdentity = {
-                    id: savedCompanyId,
-                    type: 'company',
-                    name: 'কোম্পানি পেজ'
-                };
-            }
+            isCompanyMode = true;
+            companyId = localStorage.getItem('activeCompanyId');
         }
     }
 
-    // ৩. ডিফল্ট ইউজার মোড
-    if (!activeIdentity && auth.currentUser) {
-        activeIdentity = {
-            id: auth.currentUser.uid,
-            type: 'user',
-            name: auth.currentUser.displayName || 'ইউজার'
-        };
-    }
+    const rawUid = user.uid;
+    // পেজ আইডি গঠন: যদি কোম্পানি আইডি না থাকে, তবে comp_ + rawUid ধরে নেওয়া
+    const pageTargetId = companyId ? companyId : `comp_${rawUid}`;
 
-    return activeIdentity;
+    return {
+        uid: rawUid,
+        isPageMode: isCompanyMode,
+        targetId: isCompanyMode ? pageTargetId : rawUid
+    };
 }
 
-function loadNotificationsForActiveIdentity() {
-    const activeIdentity = getActiveIdentityData();
+function loadNotificationsForActiveMode() {
+    const modeDetails = getActiveModeDetails();
     const container = document.getElementById('notifications-list');
 
-    if (!activeIdentity || !activeIdentity.id) {
+    if (!modeDetails) {
         if (container) {
             container.innerHTML = `<p style="text-align:center;color:#7f8c8d;padding:20px;">অ্যাকাউন্ট যাচাই হচ্ছে...</p>`;
         }
         return;
     }
 
-    listenForNotifications(activeIdentity);
+    listenForNotifications(modeDetails);
 }
 
-// 🎯 সরাসরি ডাইরেক্ট ফায়ারস্টোর কোয়েরির মাধ্যমে মোড আইসোলেশন
-function listenForNotifications(activeIdentity) {
+// 🎯 মোড অনুসারে সুনির্দিষ্ট ফিল্টারিং
+function listenForNotifications(modeDetails) {
     const notificationContainer = document.getElementById("notifications-list");
 
     if (currentNotifUnsubscribe) {
@@ -95,105 +89,93 @@ function listenForNotifications(activeIdentity) {
         currentNotifUnsubscribe = null;
     }
 
-    const targetId = activeIdentity.id;
+    const rawUid = modeDetails.uid;
+    const isPageMode = modeDetails.isPageMode;
+    const targetId = modeDetails.targetId;
 
-    // 🔒 সরাসরি বর্তমান Target ID (ইউজার UID অথবা পেজের Company ID) ধরে ফায়ারস্টোর কোয়েরি
+    // ১. টার্গেট কোয়েরি করা (userId == targetId অথবা receiverId == targetId)
     currentNotifUnsubscribe = db.collection("notifications")
-        .where("userId", "==", targetId)
         .onSnapshot((snapshot) => {
             if (notificationContainer) notificationContainer.innerHTML = "";
 
             if (snapshot.empty) {
-                // যদি userId দিয়ে না পাওয়া যায়, তবে receiverId ফিল্ড চেক করবে (Fallback Query)
-                checkReceiverIdNotifications(targetId, activeIdentity, notificationContainer);
+                showEmptyState(notificationContainer, isPageMode);
                 return;
             }
 
-            renderNotificationList(snapshot, targetId, notificationContainer);
+            const uniqueNotifsMap = new Map();
 
-        }, (error) => {
-            console.warn("userId কোয়েরি ব্যর্থ, receiverId ফিল্টার ট্রাই করা হচ্ছে...", error);
-            checkReceiverIdNotifications(targetId, activeIdentity, notificationContainer);
-        });
-}
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const docUserId = String(data.userId || data.receiverId || '');
 
-// 🎯 ব্যাকআপ কোয়েরি: receiverId ফিল্ড ম্যাচিং
-function checkReceiverIdNotifications(targetId, activeIdentity, notificationContainer) {
-    db.collection("notifications")
-        .where("receiverId", "==", targetId)
-        .onSnapshot((snapshot) => {
-            if (notificationContainer) notificationContainer.innerHTML = "";
+                // 🚨 ১. কড়া ফিল্টার: comp_ প্রিফিক্স লজিক
+                if (isPageMode) {
+                    // পেজ মোড: শুধুমাত্র comp_ দিয়ে শুরু এবং বর্তমান ইউজারের সাথে সম্পর্কিত হতে হবে
+                    if (!docUserId.startsWith('comp_')) return;
+                    if (!docUserId.includes(rawUid) && docUserId !== targetId) return;
+                } else {
+                    // ইউজার মোড: comp_ থাকা যাবে না এবং শুধুমাত্র নিজস্ব rawUid মিলতে হবে
+                    if (docUserId.startsWith('comp_')) return;
+                    if (docUserId !== rawUid) return;
+                }
 
-            if (snapshot.empty) {
-                showEmptyState(notificationContainer, activeIdentity);
+                // 🚨 ২. নিজের পাঠানো নোটিফিকেশন স্কিপ করা
+                if (data.senderId && (data.senderId === rawUid || data.senderId === targetId)) {
+                    return;
+                }
+
+                const msgContent = (data.message || data.body || '').trim();
+                const notifType = data.type || 'general';
+                
+                let uniqueKey = doc.id;
+                if (data.chatId && msgContent) {
+                    uniqueKey = `${data.chatId}_${msgContent}_${notifType}`;
+                } else if (msgContent) {
+                    uniqueKey = `${msgContent}_${notifType}`;
+                }
+
+                if (!uniqueNotifsMap.has(uniqueKey)) {
+                    uniqueNotifsMap.set(uniqueKey, { id: doc.id, data: data });
+                }
+            });
+
+            let docsArray = Array.from(uniqueNotifsMap.values());
+
+            if (docsArray.length === 0) {
+                showEmptyState(notificationContainer, isPageMode);
                 return;
             }
 
-            renderNotificationList(snapshot, targetId, notificationContainer);
+            // সময় অনুযায়ী সর্টিং
+            docsArray.sort((a, b) => {
+                const getMillis = (d) => {
+                    if (!d) return 0;
+                    if (d.seconds) return d.seconds * 1000;
+                    return new Date(d).getTime() || 0;
+                };
+                return getMillis(b.data.createdAt || b.data.timestamp) - getMillis(a.data.createdAt || a.data.timestamp);
+            });
+
+            if (notificationContainer) {
+                docsArray.forEach((item) => {
+                    const notifItem = createNotificationCard(item.id, item.data);
+                    notificationContainer.appendChild(notifItem);
+                });
+            }
+
+            const unreadCount = docsArray.reduce((n, item) => n + (item.data.isRead === false ? 1 : 0), 0);
+            updateHeaderBadge(unreadCount);
 
         }, (error) => {
-            console.error("নোটিফিকেশন লোড করতে সমস্যা হয়েছে:", error);
-            showEmptyState(notificationContainer, activeIdentity);
+            console.error("নোটিফিকেশন লোড এরর: ", error);
+            showEmptyState(notificationContainer, isPageMode);
         });
 }
 
-// 🎯 নোটিফিকেশন ফিল্টার ও রেন্ডার করার প্রসেসর
-function renderNotificationList(snapshot, targetId, notificationContainer) {
-    const uniqueNotifsMap = new Map();
-
-    snapshot.forEach((doc) => {
-        const data = doc.data();
-        
-        // ১. নিজের পাঠানো নোটিফিকেশন স্কিপ করা
-        if (data.senderId && String(data.senderId) === String(targetId)) return;
-
-        const msgContent = (data.message || data.body || '').trim();
-        const notifType = data.type || 'general';
-        
-        let uniqueKey = doc.id;
-        if (data.chatId && msgContent) {
-            uniqueKey = `${data.chatId}_${msgContent}_${notifType}`;
-        } else if (msgContent) {
-            uniqueKey = `${msgContent}_${notifType}`;
-        }
-
-        if (!uniqueNotifsMap.has(uniqueKey)) {
-            uniqueNotifsMap.set(uniqueKey, { id: doc.id, data: data });
-        }
-    });
-
-    let docsArray = Array.from(uniqueNotifsMap.values());
-
-    if (docsArray.length === 0) {
-        showEmptyState(notificationContainer, getActiveIdentityData());
-        return;
-    }
-
-    // নতুন নোটিফিকেশন সবার উপরে আনার সর্টিং
-    docsArray.sort((a, b) => {
-        const getMillis = (d) => {
-            if (!d) return 0;
-            if (d.seconds) return d.seconds * 1000;
-            return new Date(d).getTime() || 0;
-        };
-        return getMillis(b.data.createdAt || b.data.timestamp) - getMillis(a.data.createdAt || a.data.timestamp);
-    });
-
-    if (notificationContainer) {
-        docsArray.forEach((item) => {
-            const notifItem = createNotificationCard(item.id, item.data);
-            notificationContainer.appendChild(notifItem);
-        });
-    }
-
-    // হেডারে রেড ব্যাজ কাউন্ট আপডেট
-    const unreadCount = docsArray.reduce((n, item) => n + (item.data.isRead === false ? 1 : 0), 0);
-    updateHeaderBadge(unreadCount);
-}
-
-function showEmptyState(container, activeIdentity) {
+function showEmptyState(container, isPageMode) {
     if (container) {
-        const label = activeIdentity?.type === 'company' ? 'পেজের' : 'ইউজারের';
+        const label = isPageMode ? 'পেজের' : 'ইউজারের';
         container.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">এই ${label} জন্য কোনো নোটিফিকেশন নেই।</p>`;
     }
     updateHeaderBadge(0);
@@ -292,9 +274,11 @@ async function syncGuestTokenToUser(uid) {
             currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
         }
         if (currentToken) {
-            const activeIdentity = getActiveIdentityData();
-            const targetCol = activeIdentity?.type === 'company' ? 'companies' : 'users';
-            await db.collection(targetCol).doc(activeIdentity.id).set({
+            const modeDetails = getActiveModeDetails();
+            const targetCol = modeDetails?.isPageMode ? 'companies' : 'users';
+            const targetId = modeDetails?.targetId || uid;
+            
+            await db.collection(targetCol).doc(targetId).set({
                 fcmToken: currentToken,
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
@@ -302,4 +286,4 @@ async function syncGuestTokenToUser(uid) {
     } catch (e) {
         console.error("Token Sync Error:", e);
     }
-            }
+    }
