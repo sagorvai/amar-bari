@@ -176,7 +176,7 @@ function showErrorUI(container) {
     container.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">নোটিফিকেশন লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে পেজটি রিফ্রেশ করুন।</p>`;
 }
 
-// 🎯 ৪. ফায়ারস্টোর পারমিশন ফিক্স সহ লিসেনার
+// 🎯 ৪. ফায়ারস্টোর ও পেজ মোড পারফেক্ট লিসেনার (Fixed)
 function listenForNotifications(activeIdentity) {
     const notificationContainer = document.getElementById("notifications-list");
     if (!notificationContainer) return;
@@ -186,17 +186,11 @@ function listenForNotifications(activeIdentity) {
         currentNotifUnsubscribe = null;
     }
 
-    const currentUserUid = auth.currentUser ? auth.currentUser.uid : activeIdentity.id;
+    const targetUserId = activeIdentity.id;
     const isCompany = activeIdentity.type === 'company';
 
-    // ⚡ সিকিউরিটি রুলসের সাথে সামঞ্জস্য রেখে কোয়েরি নির্বাচন
-    // পেজ মোডে থাকলে ownerUid দিয়ে কোয়েরি করা হবে যেন পারমিশন এরর না দেয়
-    let query;
-    if (isCompany) {
-        query = db.collection("notifications").where("ownerUid", "==", currentUserUid);
-    } else {
-        query = db.collection("notifications").where("userId", "==", activeIdentity.id);
-    }
+    // ⚡ সরাসরি activeIdentity.id (ইউজার ID বা কোম্পানি ID) দিয়ে কোয়েরি
+    const query = db.collection("notifications").where("userId", "==", targetUserId);
 
     currentNotifUnsubscribe = query.onSnapshot((snapshot) => {
         notificationContainer.innerHTML = "";
@@ -210,14 +204,14 @@ function listenForNotifications(activeIdentity) {
 
         snapshot.forEach((doc) => {
             const data = doc.data();
-            
-            // পেজ মোডে থাকলে শুধুমাত্র ঐ কোম্পানির নোটিফিকেশন ফিল্টার করে রাখা
-            if (isCompany && data.userId !== activeIdentity.id) {
+
+            // পেজ মোডে থাকলে শুধুমাত্র ঐ কোম্পানির নোটিফিকেশন ফিল্টার
+            if (isCompany && String(data.userId) !== String(targetUserId)) {
                 return;
             }
 
             // নিজেকে পাঠানো নোটিফিকেশন ফিল্টার
-            if (data.senderId && String(data.senderId) === String(activeIdentity.id)) {
+            if (data.senderId && String(data.senderId) === String(targetUserId)) {
                 return;
             }
 
@@ -243,6 +237,7 @@ function listenForNotifications(activeIdentity) {
             return;
         }
 
+        // সময় অনুযায়ী সর্টিং (সর্বশেষ নোটিফিকেশন আগে থাকবে)
         docsArray.sort((a, b) => {
             const getMillis = (d) => {
                 if (!d) return 0;
@@ -257,6 +252,7 @@ function listenForNotifications(activeIdentity) {
             notificationContainer.appendChild(notifItem);
         });
 
+        // অ্যান্ডয়েড ব্যাজ সিঙ্ক
         const unreadCount = docsArray.reduce((n, item) => n + (item.data.isRead === false ? 1 : 0), 0);
         try {
             if (window.AndroidBridge && typeof window.AndroidBridge.setPendingNotificationCount === 'function') {
@@ -290,7 +286,6 @@ function createNotificationCard(docId, notif) {
         }
     }
 
-    // ⚡ সেন্ডার নাম ফিক্স: title/senderName যদি ফালব্যাক ভ্যালু হয় তবে তা সঠিক পেজ/ইউজার নামে রূপান্তর
     let displayName = notif.title || notif.senderName;
     if (!displayName || displayName === "সম্মানিত গ্রাহক" || displayName === "আমার বাড়ি ব্যবহারকারী") {
         displayName = notif.type === "chat" ? "নতুন বার্তা এসেছে" : "নোটিফিকেশন";
@@ -326,4 +321,4 @@ async function markAsRead(docId) {
     } catch (error) {
         console.error("রিড স্ট্যাটাস এরর: ", error);
     }
-                    }
+}
