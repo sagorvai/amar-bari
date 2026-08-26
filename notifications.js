@@ -178,7 +178,7 @@ function showErrorUI(container) {
     container.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">নোটিফিকেশন লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে পেজটি রিফ্রেশ করুন।</p>`;
 }
 
-// 🎯 ৪. নোটিফিকেশন লিসেনার (ইউজার ও পেজ সেপারেট রাখা)
+// 🎯 ৪. ইউজার ও পেজের নোটিফিকেশন সম্পূর্ণ আলাদা রাখার ফিক্সড লিসেনার
 function listenForNotifications(activeIdentity) {
     const notificationContainer = document.getElementById("notifications-list");
 
@@ -188,7 +188,9 @@ function listenForNotifications(activeIdentity) {
     }
 
     const targetUserId = activeIdentity.id;
+    const isCompany = activeIdentity.type === 'company';
 
+    // সরাসরি বর্তমান অ্যাক্টিভ আইডেন্টিটি (ইউজার আইডি অথবা পেজ আইডি) ধরে ফিল্টার
     const query = db.collection("notifications").where("userId", "==", targetUserId);
 
     currentNotifUnsubscribe = query.onSnapshot((snapshot) => {
@@ -207,12 +209,19 @@ function listenForNotifications(activeIdentity) {
         snapshot.forEach((doc) => {
             const data = doc.data();
 
-            // ⚡ নিখুঁত ফিল্টার: ডাটার userId এবং বর্তমান অ্যাক্টিভ ID হুবহু এক হতে হবে
-            if (String(data.userId) !== String(targetUserId)) {
+            // ⚡ মূল ফিল্টার ফিক্স:
+            // ১. ইউজার মোডে থাকলে (isCompany = false) কোনো পেজের নোটিফিকেশন দেখাবে না। (যদি userId 'comp_' দিয়ে শুরু হয় বা data.isCompany === true হয়)
+            if (!isCompany) {
+                if (data.userId && String(data.userId).startsWith('comp_')) return;
+                if (data.recipientType === 'company') return;
+            }
+
+            // ২. পেজ মোডে থাকলে (isCompany = true) ইউজার আইডি এবং ডাটার userId হুবহু এক হতে হবে
+            if (isCompany && String(data.userId) !== String(targetUserId)) {
                 return;
             }
 
-            // নিজেকে পাঠানো বার্তা বা নোটিফিকেশন ফিল্টার
+            // নিজেকে পাঠানো বার্তার নোটিফিকেশন ফিল্টার
             if (data.senderId && String(data.senderId) === String(targetUserId)) {
                 return;
             }
@@ -242,6 +251,7 @@ function listenForNotifications(activeIdentity) {
             return;
         }
 
+        // সময় অনুসারে সর্টিং
         docsArray.sort((a, b) => {
             const getMillis = (d) => {
                 if (!d) return 0;
@@ -261,18 +271,11 @@ function listenForNotifications(activeIdentity) {
         const unreadCount = docsArray.reduce((n, item) => n + (item.data.isRead === false ? 1 : 0), 0);
         updateNotificationHeaderBadge(unreadCount);
 
-        try {
-            if (window.AndroidBridge && typeof window.AndroidBridge.setPendingNotificationCount === 'function') {
-                window.AndroidBridge.setPendingNotificationCount(unreadCount);
-            }
-        } catch (e) {
-            console.warn('Android badge sync error:', e);
-        }
     }, (error) => {
         console.error("নোটিফিকেশন লোড এরর:", error);
         if (notificationContainer) showErrorUI(notificationContainer);
     });
-}
+    }
 
 // 🎯 ৫. পেজ/ইউজার মোড অনুযায়ী মেসেজ আইকনে রিয়েল-টাইম আনরিড কাউন্ট প্রদর্শন
 function listenForActiveChatBadge(activeIdentity) {
