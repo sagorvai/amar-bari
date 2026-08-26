@@ -1,4 +1,4 @@
-// notifications.js - পেজ ও ইউজার মোড এরর-ফ্রি সম্পূর্ণ আপডেট
+// notifications.js - ইউজার/পেজ সেপারেশন ও মেসেজ কাউন্ট ফিক্স সহ আপডেট
 const db = firebase.firestore();
 const auth = firebase.auth();
 const messaging = firebase.messaging(); 
@@ -6,6 +6,7 @@ const messaging = firebase.messaging();
 const VAPID_KEY = "BIWyqUvtwx7iH6nKiZRVCNl7ihTsFn40IJ1LVp58RYIFDEbHrWBSYnVVQ2iA5m9d7tmbNngRPvAhPDEW34SBoLg"; 
 
 let currentNotifUnsubscribe = null; 
+let currentChatUnsubscribe = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     initGlobalNotificationSystem();
@@ -121,6 +122,7 @@ function loadNotificationsForActiveIdentity() {
     }
 
     listenForNotifications(activeIdentity);
+    listenForActiveChatBadge(activeIdentity); // ⚡ পেজ/ইউজার মোড অনুযায়ী মেসেজ কাউন্ট
 }
 
 function showGuestMessage() {
@@ -176,10 +178,9 @@ function showErrorUI(container) {
     container.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">নোটিফিকেশন লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে পেজটি রিফ্রেশ করুন।</p>`;
 }
 
-// 🎯 ৪. ফায়ারস্টোর ও পেজ মোড পারফেক্ট লিসেনার (Fixed)
+// 🎯 ৪. নোটিফিকেশন লিসেনার (ইউজার ও পেজ সেপারেট রাখা)
 function listenForNotifications(activeIdentity) {
     const notificationContainer = document.getElementById("notifications-list");
-    if (!notificationContainer) return;
 
     if (currentNotifUnsubscribe) {
         currentNotifUnsubscribe();
@@ -187,16 +188,17 @@ function listenForNotifications(activeIdentity) {
     }
 
     const targetUserId = activeIdentity.id;
-    const isCompany = activeIdentity.type === 'company';
 
-    // ⚡ সরাসরি activeIdentity.id (ইউজার ID বা কোম্পানি ID) দিয়ে কোয়েরি
     const query = db.collection("notifications").where("userId", "==", targetUserId);
 
     currentNotifUnsubscribe = query.onSnapshot((snapshot) => {
-        notificationContainer.innerHTML = "";
+        if (notificationContainer) notificationContainer.innerHTML = "";
 
         if (snapshot.empty) {
-            notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">কোনো নোটিফিকেশন নেই।</p>`;
+            if (notificationContainer) {
+                notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">কোনো নোটিফিকেশন নেই।</p>`;
+            }
+            updateNotificationHeaderBadge(0);
             return;
         }
 
@@ -205,12 +207,12 @@ function listenForNotifications(activeIdentity) {
         snapshot.forEach((doc) => {
             const data = doc.data();
 
-            // পেজ মোডে থাকলে শুধুমাত্র ঐ কোম্পানির নোটিফিকেশন ফিল্টার
-            if (isCompany && String(data.userId) !== String(targetUserId)) {
+            // ⚡ নিখুঁত ফিল্টার: ডাটার userId এবং বর্তমান অ্যাক্টিভ ID হুবহু এক হতে হবে
+            if (String(data.userId) !== String(targetUserId)) {
                 return;
             }
 
-            // নিজেকে পাঠানো নোটিফিকেশন ফিল্টার
+            // নিজেকে পাঠানো বার্তা বা নোটিফিকেশন ফিল্টার
             if (data.senderId && String(data.senderId) === String(targetUserId)) {
                 return;
             }
@@ -233,11 +235,13 @@ function listenForNotifications(activeIdentity) {
         let docsArray = Array.from(uniqueNotifsMap.values());
 
         if (docsArray.length === 0) {
-            notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">কোনো নতুন নোটিফিকেশন নেই।</p>`;
+            if (notificationContainer) {
+                notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">কোনো নতুন নোটিফিকেশন নেই।</p>`;
+            }
+            updateNotificationHeaderBadge(0);
             return;
         }
 
-        // সময় অনুযায়ী সর্টিং (সর্বশেষ নোটিফিকেশন আগে থাকবে)
         docsArray.sort((a, b) => {
             const getMillis = (d) => {
                 if (!d) return 0;
@@ -247,13 +251,16 @@ function listenForNotifications(activeIdentity) {
             return getMillis(b.data.createdAt || b.data.timestamp) - getMillis(a.data.createdAt || a.data.timestamp);
         });
 
-        docsArray.forEach((item) => {
-            const notifItem = createNotificationCard(item.id, item.data);
-            notificationContainer.appendChild(notifItem);
-        });
+        if (notificationContainer) {
+            docsArray.forEach((item) => {
+                const notifItem = createNotificationCard(item.id, item.data);
+                notificationContainer.appendChild(notifItem);
+            });
+        }
 
-        // অ্যান্ডয়েড ব্যাজ সিঙ্ক
         const unreadCount = docsArray.reduce((n, item) => n + (item.data.isRead === false ? 1 : 0), 0);
+        updateNotificationHeaderBadge(unreadCount);
+
         try {
             if (window.AndroidBridge && typeof window.AndroidBridge.setPendingNotificationCount === 'function') {
                 window.AndroidBridge.setPendingNotificationCount(unreadCount);
@@ -263,11 +270,65 @@ function listenForNotifications(activeIdentity) {
         }
     }, (error) => {
         console.error("নোটিফিকেশন লোড এরর:", error);
-        showErrorUI(notificationContainer);
+        if (notificationContainer) showErrorUI(notificationContainer);
     });
 }
 
-// 🎯 ৫. সেন্ডারের সঠিক নাম সহ নোটিফিকেশন কার্ড তৈরি
+// 🎯 ৫. পেজ/ইউজার মোড অনুযায়ী মেসেজ আইকনে রিয়েল-টাইম আনরিড কাউন্ট প্রদর্শন
+function listenForActiveChatBadge(activeIdentity) {
+    if (currentChatUnsubscribe) {
+        currentChatUnsubscribe();
+        currentChatUnsubscribe = null;
+    }
+
+    const targetId = activeIdentity.id;
+
+    // বর্তমান আইডেন্টিটি অনুযায়ী সকল চ্যাট পর্যবেক্ষণ
+    currentChatUnsubscribe = db.collection("chats")
+        .where("participants", "array-contains", targetId)
+        .onSnapshot((snapshot) => {
+            let unreadChatCount = 0;
+
+            snapshot.forEach((doc) => {
+                const chatData = doc.data();
+                // যদি মেসেজের unreadCount থাকে এবং শেষ মেসেজটি অন্য কেউ পাঠায়
+                if (chatData.unreadCount && chatData.lastSenderId && String(chatData.lastSenderId) !== String(targetId)) {
+                    const count = chatData.unreadCount[targetId] || 0;
+                    unreadChatCount += count;
+                }
+            });
+
+            updateMessageHeaderBadge(unreadChatCount);
+        }, (err) => {
+            console.warn("চ্যাট ব্যাজ লোড এরর:", err);
+        });
+}
+
+function updateNotificationHeaderBadge(count) {
+    const badge = document.getElementById("notification-badge") || document.getElementById("notification-count");
+    if (badge) {
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.style.display = "inline-block";
+        } else {
+            badge.style.display = "none";
+        }
+    }
+}
+
+function updateMessageHeaderBadge(count) {
+    const messageBadge = document.getElementById("message-badge") || document.getElementById("chat-badge") || document.getElementById("unread-messages-count");
+    if (messageBadge) {
+        if (count > 0) {
+            messageBadge.textContent = count > 99 ? '99+' : count;
+            messageBadge.style.display = "inline-block";
+        } else {
+            messageBadge.style.display = "none";
+        }
+    }
+}
+
+// 🎯 ৬. নোটিফিকেশন কার্ড রেন্ডারিং
 function createNotificationCard(docId, notif) {
     const li = document.createElement("li");
     li.className = `notification-item ${notif.isRead ? 'read' : 'unread'}`;
@@ -321,4 +382,4 @@ async function markAsRead(docId) {
     } catch (error) {
         console.error("রিড স্ট্যাটাস এরর: ", error);
     }
-}
+        }
