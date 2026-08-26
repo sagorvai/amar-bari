@@ -179,7 +179,7 @@ function showErrorUI(container) {
     container.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">নোটিফিকেশন লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে পেজটি রিফ্রেশ করুন।</p>`;
 }
 
-// 🎯 ৪. ইউজার ও পেজের নোটিফিকেশন সম্পূর্ণ আলাদা রাখার ফিক্সড লিসেনার
+// 🎯 ৪. ইউজার ও পেজের নোটিফিকেশন ১০০% আলাদা রাখার স্ট্রং লিসেনার
 function listenForNotifications(activeIdentity) {
     const notificationContainer = document.getElementById("notifications-list");
 
@@ -209,27 +209,30 @@ function listenForNotifications(activeIdentity) {
         snapshot.forEach((doc) => {
             const data = doc.data();
             const notifUserId = String(data.userId || '');
-            const targetType = data.targetType || (notifUserId.startsWith('comp_') ? 'company' : 'user');
-            const messageStr = String(data.message || data.body || '');
+            const targetType = data.targetType || '';
 
-            // ⚡ ফিল্টার ১: আইডি ১০০% ম্যাচ হতে হবে
+            // ⚡ ১. আইডি সরাসরি না মিললে বাদ
             if (notifUserId !== targetUserId) return;
 
-            // ⚡ ফিল্টার ২: ইউজার মোডে থাকাকালীন কোম্পানির কোনো নোটিফিকেশন বা টেক্সট আসবে না
+            // ⚡ ২. ইউজার মোডে থাকলে পেজের বার্তা বা চ্যাট সম্পূর্ণ ফিল্টার
             if (!isCompanyMode) {
                 if (targetType === 'company') return;
                 if (notifUserId.startsWith('comp_')) return;
-                // পেজের ওয়েলকাম বার্তা বা কোম্পানি টাইটেল যুক্ত থাকলে তা ইউজার মোড থেকে ফিল্টার
-                if (messageStr.includes("কোম্পানি/পেজ") || messageStr.includes("স্বাক্রিয় হয়েছে")) return;
+
+                // চ্যাট নোটিফিকেশন চেক: যদি নোটিফিকেশনটি কোনো কোম্পানির চ্যাটের হয়ে থাকে
+                if (data.type === 'chat' && data.companyId && data.companyId !== targetUserId) return;
             }
 
-            // ⚡ ফিল্টার ৩: পেজ মোডে থাকাকালীন ইউজারের ব্যক্তিগত নোটিফিকেশন আসবে না
-            if (isCompanyMode && targetType === 'user') return;
+            // ⚡ ৩. পেজ মোডে থাকলে ইউজারের ব্যক্তিগত বার্তা ফিল্টার
+            if (isCompanyMode) {
+                if (targetType === 'user') return;
+                if (!notifUserId.startsWith('comp_') && targetUserId.startsWith('comp_')) return;
+            }
 
-            // ⚡ ফিল্টার ৪: নিজের পাঠানো মেসেজের নোটিফিকেশন স্কিপ
+            // ⚡ ৪. নিজের পাঠানো নোটিফিকেশন ফিল্টার
             if (data.senderId && String(data.senderId) === targetUserId) return;
 
-            const msgContent = messageStr.trim();
+            const msgContent = (data.message || data.body || '').trim();
             const notifType = data.type || 'general';
             
             let uniqueKey = doc.id;
@@ -277,7 +280,7 @@ function listenForNotifications(activeIdentity) {
         console.error("নোটিফিকেশন লোড এরর:", error);
         if (notificationContainer) showErrorUI(notificationContainer);
     });
-}
+                    }
 
 // 🎯 ৫. পেজ/ইউজার মোড অনুযায়ী মেসেজ আইকনে রিয়েল-টাইম আনরিড কাউন্ট প্রদর্শন
 function listenForActiveChatBadge(activeIdentity) {
