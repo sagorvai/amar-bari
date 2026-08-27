@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 🏢 ৩. মূল ভিউ রেন্ডার লজিক
     window.renderProfileView = function() {
-        listenForInactiveModeNotifications(); // ⚡ অফ থাকা মোডের নোটিফিকেশন চেক করা
+        listenForInactiveModeNotifications(); 
         renderCompanyWidget();
 
         const editBtnText = document.getElementById('edit-btn-text');
@@ -268,7 +268,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const user = auth.currentUser;
         if (!user) return;
 
-        // যে মোডটি এখন বন্ধ আছে তার ID বের করা
         let targetId = isCompanyMode ? user.uid : (companyData ? companyData.companyId : null);
         if (!targetId) return;
 
@@ -283,24 +282,27 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // 🏢 ৪. কোম্পানি সুইচ কার্ড রেন্ডার (লাল ব্যাজসহ আপডেটেড)
+    // 🏢 ৪. কোম্পানি সুইচ কার্ড রেন্ডার (প্রোফাইল পিকের উপরে লাল ব্যাজসহ)
     function renderCompanyWidget() {
         const widgetEl = document.getElementById('company-widget-content');
         if (!widgetEl) return;
 
-        // 🔴 লাল নোটিফিকেশন ব্যাজ তৈরি
+        // 🔴 পিকের ওপর বসানোর জন্য লাল ব্যাজের HTML
         const badgeHTML = inactiveUnreadCount > 0 
-            ? `<span class="switch-badge-count" style="background:#e74c3c; color:#fff; font-size:11px; font-weight:bold; padding:3px 8px; border-radius:12px; margin-left:8px; display:inline-block; vertical-align:middle; box-shadow:0 2px 4px rgba(231,76,60,0.3);">${inactiveUnreadCount > 99 ? '99+' : inactiveUnreadCount}</span>` 
+            ? `<span class="switch-badge-count" style="position: absolute; top: -5px; right: -5px; background: #e74c3c; color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10;">${inactiveUnreadCount > 99 ? '99+' : inactiveUnreadCount}</span>` 
             : '';
 
         if (companyData) {
             if (!isCompanyMode) {
                 widgetEl.innerHTML = `
-                    <div class="company-item-box" onclick="switchMode(true)" style="position:relative;">
-                        <div class="company-left">
-                            <img src="${companyData.logo || 'https://via.placeholder.com/50'}" class="company-logo-img">
+                    <div class="company-item-box" onclick="switchMode(true)" style="position:relative; cursor:pointer;">
+                        <div class="company-left" style="display:flex; align-items:center;">
+                            <div style="position:relative; display:inline-block; margin-right:12px;">
+                                <img src="${companyData.logo || 'https://via.placeholder.com/50'}" class="company-logo-img" style="width:45px; height:45px; border-radius:50%; object-fit:cover;">
+                                ${badgeHTML}
+                            </div>
                             <div>
-                                <div class="company-title">${companyData.name} <span class="badge-company">কোম্পানি</span> ${badgeHTML}</div>
+                                <div class="company-title" style="font-weight:bold;">${companyData.name} <span class="badge-company">কোম্পানি</span></div>
                                 <small style="color: var(--gray); font-size:12px;">ক্লিক করে কোম্পানি পেজে সুইচ করুন</small>
                             </div>
                         </div>
@@ -309,10 +311,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             } else {
                 let userName = currentUserData ? (currentUserData.fullName || currentUserData.name || 'ইউজার') : 'ইউজার';
+                let userImg = currentUserData ? (currentUserData.profilePic || currentUserData.avatarUrl || 'https://via.placeholder.com/50') : 'https://via.placeholder.com/50';
+
                 widgetEl.innerHTML = `
-                    <button class="btn-switch-back" onclick="switchMode(false)" style="position:relative; width:100%;">
-                        <i class="material-icons">published_with_changes</i> পার্সোনাল প্রোফাইলে সুইচ করুন (${userName}) ${badgeHTML}
-                    </button>
+                    <div class="company-item-box" onclick="switchMode(false)" style="position:relative; cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:10px 15px; background:#f8f9fa; border-radius:8px; border:1px solid #e9ecef;">
+                        <div style="display:flex; align-items:center;">
+                            <div style="position:relative; display:inline-block; margin-right:12px;">
+                                <img src="${userImg}" style="width:45px; height:45px; border-radius:50%; object-fit:cover;">
+                                ${badgeHTML}
+                            </div>
+                            <div>
+                                <div style="font-weight:bold; color:var(--dark); font-size:14px;">${userName}</div>
+                                <small style="color:var(--gray); font-size:12px;">পার্সোনাল প্রোফাইলে সুইচ করুন</small>
+                            </div>
+                        </div>
+                        <i class="material-icons" style="color:var(--gray);">published_with_changes</i>
+                    </div>
                 `;
             }
         } else {
@@ -682,4 +696,4 @@ async function loadSavedProperties(userId) {
         console.error("Saved properties error:", error);
         savedListEl.innerHTML = '<p style="text-align:center; color:red; padding:20px;">বুকমার্ক লোড করতে সমস্যা হয়েছে।</p>';
     }
-            }
+                          }
