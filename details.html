@@ -26,19 +26,22 @@
     }
     </script>
    
-    
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <!-- Fancybox CSS (ইমেজ গ্যালারি স্টাইলিংয়ের জন্য) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
     
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- jsQR Library (ব্যাকগ্রাউন্ডে QR Code স্ক্যান করার জন্য) -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
     <style>
         :root { --primary: #007bff; --success: #28a745; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f4f7f6; }
@@ -58,11 +61,10 @@
         .gal-item:first-child { grid-column: span 4; height: 350px; }
         .gal-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* পোস্টদাতা ইনফো সেকশন এবং রেটিং */
+        /* পোস্টদাতা ইনফো সেকশন এবং রেটিং */
         .publisher-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
         .pub-left { display: flex; align-items: center; gap: 12px; }
         
-        /* 🆕 ক্লিকের জন্য কার্সর পয়েন্টার ও ইফেক্ট যুক্ত করা হলো */
         .clickable-author { cursor: pointer; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s; }
         .clickable-author:hover { opacity: 0.8; }
 
@@ -95,12 +97,12 @@
 
         .like-btn-box i {
             font-size: 38px;
-            color: #bdc3c7; /* ডিফল্ট গ্রে */
+            color: #bdc3c7;
             transition: color 0.2s;
         }
 
         .like-btn-box.liked i {
-            color: #2196F3; /* ফেসবুক ব্লু লাইক কালার */
+            color: #2196F3;
         }
         
         @media (max-width: 600px) {
@@ -110,21 +112,19 @@
             .profile-image-wrapper { width: 30px; height: 30px; }
         }
 
-
         .gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 8px;
-  margin-top: 15px;
-}
-.gallery-thumb {
-  transition: transform 0.2s ease;
-}
-.gallery-thumb:hover {
-  transform: scale(1.05); /* মাউস নিলে ছবি সামান্য বড় হবে */
-}
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .gallery-thumb {
+            transition: transform 0.2s ease;
+        }
+        .gallery-thumb:hover {
+            transform: scale(1.05);
+        }
 
-        
         .action-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
         .btn-act { padding: 10px; border: 1px solid #ddd; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; text-decoration: none; font-size: 12px; font-weight: bold; background: white; color: var(--dark); }
         .btn-call { color: var(--success); border-color: var(--success); }
@@ -134,7 +134,7 @@
         .info-table td { padding: 12px 15px; border-bottom: 1px solid #f8f9fa; font-size: 14px; }
         .info-table td:last-child { text-align: right; font-weight: 600; }
 
-        .btn-map { background: #e74c3c; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; }
+        .btn-map { background: #e74c3c; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; border: none; cursor: pointer; width: 100%; }
 
         /* Related Posts */
         .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 15px; }
@@ -151,19 +151,16 @@
         #lightbox { display: none; position: fixed; z-index: 999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
         #lb-img { max-width: 90%; max-height: 80%; }
 
-        /* CSS ভেরিয়েবল */
         :root {
             --primary-color: #007bff;
         }
 
-        /* গ্লোবাল ফিক্স */
         body {
             margin: 0; 
-            padding-top: 50px; /* হেডারের উচ্চতা অনুযায়ী padding যোগ করা হলো */
+            padding-top: 50px; 
             font-family: Arial, sans-serif; 
         }
  
-        /* --- হেডার ফিক্স: সবার উপরে ফিক্সড করা --- */
         .main-header {
              position: fixed; 
              top: 0;
@@ -175,14 +172,13 @@
              padding-bottom: 0;
         }
         
-        /* --- ⭐ FIX 2: সাইডবার পজিশনিং, ট্রানজিশন ও রঙ যোগ করা হলো ⭐ --- */
         .sidebar {
             position: fixed; 
             top: 0;
             left: -250px; 
             width: 250px; 
             height: 100%;
-            background-color: #34495e; /* গাঢ় নীল/ধূসর রঙ */
+            background-color: #34495e; 
             transition: left 0.3s ease; 
             box-shadow: 2px 0 5px rgba(0,0,0,0.5); 
             z-index: 1050; 
@@ -209,7 +205,6 @@
             display: block; 
         }
         
-        /* সাইডবারের লিঙ্ক এবং আইকনের রঙ সাদা করা */
         .sidebar a {
             color: #ffffff; 
             padding: 12px 15px; 
@@ -228,7 +223,6 @@
             background-color: #3e5369; 
         }
         
-        /* সাইডবারের লোগো লিঙ্ক */
         .sidebar-logo {
             padding: 15px;
             font-size: 1.5em;
@@ -237,7 +231,6 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 5px;
         }
-        /* --- [সাইডবার ফিক্স শেষ] --- */
 
         .header-top {
             display: flex;
@@ -274,7 +267,6 @@
             margin-right: 5px;
         }
 
-        /* ডানের ব্লক (আইকন) ফিক্স */
         .header-actions {
              display: flex;
              align-items: center;
@@ -283,7 +275,6 @@
              flex-shrink: 0; 
         }
         
-        /* কমন আইকন র‍্যাপার স্টাইল (নোটিফিকেশন, ম্যাসেজ, পোস্ট) */
         .icon-wrapper {
              position: relative;
              display: inline-flex;
@@ -294,7 +285,6 @@
              width: 30px; 
         }
         
-        /* কমন নোটিফিকেশন কাউন্ট স্টাইল */
         .notification-count {
             position: absolute;
             top: -5px; 
@@ -311,34 +301,30 @@
             display: none; 
         }
         
-        /* আইকন কালার */
         .notification-icon { color: var(--primary-color); }
         .message-icon { color: var(--primary-color); }
         .post-icon-header { color: #28a745; }
 
-        /* প্রোফাইল ইমেজের বাইরের গোল বক্স */
-.profile-image-wrapper {
-    cursor: pointer;
-    width: 35px;          /* আপনার পছন্দমতো সাইজ */
-    height: 35px;         /* উইডথ ও হাইট একদম সমান রাখবেন */
-    border-radius: 50%;   /* গোল করার জন্য */
-    overflow: hidden;     /* বক্সের বাইরের অংশ কেটে ফেলার জন্য */
-    border: 2px solid var(--primary); /* বর্ডার */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+        .profile-image-wrapper {
+            cursor: pointer;
+            width: 35px;          
+            height: 35px;         
+            border-radius: 50%;   
+            overflow: hidden;     
+            border: 2px solid var(--primary); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-/* 🎯 ইমেজের একাংশ কেটে যাওয়া রোধ করার ফিক্স */
-.profile-image-wrapper img {
-    width: 100%;          /* বক্সের পুরো উইডথ নিবে */
-    height: 100%;         /* বক্সের পুরো হাইট নিবে */
-    object-fit: cover;    /* 👈 এটি ছবিটিকে চ্যাপ্টা বা বিকৃত না করে গোল বক্সের মাঝে সুন্দরভাবে ফিট করবে */
-    object-position: center; /* ছবির মাঝখানের অংশ ফোকাস করবে */
-    display: block;
-}
+        .profile-image-wrapper img {
+            width: 100%;          
+            height: 100%;         
+            object-fit: cover;    
+            object-position: center; 
+            display: block;
+        }
         
-        /* --- 📱 মোবাইল ভিউয়ের জন্য নির্দিষ্ট ফিক্স --- */
         @media (max-width: 600px) {
             body {
                 padding-top: 46px; 
@@ -355,321 +341,72 @@
                  height: 30px;
             }
         }
-        
-    
-    
-/* ==========================================
-   TABLET VIEW (768px - 1023px)
-========================================== */
 
-@media screen and (min-width:768px) and (max-width:1023px){
-
-    .container{
-        max-width:95%;
-        padding:20px;
-    }
-
-    .gallery-grid{
-        display:grid;
-        grid-template-columns:repeat(3,1fr);
-        gap:10px;
-    }
-
-    .gallery-grid .gal-item:first-child{
-        grid-column:span 3;
-        height:350px;
-    }
-
-    .gallery-grid .gal-item{
-        height:150px;
-    }
-
-    .post-title{
-        font-size:28px;
-    }
-
-    .post-price{
-        font-size:26px;
-    }
-
-    .publisher-card{
-        padding:18px;
-    }
-
-    .pub-avatar-box{
-        width:60px;
-        height:60px;
-    }
-
-    .pub-details h3{
-        font-size:18px;
-    }
-
-    .action-bar{
-        grid-template-columns:repeat(4,1fr);
-        gap:12px;
-    }
-
-    .btn-act{
-        padding:14px;
-        font-size:14px;
-    }
-
-    .info-table td{
-        padding:14px 18px;
-        font-size:15px;
-    }
-
-    #map-container{
-        height:420px !important;
-    }
-
-    .related-grid{
-        grid-template-columns:repeat(3,1fr);
-    }
-
-    .rel-card img{
-        height:170px;
-    }
-}
-
-
-/* ==========================================
-   DESKTOP VIEW (1024px+)
-========================================== */
-
-@media screen and (min-width:1024px){
-
-    body{
-        background:#f5f7fb;
-    }
-
-    .container{
-        max-width:1400px;
-        margin:auto;
-        padding:25px;
-    }
-
-    /* Main Layout */
-
-    .details-layout{
-        display:grid;
-        grid-template-columns:2fr 380px;
-        gap:30px;
-        align-items:start;
-    }
-
-    /* Gallery */
-
-    .gallery-grid{
-        display:grid;
-        grid-template-columns:2fr 1fr 1fr;
-        gap:12px;
-        margin-bottom:25px;
-    }
-
-    .gallery-grid .gal-item:first-child{
-        grid-row:span 2;
-        grid-column:auto;
-        height:460px;
-    }
-
-    .gallery-grid .gal-item{
-        height:224px;
-    }
-
-    .gallery-grid img{
-        transition:.3s;
-    }
-
-    .gallery-grid img:hover{
-        transform:scale(1.03);
-    }
-
-    /* Property Card */
-
-    .content-card{
-        padding:25px;
-        border-radius:18px;
-        box-shadow:0 4px 18px rgba(0,0,0,.08);
-    }
-
-    .post-title{
-        font-size:34px;
-        line-height:1.4;
-        margin-bottom:10px;
-    }
-
-    .post-price{
-        font-size:32px;
-        color:#ff6b00;
-        margin-bottom:15px;
-    }
-
-    #p-location{
-        display:block;
-        font-size:16px;
-        color:#666;
-        margin-bottom:15px;
-    }
-
-    .post-desc{
-        font-size:16px;
-        line-height:1.9;
-    }
-
-    /* Seller Card */
-
-    .publisher-card{
-        padding:20px;
-        border-radius:18px;
-        box-shadow:0 4px 18px rgba(0,0,0,.08);
-    }
-
-    .pub-avatar-box{
-        width:70px;
-        height:70px;
-    }
-
-    .pub-details h3{
-        font-size:20px;
-    }
-
-    .pub-time-meta{
-        font-size:14px;
-    }
-
-    /* Like Button */
-
-    .like-btn-box i{
-        font-size:42px;
-    }
-
-    /* Action Buttons */
-
-    .action-bar{
-        grid-template-columns:repeat(4,1fr);
-        gap:15px;
-        margin:25px 0;
-    }
-
-    .btn-act{
-        padding:15px;
-        font-size:14px;
-        border-radius:12px;
-        transition:.3s;
-    }
-
-    .btn-act:hover{
-        transform:translateY(-2px);
-    }
-
-    .btn-call{
-        background:#22c55e;
-        color:white;
-        border:none;
-    }
-
-    /* Section Header */
-
-    .section-header{
-        font-size:18px;
-        padding:15px 20px;
-        border-radius:12px 12px 0 0;
-    }
-
-    /* Tables */
-
-    .info-table{
-        border-radius:0 0 12px 12px;
-        overflow:hidden;
-    }
-
-    .info-table td{
-        padding:16px 20px;
-        font-size:15px;
-    }
-
-    .info-table td:first-child{
-        width:35%;
-        color:#666;
-        font-weight:600;
-    }
-
-    /* Map */
-
-    #map-container{
-        height:500px !important;
-        border-radius:18px;
-        overflow:hidden;
-    }
-
-    /* Related Posts */
-
-    .related-grid{
-        grid-template-columns:repeat(4,1fr);
-        gap:18px;
-    }
-
-    .rel-card{
-        border-radius:16px;
-        transition:.3s;
-    }
-
-    .rel-card:hover{
-        transform:translateY(-5px);
-        box-shadow:0 8px 25px rgba(0,0,0,.12);
-    }
-
-    .rel-card img{
-        height:200px;
-    }
-
-    .rel-info{
-        padding:12px;
-    }
-
-    .rel-title{
-        font-size:15px;
-        height:42px;
-    }
-
-    .rel-price{
-        font-size:14px;
-    }
-
-    .rel-loc{
-        font-size:12px;
-    }
-
-    /* Header */
-
-    .main-header{
-        padding:0 15px;
-    }
-
-    .logo-title{
-        font-size:2rem;
-    }
-
-    .header-actions{
-        gap:18px;
-    }
-
-    .profile-image-wrapper{
-        width:40px;
-        height:40px;
-    }
-
+        @media screen and (min-width:768px) and (max-width:1023px){
+            .container{ max-width:95%; padding:20px; }
+            .gallery-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+            .gallery-grid .gal-item:first-child{ grid-column:span 3; height:350px; }
+            .gallery-grid .gal-item{ height:150px; }
+            .post-title{ font-size:28px; }
+            .post-price{ font-size:26px; }
+            .publisher-card{ padding:18px; }
+            .pub-avatar-box{ width:60px; height:60px; }
+            .pub-details h3{ font-size:18px; }
+            .action-bar{ grid-template-columns:repeat(4,1fr); gap:12px; }
+            .btn-act{ padding:14px; font-size:14px; }
+            .info-table td{ padding:14px 18px; font-size:15px; }
+            #map-container{ height:420px !important; }
+            .related-grid{ grid-template-columns:repeat(3,1fr); }
+            .rel-card img{ height:170px; }
         }
 
+        @media screen and (min-width:1024px){
+            body{ background:#f5f7fb; }
+            .container{ max-width:1400px; margin:auto; padding:25px; }
+            .details-layout{ display:grid; grid-template-columns:2fr 380px; gap:30px; align-items:start; }
+            .gallery-grid{ display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; margin-bottom:25px; }
+            .gallery-grid .gal-item:first-child{ grid-row:span 2; grid-column:auto; height:460px; }
+            .gallery-grid .gal-item{ height:224px; }
+            .gallery-grid img{ transition:.3s; }
+            .gallery-grid img:hover{ transform:scale(1.03); }
+            .content-card{ padding:25px; border-radius:18px; box-shadow:0 4px 18px rgba(0,0,0,.08); }
+            .post-title{ font-size:34px; line-height:1.4; margin-bottom:10px; }
+            .post-price{ font-size:32px; color:#ff6b00; margin-bottom:15px; }
+            #p-location{ display:block; font-size:16px; color:#666; margin-bottom:15px; }
+            .post-desc{ font-size:16px; line-height:1.9; }
+            .publisher-card{ padding:20px; border-radius:18px; box-shadow:0 4px 18px rgba(0,0,0,.08); }
+            .pub-avatar-box{ width:70px; height:70px; }
+            .pub-details h3{ font-size:20px; }
+            .pub-time-meta{ font-size:14px; }
+            .like-btn-box i{ font-size:42px; }
+            .action-bar{ grid-template-columns:repeat(4,1fr); gap:15px; margin:25px 0; }
+            .btn-act{ padding:15px; font-size:14px; border-radius:12px; transition:.3s; }
+            .btn-act:hover{ transform:translateY(-2px); }
+            .btn-call{ background:#22c55e; color:white; border:none; }
+            .section-header{ font-size:18px; padding:15px 20px; border-radius:12px 12px 0 0; }
+            .info-table{ border-radius:0 0 12px 12px; overflow:hidden; }
+            .info-table td{ padding:16px 20px; font-size:15px; }
+            .info-table td:first-child{ width:35%; color:#666; font-weight:600; }
+            #map-container{ height:500px !important; border-radius:18px; overflow:hidden; }
+            .related-grid{ grid-template-columns:repeat(4,1fr); gap:18px; }
+            .rel-card{ border-radius:16px; transition:.3s; }
+            .rel-card:hover{ transform:translateY(-5px); box-shadow:0 8px 25px rgba(0,0,0,.12); }
+            .rel-card img{ height:200px; }
+            .rel-info{ padding:12px; }
+            .rel-title{ font-size:15px; height:42px; }
+            .rel-price{ font-size:14px; }
+            .rel-loc{ font-size:12px; }
+            .main-header{ padding:0 15px; }
+            .logo-title{ font-size:2rem; }
+            .header-actions{ gap:18px; }
+            .profile-image-wrapper{ width:40px; height:40px; }
+        }
     </style>
 </head>
 <body>
 
     <header class="main-header">
         <div class="header-top">
-            
             <div class="header-left">
                 <i class="material-icons menu-icon" id="menuButton">menu</i>
                 
@@ -680,7 +417,6 @@
             </div>
             
             <div class="header-actions">
-                
                 <div class="icon-wrapper" id="notificationButton"> 
                     <i class="material-icons notification-icon">notifications</i>
                     <span class="notification-count" id="notification-count"></span>
@@ -695,13 +431,14 @@
                     <i class="material-icons message-icon">message</i>
                     <span class="notification-count" id="message-count"></span>
                 </div>
+
                 <div class="profile-image-wrapper" id="profileImageWrapper">
                     <img src="https://www.w3schools.com/howto/img_avatar.png" alt="Profile" id="profileImage">
                 </div>
 
-<div class="notification-dropdown" id="notification-dropdown"></div>
+                <div class="notification-dropdown" id="notification-dropdown"></div>
+            </div>
         </div>
-        
     </header>
     
     <div class="sidebar" id="sidebar">
@@ -719,10 +456,9 @@
             <a href="about.html" id="about-link-sidebar"><i class="material-icons">info</i> আমাদের সম্পর্কে</a>
             <a href="contact.html" id="contact-link-sidebar"><i class="material-icons">mail</i> যোগাযোগ</a>
             
-            <!-- 🎯 নতুন যুক্ত করুন: লগইন ও লগআউট বাটন -->
-        <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
-        <a href="#" id="logout-link-sidebar" style="display: none; color: #ff4d4d;"><i class="material-icons">exit_to_app</i> লগআউট</a>
-    </nav>
+            <a href="auth.html" class="login-link" id="login-link-sidebar"><i class="material-icons">lock_open</i> লগইন</a>
+            <a href="#" id="logout-link-sidebar" style="display: none; color: #ff4d4d;"><i class="material-icons">exit_to_app</i> লগআউট</a>
+        </nav>
     </div>
 
     <div class="overlay" id="overlay"></div>
@@ -735,13 +471,13 @@
         <div class="content-card">
             <h1 id="p-title" class="post-title">লোড হচ্ছে...</h1>
             <span id="p-price" class="post-price"></span>
-           <span id="p-location" class="post-location"></span>
+            <span id="p-location" class="post-location"></span>
             <div id="p-desc" class="post-desc"></div>
         </div>
 
         <div class="gallery-grid" id="p-gallery"></div>
 
-<div class="publisher-card">
+        <div class="publisher-card">
             <div class="pub-left">
                 <div class="clickable-author" id="authorProfileTrigger">
                     <div class="pub-avatar-box">
@@ -756,41 +492,40 @@
                     </div>
                 </div>
             </div>
+
             <!-- লাইক মেকানিজম বাটন -->
-<div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
-    <button class="like-btn-box" id="likeBtn">
-        <i class="material-icons" id="likeIcon">thumb_up_off_alt</i>
-    </button>
-    <span id="likeCountText" style="font-size: 11px; color: var(--gray); font-weight: bold;">0 লাইক</span>
-</div>
-</div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                <button class="like-btn-box" id="likeBtn">
+                    <i class="material-icons" id="likeIcon">thumb_up_off_alt</i>
+                </button>
+                <span id="likeCountText" style="font-size: 11px; color: var(--gray); font-weight: bold;">0 লাইক</span>
+            </div>
+        </div>
 
         <div class="action-bar">
-    <!-- সাধারণ ভিজিটরদের জন্য বাটন সমূহ -->
-    <a href="#" id="p-call" class="btn-act btn-call"><i class="material-icons">call</i> কল</a>
-    <button class="btn-act" id="p-message"><i class="material-icons">chat</i> মেসেজ</button>
-    <button class="btn-act" id="p-save"><i class="material-icons">bookmark_border</i> <span>সেভ</span></button>
-    
-    <!-- পোস্টদাতার নিজের জন্য বাটন সমূহ (ডিফল্টভাবে হাইড থাকবে) -->
-    <button class="btn-act" id="p-edit" style="display: none; color: #3498db;"><i class="material-icons">edit</i> ইডিট</button>
-    <button class="btn-act" id="p-boost" style="display: none; color: #9b59b6;"><i class="material-icons">bolt</i> বুস্ট</button>
-    <button class="btn-act" id="p-delete" style="display: none; color: #e74c3c;"><i class="material-icons">delete</i> ডিলিট</button>
-    
-    <!-- শেয়ার বাটনটি সবার জন্যই থাকবে -->
-    <button class="btn-act" id="p-share"><i class="material-icons">share</i> শেয়ার</button>
+            <a href="#" id="p-call" class="btn-act btn-call"><i class="material-icons">call</i> কল</a>
+            <button class="btn-act" id="p-message"><i class="material-icons">chat</i> মেসেজ</button>
+            <button class="btn-act" id="p-save"><i class="material-icons">bookmark_border</i> <span>সেভ</span></button>
+            
+            <button class="btn-act" id="p-edit" style="display: none; color: #3498db;"><i class="material-icons">edit</i> ইডিট</button>
+            <button class="btn-act" id="p-boost" style="display: none; color: #9b59b6;"><i class="material-icons">bolt</i> বুস্ট</button>
+            <button class="btn-act" id="p-delete" style="display: none; color: #e74c3c;"><i class="material-icons">delete</i> ডিলিট</button>
+            
+            <button class="btn-act" id="p-share"><i class="material-icons">share</i> শেয়ার</button>
         </div>
 
         <div class="section-header">🏠 প্রপার্টির তথ্য</div>
         <table class="info-table" id="table-basic"></table>
 
         <div id="section-owner" style="display:none;">
-    <div class="section-header">📑 মালিকানা তথ্য</div>
-    <table class="info-table" id="table-owner"></table>
-    
-    <a href="https://dlrms.land.gov.bd/" target="_blank" id="btn-verify-khotian" class="btn-map" style="background: #27ae60; margin-top: 10px; text-decoration: none;">
-        <i class="material-icons">verified</i> খতিয়ান যাচাই করুন
-    </a>
-                                                       </div>
+            <div class="section-header">📑 মালিকানা তথ্য</div>
+            <table class="info-table" id="table-owner"></table>
+            
+            <!-- আপডেট করা বাটন (বাটনে ID ও টাইপ ঠিক রাখা হয়েছে) -->
+            <button id="btn-verify-khotian" class="btn-map" style="background: #27ae60; margin-top: 10px;">
+                <i class="material-icons">verified</i> খতিয়ান যাচাই করুন
+            </button>
+        </div>
 
         <div class="section-header">📍 অবস্থান</div>
         <table class="info-table" id="table-location"></table>
@@ -808,21 +543,15 @@
         </div>
     </div>
 
-
     <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
-<script src="details.js"></script>
-
-    
+    <script src="details.js"></script>
     <script src="notifications.js"></script> 
-    
-    <!-- 🎯 আমাদের নতুন লাইভ হেডার সিঙ্ক স্ক্রিপ্ট -->
     <script src="header-sync.js"></script> 
 
-
     <footer class="footer">
-    <div class="container">
-        <p>&copy; 2026 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
-    </div>
+        <div class="container">
+            <p>&copy; 2026 আমার বাড়ি.কম। সর্বস্বত্ব সংরক্ষিত।</p>
+        </div>
     </footer>
 </body>
     </html>
