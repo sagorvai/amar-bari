@@ -606,7 +606,73 @@ function setupSaveAndShareSystem(postData, sellerId) {
     }
 }
 
-// 🎯 খতিয়ান যাচাইকরণ বাটন লজিক (QR Scan Integration)
+// QR কোড থেকে URL বের করার সবচেয়ে কার্যকর লজিক
+async function scanQRCodeFromImageUrl(url) {
+    // পদ্ধতি ১: ZXing Reader
+    try {
+        if (window.ZXing) {
+            const codeReader = new ZXing.BrowserQRCodeReader();
+            const result = await codeReader.decodeFromImageUrl(url);
+            if (result && result.text) {
+                return result.text;
+            }
+        }
+    } catch (err) {
+        console.warn("ZXing Scan Fallback:", err);
+    }
+
+    // পদ্ধতি ২: Proxy Image Loading + Canvas Processing (CORS Bypass)
+    return new Promise(async (resolve) => {
+        try {
+            const img = new Image();
+            img.crossOrigin = "Anonymous"; // CORS পারমিশন
+            
+            // Firebase Storage বা বাইরের ইমেজের ক্ষেত্রে CORS এড়াতে Proxy বা সরাসরি Fetch
+            const response = await fetch(url);
+            const blob = await response.blob();
+            img.src = URL.createObjectURL(blob);
+
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+
+                // ছবি খুব বড় হলে ছোট করে পিক্সেল স্পষ্ট করা
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 1200;
+
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                context.drawImage(img, 0, 0, width, height);
+
+                const imageData = context.getImageData(0, 0, width, height);
+
+                // jsQR দিয়ে রিড করা
+                let code = (typeof jsQR !== 'undefined') ? jsQR(imageData.data, width, height, { inversionAttempts: "attemptBoth" }) : null;
+
+                URL.revokeObjectURL(img.src);
+                resolve(code ? code.data : null);
+            };
+
+            img.onerror = () => resolve(null);
+        } catch (error) {
+            console.error("Image Processing Error:", error);
+            resolve(null);
+        }
+    });
+}
+
+// 🎯 খতিয়ান যাচাইকরণ বাটন লজিক (সরাসরি সরকারি পোর্টালে নিয়ে যাওয়ার জন্য)
 document.addEventListener('DOMContentLoaded', () => {
     const khotiyanButton = document.getElementById('btn-verify-khotian');
     if (khotiyanButton) {
@@ -618,47 +684,34 @@ document.addEventListener('DOMContentLoaded', () => {
             khotiyanButton.disabled = true;
 
             try {
+                // খতিয়ানের ইমেজের URL সংগ্রহ
                 const khotianImgUrl = globalPostData?.documents?.khotian?.url || 
                                      globalPostData?.documents?.khotian || 
                                      (Array.isArray(globalPostData?.documents?.khotian) ? globalPostData.documents.khotian[0]?.url : null);
 
                 if (!khotianImgUrl) {
-                    redirectToDLMRS();
+                    alert("খতিয়ানের কোনো ছবি পাওয়া যায়নি। আপনাকে সরকারি পোর্টালে নিয়ে যাওয়া হচ্ছে।");
+                    window.open("https://mutation.land.gov.bd", "_blank");
                     return;
                 }
 
-                // QR Scan Process Call
+                // QR কোড থেকে তথ্য বা URL স্ক্যান করা
                 const qrData = await scanQRCodeFromImageUrl(khotianImgUrl);
 
-                if (qrData) {
-                    if (qrData.startsWith("http://") || qrData.startsWith("https://")) {
-                        window.location.href = qrData;
-                    } else {
-                        alert(`খতিয়ান তথ্য পাওয়া গেছে: ${qrData}`);
-                    }
+                if (qrData && (qrData.startsWith("http://") || qrData.startsWith("https://"))) {
+                    // QR কোডে লিংক পাওয়া গেলে সরাসরি নতুন ট্যাবে সরকারি খতিয়ান পেজটি ওপেন হবে
+                    window.open(qrData, '_blank');
+                } else if (qrData) {
+                    alert(`খতিয়ান কোড: ${qrData}`);
+                    window.open("https://mutation.land.gov.bd", "_blank");
                 } else {
-                    redirectToDLMRS();
-                }
-
-                // নোটিফিকেশন লজিক
-                if (postId && globalPostData) {
-                    const currentUser = firebase.auth().currentUser;
-                    const recipientId = globalPostData.companyId || globalPostData.ownerId || globalPostData.userId;
-                    if (currentUser && currentUser.uid !== recipientId) {
-                        writeNotificationToFirestore(
-                            recipientId,
-                            currentUser.uid,
-                            postId,
-                            "খতিয়ান যাচাই হচ্ছে! 🔍",
-                            `অভিনন্দন! একজন ক্রেতা আপনার '${globalPostData.title}' প্রপার্টির খতিয়ান যাচাই করে দেখছেন।`,
-                            "khotian"
-                        );
-                    }
+                    alert("QR কোডটি সরাসরি পড়া সম্ভব হয়নি। সরকারি পোর্টালে ম্যানুয়ালি যাচাই করার জন্য রিডাইরেক্ট করা হচ্ছে।");
+                    window.open("https://mutation.land.gov.bd", "_blank");
                 }
 
             } catch (err) {
                 console.error("খতিয়ান প্রসেসিং ত্রুটি:", err);
-                redirectToDLMRS();
+                window.open("https://mutation.land.gov.bd", "_blank");
             } finally {
                 khotiyanButton.innerHTML = originalText;
                 khotiyanButton.disabled = false;
