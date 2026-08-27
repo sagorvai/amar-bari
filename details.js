@@ -13,31 +13,110 @@ const db = firebase.firestore();
 const urlParams = new URLSearchParams(window.location.search);
 const postId = urlParams.get('id');
 
+let globalPostData = null; // খতিয়ান স্ক্যান করার জন্য পোস্ট ডাটা গ্লোবালি রিসিভ রাখা
+
 document.addEventListener('DOMContentLoaded', async () => {
     if (!postId) return;
     try {
         const doc = await db.collection('properties').doc(postId).get();
         if (doc.exists) {
-            const data = doc.data();
-            renderDetails(data);
-            loadRelatedPosts(data);
-            setupLikeSystem(data);
+            globalPostData = doc.data();
+            renderDetails(globalPostData);
+            loadRelatedPosts(globalPostData);
+            setupLikeSystem(globalPostData);
         }
     } catch (e) {
         console.error("ডেটা লোড করতে সমস্যা:", e);
     }
 });
 
+function redirectToDLMRS() {
+    alert("খতিয়ানে কোনো QR কোড রিড করা সম্ভব হয়নি। আপনাকে DLMRS সরকারি সাইটে রিডাইরেক্ট করা হচ্ছে।");
+    window.location.href = "https://dlrms.land.gov.bd";
+}
+
+// QR কোড স্ক্যান করার মূল লজিক (ZXing + Canvas Processing)
+async function scanQRCodeFromImageUrl(url) {
+    // পদ্ধতি ১: ZXing Reader
+    try {
+        if (window.ZXing) {
+            const codeReader = new ZXing.BrowserQRCodeReader();
+            const result = await codeReader.decodeFromImageUrl(url);
+            if (result && result.text) {
+                return result.text;
+            }
+        }
+    } catch (err) {
+        console.warn("ZXing Scan Fallback engaged:", err);
+    }
+
+    // পদ্ধতি ২: Canvas Scaling + Contrast Boost + jsQR
+    return new Promise(async (resolve) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const img = new Image();
+            img.src = URL.createObjectURL(blob);
+
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 1500;
+
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                context.drawImage(img, 0, 0, width, height);
+
+                const imageData = context.getImageData(0, 0, width, height);
+
+                let code = (typeof jsQR !== 'undefined') ? jsQR(imageData.data, width, height, { inversionAttempts: "dontInvert" }) : null;
+
+                if (!code && typeof jsQR !== 'undefined') {
+                    const data = imageData.data;
+                    for (let i = 0; i < data.length; i += 4) {
+                        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                        const threshold = avg > 128 ? 255 : 0;
+                        data[i] = threshold;
+                        data[i + 1] = threshold;
+                        data[i + 2] = threshold;
+                    }
+                    context.putImageData(imageData, 0, 0);
+                    code = jsQR(data, width, height, { inversionAttempts: "attemptBoth" });
+                }
+
+                URL.revokeObjectURL(img.src);
+                resolve(code ? code.data : null);
+            };
+
+            img.onerror = () => resolve(null);
+        } catch (error) {
+            console.error("Image Fetch Error:", error);
+            resolve(null);
+        }
+    });
+}
+
 function renderDetails(data) {
     document.getElementById('p-title').textContent = data.title || "";
     document.getElementById('p-desc').textContent = data.description || "";
 
-    // ১. দাম ও ইউনিট
     let amount = data.category === 'বিক্রয়' ? data.price : data.monthlyRent;
     let unit = data.priceUnit || data.rentUnit || ""; 
     document.getElementById('p-price').textContent = amount ? `৳ ${amount} (${unit})` : "আলোচনা সাপেক্ষ";
 
-    // ইমেজ গ্যালারি
     let images = [];
     if (data.images) data.images.forEach(img => images.push(img.url || img));
     if (data.documents?.khotian) images.push(data.documents.khotian.url || data.documents.khotian);
@@ -59,20 +138,12 @@ function renderDetails(data) {
 
         if (typeof Fancybox !== 'undefined') {
             Fancybox.bind("[data-fancybox='gallery']", {
-                Images: {
-                    Panzoom: {
-                        maxScale: 3, 
-                    },
-                },
+                Images: { Panzoom: { maxScale: 3 } }
             });
         }
     }
 
-    // =======================================================
-    // 👤/🏢 পোস্টদাতার ডাটা লোড ও পেজ/কোম্পানি বনাম ইউজারের লজিক
-    // =======================================================
     const authorTrigger = document.getElementById('authorProfileTrigger');
-    
     const isCompany = data.ownerType === 'company' || data.authorType === 'company' || !!data.companyId;
     const companyId = data.companyId || data.ownerId || data.authorId;
     const userId = data.userId || data.createdByUid || data.createdByUserId;
@@ -82,11 +153,8 @@ function renderDetails(data) {
             if (compDoc.exists) {
                 const compData = compDoc.data();
                 document.getElementById('pub-name').textContent = compData.companyName || compData.name || data.postedByName || "অফিসিয়াল কোম্পানি";
-                
                 const logo = compData.logo || compData.companyLogo || compData.profilePic || data.postedByAvatar;
-                if (logo) {
-                    document.getElementById('pub-avatar').src = logo;
-                }
+                if (logo) document.getElementById('pub-avatar').src = logo;
             } else {
                 document.getElementById('pub-name').textContent = data.postedByName || "কোম্পানি পেজ";
                 if (data.postedByAvatar) document.getElementById('pub-avatar').src = data.postedByAvatar;
@@ -96,20 +164,15 @@ function renderDetails(data) {
         });
 
         if (authorTrigger) {
-            authorTrigger.onclick = () => {
-                window.location.href = `seller-profile.html?companyId=${companyId}&mode=company`;
-            };
+            authorTrigger.onclick = () => window.location.href = `seller-profile.html?companyId=${companyId}&mode=company`;
         }
     } else if (userId) {
         db.collection('users').doc(userId).get().then(userDoc => {
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 document.getElementById('pub-name').textContent = userData.fullName || userData.name || data.postedByName || "সম্মানিত বিক্রেতা";
-                
                 const avatar = userData.profilePic || data.postedByAvatar;
-                if (avatar) {
-                    document.getElementById('pub-avatar').src = avatar;
-                }
+                if (avatar) document.getElementById('pub-avatar').src = avatar;
             } else {
                 document.getElementById('pub-name').textContent = data.postedByName || "সাধারণ ইউজার";
             }
@@ -118,9 +181,7 @@ function renderDetails(data) {
         });
 
         if (authorTrigger) {
-            authorTrigger.onclick = () => {
-                window.location.href = `seller-profile.html?userId=${userId}&mode=user`;
-            };
+            authorTrigger.onclick = () => window.location.href = `seller-profile.html?userId=${userId}&mode=user`;
         }
     } else {
         document.getElementById('pub-name').textContent = data.postedByName || "বিজ্ঞাপনদাতা";
@@ -139,7 +200,6 @@ function renderDetails(data) {
         if (table) table.innerHTML += `<tr><td>${label}</td><td>${value}</td></tr>`;
     };
 
-    // ২. 🏠 প্রপার্টির তথ্য
     const basicT = 'table-basic';
     if (document.getElementById(basicT)) {
         document.getElementById(basicT).innerHTML = ""; 
@@ -172,7 +232,6 @@ function renderDetails(data) {
         addRow(basicT, "পরিমাণ", area ? `${area} (${areaUnit})` : "");
     }
 
-    // ৩. 📑 মালিকানা তথ্য
     const ownerSection = document.getElementById('section-owner');
     if (ownerSection) {
         if (data.category === 'বিক্রয়' && data.owner) {
@@ -193,7 +252,6 @@ function renderDetails(data) {
         }
     }
     
-    // ৪. 📍 অবস্থান
     const locT = 'table-location';
     if (document.getElementById(locT)) {
         document.getElementById(locT).innerHTML = "";
@@ -211,9 +269,6 @@ function renderDetails(data) {
         initSinglePropertyMap(data);
     }
 
-    // =======================================================
-    // 📞 ৫. বাটন ও অ্যাকশন কন্ট্রোল (ভিজিটর বনাম পোস্টদাতা)
-    // =======================================================
     const conT = 'table-contact';
     if (document.getElementById(conT)) {
         document.getElementById(conT).innerHTML = "";
@@ -244,17 +299,8 @@ function renderDetails(data) {
             if (boostBtn) boostBtn.style.display = 'flex';
             if (deleteBtn) deleteBtn.style.display = 'flex';
 
-            if (editBtn) {
-                editBtn.onclick = () => {
-                    window.location.href = `post.html?edit=${postId}`;
-                };
-            }
-            if (boostBtn) {
-                boostBtn.onclick = (e) => {
-                    e.preventDefault();
-                    alert("ফিচারটি অতিশিগ্রই আসছে, সাইটের কাজ চলমান।");
-                };
-            }
+            if (editBtn) editBtn.onclick = () => window.location.href = `post.html?edit=${postId}`;
+            if (boostBtn) boostBtn.onclick = (e) => { e.preventDefault(); alert("ফিচারটি অতিশিগ্রই আসছে, সাইটের কাজ চলমান।"); };
             if (deleteBtn) {
                 deleteBtn.onclick = async () => {
                     if (confirm("আপনি কি নিশ্চিতভাবে এই প্রপার্টিটি ডিলিট করতে চান?")) {
@@ -269,7 +315,6 @@ function renderDetails(data) {
                     }
                 };
             }
-
         } else {
             if (callBtn && data.phoneNumber) callBtn.style.display = 'flex';
             if (msgBtn) msgBtn.style.display = 'flex';
@@ -281,7 +326,6 @@ function renderDetails(data) {
         }
     });
 
-    // 💬 মেসেজ বাটন লজিক
     const msgBtn = document.getElementById('p-message');
     if (msgBtn) {
         msgBtn.onclick = async () => {
@@ -298,9 +342,7 @@ function renderDetails(data) {
 
             if (senderType === 'company') {
                 const storedCompanyId = localStorage.getItem('activeCompanyId');
-                if (storedCompanyId) {
-                    senderId = storedCompanyId;
-                }
+                if (storedCompanyId) senderId = storedCompanyId;
             }
 
             const receiverType = isCompany ? 'company' : 'user';
@@ -362,10 +404,7 @@ function renderDetails(data) {
             }
         };
     }
-    
-    // =======================================================
-    // 🎯 ডাইনামিক এসইও ইঞ্জিন
-    // =======================================================
+
     const currentUrl = window.location.href;
     const village = data.location?.village || "";
     const thana = data.location?.thana || data.location?.upazila || "";
@@ -383,9 +422,7 @@ function renderDetails(data) {
     document.title = seoTitle; 
     
     const seoTitleTag = document.getElementById('seo-title');
-    if (seoTitleTag) {
-        seoTitleTag.innerText = seoTitle;
-    }
+    if (seoTitleTag) seoTitleTag.innerText = seoTitle;
     
     document.getElementById('seo-desc')?.setAttribute('content', seoDescription);
     document.getElementById('seo-canonical')?.setAttribute('href', currentUrl);
@@ -569,114 +606,66 @@ function setupSaveAndShareSystem(postData, sellerId) {
     }
 }
 
-// 🔍 আপডেট করা খতিয়ান ভেরিফিকেশন ও QR স্ক্যান লজিক
+// 🎯 খতিয়ান যাচাইকরণ বাটন লজিক (QR Scan Integration)
 document.addEventListener('DOMContentLoaded', () => {
     const khotiyanButton = document.getElementById('btn-verify-khotian');
     if (khotiyanButton) {
         khotiyanButton.addEventListener('click', async (event) => {
             event.preventDefault();
             
-            const DLMRS_URL = "https://dlrms.land.gov.bd/";
-
-            if (!postId) {
-                window.open(DLMRS_URL, '_blank');
-                return;
-            }
-
-            const originalBtnText = khotiyanButton.innerHTML;
+            const originalText = khotiyanButton.innerHTML;
             khotiyanButton.innerHTML = `<i class="material-icons">sync</i> খতিয়ান স্ক্যান হচ্ছে...`;
             khotiyanButton.disabled = true;
 
             try {
-                const doc = await db.collection('properties').doc(postId).get();
-                if (doc.exists) {
-                    const postData = doc.data();
-                    
-                    // ১. খতিয়ান ইমেজের ইউআরএল চেক করা
-                    const khotianImgUrl = postData.documents?.khotian?.url || postData.documents?.khotian;
+                const khotianImgUrl = globalPostData?.documents?.khotian?.url || 
+                                     globalPostData?.documents?.khotian || 
+                                     (Array.isArray(globalPostData?.documents?.khotian) ? globalPostData.documents.khotian[0]?.url : null);
 
-                    if (khotianImgUrl) {
-                        // ২. ব্যাকগ্রাউন্ডে ইমেজের QR কোড স্ক্যান করা
-                        const qrData = await scanQRCodeFromImageUrl(khotianImgUrl);
+                if (!khotianImgUrl) {
+                    redirectToDLMRS();
+                    return;
+                }
 
-                        if (qrData) {
-                            alert(`খতিয়ান যাচাই তথ্য পাওয়া গিয়েছে:\n\n${qrData}`);
-                            if (qrData.startsWith('http://') || qrData.startsWith('https://')) {
-                                window.open(qrData, '_blank');
-                            }
-                        } else {
-                            alert("খতিয়ানে কোনো QR কোড রিড করা সম্ভব হয়নি। আপনাকে DLMRS সরকারি সাইটে রিডাইরেক্ট করা হচ্ছে।");
-                            window.open(DLMRS_URL, '_blank');
-                        }
+                // QR Scan Process Call
+                const qrData = await scanQRCodeFromImageUrl(khotianImgUrl);
+
+                if (qrData) {
+                    if (qrData.startsWith("http://") || qrData.startsWith("https://")) {
+                        window.location.href = qrData;
                     } else {
-                        alert("আপলোডকৃত প্রপার্টিতে কোনো খতিয়ান ফাইল পাওয়া যায়নি। সরাসরি DLMRS সাইট থেকে যাচাই করুন।");
-                        window.open(DLMRS_URL, '_blank');
+                        alert(`খতিয়ান তথ্য পাওয়া গেছে: ${qrData}`);
                     }
+                } else {
+                    redirectToDLMRS();
+                }
 
-                    // ৩. বিক্রেতাকে নোটিফিকেশন পাঠানো
+                // নোটিফিকেশন লজিক
+                if (postId && globalPostData) {
                     const currentUser = firebase.auth().currentUser;
-                    const recipientId = postData.companyId || postData.ownerId || postData.userId;
-                    if (currentUser && currentUser.uid !== recipientId && typeof writeNotificationToFirestore === 'function') {
+                    const recipientId = globalPostData.companyId || globalPostData.ownerId || globalPostData.userId;
+                    if (currentUser && currentUser.uid !== recipientId) {
                         writeNotificationToFirestore(
                             recipientId,
                             currentUser.uid,
                             postId,
                             "খতিয়ান যাচাই হচ্ছে! 🔍",
-                            `অভিনন্দন! একজন ক্রেতা আপনার '${postData.title}' প্রপার্টির খতিয়ান যাচাই করে দেখছেন।`,
+                            `অভিনন্দন! একজন ক্রেতা আপনার '${globalPostData.title}' প্রপার্টির খতিয়ান যাচাই করে দেখছেন।`,
                             "khotian"
                         );
                     }
-                } else {
-                    window.open(DLMRS_URL, '_blank');
                 }
+
             } catch (err) {
-                console.error("খতিয়ান যাচাইয়ে ত্রুটি:", err);
-                alert("যাচাইকরণে ত্রুটি হয়েছে। সরকারি DLMRS সাইটে পাঠানো হচ্ছে।");
-                window.open(DLMRS_URL, '_blank');
+                console.error("খতিয়ান প্রসেসিং ত্রুটি:", err);
+                redirectToDLMRS();
             } finally {
-                khotiyanButton.innerHTML = originalBtnText;
+                khotiyanButton.innerHTML = originalText;
                 khotiyanButton.disabled = false;
             }
         });
     }
 });
-
-// ব্যাকগ্রাউন্ডে ইমেজের QR কোড রিড করার সহায়ক ফাংশন
-function scanQRCodeFromImageUrl(url) {
-    return new Promise(async (resolve) => {
-        try {
-            // Fetch দিয়ে ইমেজকে Blob এ কনভার্ট করা (CORS বাইপাস)
-            const response = await fetch(url);
-            const blob = await response.blob();
-            const img = new Image();
-            img.src = URL.createObjectURL(blob);
-
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                context.drawImage(img, 0, 0, img.width, img.height);
-
-                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-                URL.revokeObjectURL(img.src); // মেমোরি ক্লিয়ার করা
-
-                if (code) {
-                    resolve(code.data);
-                } else {
-                    resolve(null);
-                }
-            };
-
-            img.onerror = () => resolve(null);
-        } catch (error) {
-            console.error("Image Fetch Error:", error);
-            resolve(null);
-        }
-    });
-            }
 
 function formatPostTime(date) {
     const now = new Date();
@@ -802,9 +791,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profileImageWrapper')?.addEventListener('click', () => location.href = 'profile.html');
 });
 
-/**
- * ফায়ারস্টোরে নোটিফিকেশন লেখার কমন ফাংশন
- */
 async function writeNotificationToFirestore(recipientId, senderId, postId, title, message, type) {
     try {
         const notifData = {
@@ -824,9 +810,6 @@ async function writeNotificationToFirestore(recipientId, senderId, postId, title
     }
 }
 
-/**
- * গেস্ট ইউজারের লোকাল স্টোরেজে নোটিফিকেশন লেখার ফাংশন
- */
 function writeNotificationToLocalStorage(postId, title, message, type) {
     let guestNotifications = JSON.parse(localStorage.getItem("guest_notifications")) || [];
     const newNotification = {
@@ -840,4 +823,4 @@ function writeNotificationToLocalStorage(postId, title, message, type) {
     guestNotifications.unshift(newNotification);
     localStorage.setItem("guest_notifications", JSON.stringify(guestNotifications));
     console.log("গেস্ট নোটিফিকেশন লোকাল স্টোরেজে লেখা হয়েছে।");
-}
+    }
