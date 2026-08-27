@@ -643,33 +643,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ব্যাকগ্রাউন্ডে ইমেজের QR কোড রিড করার সহায়ক ফাংশন
 function scanQRCodeFromImageUrl(url) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = "Anonymous"; // CORS Bypass Handle
-        img.src = url;
+    return new Promise(async (resolve) => {
+        try {
+            // Fetch দিয়ে ইমেজকে Blob এ কনভার্ট করা (CORS বাইপাস)
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const img = new Image();
+            img.src = URL.createObjectURL(blob);
 
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            context.drawImage(img, 0, 0, img.width, img.height);
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                context.drawImage(img, 0, 0, img.width, img.height);
 
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-            if (code) {
-                resolve(code.data);
-            } else {
-                resolve(null);
-            }
-        };
+                URL.revokeObjectURL(img.src); // মেমোরি ক্লিয়ার করা
 
-        img.onerror = () => {
+                if (code) {
+                    resolve(code.data);
+                } else {
+                    resolve(null);
+                }
+            };
+
+            img.onerror = () => resolve(null);
+        } catch (error) {
+            console.error("Image Fetch Error:", error);
             resolve(null);
-        };
+        }
     });
-}
+            }
 
 function formatPostTime(date) {
     const now = new Date();
