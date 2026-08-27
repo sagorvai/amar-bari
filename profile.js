@@ -56,8 +56,9 @@ const compressImage = (file, maxWidth = 500, quality = 0.7) => {
 // গ্লোবাল স্টেট
 let currentUserData = null;
 let companyData = null;
-// ⚡ LocalStorage থেকে আগের সেভ করা মোড চেক করা
 let isCompanyMode = localStorage.getItem('activeIdentityType') === 'company';
+let inactiveUnreadCount = 0; // ⚡ অফ থাকা মোডের আনরিড নোটিফিকেশন কাউন্ট
+let inactiveNotifUnsubscribe = null; // ⚡ ব্যাকগ্রাউন্ড লিসেনার
 
 // 🎯 গ্লোবাল আইডেন্টিটি হেল্পার ফাংশন
 window.getActiveIdentity = function() {
@@ -115,7 +116,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const companyLogoInput = document.getElementById('company-logo-file');
     const companyLogoPreview = document.getElementById('company-logo-preview');
 
-    // 🎯 ইউআরএল চেক করা (নতুন সাইনআপ ইউজারদের এডিট মডাল সরাসরি দেখানোর জন্য)
     const urlParams = new URLSearchParams(window.location.search);
     const shouldOpenEdit = urlParams.get('openEdit');
 
@@ -176,8 +176,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🏢 ৩. মূল ভিউ রেন্ডার লজিক (প্রোফাইল <-> কোম্পানি)
+    // 🏢 ৩. মূল ভিউ রেন্ডার লজিক
     window.renderProfileView = function() {
+        listenForInactiveModeNotifications(); // ⚡ অফ থাকা মোডের নোটিফিকেশন চেক করা
         renderCompanyWidget();
 
         const editBtnText = document.getElementById('edit-btn-text');
@@ -257,19 +258,49 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // 🏢 ৪. কোম্পানি সুইচ কার্ড রেন্ডার
+    // ⚡ অফ থাকা মোডের (ইউজার বা পেজের) অপঠিত নোটিফিকেশন রিয়েল-টাইম শো করানোর লিসেনার
+    function listenForInactiveModeNotifications() {
+        if (inactiveNotifUnsubscribe) {
+            inactiveNotifUnsubscribe();
+            inactiveNotifUnsubscribe = null;
+        }
+
+        const user = auth.currentUser;
+        if (!user) return;
+
+        // যে মোডটি এখন বন্ধ আছে তার ID বের করা
+        let targetId = isCompanyMode ? user.uid : (companyData ? companyData.companyId : null);
+        if (!targetId) return;
+
+        inactiveNotifUnsubscribe = db.collection("notifications")
+            .where("userId", "==", targetId)
+            .where("isRead", "==", false)
+            .onSnapshot((snapshot) => {
+                inactiveUnreadCount = snapshot.size;
+                renderCompanyWidget();
+            }, (error) => {
+                console.warn("Inactive notifications check error:", error);
+            });
+    }
+
+    // 🏢 ৪. কোম্পানি সুইচ কার্ড রেন্ডার (লাল ব্যাজসহ আপডেটেড)
     function renderCompanyWidget() {
         const widgetEl = document.getElementById('company-widget-content');
         if (!widgetEl) return;
 
+        // 🔴 লাল নোটিফিকেশন ব্যাজ তৈরি
+        const badgeHTML = inactiveUnreadCount > 0 
+            ? `<span class="switch-badge-count" style="background:#e74c3c; color:#fff; font-size:11px; font-weight:bold; padding:3px 8px; border-radius:12px; margin-left:8px; display:inline-block; vertical-align:middle; box-shadow:0 2px 4px rgba(231,76,60,0.3);">${inactiveUnreadCount > 99 ? '99+' : inactiveUnreadCount}</span>` 
+            : '';
+
         if (companyData) {
             if (!isCompanyMode) {
                 widgetEl.innerHTML = `
-                    <div class="company-item-box" onclick="switchMode(true)">
+                    <div class="company-item-box" onclick="switchMode(true)" style="position:relative;">
                         <div class="company-left">
                             <img src="${companyData.logo || 'https://via.placeholder.com/50'}" class="company-logo-img">
                             <div>
-                                <div class="company-title">${companyData.name} <span class="badge-company">কোম্পানি</span></div>
+                                <div class="company-title">${companyData.name} <span class="badge-company">কোম্পানি</span> ${badgeHTML}</div>
                                 <small style="color: var(--gray); font-size:12px;">ক্লিক করে কোম্পানি পেজে সুইচ করুন</small>
                             </div>
                         </div>
@@ -279,8 +310,8 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 let userName = currentUserData ? (currentUserData.fullName || currentUserData.name || 'ইউজার') : 'ইউজার';
                 widgetEl.innerHTML = `
-                    <button class="btn-switch-back" onclick="switchMode(false)">
-                        <i class="material-icons">published_with_changes</i> পার্সোনাল প্রোফাইলে সুইচ করুন (${userName})
+                    <button class="btn-switch-back" onclick="switchMode(false)" style="position:relative; width:100%;">
+                        <i class="material-icons">published_with_changes</i> পার্সোনাল প্রোফাইলে সুইচ করুন (${userName}) ${badgeHTML}
                     </button>
                 `;
             }
@@ -534,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 🎯 ১০. পার্সোনাল প্রোফাইল এডিট সাবমিট (তথ্য সেভের পর ইন্ডেক্স পেজে নেওয়ার লজিকসহ আপডেটেড)
+    // 🎯 ১০. পার্সোনাল প্রোফাইল এডিট সাবমিট
     if (editForm) {
         editForm.onsubmit = async (e) => {
             e.preventDefault();
@@ -578,7 +609,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('আপনার তথ্য সফলভাবে আপডেট হয়েছে!');
                 if(editModal) editModal.style.display = 'none';
                 
-                // 🎯 তথ্য সফলভাবে জমা হওয়ার পর ইন্ডেক্স পেজে নিয়ে যাওয়া হবে
                 window.location.href = 'index.html';
                 
             } catch (error) {
@@ -652,4 +682,4 @@ async function loadSavedProperties(userId) {
         console.error("Saved properties error:", error);
         savedListEl.innerHTML = '<p style="text-align:center; color:red; padding:20px;">বুকমার্ক লোড করতে সমস্যা হয়েছে।</p>';
     }
-                                         }
+            }
