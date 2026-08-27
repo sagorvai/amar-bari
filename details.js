@@ -13,7 +13,7 @@ const db = firebase.firestore();
 const urlParams = new URLSearchParams(window.location.search);
 const postId = urlParams.get('id');
 
-let globalPostData = null; // খতিয়ান স্ক্যান করার জন্য পোস্ট ডাটা গ্লোবালি রিসিভ রাখা
+let globalPostData = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!postId) return;
@@ -30,83 +30,79 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-function redirectToDLMRS() {
-    alert("খতিয়ানে কোনো QR কোড রিড করা সম্ভব হয়নি। আপনাকে DLMRS সরকারি সাইটে রিডাইরেক্ট করা হচ্ছে।");
-    window.location.href = "https://dlrms.land.gov.bd";
-}
-
-// QR কোড স্ক্যান করার মূল লজিক (ZXing + Canvas Processing)
-async function scanQRCodeFromImageUrl(url) {
-    // পদ্ধতি ১: ZXing Reader
+// Advanced QR Scanning Engine (CORS & Low Quality Proof)
+async function scanQRCodeFromImageUrl(imageUrl) {
     try {
-        if (window.ZXing) {
-            const codeReader = new ZXing.BrowserQRCodeReader();
-            const result = await codeReader.decodeFromImageUrl(url);
-            if (result && result.text) {
-                return result.text;
-            }
-        }
-    } catch (err) {
-        console.warn("ZXing Scan Fallback engaged:", err);
-    }
-
-    // পদ্ধতি ২: Canvas Scaling + Contrast Boost + jsQR
-    return new Promise(async (resolve) => {
-        try {
-            const response = await fetch(url);
-            const blob = await response.blob();
+        // ১. CORS Bypass-এর জন্য ইমেজকে Blob-এ কনভার্ট করা
+        const response = await fetch(imageUrl, { mode: 'cors' });
+        const blob = await response.blob();
+        
+        return new Promise((resolve) => {
             const img = new Image();
             img.src = URL.createObjectURL(blob);
 
-            img.onload = () => {
+            img.onload = async () => {
                 const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
+                const ctx = canvas.getContext('2d');
 
-                let width = img.width;
-                let height = img.height;
-                const maxDim = 1500;
+                // খতিয়ানের QR ছোট হলে রেজোলিউশন বড় রেখে স্ক্যান করা
+                const scale = Math.max(1, 1600 / Math.max(img.width, img.height));
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
 
-                if (width > maxDim || height > maxDim) {
-                    if (width > height) {
-                        height = Math.round((height * maxDim) / width);
-                        width = maxDim;
-                    } else {
-                        width = Math.round((width * maxDim) / height);
-                        height = maxDim;
-                    }
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                // প্রথম চেষ্টা: jsQR Standard Scan
+                let code = typeof jsQR !== 'undefined' ? jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "attemptBoth" }) : null;
+
+                if (code && code.data) {
+                    URL.revokeObjectURL(img.src);
+                    return resolve(code.data);
                 }
 
-                canvas.width = width;
-                canvas.height = height;
-                context.drawImage(img, 0, 0, width, height);
+                // দ্বিতীয় চেষ্টা: Binarization / Contrast Enhancer Logic
+                const d = imageData.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    const avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
+                    const threshold = avg > 120 ? 255 : 0; // High contrast
+                    d[i] = threshold;
+                    d[i + 1] = threshold;
+                    d[i + 2] = threshold;
+                }
+                ctx.putImageData(imageData, 0, 0);
 
-                const imageData = context.getImageData(0, 0, width, height);
+                code = typeof jsQR !== 'undefined' ? jsQR(d, canvas.width, canvas.height, { inversionAttempts: "attemptBoth" }) : null;
 
-                let code = (typeof jsQR !== 'undefined') ? jsQR(imageData.data, width, height, { inversionAttempts: "dontInvert" }) : null;
+                if (code && code.data) {
+                    URL.revokeObjectURL(img.src);
+                    return resolve(code.data);
+                }
 
-                if (!code && typeof jsQR !== 'undefined') {
-                    const data = imageData.data;
-                    for (let i = 0; i < data.length; i += 4) {
-                        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                        const threshold = avg > 128 ? 255 : 0;
-                        data[i] = threshold;
-                        data[i + 1] = threshold;
-                        data[i + 2] = threshold;
+                // তৃতীয় চেষ্টা: ZXing Library Fallback
+                if (window.ZXing) {
+                    try {
+                        const codeReader = new ZXing.BrowserQRCodeReader();
+                        const zxingResult = await codeReader.decodeFromCanvas(canvas);
+                        if (zxingResult && zxingResult.text) {
+                            URL.revokeObjectURL(img.src);
+                            return resolve(zxingResult.text);
+                        }
+                    } catch (e) {
+                        console.warn("ZXing attempt failed:", e);
                     }
-                    context.putImageData(imageData, 0, 0);
-                    code = jsQR(data, width, height, { inversionAttempts: "attemptBoth" });
                 }
 
                 URL.revokeObjectURL(img.src);
-                resolve(code ? code.data : null);
+                resolve(null);
             };
 
             img.onerror = () => resolve(null);
-        } catch (error) {
-            console.error("Image Fetch Error:", error);
-            resolve(null);
-        }
-    });
+        });
+    } catch (err) {
+        console.error("CORS / Image Processing Error:", err);
+        return null;
+    }
 }
 
 function renderDetails(data) {
@@ -606,73 +602,7 @@ function setupSaveAndShareSystem(postData, sellerId) {
     }
 }
 
-// QR কোড থেকে URL বের করার সবচেয়ে কার্যকর লজিক
-async function scanQRCodeFromImageUrl(url) {
-    // পদ্ধতি ১: ZXing Reader
-    try {
-        if (window.ZXing) {
-            const codeReader = new ZXing.BrowserQRCodeReader();
-            const result = await codeReader.decodeFromImageUrl(url);
-            if (result && result.text) {
-                return result.text;
-            }
-        }
-    } catch (err) {
-        console.warn("ZXing Scan Fallback:", err);
-    }
-
-    // পদ্ধতি ২: Proxy Image Loading + Canvas Processing (CORS Bypass)
-    return new Promise(async (resolve) => {
-        try {
-            const img = new Image();
-            img.crossOrigin = "Anonymous"; // CORS পারমিশন
-            
-            // Firebase Storage বা বাইরের ইমেজের ক্ষেত্রে CORS এড়াতে Proxy বা সরাসরি Fetch
-            const response = await fetch(url);
-            const blob = await response.blob();
-            img.src = URL.createObjectURL(blob);
-
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-
-                // ছবি খুব বড় হলে ছোট করে পিক্সেল স্পষ্ট করা
-                let width = img.width;
-                let height = img.height;
-                const maxDim = 1200;
-
-                if (width > maxDim || height > maxDim) {
-                    if (width > height) {
-                        height = Math.round((height * maxDim) / width);
-                        width = maxDim;
-                    } else {
-                        width = Math.round((width * maxDim) / height);
-                        height = maxDim;
-                    }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                context.drawImage(img, 0, 0, width, height);
-
-                const imageData = context.getImageData(0, 0, width, height);
-
-                // jsQR দিয়ে রিড করা
-                let code = (typeof jsQR !== 'undefined') ? jsQR(imageData.data, width, height, { inversionAttempts: "attemptBoth" }) : null;
-
-                URL.revokeObjectURL(img.src);
-                resolve(code ? code.data : null);
-            };
-
-            img.onerror = () => resolve(null);
-        } catch (error) {
-            console.error("Image Processing Error:", error);
-            resolve(null);
-        }
-    });
-}
-
-// 🎯 খতিয়ান যাচাইকরণ বাটন লজিক (সরাসরি সরকারি পোর্টালে নিয়ে যাওয়ার জন্য)
+// 🎯 খতিয়ান যাচাইকরণ বাটন লজিক
 document.addEventListener('DOMContentLoaded', () => {
     const khotiyanButton = document.getElementById('btn-verify-khotian');
     if (khotiyanButton) {
@@ -684,25 +614,23 @@ document.addEventListener('DOMContentLoaded', () => {
             khotiyanButton.disabled = true;
 
             try {
-                // খতিয়ানের ইমেজের URL সংগ্রহ
                 const khotianImgUrl = globalPostData?.documents?.khotian?.url || 
                                      globalPostData?.documents?.khotian || 
                                      (Array.isArray(globalPostData?.documents?.khotian) ? globalPostData.documents.khotian[0]?.url : null);
 
                 if (!khotianImgUrl) {
-                    alert("খতিয়ানের কোনো ছবি পাওয়া যায়নি। আপনাকে সরকারি পোর্টালে নিয়ে যাওয়া হচ্ছে।");
+                    alert("খতিয়ানের ছবি পাওয়া যায়নি। সরকারি সাইটে নিয়ে যাওয়া হচ্ছে।");
                     window.open("https://mutation.land.gov.bd", "_blank");
                     return;
                 }
 
-                // QR কোড থেকে তথ্য বা URL স্ক্যান করা
+                // QR Scan Process Call
                 const qrData = await scanQRCodeFromImageUrl(khotianImgUrl);
 
                 if (qrData && (qrData.startsWith("http://") || qrData.startsWith("https://"))) {
-                    // QR কোডে লিংক পাওয়া গেলে সরাসরি নতুন ট্যাবে সরকারি খতিয়ান পেজটি ওপেন হবে
                     window.open(qrData, '_blank');
                 } else if (qrData) {
-                    alert(`খতিয়ান কোড: ${qrData}`);
+                    alert(`খতিয়ান লিঙ্ক/ডাটা: ${qrData}`);
                     window.open("https://mutation.land.gov.bd", "_blank");
                 } else {
                     alert("QR কোডটি সরাসরি পড়া সম্ভব হয়নি। সরকারি পোর্টালে ম্যানুয়ালি যাচাই করার জন্য রিডাইরেক্ট করা হচ্ছে।");
@@ -857,7 +785,6 @@ async function writeNotificationToFirestore(recipientId, senderId, postId, title
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
         await db.collection("notifications").add(notifData);
-        console.log("ফায়ারস্টোরে নোটিফিকেশন সফলভাবে লেখা হয়েছে।");
     } catch (error) {
         console.error("ফায়ারস্টোরে নোটিফিকেশন লিখতে ত্রুটি: ", error);
     }
@@ -875,5 +802,4 @@ function writeNotificationToLocalStorage(postId, title, message, type) {
     };
     guestNotifications.unshift(newNotification);
     localStorage.setItem("guest_notifications", JSON.stringify(guestNotifications));
-    console.log("গেস্ট নোটিফিকেশন লোকাল স্টোরেজে লেখা হয়েছে।");
     }
