@@ -371,6 +371,24 @@
             .header-actions{ gap:18px; }
             .profile-image-wrapper{ width:40px; height:40px; }
         }
+
+        @keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.btn-scanning {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.85;
+  animation: scanPulse 1.2s infinite alternate;
+}
+
+@keyframes scanPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+  100% { transform: scale(1.02); box-shadow: 0 0 10px 8px rgba(40, 167, 69, 0); }
+}
+        
     </style>
 </head>
 <body>
