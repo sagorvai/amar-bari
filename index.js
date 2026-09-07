@@ -39,7 +39,7 @@ const bdDistricts = {
     "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "কুমিল্লা", "ফেনী", "নোয়াখালী", "লক্ষ্মীপুর", "চাঁদপুর", "ব্রাহ্মণবাড়িয়া", "রাঙ্গামাটি", "বান্দরবান", "খাগড়াছড়ি"],
     "রাজশাহী": ["রাজশাহী", "বগুড়া", "পাবনা", "সিরাজগঞ্জ", "নওগাঁ", "নাটোর", "জয়পুরহাট", "চাপাইনবাবগঞ্জ"],
     "রংপুর": ["রংপুর", "দিনাজপুর", "গাইবান্ধা", "কুড়িগ্রাম", "লালমনিরহাট", "নীলফামারী", "পঞ্চগড়", "ঠাকুরগাঁও"],
-    "বরিশাল": ["বরিশাল", "পটুখালী", "ভোলা", "পিরোজপুর", "বরগুনা", "ঝালকাঠি"],
+    "বরিশাল": ["বরিশাল", "পটুয়াখালী", "ভোলা", "পিরোজপুর", "বরগুনা", "ঝালকাঠি"],
     "সিলেট": ["সিলেট", "মৌলভীবাজার", "হবিগঞ্জ", "সুনামগঞ্জ"],
     "ময়মনসিংহ": ["ময়মনসিংহ", "জামালপুর", "নেত্রকোনা", "শেরপুর"]
 };
@@ -68,7 +68,7 @@ if (filterDivisionEl && filterDistrictEl) {
 }
 
 // ----------------------------------------------------
-// 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার (Updated & Fixed)
+// 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার
 // ----------------------------------------------------
 async function loadProfilePicture(user) {
     if (!user) {
@@ -77,12 +77,10 @@ async function loadProfilePicture(user) {
         return;
     }
 
-    // localStorage থেকে সক্রিয় মোড ও আইডি চেক
     const activeMode = localStorage.getItem('activeMode'); // 'company' অথবা 'user'
     const activeCompanyId = localStorage.getItem('activeCompanyId') || localStorage.getItem('activePageId');
     const activeAvatar = localStorage.getItem('activeAvatar');
 
-    // ১. যদি পেজ/কোম্পানি মোড সক্রিয় থাকে
     if ((activeMode === 'company' || activePageIdCheck()) && activeCompanyId) {
         try {
             const compDoc = await db.collection('companies').doc(activeCompanyId).get();
@@ -93,7 +91,7 @@ async function loadProfilePicture(user) {
                     profileImage.src = photo;
                     profileImage.style.display = 'block';
                     if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-                    return; // পেজের ছবি লোড সফল হলে এখানেই সমাপ্ত
+                    return;
                 }
             }
         } catch (err) {
@@ -101,11 +99,9 @@ async function loadProfilePicture(user) {
         }
     }
 
-    // ২. যদি পেজ মোড সক্রিয় না থাকে অথবা পেজ লোগো না পাওয়া যায়, তবে ইউজারের নিজস্ব ছবি লোড হবে
     loadUserDefaultPic(user);
 }
 
-// হেল্পার ফাংশন: পুরনো 'activePageId' চেক করার জন্য
 function activePageIdCheck() {
     const activeMode = localStorage.getItem('activeMode');
     return activeMode ? activeMode === 'company' : !!localStorage.getItem('activePageId');
@@ -142,7 +138,7 @@ function loadUserDefaultPic(user) {
 }
 
 // ----------------------------------------------------
-// 🗺️ ৪. ম্যাপ ফিল্টারিং ও ব্যাক বাটন লজিক (ঠিক ট্যাবের উপরে)
+// 🗺️ ৪. ম্যাপ ফিল্টারিং ও ব্যাক বাটন লজিক
 // ----------------------------------------------------
 function createCustomMarker(category, type, isPaid = false) {
     const color = isPaid ? '#ff9800' : (category === 'বিক্রয়' ? '#1877f2' : '#2e7d32');
@@ -510,7 +506,7 @@ function createFbPostHTML(docId, data) {
             </div>
 
             <div class="fb-action-buttons">
-                <button class="fb-action-btn like-btn-toggle"><i class="material-icons">thumb_up_off_alt</i> লাইক</button>
+                <button class="fb-action-btn like-btn-toggle" onclick="toggleLike('${docId}', this)"><i class="material-icons">thumb_up_off_alt</i> লাইক</button>
                 <a href="details.html?id=${docId}" class="fb-action-btn" style="color:#ff4d4d; font-weight:700;">
                     <i class="material-icons">double_arrow</i> বিস্তারিত ও যোগাযোগ
                 </a>
@@ -629,7 +625,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
 }
 
 // ----------------------------------------------------
-// 📌 পোস্টে পেজ/ইউজার নাম এবং লোগো ফেচিং (details.js লজিক হুবহু)
+// 📌 পোস্টে পেজ/ইউজার নাম এবং লোগো ফেচিং
 // ----------------------------------------------------
 async function loadPostAuthorDetails(docId, postData = {}) {
     const nameEl = document.getElementById(`author-name-${docId}`);
@@ -637,12 +633,10 @@ async function loadPostAuthorDetails(docId, postData = {}) {
 
     if (!nameEl || !picEl) return;
 
-    // details.js অনুযায়ী লজিক চেক
     const isCompany = postData.ownerType === 'company' || postData.authorType === 'company' || !!postData.companyId;
     const companyId = postData.companyId || postData.ownerId || postData.authorId;
     const userId = postData.userId || postData.createdByUid || postData.createdByUserId;
 
-    // A. যদি পেজ / কোম্পানি পোস্ট হয়
     if (isCompany && companyId) {
         try {
             const compDoc = await db.collection('companies').doc(companyId).get();
@@ -662,7 +656,6 @@ async function loadPostAuthorDetails(docId, postData = {}) {
         return;
     } 
 
-    // B. যদি সাধারণ ইউজার পোস্ট হয়
     if (userId) {
         try {
             const userDoc = await db.collection('users').doc(userId).get();
@@ -681,8 +674,50 @@ async function loadPostAuthorDetails(docId, postData = {}) {
         return;
     }
 
-    // C. কোনো আইডি না থাকলে ফলব্যাক
     nameEl.textContent = postData.postedByName || "বিজ্ঞাপনদাতা";
+}
+
+// ----------------------------------------------------
+// 👍 লাইক অপশন লজিক
+// ----------------------------------------------------
+async function toggleLike(docId, btnEl) {
+    const user = auth.currentUser;
+    if (!user) {
+        alert("লাইক দিতে প্রথমে লগইন করুন।");
+        window.location.href = "auth.html";
+        return;
+    }
+
+    const postRef = db.collection('properties').doc(docId);
+    const likeCountSpan = btnEl.closest('.fb-feed-card').querySelector('.like-count');
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            const postDoc = await transaction.get(postRef);
+            if (!postDoc.exists) return;
+
+            const data = postDoc.data();
+            let likes = data.likes || 0;
+            let likedBy = data.likedBy || [];
+
+            const userIndex = likedBy.indexOf(user.uid);
+
+            if (userIndex === -1) {
+                likes += 1;
+                likedBy.push(user.uid);
+                btnEl.style.color = '#1877f2';
+            } else {
+                likes = Math.max(0, likes - 1);
+                likedBy.splice(userIndex, 1);
+                btnEl.style.color = 'var(--text-sub)';
+            }
+
+            transaction.update(postRef, { likes, likedBy });
+            if (likeCountSpan) likeCountSpan.textContent = likes;
+        });
+    } catch (err) {
+        console.error("লাইক দিতে ব্যর্থ:", err);
+    }
 }
 
 function setupSliderAndLikeLogic() {
@@ -716,7 +751,7 @@ function setupScrollToTop() {
         right: '20px',
         width: '42px',
         height: '42px',
-        backgroundColor: 'rgba(24, 119, 242, 0.75)',
+        backgroundColor: 'rgba(24, 119, 242, 0.85)',
         color: '#ffffff',
         border: 'none',
         borderRadius: '50%',
@@ -762,7 +797,6 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.onclick = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
     }
 
-    // ট্যাবে ক্লিক করলে লিস্টিং ও ম্যাপ ডাটা রিফ্রেশ লজিক
     navButtons.forEach(btn => {
         btn.onclick = function() {
             navButtons.forEach(b => b.classList.remove('active'));
@@ -772,11 +806,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const mapSection = document.getElementById('map-section');
             const propertyContainer = document.getElementById('property-grid-container');
 
-            // যদি স্ক্রিনে ম্যাপ ভিউ অন থাকে, তবে ম্যাপ ডাটা ফিল্টার হবে
             if (mapSection && mapSection.style.display !== 'none') {
                 initMap(selectedCategory);
             } else {
-                // নতুবা সাধারণ নিউজফিড লিস্ট ফিল্টার হবে
                 updateMapBackButton(false);
                 if (propertyContainer) propertyContainer.style.display = 'block';
                 fetchAndDisplayProperties(selectedCategory, globalSearchInput?.value || '');
@@ -793,7 +825,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (propertyContainer) propertyContainer.style.display = 'none';
             if (mapSection) mapSection.style.display = 'block';
             
-            // বর্তমানে যে ট্যাব সিলেক্টেড আছে (বিক্রয় নাকি ভাড়া) সেটার ডাটা ম্যাপে লোড করবে
             const activeNavBtn = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
             const currentCat = activeNavBtn ? activeNavBtn.getAttribute('data-category') : 'বিক্রয়';
             initMap(currentCat);
@@ -816,20 +847,37 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // লগআউট লজিক
+    const logoutBtn = document.getElementById('logout-link-sidebar');
+    if (logoutBtn) {
+        logoutBtn.onclick = (e) => {
+            e.preventDefault();
+            auth.signOut().then(() => {
+                window.location.reload();
+            });
+        };
+    }
+
     // ডিফল্ট লোড
     fetchAndDisplayProperties('বিক্রয়', ''); 
 
     // ফায়ারবেস অথ লিসেনার
     auth.onAuthStateChanged(user => {
+        const loginLink = document.getElementById('login-link-sidebar');
+        const logoutLink = document.getElementById('logout-link-sidebar');
+
         if (user) {
             loadProfilePicture(user);
+            if (loginLink) loginLink.style.display = 'none';
+            if (logoutLink) logoutLink.style.display = 'flex';
         } else {
             if (profileImage) profileImage.style.display = 'none';
             if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
+            if (loginLink) loginLink.style.display = 'flex';
+            if (logoutLink) logoutLink.style.display = 'none';
         }
     });
     
-    // লোকাল স্টোরেজে অ্যাকাউন্ট/পেজ চেঞ্জ হলে তাৎক্ষণিক হেডার প্রোফাইল পিক আপডেট লিসেনার
     window.addEventListener('storage', () => {
         const user = auth.currentUser;
         if (user) loadProfilePicture(user);
