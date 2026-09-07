@@ -77,7 +77,7 @@ async function loadProfilePicture(user) {
         return;
     }
 
-    const activeMode = localStorage.getItem('activeMode'); // 'company' অথবা 'user'
+    const activeMode = localStorage.getItem('activeMode'); 
     const activeCompanyId = localStorage.getItem('activeCompanyId') || localStorage.getItem('activePageId');
     const activeAvatar = localStorage.getItem('activeAvatar');
 
@@ -429,6 +429,9 @@ function createLargeFeaturedPostsHTML(featuredList) {
     `;
 }
 
+// ----------------------------------------------------
+// 🎴 ৭. নতুন আপগ্রেডেড ভিউ কার্ড (New Property Card Template)
+// ----------------------------------------------------
 function createFbPostHTML(docId, data) {
     const title = data.title || 'শিরোনামহীন প্রোপার্টি';
     const village = data.location?.village || "তথ্য নেই";
@@ -469,46 +472,57 @@ function createFbPostHTML(docId, data) {
     ` : '';
 
     return `
-        <div class="fb-feed-card ${isBoosted ? 'boosted-card' : ''}">
-            <div class="card-author-header">
-                <div class="author-info">
-                    <img id="author-pic-${docId}" src="https://via.placeholder.com/40?text=..." class="fb-profile-pic" alt="pic">
+        <div class="fb-feed-card ${isBoosted ? 'boosted-card' : ''}" style="border-radius:12px; margin-bottom:16px; overflow:hidden; background:#fff; border:1px solid #e4e6eb;">
+            <!-- কার্ড হেডার -->
+            <div class="card-author-header" style="padding:12px; display:flex; align-items:center; justify-content:space-between;">
+                <div class="author-info" style="display:flex; align-items:center; gap:10px;">
+                    <img id="author-pic-${docId}" src="https://via.placeholder.com/40?text=..." class="fb-profile-pic" alt="pic" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
                     <div class="author-meta">
-                        <h4 id="author-name-${docId}" style="line-height:1.3; font-size:14px;">লোডিং...</h4>
-                        <p><i class="material-icons" style="font-size:12px;">place</i> ${village}, ${thana}, ${district}</p>
+                        <h4 id="author-name-${docId}" style="margin:0; font-size:14px; font-weight:700; color:#050505;">লোডিং...</h4>
+                        <p style="margin:2px 0 0 0; font-size:11.5px; color:#65676b; display:flex; align-items:center; gap:2px;">
+                            <i class="material-icons" style="font-size:13px; color:#1877f2;">place</i> ${village}, ${thana}, ${district}
+                        </p>
                     </div>
                 </div>
-                <div style="display:flex; gap:6px; align-items:center;">
+                <div style="display:flex; gap:4px; align-items:center;">
                     ${boostedBadge}
                     ${verifiedBadge}
-                    <span class="badge-category">${category}</span>
+                    <span class="badge-category" style="background:#1877f2; color:#fff; padding:3px 8px; border-radius:12px; font-size:10px; font-weight:bold;">${category}</span>
                 </div>
             </div>
             
-            <div class="card-body-text">
-                <h3 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 700;">${title}</h3>
-                <div><b>${size} ${unit}, ${type}, ${category}।</b> বিস্তারিত জানতে নিচে ক্লিক করুন।</div>
+            <!-- কার্ড বডি / টাইটেল ও মেটা -->
+            <div class="card-body-text" style="padding:0 12px 10px 12px;">
+                <h3 style="margin:0 0 6px 0; font-size:15px; font-weight:700; color:#050505; line-height:1.3;">${title}</h3>
+                <div style="font-size:12.5px; color:#4b4f56; display:flex; gap:12px; flex-wrap:wrap;">
+                    <span><b>সাইজ:</b> ${size} ${unit}</span>
+                    <span><b>ধরন:</b> ${type}</span>
+                </div>
             </div>
 
-            <div class="card-media-section">
+            <!-- ইমেজ স্লাইডার ও প্রাইস ট্যাগ -->
+            <div class="card-media-section" style="position:relative; height:240px; background:#000;">
                 <div class="fb-slider" data-current-index="0" data-total-slides="${images.length}">
                     ${mediaHTML}
                     ${navArrows}
                 </div>
-                <div class="price-tag-overlay">
+                <div class="price-tag-overlay" style="position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.8); color:#fff; padding:6px 12px; border-radius:6px; font-weight:700; font-size:14px; border:1px solid rgba(255,255,255,0.2);">
                     ৳ ${displayPrice} ${category === 'ভাড়া' ? '/মাস' : ''}
                 </div>
             </div>
 
-            <div class="fb-stats-bar">
+            <!-- কার্ড অ্যাকশন ও লাইক বার -->
+            <div class="fb-stats-bar" style="padding:8px 12px; display:flex; justify-content:space-between; font-size:12px; color:#65676b; border-bottom:1px solid #f2f3f5;">
                 <div><span class="like-count">${data.likes || 0}</span> জন পছন্দ করেছেন</div>
-                <div>কমেন্ট দেখুন</div>
+                <div>পাসপোস্ট ও ভেরিফাইড প্রপার্টি</div>
             </div>
 
-            <div class="fb-action-buttons">
-                <button class="fb-action-btn like-btn-toggle" onclick="toggleLike('${docId}', this)"><i class="material-icons">thumb_up_off_alt</i> লাইক</button>
-                <a href="details.html?id=${docId}" class="fb-action-btn" style="color:#ff4d4d; font-weight:700;">
-                    <i class="material-icons">double_arrow</i> বিস্তারিত ও যোগাযোগ
+            <div class="fb-action-buttons" style="display:flex; padding:4px 8px; border-top:1px solid #e4e6eb; background:#f8f9fa;">
+                <button class="fb-action-btn like-btn-toggle" onclick="toggleLike('${docId}', this)" style="flex:1; border:none; background:none; padding:8px; cursor:pointer; font-weight:600; color:#65676b; display:flex; align-items:center; justify-content:center; gap:4px;">
+                    <i class="material-icons" style="font-size:18px;">thumb_up_off_alt</i> লাইক
+                </button>
+                <a href="details.html?id=${docId}" class="fb-action-btn" style="flex:1.2; background:#1877f2; color:#fff; text-decoration:none; padding:8px 12px; border-radius:6px; font-weight:700; font-size:12.5px; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px;">
+                    <i class="material-icons" style="font-size:16px;">visibility</i> বিস্তারিত দেখুন
                 </a>
             </div>
         </div>
@@ -516,7 +530,7 @@ function createFbPostHTML(docId, data) {
 }
 
 // ----------------------------------------------------
-// 🚀 ৭. নিউজ ফিড রেন্ডারিং লজিক
+// 🚀 ৮. নিউজ ফিড রেন্ডারিং লজিক
 // ----------------------------------------------------
 async function fetchAndDisplayProperties(category, searchFilter = '') {
     if (!propertyG) return;
@@ -709,7 +723,7 @@ async function toggleLike(docId, btnEl) {
             } else {
                 likes = Math.max(0, likes - 1);
                 likedBy.splice(userIndex, 1);
-                btnEl.style.color = 'var(--text-sub)';
+                btnEl.style.color = '#65676b';
             }
 
             transaction.update(postRef, { likes, likedBy });
@@ -738,7 +752,7 @@ function setupSliderAndLikeLogic() {
 }
 
 // ----------------------------------------------------
-// 🔝 ৮. স্ক্রোল টু টপ বাটন
+// 🔝 ৯. স্ক্রোল টু টপ বাটন
 // ----------------------------------------------------
 function setupScrollToTop() {
     const scrollTopBtn = document.createElement('button');
