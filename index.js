@@ -339,101 +339,11 @@ async function generateCompanySliderHTML(allMatchedDocs) {
 }
 
 // ----------------------------------------------------
-// 🔵 ৬. প্রমোশনাল ব্যানার ও কার্ডস
-// ----------------------------------------------------
-function createBluePostPromptHTML() {
-    return `
-        <div class="fb-feed-card" style="background: linear-gradient(135deg, #1877f2, #0d52b5); color: #fff; border-radius: 12px; padding: 22px 16px; margin-bottom: 16px; text-align: center; box-shadow: 0 4px 12px rgba(24, 119, 242, 0.2);">
-            <span style="background: rgba(255, 255, 255, 0.2); font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: bold;">বিজ্ঞাপন / স্পন্সরড</span>
-            <h2 style="margin: 12px 0 6px 0; font-size: 18px; font-weight: 700; line-height: 1.3;">আপনার প্রোপার্টি দ্রুত বিক্রি বা ভাড়া দিতে চান?</h2>
-            <p style="margin: 0 0 16px 0; font-size: 12.5px; opacity: 0.95;">আমার বাড়ি.কম-এ সরাসরি কোনো কমিশন ছাড়াই পোস্ট করুন।</p>
-            <a href="post.html" style="display: inline-block; background: #ffffff; color: #1877f2; text-decoration: none; padding: 9px 22px; border-radius: 25px; font-weight: 700; font-size: 13.5px;">এখনই ফ্রিতে পোস্ট করুন</a>
-        </div>
-    `;
-}
-
-function createImageBannerSliderHTML() {
-    const banners = [
-        { img: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&auto=format&fit=crop&q=80", link: "post.html" },
-        { img: "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=600&auto=format&fit=crop&q=80", link: "boost.html" },
-        { img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&auto=format&fit=crop&q=80", link: "tips.html" }
-    ];
-
-    const slidesHTML = banners.map((item, i) => `
-        <div style="min-width: 260px; width: 260px; height: 125px; border-radius: 8px; overflow: hidden; flex-shrink: 0; position: relative; border: 1px solid #ced0d4; cursor:pointer;" onclick="window.location.href='${item.link}'">
-            <img src="${item.img}" style="width: 100%; height: 100%; object-fit: cover;" alt="Banner ${i+1}">
-            <span style="position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.6); color: #fff; font-size: 9px; padding: 2px 5px; border-radius: 4px;">বিজ্ঞাপন</span>
-        </div>
-    `).join('');
-
-    return `
-        <div class="fb-feed-card" style="background: #fff; padding: 12px; margin-bottom: 16px; border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 700; font-size: 13px; color: #1877f2; display: flex; align-items: center; gap: 4px;">
-                    <i class="material-icons" style="font-size: 16px; color: #ff9800;">campaign</i> প্রমোশনাল অফার
-                </span>
-                <span style="font-size: 11px; color: #65676b;">স্ক্রোল করুন ➔</span>
-            </div>
-            <div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
-                ${slidesHTML}
-                <div style="min-width: 100px; width: 100px; height: 125px; background: #f0f2f5; border: 2px dashed #1877f2; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; flex-shrink: 0; cursor: pointer;" onclick="window.location.href='boost.html'">
-                    <div style="width: 32px; height: 32px; background: #1877f2; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 4px;">
-                        <i class="material-icons">add</i>
-                    </div>
-                    <span style="font-size: 10.5px; font-weight: bold; color: #1877f2;">অ্যাড দিন</span>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-function createLargeFeaturedPostsHTML(featuredList) {
-    if (!featuredList || featuredList.length === 0) return '';
-    const list = featuredList.slice(0, 5);
-
-    const cardsHTML = list.map(item => {
-        const data = item.data;
-        const imgUrl = (data.images && data.images.length > 0) ? (data.images[0].url || data.images[0]) : 'https://via.placeholder.com/300x160?text=Featured';
-        const price = data.price || data.monthlyRent || 'আলোচনা সাপেক্ষে';
-        const displayPrice = typeof price === 'number' ? new Intl.NumberFormat('bn-BD').format(price) : price;
-
-        return `
-            <div class="featured-card-item">
-                <div class="featured-img-box" style="background-image: url('${imgUrl}');">
-                    <span style="position: absolute; top: 8px; left: 8px; background: #ff9800; color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px;">⭐ ফিচার্ড</span>
-                </div>
-                <div style="padding: 10px;">
-                    <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 700; color: #050505; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${data.title || 'শিরোনামহীন'}</h4>
-                    <p style="margin: 0; font-size: 11.5px; color: #65676b;">📍 ${data.location?.district || ''}, ${data.location?.thana || ''}</p>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                        <span style="font-size: 14px; font-weight: 800; color: #1877f2;">৳ ${displayPrice}</span>
-                        <a href="details.html?id=${item.id}" style="background: #ff9800; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-decoration: none;">বিস্তারিত</a>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    return `
-        <div class="fb-feed-card" style="background: #fffdf6; border: 1px solid #ffe082; padding: 12px; margin-bottom: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 700; font-size: 14px; color: #e65100; display: flex; align-items: center; gap: 4px;">
-                    <i class="material-icons" style="font-size: 18px; color: #ff9800;">stars</i> ফিচার্ড প্রপার্টিসমূহ
-                </span>
-                <span style="font-size: 11px; color: #65676b;">ডানে স্লাইড করুন ➔</span>
-            </div>
-            <div class="featured-scroll-container">
-                ${cardsHTML}
-            </div>
-        </div>
-    `;
-}
-
-// ----------------------------------------------------
-// 🎴 ৭. নতুন আপগ্রেডেড ভিউ কার্ড (New Property Card Template)
+// 🟢 ৬. প্রপার্টি পোস্ট কার্ড HTML (আপডেটেড লেআউট)
 // ----------------------------------------------------
 function createFbPostHTML(docId, data) {
     const title = data.title || 'শিরোনামহীন প্রোপার্টি';
+    const description = data.description || 'কোন বিবরণ দেওয়া হয়নি।';
     const village = data.location?.village || "তথ্য নেই";
     const thana = data.location?.thana || data.location?.upazila || "তথ্য নেই";
     const district = data.location?.district || "তথ্য নেই";
@@ -451,83 +361,199 @@ function createFbPostHTML(docId, data) {
     const verifiedBadge = data.documents ? `<span class="badge-verified">✓ ভেরিফাইড</span>` : '';
     const boostedBadge = isBoosted ? `<span class="badge-boosted"><i class="material-icons" style="font-size:11px;">bolt</i> স্পন্সরড</span>` : '';
 
+    // ইমেজ অ্যারে প্রসেসিং
     let images = [];
-    if (data.images) {
+    if (data.images && data.images.length > 0) {
         data.images.forEach(img => {
             const url = typeof img === 'string' ? img : (img.url || '');
             if (url) images.push(url);
         });
     }
     
-    let mediaHTML = `<div class="fb-slide-item" style="background-image: url('https://via.placeholder.com/500x250?text=No+Photo'); display:block;"></div>`;
-    if (images.length > 0) {
-        mediaHTML = images.map((img, i) => `
-            <div class="fb-slide-item" style="background-image: url('${img}'); display:${i === 0 ? 'block' : 'none'};"></div>
-        `).join('');
+    if (images.length === 0) {
+        images.push('https://via.placeholder.com/500x300?text=No+Photo');
     }
 
-    const navArrows = images.length > 1 ? `
-        <button class="fb-slider-btn fb-prev">&#10094;</button>
-        <button class="fb-slider-btn fb-next">&#10095;</button>
-    ` : '';
+    // ৫টি থাম্বনেইল পিকচার তৈরির লজিক
+    const displayThumbs = images.slice(0, 5);
+    const thumbHTML = displayThumbs.map((img, i) => `
+        <div class="thumb-box ${i === 0 ? 'active' : ''}" data-index="${i}" onclick="switchSlide('${docId}', ${i}, event)">
+            <img src="${img}" alt="thumb">
+        </div>
+    `).join('');
+
+    // টাইপ অনুযায়ী ইনফরমেশন গ্রিড তৈরি
+    const isLandOrPlot = (type === 'জমি' || type === 'প্লট');
+    
+    let infoSectionHTML = '';
+    if (isLandOrPlot) {
+        infoSectionHTML = `
+            <div class="prop-info-left">
+                <div>◾ প্রপার্টির ধরন: <b>${category}</b></div>
+                <div>◾ টাইপ: <b>${type}</b></div>
+                <div>◾ পরিমাণ: <b>${size} ${unit}</b></div>
+                <div>◾ রোড: <b>${data.roadSize || 'তথ্য নেই'}</b></div>
+            </div>
+        `;
+    } else {
+        infoSectionHTML = `
+            <div class="prop-info-left">
+                <div>◾ প্রপার্টির ধরন: <b>${category} (${type})</b></div>
+                <div>◾ বেড: <b>${data.bedrooms || '০'}টি</b></div>
+                <div>◾ পরিমাণ: <b>${size} ${unit}</b></div>
+                <div>◾ বাথ: <b>${data.bathrooms || '০'}টি</b></div>
+            </div>
+        `;
+    }
 
     return `
-        <div class="fb-feed-card ${isBoosted ? 'boosted-card' : ''}" style="border-radius:12px; margin-bottom:16px; overflow:hidden; background:#fff; border:1px solid #e4e6eb;">
-            <!-- কার্ড হেডার -->
-            <div class="card-author-header" style="padding:12px; display:flex; align-items:center; justify-content:space-between;">
-                <div class="author-info" style="display:flex; align-items:center; gap:10px;">
-                    <img id="author-pic-${docId}" src="https://via.placeholder.com/40?text=..." class="fb-profile-pic" alt="pic" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+        <div class="fb-feed-card ${isBoosted ? 'boosted-card' : ''}" id="post-card-${docId}">
+            <!-- ১. হেডার সেকশন -->
+            <div class="card-author-header">
+                <div class="author-info">
+                    <img id="author-pic-${docId}" src="https://via.placeholder.com/40?text=..." class="fb-profile-pic" alt="pic">
                     <div class="author-meta">
-                        <h4 id="author-name-${docId}" style="margin:0; font-size:14px; font-weight:700; color:#050505;">লোডিং...</h4>
-                        <p style="margin:2px 0 0 0; font-size:11.5px; color:#65676b; display:flex; align-items:center; gap:2px;">
-                            <i class="material-icons" style="font-size:13px; color:#1877f2;">place</i> ${village}, ${thana}, ${district}
-                        </p>
+                        <h4 id="author-name-${docId}">লোডিং...</h4>
+                        <p><i class="material-icons" style="font-size:12px;">place</i> ${village}, ${thana}, ${district}</p>
                     </div>
                 </div>
                 <div style="display:flex; gap:4px; align-items:center;">
-                    ${boostedBadge}
                     ${verifiedBadge}
-                    <span class="badge-category" style="background:#1877f2; color:#fff; padding:3px 8px; border-radius:12px; font-size:10px; font-weight:bold;">${category}</span>
-                </div>
-            </div>
-            
-            <!-- কার্ড বডি / টাইটেল ও মেটা -->
-            <div class="card-body-text" style="padding:0 12px 10px 12px;">
-                <h3 style="margin:0 0 6px 0; font-size:15px; font-weight:700; color:#050505; line-height:1.3;">${title}</h3>
-                <div style="font-size:12.5px; color:#4b4f56; display:flex; gap:12px; flex-wrap:wrap;">
-                    <span><b>সাইজ:</b> ${size} ${unit}</span>
-                    <span><b>ধরন:</b> ${type}</span>
+                    ${boostedBadge}
+                    <span class="badge-category">${category}</span>
                 </div>
             </div>
 
-            <!-- ইমেজ স্লাইডার ও প্রাইস ট্যাগ -->
-            <div class="card-media-section" style="position:relative; height:240px; background:#000;">
-                <div class="fb-slider" data-current-index="0" data-total-slides="${images.length}">
-                    ${mediaHTML}
-                    ${navArrows}
-                </div>
-                <div class="price-tag-overlay" style="position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.8); color:#fff; padding:6px 12px; border-radius:6px; font-weight:700; font-size:14px; border:1px solid rgba(255,255,255,0.2);">
-                    ৳ ${displayPrice} ${category === 'ভাড়া' ? '/মাস' : ''}
+            <!-- ২. হাইলাইটেড সবুজ শিরোনাম -->
+            <div class="custom-card-title-banner">
+                ${title}
+            </div>
+
+            <!-- ৩. সর্ট ডেসক্রিপশন উইথ টগল -->
+            <div class="custom-card-desc">
+                <p class="desc-text clamp-line" id="desc-${docId}">${description}</p>
+                <span class="read-more-btn" onclick="toggleReadMore('${docId}')">আরও পড়ুন...</span>
+            </div>
+
+            <!-- ৪. মেইন কভার ফটো ও থাম্বনেইল স্লাইডার -->
+            <div class="custom-media-wrapper">
+                <a href="details.html?id=${docId}" class="main-cover-link">
+                    <img id="main-cover-${docId}" src="${images[0]}" class="main-cover-img" alt="${title}">
+                </a>
+                
+                <div class="thumb-strip" id="thumbs-${docId}">
+                    ${thumbHTML}
                 </div>
             </div>
 
-            <!-- কার্ড অ্যাকশন ও লাইক বার -->
-            <div class="fb-stats-bar" style="padding:8px 12px; display:flex; justify-content:space-between; font-size:12px; color:#65676b; border-bottom:1px solid #f2f3f5;">
-                <div><span class="like-count">${data.likes || 0}</span> জন পছন্দ করেছেন</div>
-                <div>পাসপোস্ট ও ভেরিফাইড প্রপার্টি</div>
+            <!-- ৫. প্রপার্টি স্পেসিফিকেশন ও প্রাইস সেকশন -->
+            <div class="custom-prop-details-grid">
+                ${infoSectionHTML}
+                <div class="prop-info-right">
+                    <div class="price-amount">${displayPrice} টাকা</div>
+                    <div class="price-unit">(${unit || 'একমুঠো'})</div>
+                </div>
             </div>
 
-            <div class="fb-action-buttons" style="display:flex; padding:4px 8px; border-top:1px solid #e4e6eb; background:#f8f9fa;">
-                <button class="fb-action-btn like-btn-toggle" onclick="toggleLike('${docId}', this)" style="flex:1; border:none; background:none; padding:8px; cursor:pointer; font-weight:600; color:#65676b; display:flex; align-items:center; justify-content:center; gap:4px;">
-                    <i class="material-icons" style="font-size:18px;">thumb_up_off_alt</i> লাইক
-                </button>
-                <a href="details.html?id=${docId}" class="fb-action-btn" style="flex:1.2; background:#1877f2; color:#fff; text-decoration:none; padding:8px 12px; border-radius:6px; font-weight:700; font-size:12.5px; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px;">
-                    <i class="material-icons" style="font-size:16px;">visibility</i> বিস্তারিত দেখুন
+            <!-- ৬. বিস্তারিত বাটন -->
+            <div style="padding: 10px 12px 14px 12px;">
+                <a href="details.html?id=${docId}" class="btn-details-outline">
+                    &gt;&gt; বিস্তারিত জানুন
                 </a>
             </div>
         </div>
     `;
 }
+
+// ----------------------------------------------------
+// 🔄 ৭. স্লাইডার ও ইন্টারঅ্যাকশন ফাংশনসমূহ
+// ----------------------------------------------------
+
+// বিবরণ বড়/ছোট করার লজিক
+function toggleReadMore(docId) {
+    const descEl = document.getElementById(`desc-${docId}`);
+    const btn = descEl.nextElementSibling;
+    if (descEl.classList.contains('clamp-line')) {
+        descEl.classList.remove('clamp-line');
+        btn.textContent = 'সংক্ষিপ্ত করুন';
+    } else {
+        descEl.classList.add('clamp-line');
+        btn.textContent = 'আরও পড়ুন...';
+    }
+}
+
+// ম্যানুয়াল থাম্বনেইল সুইচিং
+function switchSlide(docId, index, event) {
+    if(event) event.stopPropagation();
+    const card = document.getElementById(`post-card-${docId}`);
+    if (!card) return;
+
+    const images = Array.from(card.querySelectorAll('.thumb-box img')).map(img => img.src);
+    const mainImg = document.getElementById(`main-cover-${docId}`);
+    if (mainImg && images[index]) {
+        mainImg.src = images[index];
+    }
+
+    const thumbs = card.querySelectorAll('.thumb-box');
+    thumbs.forEach((t, i) => {
+        if (i === index) t.classList.add('active');
+        else t.classList.remove('active');
+    });
+
+    card.dataset.currentIndex = index;
+}
+
+// অটোপ্লে স্লাইডার রেজিস্ট্রি ও ইন্টারসেকশন অবজারভার
+let activeIntervals = {};
+
+function setupAutoSliders() {
+    // আগের সব টাইমার ক্লিয়ার
+    Object.keys(activeIntervals).forEach(key => clearInterval(activeIntervals[key]));
+    activeIntervals = {};
+
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.5 // স্ক্রিনে ৫০% আসলে স্লাইড শুরু হবে
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const card = entry.target;
+            const docId = card.id.replace('post-card-', '');
+
+            if (entry.isIntersecting) {
+                // স্ক্রিনে আসলে স্লাইড চালু হবে
+                if (!activeIntervals[docId]) {
+                    card.dataset.currentIndex = card.dataset.currentIndex || 0;
+                    activeIntervals[docId] = setInterval(() => {
+                        const thumbs = card.querySelectorAll('.thumb-box');
+                        if (thumbs.length <= 1) return;
+                        
+                        let curr = parseInt(card.dataset.currentIndex || 0);
+                        let next = (curr + 1) % thumbs.length;
+                        switchSlide(docId, next, null);
+                    }, 3000); // ৩ সেকেন্ট পর পর অটো স্লাইড
+                }
+            } else {
+                // স্ক্রিনের বাইরে গেলে স্লাইড বন্ধ হবে (পারফরম্যান্স সেভ করার জন্য)
+                if (activeIntervals[docId]) {
+                    clearInterval(activeIntervals[docId]);
+                    delete activeIntervals[docId];
+                }
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.fb-feed-card[id^="post-card-"]').forEach(card => {
+        observer.observe(card);
+    });
+}
+
+function setupSliderAndLikeLogic() {
+    setupAutoSliders();
+}
+
 
 // ----------------------------------------------------
 // 🚀 ৮. নিউজ ফিড রেন্ডারিং লজিক
