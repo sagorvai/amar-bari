@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <select id="land-type" required>
                         <option value="">-- নির্বাচন করুন --</option>
                         <option value="আবাসিক" ${stagedData?.landType === 'আবাসিক' ? 'selected' : ''}>আবাসিক</option>
-                        <option value="বিলাতি" ${stagedData?.landType === 'বিলাতি' ? 'selected' : ''}>বিলাতি</option>
+                        <option value="বিলাতি" ${stagedData?.landType === 'বিলান' ? 'selected' : ''}>বিলান</option>
                         <option value="বাস্তু" ${stagedData?.landType === 'বাস্তু' ? 'selected' : ''}>বাস্তু</option>
                         <option value="ভিটা" ${stagedData?.landType === 'ভিটা' ? 'selected' : ''}>ভিটা</option>
                         <option value="ডোবা" ${stagedData?.landType === 'ডোবা' ? 'selected' : ''}>ডোবা</option>
@@ -442,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <div class="input-group">
-                        <label>প্রপার্টি স্কেচ বা হস্তান্তর নকশা ছবি (১টি):</label>
+                        <label>প্রপার্টি স্কেচ বা হস্ত নকশা ছবি (১টি):</label>
                         <div class="custom-upload-box" onclick="document.getElementById('sketch-image').click()">
                             <i class="material-icons upload-icon-cloud">map</i>
                             <div class="upload-text-main">স্কেচ/নকশার ফাইল সিলেক্ট করুন</div>
@@ -826,8 +826,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="text" id="village-input" placeholder="যেমন: বসুপাড়া / গ্রাম লিখুন" required value="${stagedData?.location?.village || ''}">
                 </div>
                 <div class="input-group">
-                    <label for="road-input">রাস্তা / রোড / বাড়ি নং (লিখিত):</label>
-                    <input type="text" id="road-input" placeholder="যেমন: রোড নং ৪, বাড়ি নং ১০" required value="${stagedData?.location?.road || ''}">
+                    <label for="road-input">রাস্তা / রোড (লিখিত):</label>
+                    <input type="text" id="road-input" placeholder="যেমন: জলিল সরনি " required value="${stagedData?.location?.road || ''}">
                 </div>
             </div>
         `;
