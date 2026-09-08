@@ -941,7 +941,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ১. লোডিং ও স্ক্যানিং অ্যানিমেশন চালুকরণ
         khotiyanButton.classList.add('btn-scanning');
         khotiyanButton.disabled = true;
-        khotiyanButton.innerHTML = `<i class="material-icons" style="animation: spin 1s linear infinite;">sync</i> ছবি থেকে স্ক্যান করা হচ্ছে...`;
+        khotiyanButton.innerHTML = `<i class="material-icons" style="animation: spin 1s linear infinite;">sync</i> খতিয়ান অনুসন্ধান করা হচ্ছে...`;
 
         try {
             // ২. খতিয়ানের ছবির URL সংগ্রহ
