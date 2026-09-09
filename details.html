@@ -17,6 +17,13 @@
 
     <link id="seo-canonical" rel="canonical" href="">
 
+    <!-- DNS Prefetch & Preconnect for Super Fast Network Connections -->
+    <link rel="preconnect" href="https://firestore.googleapis.com">
+    <link rel="preconnect" href="https://firebasestorage.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://unpkg.com">
+
     <script id="seo-schema" type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -27,21 +34,21 @@
     </script>
    
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- Fancybox CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
-    
+
+    <!-- Deferred Heavy Libraries to avoid render blocking -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <!-- ZXing QR Reader Library & jsQR Fallback -->
-    <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js" defer></script>
 
     <style>
         :root { --primary: #007bff; --success: #28a745; --dark: #2c3e50; --gray: #7f8c8d; --bg: #f4f7f6; }
@@ -373,22 +380,21 @@
         }
 
         @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
 
-.btn-scanning {
-  position: relative;
-  pointer-events: none;
-  opacity: 0.85;
-  animation: scanPulse 1.2s infinite alternate;
-}
+        .btn-scanning {
+          position: relative;
+          pointer-events: none;
+          opacity: 0.85;
+          animation: scanPulse 1.2s infinite alternate;
+        }
 
-@keyframes scanPulse {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
-  100% { transform: scale(1.02); box-shadow: 0 0 10px 8px rgba(40, 167, 69, 0); }
-}
-        
+        @keyframes scanPulse {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+          100% { transform: scale(1.02); box-shadow: 0 0 10px 8px rgba(40, 167, 69, 0); }
+        }
     </style>
 </head>
 <body>
@@ -526,10 +532,9 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
-    <script src="details.js"></script>
-    <script src="notifications.js"></script> 
-    <script src="header-sync.js"></script> 
+    <script src="details.js" defer></script>
+    <script src="notifications.js" defer></script> 
+    <script src="header-sync.js" defer></script> 
 
     <footer class="footer">
         <div class="container">
