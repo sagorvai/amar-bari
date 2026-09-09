@@ -10,6 +10,15 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// Enable Firestore Offline Persistence for Instant Data Load
+db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+    if (err.code == 'failed-precondition') {
+        console.warn('Persistence failed: Multiple tabs open');
+    } else if (err.code == 'unimplemented') {
+        console.warn('Browser does not support persistence');
+    }
+});
+
 const urlParams = new URLSearchParams(window.location.search);
 const postId = urlParams.get('id');
 
@@ -395,17 +404,19 @@ function renderDetails(data) {
 
     const gallery = document.getElementById('p-gallery');
     if (gallery) {
-        gallery.innerHTML = '';
+        const fragment = document.createDocumentFragment();
         images.slice(0, 5).forEach(url => {
             const div = document.createElement('div');
             div.className = 'gal-item';
             div.innerHTML = `
                 <a href="${url}" data-fancybox="gallery" data-caption="আমার বাড়ি প্ল্যাটফর্ম - প্রপার্টি ছবি">
-                    <img src="${url}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" alt="Property Image">
+                    <img src="${url}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" alt="Property Image">
                 </a>
             `;
-            gallery.appendChild(div);
+            fragment.appendChild(div);
         });
+        gallery.innerHTML = '';
+        gallery.appendChild(fragment);
 
         if (typeof Fancybox !== 'undefined') {
             Fancybox.bind("[data-fancybox='gallery']", { Images: { Panzoom: { maxScale: 3 } } });
@@ -730,6 +741,8 @@ function initSinglePropertyMap(data) {
     if (!mapContainer) return;
 
     try {
+        if (typeof L === 'undefined') return;
+
         const map = L.map('map-container').setView([data.location.lat, data.location.lng], 15);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -923,7 +936,6 @@ function setupSaveAndShareSystem(postData, sellerId) {
    🎯 KHATIAN QR VERIFICATION BUTTON LOGIC (WINDOW.LOCATION FIX)
    ========================================================= */
 
-// DLRMS পোর্টাল রিডাইরেক্ট ফাংশন (১০০% কাজ করে এমন রিডাইরেক্ট)
 function redirectToDlrmsPortal() {
     window.location.href = "https://dlrms.land.gov.bd";
 }
@@ -938,13 +950,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const originalText = khotiyanButton.innerHTML;
 
-        // ১. লোডিং ও স্ক্যানিং অ্যানিমেশন চালুকরণ
         khotiyanButton.classList.add('btn-scanning');
         khotiyanButton.disabled = true;
         khotiyanButton.innerHTML = `<i class="material-icons" style="animation: spin 1s linear infinite;">sync</i> খতিয়ান অনুসন্ধান করা হচ্ছে...`;
 
         try {
-            // ২. খতিয়ানের ছবির URL সংগ্রহ
             let khotianImgUrl = null;
             const khotianDocument = globalPostData?.documents?.khotian;
 
@@ -959,24 +969,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // ৩. ছবি না পাওয়া গেলে সরাসরি DLRMS পোর্টালে রিডাইরেক্ট
             if (!khotianImgUrl) {
                 console.warn("খতিয়ানের ছবি পাওয়া যায়নি। DLRMS পোর্টালে নিয়ে যাওয়া হচ্ছে...");
                 redirectToDlrmsPortal();
                 return;
             }
 
-            // ৪. ক্যানভাসের সাহায্যে সার্ভারের ছবি থেকে QR কোড স্ক্যান
             const qrData = await scanQRCodeFromImageUrl(khotianImgUrl);
 
-            // ৫. ফলাফল অনুযায়ী রিডাইরেক্ট
             if (qrData && (qrData.startsWith("http://") || qrData.startsWith("https://"))) {
                 window.location.href = qrData;
             } else if (qrData) {
                 alert(`খতিয়ান QR ডাটা পাওয়া গেছে:\n\n${qrData}`);
                 redirectToDlrmsPortal();
             } else {
-                // স্ক্যান ব্যর্থ হলে বা QR না থাকলে DLRMS পোর্টালে রিডাইরেক্ট
                 redirectToDlrmsPortal();
             }
 
@@ -1034,7 +1040,7 @@ async function loadRelatedPosts(currentData) {
     try {
         const snapshot = await db.collection('properties')
             .where('category', '==', currentData.category)
-            .limit(25)
+            .limit(15)
             .get();
 
         let allPosts = [];
@@ -1058,7 +1064,7 @@ async function loadRelatedPosts(currentData) {
             return bThana - aThana;
         });
 
-        list.innerHTML = "";
+        const fragment = document.createDocumentFragment();
         let displayedCount = 0;
         const limitIncrement = 10;
 
@@ -1068,24 +1074,28 @@ async function loadRelatedPosts(currentData) {
                 let pAmt = post.category === 'বিক্রয়' ? post.price : post.monthlyRent;
                 let pUnit = post.priceUnit || post.rentUnit || "";
 
-                list.innerHTML += `
-                    <div class="rel-card" onclick="location.href='details.html?id=${post.id}'">
-                        <img src="${post.images?.[0]?.url || post.images?.[0] || 'placeholder.jpg'}" alt="Related Property">
-                        <div class="rel-info">
-                            <h4 class="rel-title">${post.title}</h4>
-                            <p class="rel-price">৳ ${pAmt} (${pUnit})</p>
-                            <p class="rel-loc">
-                                ${post.location?.village || ''},
-                                ${post.location?.thana || post.location?.upazila || ''},
-                                ${post.location?.district || ''}
-                            </p>
-                        </div>
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'rel-card';
+                cardDiv.onclick = () => location.href = `details.html?id=${post.id}`;
+                cardDiv.innerHTML = `
+                    <img src="${post.images?.[0]?.url || post.images?.[0] || 'placeholder.jpg'}" loading="lazy" alt="Related Property">
+                    <div class="rel-info">
+                        <h4 class="rel-title">${post.title}</h4>
+                        <p class="rel-price">৳ ${pAmt} (${pUnit})</p>
+                        <p class="rel-loc">
+                            ${post.location?.village || ''},
+                            ${post.location?.thana || post.location?.upazila || ''},
+                            ${post.location?.district || ''}
+                        </p>
                     </div>
                 `;
+                fragment.appendChild(cardDiv);
             });
+            list.appendChild(fragment);
             displayedCount = end;
         };
 
+        list.innerHTML = "";
         renderPostCards(0, Math.min(10, allPosts.length));
 
         if (allPosts.length > 10 && seeMoreBox) {
