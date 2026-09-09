@@ -2,6 +2,15 @@
 const db = firebase.firestore();
 const auth = firebase.auth();
 
+// 💾 অফলাইন ক্যাশিং পারসিস্টেন্স অন করা (Read খরচ কমানোর জন্য)
+db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+    if (err.code == 'failed-precondition') {
+        console.log('একাধিক ট্যাব খোলা থাকায় প্রথম ট্যাবে পারসিস্টেন্স অন হয়েছে।');
+    } else if (err.code == 'unimplemented') {
+        console.log('বর্তমান ব্রাউজারে অফলাইন পারসিস্টেন্স সাপোর্ট করে না।');
+    }
+});
+
 const menuButton = document.getElementById('menuButton');
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
@@ -14,6 +23,12 @@ const defaultProfileIcon = document.getElementById('defaultProfileIcon');
 
 let map = null;
 let currentUserData = null;
+
+// 🔄 পেজিনেশন ও ইনফিনিট স্ক্রল ট্র্যাকিং ভেরিয়েবল
+let lastVisibleDoc = null; 
+let currentCategory = 'বিক্রয়';
+let isLoadingMore = false;
+let hasMorePosts = true;
 
 // ----------------------------------------------------
 // 📸 ১. অটো-স্লাইড কভার ছবি লজিক
@@ -68,7 +83,7 @@ if (filterDivisionEl && filterDistrictEl) {
 }
 
 // ----------------------------------------------------
-// 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার (Updated & Fixed)
+// 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার
 // ----------------------------------------------------
 async function loadProfilePicture(user) {
     if (!user) {
@@ -77,12 +92,10 @@ async function loadProfilePicture(user) {
         return;
     }
 
-    // localStorage থেকে সক্রিয় মোড ও আইডি চেক
-    const activeMode = localStorage.getItem('activeMode'); // 'company' অথবা 'user'
+    const activeMode = localStorage.getItem('activeMode'); 
     const activeCompanyId = localStorage.getItem('activeCompanyId') || localStorage.getItem('activePageId');
     const activeAvatar = localStorage.getItem('activeAvatar');
 
-    // ১. যদি পেজ/কোম্পানি মোড সক্রিয় থাকে
     if ((activeMode === 'company' || activePageIdCheck()) && activeCompanyId) {
         try {
             const compDoc = await db.collection('companies').doc(activeCompanyId).get();
@@ -93,7 +106,7 @@ async function loadProfilePicture(user) {
                     profileImage.src = photo;
                     profileImage.style.display = 'block';
                     if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-                    return; // পেজের ছবি লোড সফল হলে এখানেই সমাপ্ত
+                    return;
                 }
             }
         } catch (err) {
@@ -101,11 +114,9 @@ async function loadProfilePicture(user) {
         }
     }
 
-    // ২. যদি পেজ মোড সক্রিয় না থাকে অথবা পেজ লোগো না পাওয়া যায়, তবে ইউজারের নিজস্ব ছবি লোড হবে
     loadUserDefaultPic(user);
 }
 
-// হেল্পার ফাংশন: পুরনো 'activePageId' চেক করার জন্য
 function activePageIdCheck() {
     const activeMode = localStorage.getItem('activeMode');
     return activeMode ? activeMode === 'company' : !!localStorage.getItem('activePageId');
@@ -142,7 +153,7 @@ function loadUserDefaultPic(user) {
 }
 
 // ----------------------------------------------------
-// 🗺️ ৪. ম্যাপ ফিল্টারিং ও ব্যাক বাটন লজিক (ঠিক ট্যাবের উপরে)
+// 🗺️ ৪. ম্যাপ ফিল্টারিং ও ব্যাক বাটন লজিক
 // ----------------------------------------------------
 function createCustomMarker(category, type, isPaid = false) {
     const color = isPaid ? '#ff9800' : (category === 'বিক্রয়' ? '#1877f2' : '#2e7d32');
@@ -433,7 +444,7 @@ function createLargeFeaturedPostsHTML(featuredList) {
     `;
 }
 
-// ১. কার্ড জেনারেটর
+// কার্ড জেনারেটর
 function createFbPostHTML(docId, data) {
     const title = data.title || 'শিরোনাম';
     const description = data.description || 'কোন বিবরণ দেওয়া হয়নি।';
@@ -518,7 +529,6 @@ function createFbPostHTML(docId, data) {
 
     setTimeout(() => loadAuthorProfile(docId, data), 50);
 
-    // ক্লিন SVG লোকেশন পিন তৈরি
     const locationSvg = `<svg class="loc-svg-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`;
 
     return `
@@ -547,7 +557,6 @@ function createFbPostHTML(docId, data) {
                 ${description.length > 60 ? `<span class="read-more-btn" onclick="toggleDescReadMore(this)">(বিস্তারিত)</span>` : ''}
             </div>
 
-            <!-- কভার ফটো ক্লিক ডিটেইলস পেজে নিয়ে যাবে -->
             <div class="card-media-section" onclick="window.location.href='details.html?id=${docId}'">
                 ${mediaHTML}
                 ${thumbHTML}
@@ -570,7 +579,7 @@ function createFbPostHTML(docId, data) {
     `;
 }
 
-// ২. ডেসক্রিপশন এক্সপ্যান্ড/কোল্যাপ্স টগল
+// ডেসক্রিপশন এক্সপ্যান্ড/কোল্যাপ্স টগল
 function toggleDescReadMore(btn) {
     const textElem = btn.previousElementSibling;
     if (textElem.classList.contains('clamp-2')) {
@@ -582,9 +591,9 @@ function toggleDescReadMore(btn) {
     }
 }
 
-// ৩. থাম্বনেইল ক্লিক করে ফটো ম্যানুয়ালি সুইচ করা
+// থাম্বনেইল ক্লিক করে ফটো স্পেসিফিক সুইচ করা
 function switchCardSlide(event, docId, slideIndex) {
-    event.stopPropagation(); // কভার ফটোর ডিটেইলস পেজে যাওয়া বন্ধ করবে
+    event.stopPropagation();
     
     const card = document.getElementById(`post-card-${docId}`);
     if (!card) return;
@@ -597,24 +606,37 @@ function switchCardSlide(event, docId, slideIndex) {
 }
 
 // ----------------------------------------------------
-// 🚀 ৭. নিউজ ফিড রেন্ডারিং লজিক
+// 🚀 ৭. নিউজ ফিড রেন্ডারিং লজিক (Infinite Scroll & Optimization)
 // ----------------------------------------------------
-async function fetchAndDisplayProperties(category, searchFilter = '') {
+async function fetchAndDisplayProperties(category, searchFilter = '', isLoadMore = false) {
     if (!propertyG) return;
-    propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:#65676b;">নিউজ ফিড লোড হচ্ছে...</p>';
     
-    try {
-        let snap = await db.collection('properties')
-            .where('category', '==', category)
-            .where('status', '==', 'published')
-            .get();
-            
-        propertyG.innerHTML = '';
+    const scrollLoader = document.getElementById('infinite-scroll-loader');
 
-        let allDocs = [];
+    // নতুন ক্যাটাগরি বা সার্চ ফিল্টার হলে স্টেট রি-সেট হবে
+    if (!isLoadMore) {
+        propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:#65676b;">নিউজ ফিড লোড হচ্ছে...</p>';
+        lastVisibleDoc = null;
+        hasMorePosts = true;
+        if (scrollLoader) scrollLoader.style.display = 'none';
+    } else {
+        if (scrollLoader) scrollLoader.style.display = 'block';
+    }
+
+    try {
+        currentCategory = category;
         const filterType = document.getElementById('filterType')?.value || '';
         const filterDistrict = document.getElementById('filterDistrict')?.value || '';
         const formattedSearch = searchFilter.toLowerCase().trim();
+
+        // ১. ফায়ারবেস কুয়েরি শুরু
+        let query = db.collection('properties')
+            .where('category', '==', category)
+            .where('status', '==', 'published');
+
+        const snap = await query.get();
+        
+        let allMatchedDocs = [];
 
         snap.forEach(doc => {
             const data = doc.data();
@@ -629,84 +651,81 @@ async function fetchAndDisplayProperties(category, searchFilter = '') {
                 if (!titleMatch && !villageMatch && !thanaMatch) isMatched = false;
             }
 
-            if (isMatched) allDocs.push({ id: doc.id, data: data });
+            if (isMatched) {
+                allMatchedDocs.push({ id: doc.id, docSnapshot: doc, data: data });
+            }
         });
 
-        if (allDocs.length === 0) {
-            propertyG.innerHTML = '<p style="text-align:center; padding:40px; color:#65676b;">কোনো পোস্ট পাওয়া যায়নি।</p>';
+        if (allMatchedDocs.length === 0) {
+            hasMorePosts = false;
+            if (!isLoadMore) {
+                propertyG.innerHTML = '<p style="text-align:center; padding:40px; color:#65676b;">কোনো পোস্ট পাওয়া যায়নি।</p>';
+            }
+            if (scrollLoader) scrollLoader.style.display = 'none';
+            isLoadingMore = false;
             return;
         }
 
-        let boostedList = allDocs.filter(item => item.data.isBoosted === true || item.data.isPaidPost === true);
-        let normalList = allDocs.filter(item => !item.data.isBoosted && !item.data.isPaidPost);
-        let featuredList = allDocs.slice(0, 5); 
-
-        // ১. কোম্পানি স্লাইডার
-        const companySliderHTML = await generateCompanySliderHTML(allDocs);
-        if (companySliderHTML) {
-            propertyG.insertAdjacentHTML('beforeend', companySliderHTML);
+        // পেজিনেশনের জন্য স্লাইস করা
+        let startIndex = 0;
+        if (isLoadMore && lastVisibleDoc) {
+            const lastIndex = allMatchedDocs.findIndex(item => item.id === lastVisibleDoc.id);
+            if (lastIndex !== -1) startIndex = lastIndex + 1;
         }
 
-        // ২. নীল পোস্ট ব্যানার
-        propertyG.insertAdjacentHTML('beforeend', createBluePostPromptHTML());
+        const paginatedDocs = allMatchedDocs.slice(startIndex, startIndex + 10);
 
-        // ৩. প্রমোশনাল অফার ব্যানার
-        propertyG.insertAdjacentHTML('beforeend', createImageBannerSliderHTML());
+        if (paginatedDocs.length === 0) {
+            hasMorePosts = false;
+            if (scrollLoader) scrollLoader.style.display = 'none';
+            isLoadingMore = false;
+            return;
+        }
 
-        let normalIdx = 0;
-        let boostedIdx = 0;
+        if (!isLoadMore) propertyG.innerHTML = '';
 
-        // ৪. ২টি সাধারণ পোস্ট
-        for (let i = 0; i < 2 && normalIdx < normalList.length; i++, normalIdx++) {
-            const item = normalList[normalIdx];
+        // শেষ ডকুমেন্টের স্ন্যাপশট ট্র্যাক রাখা
+        lastVisibleDoc = paginatedDocs[paginatedDocs.length - 1].docSnapshot;
+
+        // ২. কেবল প্রথমবার পেজ লোডে ব্যানার ও স্পন্সরড উইজেটগুলো বসবে
+        if (!isLoadMore) {
+            const companySliderHTML = await generateCompanySliderHTML(allMatchedDocs);
+            if (companySliderHTML) propertyG.insertAdjacentHTML('beforeend', companySliderHTML);
+
+            propertyG.insertAdjacentHTML('beforeend', createBluePostPromptHTML());
+            propertyG.insertAdjacentHTML('beforeend', createImageBannerSliderHTML());
+            
+            const featuredList = allMatchedDocs.slice(0, 5);
+            propertyG.insertAdjacentHTML('beforeend', createLargeFeaturedPostsHTML(featuredList));
+        }
+
+        // ৩. প্রপার্টি কার্ডসমূহ পোস্ট করা
+        paginatedDocs.forEach(item => {
             propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
             loadPostAuthorDetails(item.id, item.data);
+        });
+
+        // যদি সব পোস্ট লোড হয়ে যায়
+        if (startIndex + 10 >= allMatchedDocs.length) {
+            hasMorePosts = false;
         }
 
-        // ৫. ফিচার্ড পোস্ট স্লাইডার
-        propertyG.insertAdjacentHTML('beforeend', createLargeFeaturedPostsHTML(featuredList));
-
-        // ৬. আরও ২টি সাধারণ পোস্ট
-        for (let i = 0; i < 2 && normalIdx < normalList.length; i++, normalIdx++) {
-            const item = normalList[normalIdx];
-            propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
-            loadPostAuthorDetails(item.id, item.data);
-        }
-
-        // ৭. ১ম বুস্টেড পোস্ট
-        if (boostedList.length > 0 && boostedIdx < boostedList.length) {
-            const bItem = boostedList[boostedIdx++];
-            propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(bItem.id, bItem.data));
-            loadPostAuthorDetails(bItem.id, bItem.data);
-        }
-
-        // ৮. সাধারণ ও বুস্টেড পোস্ট রেন্ডার
-        let countNormal = 0;
-        while (normalIdx < normalList.length) {
-            const item = normalList[normalIdx++];
-            propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(item.id, item.data));
-            loadPostAuthorDetails(item.id, item.data);
-            countNormal++;
-
-            if (countNormal % 4 === 0) {
-                if (boostedIdx < boostedList.length) {
-                    const bItem = boostedList[boostedIdx++];
-                    propertyG.insertAdjacentHTML('beforeend', createFbPostHTML(bItem.id, bItem.data));
-                    loadPostAuthorDetails(bItem.id, bItem.data);
-                }
-            }
-        }
-
+        if (scrollLoader) scrollLoader.style.display = 'none';
         setupSliderAndLikeLogic();
 
     } catch (error) {
-        console.error("ত্রুটি:", error);
-        propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:red;">ফিড লোড করতে সমস্যা হয়েছে।</p>';
+        console.error("ফিড লোড ত্রুটি:", error);
+        if (!isLoadMore) {
+            propertyG.innerHTML = '<p style="text-align:center; padding:20px; color:red;">ফিড লোড করতে সমস্যা হয়েছে।</p>';
+        }
+        if (scrollLoader) scrollLoader.style.display = 'none';
+    } finally {
+        isLoadingMore = false;
     }
 }
 
 // ----------------------------------------------------
-// 📌 পোস্টে পেজ/ইউজার নাম এবং লোগো ফেচিং (details.js লজিক হুবহু)
+// 📌 পোস্টে পেজ/ইউজার নাম এবং লোগো ফেচিং
 // ----------------------------------------------------
 async function loadPostAuthorDetails(docId, postData = {}) {
     const nameEl = document.getElementById(`author-name-${docId}`);
@@ -714,12 +733,10 @@ async function loadPostAuthorDetails(docId, postData = {}) {
 
     if (!nameEl || !picEl) return;
 
-    // details.js অনুযায়ী লজিক চেক
     const isCompany = postData.ownerType === 'company' || postData.authorType === 'company' || !!postData.companyId;
     const companyId = postData.companyId || postData.ownerId || postData.authorId;
     const userId = postData.userId || postData.createdByUid || postData.createdByUserId;
 
-    // A. যদি পেজ / কোম্পানি পোস্ট হয়
     if (isCompany && companyId) {
         try {
             const compDoc = await db.collection('companies').doc(companyId).get();
@@ -739,7 +756,6 @@ async function loadPostAuthorDetails(docId, postData = {}) {
         return;
     } 
 
-    // B. যদি সাধারণ ইউজার পোস্ট হয়
     if (userId) {
         try {
             const userDoc = await db.collection('users').doc(userId).get();
@@ -758,7 +774,6 @@ async function loadPostAuthorDetails(docId, postData = {}) {
         return;
     }
 
-    // C. কোনো আইডি না থাকলে ফলব্যাক
     nameEl.textContent = postData.postedByName || "বিজ্ঞাপনদাতা";
 }
 
@@ -828,6 +843,28 @@ function setupScrollToTop() {
 }
 
 // ----------------------------------------------------
+// 📜 ৯. ইনফিনিট স্ক্রল ডিটেকশন (Auto-Load on Scroll)
+// ----------------------------------------------------
+window.addEventListener('scroll', () => {
+    if (isLoadingMore || !hasMorePosts) return;
+
+    const mapSection = document.getElementById('map-section');
+    if (mapSection && mapSection.style.display !== 'none') return; // ম্যাপ ভিউ অন থাকলে পেজিনেশন বন্ধ থাকবে
+
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const threshold = document.documentElement.scrollHeight - 150;
+
+    if (scrollPosition >= threshold) {
+        isLoadingMore = true;
+        
+        const activeNavBtn = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
+        const category = activeNavBtn ? activeNavBtn.getAttribute('data-category') : 'বিক্রয়';
+
+        fetchAndDisplayProperties(category, globalSearchInput?.value || '', true);
+    }
+});
+
+// ----------------------------------------------------
 // ⚙️ ইভেন্ট সেটআপ ও অ্যাপ ইনিশিয়ালাইজেশন
 // ----------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
@@ -849,11 +886,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const mapSection = document.getElementById('map-section');
             const propertyContainer = document.getElementById('property-grid-container');
 
-            // যদি স্ক্রিনে ম্যাপ ভিউ অন থাকে, তবে ম্যাপ ডাটা ফিল্টার হবে
             if (mapSection && mapSection.style.display !== 'none') {
                 initMap(selectedCategory);
             } else {
-                // নতুবা সাধারণ নিউজফিড লিস্ট ফিল্টার হবে
                 updateMapBackButton(false);
                 if (propertyContainer) propertyContainer.style.display = 'block';
                 fetchAndDisplayProperties(selectedCategory, globalSearchInput?.value || '');
@@ -870,7 +905,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (propertyContainer) propertyContainer.style.display = 'none';
             if (mapSection) mapSection.style.display = 'block';
             
-            // বর্তমানে যে ট্যাব সিলেক্টেড আছে (বিক্রয় নাকি ভাড়া) সেটার ডাটা ম্যাপে লোড করবে
             const activeNavBtn = document.querySelector('.fb-tabs .fb-tab-btn.active:not(#mapViewToggleBtn)');
             const currentCat = activeNavBtn ? activeNavBtn.getAttribute('data-category') : 'বিক্রয়';
             initMap(currentCat);
@@ -906,7 +940,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // লোকাল স্টোরেজে অ্যাকাউন্ট/পেজ চেঞ্জ হলে তাৎক্ষণিক হেডার প্রোফাইল পিক আপডেট লিসেনার
     window.addEventListener('storage', () => {
         const user = auth.currentUser;
         if (user) loadProfilePicture(user);
