@@ -327,7 +327,7 @@ async function generateCompanySliderHTML(allMatchedDocs) {
 
             companyCards.push(`
                 <div onclick="window.location.href='${redirectUrl}'" style="min-width: 95px; width: 95px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; flex-shrink: 0; background: #fff; padding: 8px 5px; border-radius: 10px; border: 1px solid #e4e6eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <img src="${logo}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1877f2&color=fff';" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #1877f2;" alt="${name}">
+                    <img src="${logo}" loading="lazy" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1877f2&color=fff';" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #1877f2;" alt="${name}">
                     <span style="font-size: 11.5px; font-weight: 600; color: #050505; margin-top: 6px; line-height: 1.4; height: 32px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-word; padding: 0 2px;">${name}</span>
                 </div>
             `);
@@ -376,7 +376,7 @@ function createImageBannerSliderHTML() {
 
     const slidesHTML = banners.map((item, i) => `
         <div style="min-width: 260px; width: 260px; height: 125px; border-radius: 8px; overflow: hidden; flex-shrink: 0; position: relative; border: 1px solid #ced0d4; cursor:pointer;" onclick="window.location.href='${item.link}'">
-            <img src="${item.img}" style="width: 100%; height: 100%; object-fit: cover;" alt="Banner ${i+1}">
+            <img src="${item.img}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" alt="Banner ${i+1}">
             <span style="position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.6); color: #fff; font-size: 9px; padding: 2px 5px; border-radius: 4px;">বিজ্ঞাপন</span>
         </div>
     `).join('');
@@ -406,15 +406,18 @@ function createLargeFeaturedPostsHTML(featuredList) {
     if (!featuredList || featuredList.length === 0) return '';
     const list = featuredList.slice(0, 5);
 
-    const cardsHTML = list.map(item => {
+    const cardsHTML = list.map((item, index) => {
         const data = item.data;
         const imgUrl = (data.images && data.images.length > 0) ? (data.images[0].url || data.images[0]) : 'https://via.placeholder.com/300x160?text=Featured';
         const price = data.price || data.monthlyRent || 'আলোচনা সাপেক্ষে';
         const displayPrice = typeof price === 'number' ? new Intl.NumberFormat('bn-BD').format(price) : price;
 
+        const bgStyle = index === 0 ? `background-image: url('${imgUrl}');` : ``;
+        const lazyClass = index > 0 ? `lazy-bg` : ``;
+
         return `
             <div class="featured-card-item">
-                <div class="featured-img-box" style="background-image: url('${imgUrl}');">
+                <div class="featured-img-box ${lazyClass}" ${index === 0 ? `style="${bgStyle}"` : `data-src="${imgUrl}"`}>
                     <span style="position: absolute; top: 8px; left: 8px; background: #ff9800; color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px;">⭐ ফিচার্ড</span>
                 </div>
                 <div style="padding: 10px;">
@@ -444,7 +447,43 @@ function createLargeFeaturedPostsHTML(featuredList) {
     `;
 }
 
-// কার্ড জেনারেটর
+// ----------------------------------------------------
+// ⚡ Lazy Loading Observer Engine
+// ----------------------------------------------------
+function initLazyLoading() {
+    const lazyElements = document.querySelectorAll('.lazy-bg');
+
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries, observerInstance) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const src = el.getAttribute('data-src');
+                    if (src) {
+                        el.style.backgroundImage = `url('${src}')`;
+                        el.classList.remove('lazy-bg');
+                        el.removeAttribute('data-src');
+                    }
+                    observerInstance.unobserve(el);
+                }
+            });
+        }, {
+            rootMargin: "150px 0px"
+        });
+
+        lazyElements.forEach(el => observer.observe(el));
+    } else {
+        lazyElements.forEach(el => {
+            const src = el.getAttribute('data-src');
+            if (src) {
+                el.style.backgroundImage = `url('${src}')`;
+                el.classList.remove('lazy-bg');
+            }
+        });
+    }
+}
+
+// কার্ড জেনারেটর (Lazy Loading Optimized)
 function createFbPostHTML(docId, data) {
     const title = data.title || 'শিরোনাম';
     const description = data.description || 'কোন বিবরণ দেওয়া হয়নি।';
@@ -476,17 +515,25 @@ function createFbPostHTML(docId, data) {
     }
     images = images.slice(0, 5);
 
-    const mediaHTML = images.map((img, i) => `
-        <div class="fb-slide-item ${i === 0 ? 'active' : ''}" style="background-image: url('${img}');"></div>
-    `).join('');
+    // প্রথম ছবি সরাসরি লোড হবে, বাকি সব স্লাইড Lazy Load হবে
+    const mediaHTML = images.map((img, i) => {
+        if (i === 0) {
+            return `<div class="fb-slide-item active" style="background-image: url('${img}');"></div>`;
+        } else {
+            return `<div class="fb-slide-item lazy-bg" data-src="${img}"></div>`;
+        }
+    }).join('');
 
+    // প্রথম থাম্বনেইল সরাসরি লোড হবে, বাকিগুলো Lazy Load হবে
     const thumbHTML = images.length > 1 ? `
         <div class="thumbnail-strip">
-            ${images.map((img, i) => `
-                <div class="thumb-box ${i === 0 ? 'active' : ''}" 
-                     style="background-image: url('${img}');" 
-                     onclick="switchCardSlide(event, '${docId}', ${i})"></div>
-            `).join('')}
+            ${images.map((img, i) => {
+                if (i === 0) {
+                    return `<div class="thumb-box active" style="background-image: url('${img}');" onclick="switchCardSlide(event, '${docId}', ${i})"></div>`;
+                } else {
+                    return `<div class="thumb-box lazy-bg" data-src="${img}" onclick="switchCardSlide(event, '${docId}', ${i})"></div>`;
+                }
+            }).join('')}
         </div>
     ` : '';
 
@@ -536,7 +583,7 @@ function createFbPostHTML(docId, data) {
             
             <div class="card-author-header">
                 <div class="author-info">
-                    <img id="author-pic-${docId}" src="https://ui-avatars.com/api/?name=User&background=1877f2&color=fff" class="fb-profile-pic" alt="pic">
+                    <img id="author-pic-${docId}" src="https://ui-avatars.com/api/?name=User&background=1877f2&color=fff" loading="lazy" class="fb-profile-pic" alt="pic">
                     <div class="author-meta">
                         <h4 id="author-name-${docId}">লোডিং...</h4>
                         <p>${locationSvg} ${fullLoc}</p>
@@ -591,7 +638,7 @@ function toggleDescReadMore(btn) {
     }
 }
 
-// থাম্বনেইল ক্লিক করে ফটো স্পেসিফিক সুইচ করা
+// থাম্বনেইল ক্লিক করে ফটো স্পেসিফিক সুইচ করা (Lazy Load হ্যান্ডেলসহ)
 function switchCardSlide(event, docId, slideIndex) {
     event.stopPropagation();
     
@@ -601,8 +648,31 @@ function switchCardSlide(event, docId, slideIndex) {
     const slides = card.querySelectorAll('.fb-slide-item');
     const thumbs = card.querySelectorAll('.thumb-box');
 
-    slides.forEach((s, i) => s.classList.toggle('active', i === slideIndex));
-    thumbs.forEach((t, i) => t.classList.toggle('active', i === slideIndex));
+    slides.forEach((s, i) => {
+        const isActive = i === slideIndex;
+        s.classList.toggle('active', isActive);
+        if (isActive && s.classList.contains('lazy-bg')) {
+            const src = s.getAttribute('data-src');
+            if (src) {
+                s.style.backgroundImage = `url('${src}')`;
+                s.classList.remove('lazy-bg');
+                s.removeAttribute('data-src');
+            }
+        }
+    });
+
+    thumbs.forEach((t, i) => {
+        const isActive = i === slideIndex;
+        t.classList.toggle('active', isActive);
+        if (isActive && t.classList.contains('lazy-bg')) {
+            const src = t.getAttribute('data-src');
+            if (src) {
+                t.style.backgroundImage = `url('${src}')`;
+                t.classList.remove('lazy-bg');
+                t.removeAttribute('data-src');
+            }
+        }
+    });
 }
 
 // ----------------------------------------------------
@@ -712,6 +782,7 @@ async function fetchAndDisplayProperties(category, searchFilter = '', isLoadMore
 
         if (scrollLoader) scrollLoader.style.display = 'none';
         setupSliderAndLikeLogic();
+        initLazyLoading(); // 👈 নতুন রেন্ডার হওয়া সকল ছবির জন্য Lazy Load চালু
 
     } catch (error) {
         console.error("ফিড লোড ত্রুটি:", error);
@@ -788,7 +859,18 @@ function setupSliderAndLikeLogic() {
 
             idx = e.target.classList.contains('fb-next') ? (idx + 1) % total : (idx - 1 + total) % total;
             slides.forEach(s => s.style.display = 'none');
-            slides[idx].style.display = 'block';
+            
+            const targetSlide = slides[idx];
+            if (targetSlide.classList.contains('lazy-bg')) {
+                const src = targetSlide.getAttribute('data-src');
+                if (src) {
+                    targetSlide.style.backgroundImage = `url('${src}')`;
+                    targetSlide.classList.remove('lazy-bg');
+                    targetSlide.removeAttribute('data-src');
+                }
+            }
+            
+            targetSlide.style.display = 'block';
             slider.dataset.currentIndex = idx;
         };
     });
