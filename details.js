@@ -933,11 +933,11 @@ function setupSaveAndShareSystem(postData, sellerId) {
 
 
 /* =========================================================
-   🎯 KHATIAN QR VERIFICATION BUTTON LOGIC (WINDOW.LOCATION FIX)
+   🎯 KHATIAN QR VERIFICATION BUTTON LOGIC (OPTIMIZED & FAST)
    ========================================================= */
 
 function redirectToDlrmsPortal() {
-    window.location.href = "https://dlrms.land.gov.bd";
+    window.location.href = "https://dlrms.land.gov.bd/";
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -952,7 +952,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         khotiyanButton.classList.add('btn-scanning');
         khotiyanButton.disabled = true;
-        khotiyanButton.innerHTML = `<i class="material-icons" style="animation: spin 1s linear infinite;">sync</i> খতিয়ান অনুসন্ধান করা হচ্ছে...`;
+        khotiyanButton.innerHTML = `<i class="material-icons" style="animation: spin 1s linear infinite;">sync</i> যাচাই করা হচ্ছে...`;
 
         try {
             let khotianImgUrl = null;
@@ -963,26 +963,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     khotianImgUrl = khotianDocument;
                 } else if (khotianDocument.url) {
                     khotianImgUrl = khotianDocument.url;
-                } else if (Array.isArray(khotianDocument)) {
+                } else if (Array.isArray(khotianDocument) && khotianDocument.length > 0) {
                     const first = khotianDocument[0];
                     khotianImgUrl = typeof first === 'string' ? first : (first?.url || null);
                 }
             }
 
+            // ছবি না পাওয়া গেলে সরাসরি DLRMS সাইটে যাবে
             if (!khotianImgUrl) {
-                console.warn("খতিয়ানের ছবি পাওয়া যায়নি। DLRMS পোর্টালে নিয়ে যাওয়া হচ্ছে...");
                 redirectToDlrmsPortal();
                 return;
             }
 
+            // QR Scan চালানো
             const qrData = await scanQRCodeFromImageUrl(khotianImgUrl);
 
-            if (qrData && (qrData.startsWith("http://") || qrData.startsWith("https://"))) {
-                window.location.href = qrData;
-            } else if (qrData) {
-                alert(`খতিয়ান QR ডাটা পাওয়া গেছে:\n\n${qrData}`);
-                redirectToDlrmsPortal();
+            if (qrData) {
+                if (qrData.startsWith("http://") || qrData.startsWith("https://")) {
+                    // QR কোড লিংক হলে তাৎক্ষণিক সেই লিংকে চলে যাবে (কোনো Alert ছাড়াই)
+                    window.location.href = qrData;
+                } else {
+                    // QR ডাটা লিংক না হলেও ডাইরেক্ট DLRMS পোর্টালে যাবে
+                    redirectToDlrmsPortal();
+                }
             } else {
+                // QR কোড পড়তে না পারলে DLRMS পোর্টালে যাবে
                 redirectToDlrmsPortal();
             }
 
@@ -996,7 +1001,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
 
 /* =========================================================
    POST TIME FORMAT
