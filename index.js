@@ -85,18 +85,26 @@ if (filterDivisionEl && filterDistrictEl) {
 // ----------------------------------------------------
 // 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার
 // ----------------------------------------------------
+// ----------------------------------------------------
+// 👤 হেডারে ইউজার/কোম্পানি প্রোফাইল পিকচার লোডার (Fixed)
+// ----------------------------------------------------
 async function loadProfilePicture(user) {
+    const profileImage = document.getElementById('profileImage');
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+
     if (!user) {
         if (profileImage) profileImage.style.display = 'none';
         if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
         return;
     }
 
-    const activeMode = localStorage.getItem('activeMode'); 
+    // notifications.js ও profile.js এর সাথে সিঙ্ক রেখে activeIdentityType থেকে মোড নেওয়া হচ্ছে
+    const activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
     const activeCompanyId = localStorage.getItem('activeCompanyId') || localStorage.getItem('activePageId');
     const activeAvatar = localStorage.getItem('activeAvatar');
 
-    if ((activeMode === 'company' || activePageIdCheck()) && activeCompanyId) {
+    // যদি মোড 'company' হয় এবং কোম্পানির আইডি থাকে
+    if (activeIdentityType === 'company' && activeCompanyId) {
         try {
             const compDoc = await db.collection('companies').doc(activeCompanyId).get();
             if (compDoc.exists) {
@@ -106,44 +114,41 @@ async function loadProfilePicture(user) {
                     profileImage.src = photo;
                     profileImage.style.display = 'block';
                     if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-                    return;
+                    return; // কোম্পানির ছবি সফলভাবে পাওয়া গেলে এখানেই রিটার্ন করবে
                 }
             }
         } catch (err) {
-            console.error("কোম্পানি প্রোফাইল লোড ত্রুটি:", err);
+            console.error("কোম্পানি প্রোফাইল পিকচার লোড করতে সমস্যা:", err);
         }
     }
 
+    // মোড যদি 'user' হয় অথবা কোম্পানি লোগো না পাওয়া যায়, তবে ইউজারের নিজস্ব ছবি লোড হবে
     loadUserDefaultPic(user);
 }
 
-function activePageIdCheck() {
-    const activeMode = localStorage.getItem('activeMode');
-    return activeMode ? activeMode === 'company' : !!localStorage.getItem('activePageId');
-}
-
 function loadUserDefaultPic(user) {
+    const profileImage = document.getElementById('profileImage');
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+
     db.collection('users').doc(user.uid).get().then(doc => {
+        let photo = null;
         if (doc.exists) {
-            currentUserData = doc.data();
-            const photo = currentUserData.profilePic || currentUserData.photoURL || user.photoURL;
-            if (profileImage && photo) {
-                profileImage.src = photo;
-                profileImage.style.display = 'block';
-                if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-            } else {
-                if (profileImage) profileImage.style.display = 'none';
-                if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
-            }
+            const currentUserData = doc.data();
+            photo = currentUserData.profilePic || currentUserData.avatarUrl || currentUserData.photoURL || user.photoURL;
         } else {
-            if (profileImage && user.photoURL) {
-                profileImage.src = user.photoURL;
-                profileImage.style.display = 'block';
-                if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-            }
+            photo = user.photoURL;
+        }
+
+        if (profileImage && photo) {
+            profileImage.src = photo;
+            profileImage.style.display = 'block';
+            if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
+        } else {
+            if (profileImage) profileImage.style.display = 'none';
+            if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
         }
     }).catch(err => {
-        console.error("ইউজার প্রোফাইল লোড ত্রুটি:", err);
+        console.error("ইউজার প্রোফাইল পিকচার লোড করতে সমস্যা:", err);
         if (profileImage && user.photoURL) {
             profileImage.src = user.photoURL;
             profileImage.style.display = 'block';
@@ -151,6 +156,14 @@ function loadUserDefaultPic(user) {
         }
     });
 }
+
+// ⚡ প্রোফাইল মোড চেঞ্জ হওয়ার সাথে সাথে যেন ইন্ডেক্স পেজে পিকচার আপডেট হয়ে যায়
+window.addEventListener('identityChanged', () => {
+    const user = firebase.auth().currentUser;
+    if (user) {
+        loadProfilePicture(user);
+    }
+});
 
 // ----------------------------------------------------
 // 🗺️ ৪. ম্যাপ ফিল্টারিং ও ব্যাক বাটন লজিক
