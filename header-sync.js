@@ -54,9 +54,11 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
     let unreadMsgListener = null;
 
     document.addEventListener('DOMContentLoaded', function() {
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async (user) => {
             if (user) {
                 console.log("Header-Sync: 🔓 ইউজার কানেক্টেড। হেডার ব্যাজ ও আইডি সিঙ্ক হচ্ছে...");
+                // ⚡ ফার্স্ট টাইম লোডে প্রোফাইল পিকচার সিঙ্ক নিশ্চিত করা
+                await ensureInitialAvatarSync(user);
                 initHeaderSync();
             } else {
                 console.log("Header-Sync: 🌐 গেস্ট/লগআউট মোড। ব্যাজ হাইড করা হলো।");
@@ -72,6 +74,40 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
         });
     });
 
+    // ⚡ প্রথমবার পেজে ঢোকার পর লোকালস্টোরেজে ছবি না থাকলে ডেটাবেজ/অথ থেকে সিঙ্ক করা
+    async function ensureInitialAvatarSync(user) {
+        const activeType = localStorage.getItem('activeIdentityType') || 'user';
+        let currentAvatar = localStorage.getItem('activeAvatar');
+
+        if (!currentAvatar) {
+            if (activeType === 'company') {
+                const compId = localStorage.getItem('activeCompanyId');
+                if (compId) {
+                    try {
+                        const compDoc = await db.collection('companies').doc(compId).get();
+                        if (compDoc.exists && compDoc.data().logo) {
+                            localStorage.setItem('activeAvatar', compDoc.data().logo);
+                        }
+                    } catch (e) {
+                        console.warn("Company logo fetch error:", e);
+                    }
+                }
+            } else {
+                // ইউজার মোড: Firestore অথবা Auth photoURL থেকে আনা
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (userDoc.exists && userDoc.data().profilePic) {
+                        localStorage.setItem('activeAvatar', userDoc.data().profilePic);
+                    } else if (user.photoURL) {
+                        localStorage.setItem('activeAvatar', user.photoURL);
+                    }
+                } catch (e) {
+                    if (user.photoURL) localStorage.setItem('activeAvatar', user.photoURL);
+                }
+            }
+        }
+    }
+
     function initHeaderSync() {
         const activeIdentity = window.getActiveIdentity();
         if (!activeIdentity) return;
@@ -79,7 +115,7 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
         // 🖼️ হেডারের ছবি ও ভিজ্যুয়াল ইন্ডিকেটর আপডেট করা
         updateHeaderAvatarAndBadge(activeIdentity);
 
-        // 🔔 ১. অ্যাক্টিভ আইডির নোটিফিকেশন লোড (Object পাস করা হচ্ছে)
+        // 🔔 ১. অ্যাক্টিভ আইডির নোটিফিকেশন লোড
         syncUnreadNotifications(activeIdentity);
 
         // 💬 ২. অ্যাক্টিভ আইডির মেসেজ লোড
@@ -109,7 +145,7 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
         }
     }
 
-    // 🔔 ১. আনরিড নোটিফিকেশন লাইভ কাউন্ট (notifications.js এর সাথে ১০০% ফিল্টারিং মিল রেখে)
+    // 🔔 ১. আনরিড নোটিফিকেশন লাইভ কাউন্ট
     function syncUnreadNotifications(activeIdentity) {
         const notifBadge = document.getElementById('notification-badge') || document.getElementById('notification-count');
         if (!notifBadge || !activeIdentity) return;
@@ -131,26 +167,21 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
                     const notifUserId = String(data.userId || '');
                     const targetType = data.targetType || '';
 
-                    // ১. আইডি মিল না থাকলে বাদ
                     if (notifUserId !== targetId) return;
 
-                    // ২. ইউজার মোডে থাকলে পেজের ফিল্টার
                     if (!isCompanyMode) {
                         if (targetType === 'company') return;
                         if (notifUserId.startsWith('comp_')) return;
                         if (data.type === 'chat' && data.companyId && data.companyId !== targetId) return;
                     }
 
-                    // ৩. পেজ মোডে থাকলে ইউজারের বার্তা ফিল্টার
                     if (isCompanyMode) {
                         if (targetType === 'user') return;
                         if (!notifUserId.startsWith('comp_') && targetId.startsWith('comp_')) return;
                     }
 
-                    // ৪. নিজের পাঠানো নোটিফিকেশন ফিল্টার
                     if (data.senderId && String(data.senderId) === targetId) return;
 
-                    // ৫. ইউনিক কি দিয়ে ডুপ্লিকেট মেসেজ বাদ দেওয়া
                     const msgContent = (data.message || data.body || '').trim();
                     const notifType = data.type || 'general';
                     
@@ -169,7 +200,6 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
 
                 console.log(`🔔 লাইভ নোটিফিকেশন কাউন্ট (${targetId}): ${validUnreadCount} টি ফিল্টার করা আনরিড`);
 
-                // Android WebView-এ launcher badge sync
                 try {
                     if (window.AndroidBridge && typeof window.AndroidBridge.setPendingNotificationCount === 'function') {
                         window.AndroidBridge.setPendingNotificationCount(validUnreadCount);
@@ -205,8 +235,6 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
                 let unreadChatsCount = 0;
                 snapshot.forEach(chatDoc => {
                     const chatData = chatDoc.data();
-                    
-                    // লাস্ট মেসেজ যদি বর্তমান এক্টিভ আইডির থেকে না হয় এবং চ্যাট আনরিড থাকে
                     if (chatData.lastSenderId && chatData.lastSenderId !== activeId && chatData.isUnread === true) {
                         unreadChatsCount++;
                     }
@@ -237,25 +265,21 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
 // 🚪 গ্লোবাল লগআউট ও অথ স্টেট হ্যান্ডলার (Header Sync)
 // =======================================================
 
-// ১. অথ স্টেট পরিবর্তনের সাথে সাথে সাইডবার বাটন আপডেট
 if (typeof firebase !== 'undefined' && firebase.auth) {
     firebase.auth().onAuthStateChanged((user) => {
         const loginBtn = document.getElementById('login-link-sidebar');
         const logoutBtn = document.getElementById('logout-link-sidebar');
 
         if (user) {
-            // ইউজার লগইন থাকলে লগইন বাটন হাইড ও লগআউট বাটন শো করবে
             if (loginBtn) loginBtn.style.display = 'none';
             if (logoutBtn) logoutBtn.style.display = 'flex';
         } else {
-            // ইউজার লগআউট থাকলে লগইন বাটন শো ও লগআউট বাটন হাইড করবে
             if (loginBtn) loginBtn.style.display = 'flex';
             if (logoutBtn) logoutBtn.style.display = 'none';
         }
     });
 }
 
-// ২. লগআউট ক্লিক ইভেন্ট হ্যান্ডলার
 document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logout-link-sidebar');
     
@@ -265,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (confirm("আপনি কি নিশ্চিত যে লগআউট করতে চান?")) {
                 firebase.auth().signOut().then(() => {
-                    // স্টোরেজ ক্লিন করা
                     localStorage.removeItem('activeIdentityType');
                     localStorage.removeItem('activeCompanyId');
                     localStorage.removeItem('activeName');
