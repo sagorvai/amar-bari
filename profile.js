@@ -365,51 +365,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // ⚡ ⭐ অ্যাক্টিভ প্রোফাইল গ্লোবালি সুইচ করার লজিক ⭐
-    window.switchMode = function(toCompany) {
-        isCompanyMode = toCompany;
+    // ⚡ ⭐ অ্যাক্টিভ প্রোফাইল গ্লোবালি সুইচ করার লজিক (Fixed) ⭐
+window.switchMode = function(toCompany) {
+    isCompanyMode = toCompany;
 
-        if (toCompany && companyData) {
-            localStorage.setItem('activeIdentityType', 'company');
-            localStorage.setItem('activeCompanyId', companyData.companyId);
-            localStorage.setItem('activeName', companyData.name);
-            localStorage.setItem('activeAvatar', companyData.logo || '');
-        } else {
-            localStorage.setItem('activeIdentityType', 'user');
-            localStorage.removeItem('activeCompanyId');
-            if (currentUserData) {
-                localStorage.setItem('activeName', currentUserData.fullName || currentUserData.name || '');
-                localStorage.setItem('activeAvatar', currentUserData.profilePic || '');
-            }
-        }
-
-        renderProfileView();
+    if (toCompany && companyData) {
+        localStorage.setItem('activeIdentityType', 'company');
+        localStorage.setItem('activeCompanyId', companyData.companyId);
+        localStorage.setItem('activeName', companyData.name);
+        localStorage.setItem('activeAvatar', companyData.logo || '');
+    } else {
+        localStorage.setItem('activeIdentityType', 'user');
+        localStorage.removeItem('activeCompanyId');
         
-        window.dispatchEvent(new Event('identityChanged'));
-    };
-
-    window.openCompanyModal = function() {
-        const modalTitle = document.querySelector('#createCompanyModal h3');
-        const saveBtn = document.getElementById('save-company-btn');
-        if(modalTitle && !companyData) modalTitle.textContent = "আবাসন ও ডেভেলপার পেজ খুলুন";
-        if(saveBtn && !companyData) saveBtn.textContent = "পেজ তৈরি করুন";
-        if (companyModal) companyModal.style.display = 'block';
-    };
-
-    if (closeCompanyBtn) {
-        closeCompanyBtn.onclick = () => { if(companyModal) companyModal.style.display = 'none'; };
+        let userPhoto = currentUserData ? (currentUserData.profilePic || currentUserData.avatarUrl || '') : '';
+        if (!userPhoto && auth.currentUser) userPhoto = auth.currentUser.photoURL || '';
+        
+        localStorage.setItem('activeName', currentUserData ? (currentUserData.fullName || currentUserData.name || '') : '');
+        localStorage.setItem('activeAvatar', userPhoto);
     }
 
-    if (companyLogoInput) {
-        companyLogoInput.addEventListener('change', function() {
-            const file = this.files[0];
-            if (file && companyLogoPreview) {
-                const reader = new FileReader();
-                reader.onload = (e) => companyLogoPreview.src = e.target.result;
-                reader.readAsDataURL(file);
-            }
-        });
-    }
+    renderProfileView();
+    
+    // গ্লোবাল হেডার সিঙ্ক ইভেন্ট ট্রিগার
+    window.dispatchEvent(new Event('identityChanged'));
+};
 
     // 🏢 ৬. কোম্পানি পেজ তৈরি/আপডেট সাবমিট
     if (companyForm) {
