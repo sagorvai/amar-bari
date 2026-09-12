@@ -2,9 +2,15 @@
 // 🎯 আমার বাড়ি.কম - গ্লোবাল হেডার লাইভ সিঙ্ক ENGINE (কোম্পানি ও পার্সোনাল মোড সাপোর্ট সহ)
 // =======================================================
 
-// ⚡ ১. বর্তমান অ্যাক্টিভ আইডি (User UID নাকি Company ID) রিটার্ন করবে (গ্লোবাল এক্সেসযোগ্য)
+// ⚡ ১. বর্তমান অ্যাক্টিভ আইডি (User UID নাকি Company ID) রিটার্ন করবে
 window.getActiveIdentity = function() {
-    const activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
+    // ডিফল্টভাবে মোড 'user' সেট করা হচ্ছে
+    let activeIdentityType = localStorage.getItem('activeIdentityType');
+    if (!activeIdentityType) {
+        activeIdentityType = 'user';
+        localStorage.setItem('activeIdentityType', 'user');
+    }
+
     const activeCompanyId = localStorage.getItem('activeCompanyId');
     const user = firebase.auth().currentUser;
 
@@ -55,12 +61,12 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
     document.addEventListener('DOMContentLoaded', function() {
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                console.log("Header-Sync: 🔓 ইউজার কানেক্টেড। সিঙ্কিং শুরু হচ্ছে...");
+                console.log("Header-Sync: 🔓 ইউজার কানেক্টেড। মোড ও ছবি সিঙ্ক করা হচ্ছে...");
                 
-                // ⚡ ১. প্রথমে ছবি ও প্রোফাইল ডাটা ফেচ ও আপডেট
-                await syncProfileAvatarNow(user);
+                // ⚡ ১. মোড ডিটেকশন ও ইউজার প্রোফাইল পিকচার সিঙ্ক
+                await syncInitialModeAndAvatar(user);
                 
-                // ⚡ ২. হেডার এবং কাউন্টার সিঙ্ক
+                // ⚡ ২. হেডার ব্যাজ ও তথ্য সিঙ্ক
                 initHeaderSync();
             } else {
                 console.log("Header-Sync: 🌐 গেস্ট/লগআউট মোড।");
@@ -75,44 +81,49 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
         });
     });
 
-    // ⚡ ইনস্ট্যান্ট ছবি সিঙ্ক ফাংশন (যা ফার্স্ট লোডেই ফায়ারবেস থেকে ছবি টেনে আনে)
-    async function syncProfileAvatarNow(user) {
-        const activeType = localStorage.getItem('activeIdentityType') || 'user';
+    // ⚡ ফার্স্ট টাইমে ইউজার মোড নিশ্চিত করা ও ফায়ারবেস থেকে ছবি ফ্লেচ করা
+    async function syncInitialModeAndAvatar(user) {
+        let activeType = localStorage.getItem('activeIdentityType');
         
-        if (activeType === 'company') {
+        // ১. যদি মোড না থাকে, ডিফল্ট 'user' মোড ধরে নেওয়া
+        if (!activeType) {
+            activeType = 'user';
+            localStorage.setItem('activeIdentityType', 'user');
+        }
+
+        // ২. ইউজার মোডে থাকলে প্রোফাইল পিকচার ফায়ারবেস থেকে ইনস্ট্যান্ট লোড করা
+        if (activeType === 'user') {
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists && userDoc.data().profilePic) {
+                    localStorage.setItem('activeAvatar', userDoc.data().profilePic);
+                    if (userDoc.data().name) localStorage.setItem('activeName', userDoc.data().name);
+                } else if (user.photoURL) {
+                    localStorage.setItem('activeAvatar', user.photoURL);
+                    if (user.displayName) localStorage.setItem('activeName', user.displayName);
+                }
+            } catch (e) {
+                console.warn("User avatar fetch error:", e);
+                if (user.photoURL) localStorage.setItem('activeAvatar', user.photoURL);
+            }
+        } 
+        // ৩. কোম্পানি মোডে থাকলে কোম্পানির লোগো ফ্লেচ করা
+        else if (activeType === 'company') {
             const compId = localStorage.getItem('activeCompanyId');
             if (compId) {
                 try {
                     const compDoc = await db.collection('companies').doc(compId).get();
-                    if (compDoc.exists) {
-                        const data = compDoc.data();
-                        if (data.logo) localStorage.setItem('activeAvatar', data.logo);
-                        if (data.companyName) localStorage.setItem('activeName', data.companyName);
+                    if (compDoc.exists && compDoc.data().logo) {
+                        localStorage.setItem('activeAvatar', compDoc.data().logo);
+                        if (compDoc.data().companyName) localStorage.setItem('activeName', compDoc.data().companyName);
                     }
                 } catch (e) {
-                    console.warn("Company sync error:", e);
+                    console.warn("Company logo fetch error:", e);
                 }
-            }
-        } else {
-            // পার্সোনাল মোড
-            try {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const data = userDoc.data();
-                    const pic = data.profilePic || data.photoURL || user.photoURL || '';
-                    const name = data.name || data.displayName || user.displayName || 'ইউজার';
-                    
-                    if (pic) localStorage.setItem('activeAvatar', pic);
-                    if (name) localStorage.setItem('activeName', name);
-                } else if (user.photoURL) {
-                    localStorage.setItem('activeAvatar', user.photoURL);
-                }
-            } catch (e) {
-                if (user.photoURL) localStorage.setItem('activeAvatar', user.photoURL);
             }
         }
 
-        // ছবি আপডেট হওয়া মাত্র ইনস্ট্যান্ট DOM আপডেট
+        // ছবি পাওয়ার পর তৎক্ষণাৎ হেডারের DOM আপডেট করা
         const activeIdentity = window.getActiveIdentity();
         updateHeaderAvatarAndBadge(activeIdentity);
     }
