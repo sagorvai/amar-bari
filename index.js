@@ -86,99 +86,22 @@ if (filterDivisionEl && filterDistrictEl) {
 // 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার
 // ----------------------------------------------------
 // ----------------------------------------------------
-// 👤 হেডারে ইউজার/কোম্পানি প্রোফাইল পিকচার লোডার (Fix Version 2)
+// 👤 হেডারে প্রোফাইল ছবি সিঙ্ক লজিক (index.js)
 // ----------------------------------------------------
-async function loadProfilePicture(user) {
-    const profileImage = document.getElementById('profileImage');
-    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+function loadProfilePicture(user) {
+    // header-sync.js অলরেডি ছবি সিঙ্ক করছে, তাই এখানে শুধু হেডার সিঙ্ক কল করা হবে
+    if (typeof window.getActiveIdentity === 'function') {
+        const activeIdentity = window.getActiveIdentity();
+        const headerProfileImg = document.querySelector('#profileImageWrapper img') || document.getElementById('profileImage');
+        const defaultProfileIcon = document.getElementById('defaultProfileIcon');
 
-    if (!user) {
-        if (profileImage) profileImage.style.display = 'none';
-        if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
-        return;
-    }
-
-    // ১. activeIdentityType এবং activeAvatar থেকে ইন্সট্যান্ট ডেটা চেক
-    const activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
-    const activeCompanyId = localStorage.getItem('activeCompanyId') || localStorage.getItem('activePageId');
-    const activeAvatar = localStorage.getItem('activeAvatar');
-
-    // ২. পেজ মোডে থাকলে
-    if (activeIdentityType === 'company' && activeCompanyId) {
-        // কুইক রেন্ডার (যদি লোকাল স্টোরেজে অবতার অলরেডি সেভ থাকে)
-        if (activeAvatar && profileImage) {
-            profileImage.src = activeAvatar;
-            profileImage.style.display = 'block';
+        if (headerProfileImg && activeIdentity && activeIdentity.avatar) {
+            headerProfileImg.src = activeIdentity.avatar;
+            headerProfileImg.style.display = 'block';
             if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
         }
-
-        try {
-            // ডাটাবেজ থেকে আপডেট লোগো চেক
-            const compDoc = await db.collection('companies').doc(activeCompanyId).get();
-            if (compDoc.exists) {
-                const cData = compDoc.data();
-                const photo = cData.logo || cData.companyLogo || cData.profilePic || activeAvatar;
-                if (profileImage && photo) {
-                    profileImage.src = photo;
-                    profileImage.style.display = 'block';
-                    if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-                    return; 
-                }
-            }
-        } catch (err) {
-            console.error("কোম্পানি প্রোফাইল ছবি লোড এরর:", err);
-        }
     }
-
-    // ৩. ইউজার মোডে থাকলে অথবা কোম্পানির ছবি না পাওয়া গেলে
-    loadUserDefaultPic(user);
 }
-
-function loadUserDefaultPic(user) {
-    const profileImage = document.getElementById('profileImage');
-    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
-
-    db.collection('users').doc(user.uid).get().then(doc => {
-        let photo = null;
-        if (doc.exists) {
-            const currentUserData = doc.data();
-            photo = currentUserData.profilePic || currentUserData.avatarUrl || currentUserData.photoURL || user.photoURL;
-        } else {
-            photo = user.photoURL;
-        }
-
-        if (profileImage && photo) {
-            profileImage.src = photo;
-            profileImage.style.display = 'block';
-            if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-        } else {
-            if (profileImage) profileImage.style.display = 'none';
-            if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
-        }
-    }).catch(err => {
-        console.error("ইউজার প্রোফাইল ছবি লোড এরর:", err);
-        if (profileImage && user.photoURL) {
-            profileImage.src = user.photoURL;
-            profileImage.style.display = 'block';
-            if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-        }
-    });
-}
-
-// ⚡ অথেনটিকেশন পরিবর্তনের সাথে রান করবে
-firebase.auth().onAuthStateChanged((user) => {
-    if (user) {
-        loadProfilePicture(user);
-    }
-});
-
-// ⚡ প্রোফাইল/পেজ সুইচ করা মাত্রই সাথে সাথে আপডেট হবে
-window.addEventListener('identityChanged', () => {
-    const user = firebase.auth().currentUser;
-    if (user) {
-        loadProfilePicture(user);
-    }
-});
 
 // ----------------------------------------------------
 // 🗺️ ৪. ম্যাপ ফিল্টারিং ও ব্যাক বাটন লজিক
