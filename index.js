@@ -86,7 +86,7 @@ if (filterDivisionEl && filterDistrictEl) {
 // 👤 ৩. হেডারে ইউজার/পেজ প্রোফাইল পিকচার লোডার
 // ----------------------------------------------------
 // ----------------------------------------------------
-// 👤 হেডারে ইউজার/কোম্পানি প্রোফাইল পিকচার লোডার (Fixed)
+// 👤 হেডারে ইউজার/কোম্পানি প্রোফাইল পিকচার লোডার (Fix Version 2)
 // ----------------------------------------------------
 async function loadProfilePicture(user) {
     const profileImage = document.getElementById('profileImage');
@@ -98,14 +98,22 @@ async function loadProfilePicture(user) {
         return;
     }
 
-    // notifications.js ও profile.js এর সাথে সিঙ্ক রেখে activeIdentityType থেকে মোড নেওয়া হচ্ছে
+    // ১. activeIdentityType এবং activeAvatar থেকে ইন্সট্যান্ট ডেটা চেক
     const activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
     const activeCompanyId = localStorage.getItem('activeCompanyId') || localStorage.getItem('activePageId');
     const activeAvatar = localStorage.getItem('activeAvatar');
 
-    // যদি মোড 'company' হয় এবং কোম্পানির আইডি থাকে
+    // ২. পেজ মোডে থাকলে
     if (activeIdentityType === 'company' && activeCompanyId) {
+        // কুইক রেন্ডার (যদি লোকাল স্টোরেজে অবতার অলরেডি সেভ থাকে)
+        if (activeAvatar && profileImage) {
+            profileImage.src = activeAvatar;
+            profileImage.style.display = 'block';
+            if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
+        }
+
         try {
+            // ডাটাবেজ থেকে আপডেট লোগো চেক
             const compDoc = await db.collection('companies').doc(activeCompanyId).get();
             if (compDoc.exists) {
                 const cData = compDoc.data();
@@ -114,15 +122,15 @@ async function loadProfilePicture(user) {
                     profileImage.src = photo;
                     profileImage.style.display = 'block';
                     if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-                    return; // কোম্পানির ছবি সফলভাবে পাওয়া গেলে এখানেই রিটার্ন করবে
+                    return; 
                 }
             }
         } catch (err) {
-            console.error("কোম্পানি প্রোফাইল পিকচার লোড করতে সমস্যা:", err);
+            console.error("কোম্পানি প্রোফাইল ছবি লোড এরর:", err);
         }
     }
 
-    // মোড যদি 'user' হয় অথবা কোম্পানি লোগো না পাওয়া যায়, তবে ইউজারের নিজস্ব ছবি লোড হবে
+    // ৩. ইউজার মোডে থাকলে অথবা কোম্পানির ছবি না পাওয়া গেলে
     loadUserDefaultPic(user);
 }
 
@@ -148,7 +156,7 @@ function loadUserDefaultPic(user) {
             if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
         }
     }).catch(err => {
-        console.error("ইউজার প্রোফাইল পিকচার লোড করতে সমস্যা:", err);
+        console.error("ইউজার প্রোফাইল ছবি লোড এরর:", err);
         if (profileImage && user.photoURL) {
             profileImage.src = user.photoURL;
             profileImage.style.display = 'block';
@@ -157,7 +165,14 @@ function loadUserDefaultPic(user) {
     });
 }
 
-// ⚡ প্রোফাইল মোড চেঞ্জ হওয়ার সাথে সাথে যেন ইন্ডেক্স পেজে পিকচার আপডেট হয়ে যায়
+// ⚡ অথেনটিকেশন পরিবর্তনের সাথে রান করবে
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        loadProfilePicture(user);
+    }
+});
+
+// ⚡ প্রোফাইল/পেজ সুইচ করা মাত্রই সাথে সাথে আপডেট হবে
 window.addEventListener('identityChanged', () => {
     const user = firebase.auth().currentUser;
     if (user) {
