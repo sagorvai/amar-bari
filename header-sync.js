@@ -79,62 +79,107 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
         // 🖼️ হেডারের ছবি ও ভিজ্যুয়াল ইন্ডিকেটর আপডেট করা
         updateHeaderAvatarAndBadge(activeIdentity);
 
-        // 🔔 ১. অ্যাক্টিভ আইডির নোটিফিকেশন লোড
-        syncUnreadNotifications(activeIdentity.id);
+        // 🔔 ১. অ্যাক্টিভ আইডির নোটিফিকেশন লোড (Object পাস করা হচ্ছে)
+        syncUnreadNotifications(activeIdentity);
 
         // 💬 ২. অ্যাক্টিভ আইডির মেসেজ লোড
         syncUnreadMessages(activeIdentity.id);
     }
 
     // 🖼️ হেডারের ছবি ও মোড টেক্সট আপডেট ফাংশন
-function updateHeaderAvatarAndBadge(activeIdentity) {
-    const headerProfileImg = document.querySelector('#profileImageWrapper img') || document.getElementById('profileImage');
-    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
+    function updateHeaderAvatarAndBadge(activeIdentity) {
+        const headerProfileImg = document.querySelector('#profileImageWrapper img') || document.getElementById('profileImage');
+        const defaultProfileIcon = document.getElementById('defaultProfileIcon');
 
-    if (headerProfileImg) {
-        if (activeIdentity && activeIdentity.avatar) {
-            headerProfileImg.src = activeIdentity.avatar;
-            headerProfileImg.style.display = 'block';
-            if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-        } else {
-            headerProfileImg.style.display = 'none';
-            if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
+        if (headerProfileImg) {
+            if (activeIdentity && activeIdentity.avatar) {
+                headerProfileImg.src = activeIdentity.avatar;
+                headerProfileImg.style.display = 'block';
+                if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
+            } else {
+                headerProfileImg.style.display = 'none';
+                if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
+            }
+        }
+
+        // যদি হেডারে মোড দেখানোর জন্য কোনো এলিমেন্ট থাকে (যেমন: #active-mode-label)
+        const modeLabel = document.getElementById('active-mode-label');
+        if (modeLabel) {
+            modeLabel.textContent = activeIdentity.type === 'company' ? `🏢 ${activeIdentity.name}` : `👤 ${activeIdentity.name}`;
         }
     }
 
-    // যদি হেডারে মোড দেখানোর জন্য কোনো এলিমেন্ট থাকে (যেমন: #active-mode-label)
-    const modeLabel = document.getElementById('active-mode-label');
-    if (modeLabel) {
-        modeLabel.textContent = activeIdentity.type === 'company' ? `🏢 ${activeIdentity.name}` : `👤 ${activeIdentity.name}`;
-    }
-}
-
-    // 🔔 ১. আনরিড নোটিফিকেশন লাইভ কাউন্ট
-    function syncUnreadNotifications(activeId) {
+    // 🔔 ১. আনরিড নোটিফিকেশন লাইভ কাউন্ট (notifications.js এর সাথে ১০০% ফিল্টারিং মিল রেখে)
+    function syncUnreadNotifications(activeIdentity) {
         const notifBadge = document.getElementById('notification-badge') || document.getElementById('notification-count');
-        if (!notifBadge) return;
+        if (!notifBadge || !activeIdentity) return;
 
         if (unreadNotifListener) unreadNotifListener();
 
-        // Notification documents use isRead:false as the canonical unread field.
+        const targetId = String(activeIdentity.id);
+        const isCompanyMode = activeIdentity.type === 'company';
+
         unreadNotifListener = db.collection('notifications')
-            .where('userId', '==', activeId)
+            .where('userId', '==', targetId)
             .where('isRead', '==', false)
             .onSnapshot(snapshot => {
-                const count = snapshot.size;
-                console.log(`🔔 লাইভ নোটিফিকেশন কাউন্ট (${activeId}): ${count} টি আনরিড`);
+                let validUnreadCount = 0;
+                const uniqueKeys = new Set();
 
-                // Android WebView-এ launcher badge-কে Firestore-এর canonical unread count-এর সঙ্গে sync করি।
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const notifUserId = String(data.userId || '');
+                    const targetType = data.targetType || '';
+
+                    // ১. আইডি মিল না থাকলে বাদ
+                    if (notifUserId !== targetId) return;
+
+                    // ২. ইউজার মোডে থাকলে পেজের ফিল্টার
+                    if (!isCompanyMode) {
+                        if (targetType === 'company') return;
+                        if (notifUserId.startsWith('comp_')) return;
+                        if (data.type === 'chat' && data.companyId && data.companyId !== targetId) return;
+                    }
+
+                    // ৩. পেজ মোডে থাকলে ইউজারের বার্তা ফিল্টার
+                    if (isCompanyMode) {
+                        if (targetType === 'user') return;
+                        if (!notifUserId.startsWith('comp_') && targetId.startsWith('comp_')) return;
+                    }
+
+                    // ৪. নিজের পাঠানো নোটিফিকেশন ফিল্টার
+                    if (data.senderId && String(data.senderId) === targetId) return;
+
+                    // ৫. ইউনিক কি দিয়ে ডুপ্লিকেট মেসেজ বাদ দেওয়া
+                    const msgContent = (data.message || data.body || '').trim();
+                    const notifType = data.type || 'general';
+                    
+                    let uniqueKey = doc.id;
+                    if (data.chatId && msgContent) {
+                        uniqueKey = `${data.chatId}_${msgContent}_${notifType}`;
+                    } else if (msgContent) {
+                        uniqueKey = `${msgContent}_${notifType}`;
+                    }
+
+                    if (!uniqueKeys.has(uniqueKey)) {
+                        uniqueKeys.add(uniqueKey);
+                        validUnreadCount++;
+                    }
+                });
+
+                console.log(`🔔 লাইভ নোটিফিকেশন কাউন্ট (${targetId}): ${validUnreadCount} টি ফিল্টার করা আনরিড`);
+
+                // Android WebView-এ launcher badge sync
                 try {
                     if (window.AndroidBridge && typeof window.AndroidBridge.setPendingNotificationCount === 'function') {
-                        window.AndroidBridge.setPendingNotificationCount(count);
+                        window.AndroidBridge.setPendingNotificationCount(validUnreadCount);
                     }
                 } catch (e) {
                     console.warn('Android badge sync unavailable:', e);
                 }
 
-                if (count > 0) {
-                    notifBadge.textContent = count;
+                if (validUnreadCount > 0) {
+                    notifBadge.textContent = validUnreadCount > 99 ? '99+' : validUnreadCount;
                     notifBadge.style.display = 'inline-block'; 
                 } else {
                     notifBadge.style.display = 'none';
@@ -169,7 +214,7 @@ function updateHeaderAvatarAndBadge(activeIdentity) {
 
                 console.log(`💬 লাইভ চ্যাট মেসেজ কাউন্ট (${activeId}): ${unreadChatsCount} টি আনরিড`);
                 if (unreadChatsCount > 0) {
-                    msgBadge.textContent = unreadChatsCount;
+                    msgBadge.textContent = unreadChatsCount > 99 ? '99+' : unreadChatsCount;
                     msgBadge.style.display = 'inline-block';
                 } else {
                     msgBadge.style.display = 'none';
