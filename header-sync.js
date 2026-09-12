@@ -87,18 +87,27 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
     }
 
     // 🖼️ হেডারের ছবি ও মোড টেক্সট আপডেট ফাংশন
-    function updateHeaderAvatarAndBadge(activeIdentity) {
-        const headerProfileImg = document.querySelector('#profileImageWrapper img') || document.getElementById('profileImage');
-        if (headerProfileImg && activeIdentity.avatar) {
-            headerProfileImg.src = activeIdentity.avatar;
-        }
+function updateHeaderAvatarAndBadge(activeIdentity) {
+    const headerProfileImg = document.querySelector('#profileImageWrapper img') || document.getElementById('profileImage');
+    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
 
-        // যদি হেডারে মোড দেখানোর জন্য কোনো এলিমেন্ট থাকে (যেমন: #active-mode-label)
-        const modeLabel = document.getElementById('active-mode-label');
-        if (modeLabel) {
-            modeLabel.textContent = activeIdentity.type === 'company' ? `🏢 ${activeIdentity.name}` : `👤 ${activeIdentity.name}`;
+    if (headerProfileImg) {
+        if (activeIdentity && activeIdentity.avatar) {
+            headerProfileImg.src = activeIdentity.avatar;
+            headerProfileImg.style.display = 'block';
+            if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
+        } else {
+            headerProfileImg.style.display = 'none';
+            if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
         }
     }
+
+    // যদি হেডারে মোড দেখানোর জন্য কোনো এলিমেন্ট থাকে (যেমন: #active-mode-label)
+    const modeLabel = document.getElementById('active-mode-label');
+    if (modeLabel) {
+        modeLabel.textContent = activeIdentity.type === 'company' ? `🏢 ${activeIdentity.name}` : `👤 ${activeIdentity.name}`;
+    }
+}
 
     // 🔔 ১. আনরিড নোটিফিকেশন লাইভ কাউন্ট
     function syncUnreadNotifications(activeId) {
