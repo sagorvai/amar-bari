@@ -69,7 +69,6 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
 
     // ⚡ ২. ফায়ারবেস বা লোকাল স্টোরেজ থেকে ছবি তোলার মেইন লজিক
     async function loadAvatarFast(user) {
-        // যদি লোকাল স্টোরেজে আগেই ছবি থাকে, ইনস্ট্যান্ট বসিয়ে দাও (No Delay)
         let localAvatar = localStorage.getItem('activeAvatar');
         if (localAvatar) {
             applyAvatarToDOM(localAvatar);
@@ -244,38 +243,34 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
 })();
 
 // =======================================================
-// 🚪 গ্লোবাল লগআউট ও অথ স্টেট হ্যান্ডলার (Header Sync)
+// 🚪 গ্লোবাল লগআউট ও অথ স্টেট হ্যান্ডলার (লগআউট ফিক্স)
 // =======================================================
 
-// ১. অথ স্টেট পরিবর্তনের সাথে সাথে সাইডবার বাটন আপডেট
 if (typeof firebase !== 'undefined' && firebase.auth) {
     firebase.auth().onAuthStateChanged((user) => {
         const loginBtn = document.getElementById('login-link-sidebar');
         const logoutBtn = document.getElementById('logout-link-sidebar');
 
         if (user) {
-            // ইউজার লগইন থাকলে লগইন বাটন হাইড ও লগআউট বাটন শো করবে
             if (loginBtn) loginBtn.style.display = 'none';
             if (logoutBtn) logoutBtn.style.display = 'flex';
         } else {
-            // ইউজার লগআউট থাকলে লগইন বাটন শো ও লগআউট বাটন হাইড করবে
             if (loginBtn) loginBtn.style.display = 'flex';
             if (logoutBtn) logoutBtn.style.display = 'none';
         }
     });
 }
 
-// ২. লগআউট ক্লিক ইভেন্ট হ্যান্ডলার
+// 🎯 সাইডবারের লগআউট বাটনে ক্লিক ইভেন্ট হ্যান্ডলার
 document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logout-link-sidebar');
     
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
+        logoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
             
             if (confirm("আপনি কি নিশ্চিত যে লগআউট করতে চান?")) {
                 firebase.auth().signOut().then(() => {
-                    // স্টোরেজ ক্লিন করা
                     localStorage.removeItem('activeIdentityType');
                     localStorage.removeItem('activeCompanyId');
                     localStorage.removeItem('activeName');
