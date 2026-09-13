@@ -779,44 +779,44 @@ function initSinglePropertyMap(data) {
    LIKE SYSTEM
    ========================================================= */
 
-async function setupLikeSystem(postData) {
+/* =========================================================
+   LIKE SYSTEM (REAL-TIME SNAPSHOT)
+   ========================================================= */
+
+function setupLikeSystem(postData) {
     const likeBtn = document.getElementById('likeBtn');
     const likeIcon = document.getElementById('likeIcon');
+    const likeCountText = document.getElementById('likeCountText');
     if (!likeBtn) return;
 
     const storageKey = `liked_post_${postId}`;
     let isLiked = localStorage.getItem(storageKey) === 'true';
 
     const updateLikeUI = (status) => {
-        if (status) {
-            if (likeIcon) {
-                likeIcon.textContent = 'thumb_up';
-                likeIcon.style.color = '#007bff';
-            }
-        } else {
-            if (likeIcon) {
-                likeIcon.textContent = 'thumb_up_off_alt';
-                likeIcon.style.color = '#7f8c8d';
-            }
+        if (likeIcon) {
+            likeIcon.textContent = status ? 'thumb_up' : 'thumb_up_off_alt';
+            likeIcon.style.color = status ? '#007bff' : '#7f8c8d';
         }
     };
 
+    // লোকাল ইউজার স্টেট অনুযায়ী আইকন ইনিশিয়ালাইজ
     updateLikeUI(isLiked);
 
-    try {
-        db.collection('properties').doc(postId).onSnapshot((doc) => {
-            if (doc.exists) {
-                const currentPostData = doc.data();
-                const totalLikes = currentPostData.likes || 0;
-                const likeCountText = document.getElementById('likeCountText');
-                if (likeCountText) likeCountText.textContent = `${totalLikes} লাইক`;
+    // ⚡ রিয়েল-টাইম ফায়ারস্টোর snapshot লিস্টেনার
+    db.collection('properties').doc(postId).onSnapshot((doc) => {
+        if (doc.exists) {
+            const currentPostData = doc.data();
+            const totalLikes = currentPostData.likes || 0;
+            if (likeCountText) {
+                likeCountText.textContent = `${totalLikes} লাইক`;
             }
-        });
-    } catch (err) {
-        console.log("লাইক সংখ্যা রিড করতে সমস্যা:", err);
-    }
+        }
+    }, (err) => {
+        console.warn("লাইক লাইভ আপডেট রিড করতে সমস্যা:", err);
+    });
 
-    likeBtn.addEventListener('click', async () => {
+    // ⚡ লাইক বাটন ক্লিক ইভেন্ট
+    likeBtn.onclick = async () => {
         isLiked = !isLiked;
         localStorage.setItem(storageKey, isLiked);
         updateLikeUI(isLiked);
@@ -837,16 +837,16 @@ async function setupLikeSystem(postData) {
                         currentUser.uid,
                         postId,
                         "লাইক পেয়েছেন! 👍",
-                        `একজন ইউজার আপনার '${postData.title}' প্রপার্টিটি লাইক করেছেন! আপনার বিজ্ঞাপনের জনপ্রিয়তা বাড়ছে।`,
+                        `একজন ইউজার আপনার '${postData.title}' প্রপার্টিটি লাইক করেছেন!`,
                         "like"
                     );
                 }
             }
         } catch (e) {
-            console.log("ফায়ারবেসে লাইক ডেটা আপডেট করতে সমস্যা:", e);
+            console.error("ফায়ারবেসে লাইক ডেটা আপডেট করতে সমস্যা:", e);
         }
-    });
-}
+    };
+            }
 
 
 /* =========================================================
