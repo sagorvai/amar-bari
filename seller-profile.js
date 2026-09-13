@@ -261,6 +261,42 @@ function renderPropertyList(snapshot, grid) {
 // =======================================================
 // ⭐ ৫. রেটিং সিস্টেম
 // =======================================================
+// =======================================================
+// ⭐ ১. রেটিং হিসাব ও স্টার ডিসপ্লে ফাংশন
+// =======================================================
+function displayCalculatedRating(count, sum) {
+    const avgRatingElem = document.getElementById('avgRatingText');
+    const totalCountElem = document.getElementById('totalRatingCount');
+    const starDisplayZone = document.getElementById('sellerStarsDisplay');
+
+    if (!count || count === 0) {
+        if (avgRatingElem) avgRatingElem.textContent = "0.0";
+        if (totalCountElem) totalCountElem.textContent = "(0 টি রেটিং)";
+        if (starDisplayZone) renderStarIcons(starDisplayZone, 0);
+        return;
+    }
+
+    const average = (sum / count).toFixed(1);
+    if (avgRatingElem) avgRatingElem.textContent = average;
+    if (totalCountElem) totalCountElem.textContent = `(${count} টি রেটিং)`;
+    if (starDisplayZone) renderStarIcons(starDisplayZone, Math.round(average));
+}
+
+function renderStarIcons(container, score) {
+    let starsHtml = '';
+    for (let i = 1; i <= 5; i++) {
+        if (i <= score) {
+            starsHtml += `<i class="material-icons" style="color:#ffc107;">star</i>`;
+        } else {
+            starsHtml += `<i class="material-icons" style="color:#e0e0e0;">star_outline</i>`;
+        }
+    }
+    container.innerHTML = starsHtml;
+}
+
+// =======================================================
+// ⭐ ২. রেটিং বাটনে ক্লিক ও ফায়ারস্টোর আপডেট (Transaction)
+// =======================================================
 function setupInteractiveProfileRating(targetType) {
     const starZone = document.getElementById('profileStarsZone');
     if (!starZone) return;
@@ -270,81 +306,82 @@ function setupInteractiveProfileRating(targetType) {
     const collectionName = targetType === 'company' ? 'companies' : 'users';
     const localStoreKey = `has_rated_${targetType}_${targetId}`;
 
+    // যদি ইউজার আগে রেটিং দিয়ে থাকে
     let alreadyRatedValue = localStorage.getItem(localStoreKey);
     if (alreadyRatedValue) {
         highlightStars(stars, parseInt(alreadyRatedValue));
-        document.getElementById('ratingHeader').textContent = "আপনি ইতিমধ্যে রেটিং দিয়েছেন";
+        const ratingHeader = document.getElementById('ratingHeader');
+        if (ratingHeader) ratingHeader.textContent = "আপনি রেটিং দিয়েছেন";
     }
 
     stars.forEach(star => {
         star.addEventListener('click', async () => {
+            const currentAuthUser = firebase.auth().currentUser;
+
+            // ১. লগইন ভ্যালিডেশন
+            if (!currentAuthUser) {
+                alert("রেটিং দিতে আপনাকে প্রথমে লগইন করতে হবে!");
+                return;
+            }
+
+            // ২. নিজের প্রোফাইল চেক
+            if (currentAuthUser.uid === targetId) {
+                alert("আপনি নিজের প্রোফাইলে নিজে রেটিং দিতে পারবেন না!");
+                return;
+            }
+
+            // ৩. ডুप्लिकেট রেটিং চেক
             if (localStorage.getItem(localStoreKey)) {
-                alert("আপনি ইতিমধ্যে রেটিং দিয়েছেন!");
+                alert("আপনি ইতিমধ্যে এই প্রোফাইলে রেটিং দিয়েছেন!");
                 return;
             }
 
             const chosenRating = parseInt(star.getAttribute('data-star'));
-            const currentAuthUser = firebase.auth().currentUser;
 
-            if (currentAuthUser && currentAuthUser.uid === targetId) {
-                alert("নিজের প্রোফাইলে নিজে রেটিং দিতে পারবেন না!");
-                return;
-            }
-
-            localStorage.setItem(localStoreKey, chosenRating);
+            // স্টার হাইলাইট আপডেট
             highlightStars(stars, chosenRating);
 
             const docRef = db.collection(collectionName).doc(targetId);
+
             try {
                 await db.runTransaction(async (transaction) => {
                     const doc = await transaction.get(docRef);
+
                     if (!doc.exists) {
                         transaction.set(docRef, { ratingCount: 1, ratingSum: chosenRating }, { merge: true });
-                        return;
+                    } else {
+                        const data = doc.data();
+                        const currentCount = data.ratingCount || 0;
+                        const currentSum = data.ratingSum || 0;
+
+                        transaction.update(docRef, {
+                            ratingCount: currentCount + 1,
+                            ratingSum: currentSum + chosenRating
+                        });
                     }
-
-                    let newCount = (doc.data().ratingCount || 0) + 1;
-                    let newSum = (doc.data().ratingSum || 0) + chosenRating;
-
-                    transaction.update(docRef, {
-                        ratingCount: newCount,
-                        ratingSum: newSum
-                    });
                 });
 
-                alert("সফলভাবে রেটিং দেওয়া হয়েছে! ধন্যবাদ।");
-                location.reload();
+                // সফল হলে লোকালস্টোরেজে সেভ করুন
+                localStorage.setItem(localStoreKey, chosenRating);
+                alert("ধন্যবাদ! আপনার রেটিং সফলভাবে জমা হয়েছে।");
 
             } catch (err) {
-                console.error("রেটিং আপডেট করতে সমস্যা:", err);
+                console.error("রেটিং আপডেট করতে সমস্যা হয়েছে:", err);
+                alert("রেটিং জমা দিতে সমস্যা হয়েছে। অনুগ্রহ করে ফায়ারস্টোর রুলস বা কানেকশন চেক করুন।");
             }
         });
     });
 }
 
-function highlightStars(stars, value) {
-    stars.forEach(s => {
-        const sVal = parseInt(s.getAttribute('data-star'));
-        if (sVal <= value) {
-            s.textContent = 'star';
-            s.classList.add('active');
+function highlightStars(starsList, count) {
+    starsList.forEach((star, index) => {
+        if (index < count) {
+            star.style.color = '#ffc107';
         } else {
-            s.textContent = 'star_border';
-            s.classList.remove('active');
+            star.style.color = '#ccc';
         }
     });
-}
-
-function displayCalculatedRating(count, sum) {
-    const label = document.getElementById('ratingStatsLabel');
-    if (!label) return;
-    if (count === 0) {
-        label.textContent = "গড় রেটিং: ০.০ (০টি ভোট)";
-        return;
-    }
-    let average = (sum / count).toFixed(1);
-    label.textContent = `গড় রেটিং: ⭐ ${average} (${count}টি ভোট)`;
-}
+         }
 
 // =======================================================
 // 🔄 হেডার প্রোফাইল পিকচার সিঙ্ক (অ্যাক্টিভ মোড অনুযায়ী)
