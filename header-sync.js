@@ -1,16 +1,9 @@
 // =======================================================
-// 🎯 আমার বাড়ি.কম - গ্লোবাল হেডার লাইভ সিঙ্ক ENGINE (কোম্পানি ও পার্সোনাল মোড সাপোর্ট সহ)
+// 🎯 আমার বাড়ি.কম - গ্লোবাল হেডার লাইভ সিঙ্ক (Bulletproof Sync Engine)
 // =======================================================
 
-// ⚡ ১. বর্তমান অ্যাক্টিভ আইডি (User UID নাকি Company ID) রিটার্ন করবে
 window.getActiveIdentity = function() {
-    // ডিফল্টভাবে মোড 'user' সেট করা হচ্ছে
-    let activeIdentityType = localStorage.getItem('activeIdentityType');
-    if (!activeIdentityType) {
-        activeIdentityType = 'user';
-        localStorage.setItem('activeIdentityType', 'user');
-    }
-
+    let activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
     const activeCompanyId = localStorage.getItem('activeCompanyId');
     const user = firebase.auth().currentUser;
 
@@ -35,7 +28,6 @@ window.getActiveIdentity = function() {
     }
 };
 
-// ⚡ ২. আইডি বা মোড সুইচ করার গ্লোবাল হেলপার ফাংশন
 window.switchIdentity = function(type, companyId = null, name = '', avatar = '') {
     localStorage.setItem('activeIdentityType', type);
     
@@ -58,115 +50,103 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
     let unreadNotifListener = null;
     let unreadMsgListener = null;
 
-    document.addEventListener('DOMContentLoaded', function() {
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                console.log("Header-Sync: 🔓 ইউজার কানেক্টেড। মোড ও ছবি সিঙ্ক করা হচ্ছে...");
-                
-                // ⚡ ১. মোড ডিটেকশন ও ইউজার প্রোফাইল পিকচার সিঙ্ক
-                await syncInitialModeAndAvatar(user);
-                
-                // ⚡ ২. হেডার ব্যাজ ও তথ্য সিঙ্ক
-                initHeaderSync();
-            } else {
-                console.log("Header-Sync: 🌐 গেস্ট/লগআউট মোড।");
-                hideBadges();
-            }
-        });
+    // ⚡ ১. হেডারের ছবি সরাসরি DOM-এ আপডেট করার ফাংশন
+    function applyAvatarToDOM(avatarUrl) {
+        const headerProfileImg = document.getElementById('profileImage') || document.querySelector('#profileImageWrapper img');
+        const defaultProfileIcon = document.getElementById('defaultProfileIcon');
 
-        window.addEventListener('identityChanged', function() {
-            if (auth.currentUser) {
-                initHeaderSync();
-            }
-        });
-    });
+        if (!headerProfileImg) return;
 
-    // ⚡ ফার্স্ট টাইমে ইউজার মোড নিশ্চিত করা ও ফায়ারবেস থেকে ছবি ফ্লেচ করা
-    async function syncInitialModeAndAvatar(user) {
+        if (avatarUrl && avatarUrl.trim() !== '') {
+            headerProfileImg.src = avatarUrl;
+            headerProfileImg.style.display = 'block';
+            if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
+        } else {
+            headerProfileImg.style.display = 'none';
+            if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
+        }
+    }
+
+    // ⚡ ২. ফায়ারবেস বা লোকাল স্টোরেজ থেকে ছবি তোলার মেইন লজিক
+    async function loadAvatarFast(user) {
+        // যদি লোকাল স্টোরেজে আগেই ছবি থাকে, ইনস্ট্যান্ট বসিয়ে দাও (No Delay)
+        let localAvatar = localStorage.getItem('activeAvatar');
+        if (localAvatar) {
+            applyAvatarToDOM(localAvatar);
+        }
+
         let activeType = localStorage.getItem('activeIdentityType');
-        
-        // ১. যদি মোড না থাকে, ডিফল্ট 'user' মোড ধরে নেওয়া
         if (!activeType) {
             activeType = 'user';
             localStorage.setItem('activeIdentityType', 'user');
         }
 
-        // ২. ইউজার মোডে থাকলে প্রোফাইল পিকচার ফায়ারবেস থেকে ইনস্ট্যান্ট লোড করা
+        // ফায়ারবেস থেকে ফ্রেশ ছবি ফ্লেচ করা
         if (activeType === 'user') {
+            if (user.photoURL) {
+                localStorage.setItem('activeAvatar', user.photoURL);
+                applyAvatarToDOM(user.photoURL);
+            }
+            
             try {
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 if (userDoc.exists && userDoc.data().profilePic) {
-                    localStorage.setItem('activeAvatar', userDoc.data().profilePic);
+                    const pic = userDoc.data().profilePic;
+                    localStorage.setItem('activeAvatar', pic);
                     if (userDoc.data().name) localStorage.setItem('activeName', userDoc.data().name);
-                } else if (user.photoURL) {
-                    localStorage.setItem('activeAvatar', user.photoURL);
-                    if (user.displayName) localStorage.setItem('activeName', user.displayName);
+                    applyAvatarToDOM(pic);
                 }
             } catch (e) {
-                console.warn("User avatar fetch error:", e);
-                if (user.photoURL) localStorage.setItem('activeAvatar', user.photoURL);
+                console.warn("User avatar sync failed:", e);
             }
-        } 
-        // ৩. কোম্পানি মোডে থাকলে কোম্পানির লোগো ফ্লেচ করা
-        else if (activeType === 'company') {
+        } else if (activeType === 'company') {
             const compId = localStorage.getItem('activeCompanyId');
             if (compId) {
                 try {
                     const compDoc = await db.collection('companies').doc(compId).get();
                     if (compDoc.exists && compDoc.data().logo) {
-                        localStorage.setItem('activeAvatar', compDoc.data().logo);
-                        if (compDoc.data().companyName) localStorage.setItem('activeName', compDoc.data().companyName);
+                        const logo = compDoc.data().logo;
+                        localStorage.setItem('activeAvatar', logo);
+                        applyAvatarToDOM(logo);
                     }
                 } catch (e) {
-                    console.warn("Company logo fetch error:", e);
+                    console.warn("Company logo sync failed:", e);
                 }
             }
         }
-
-        // ছবি পাওয়ার পর তৎক্ষণাৎ হেডারের DOM আপডেট করা
-        const activeIdentity = window.getActiveIdentity();
-        updateHeaderAvatarAndBadge(activeIdentity);
     }
+
+    // ⚡ ৩. অথ স্টেট চেঞ্জ ও ইনিশিয়ালাইজেশন
+    document.addEventListener('DOMContentLoaded', function() {
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                console.log("Header-Sync: 🔓 ইউজার লগইন অবস্থায় আছে।");
+                await loadAvatarFast(user);
+                initHeaderSync();
+            } else {
+                console.log("Header-Sync: 🌐 লগআউট মোড।");
+                applyAvatarToDOM(null);
+                hideBadges();
+            }
+        });
+
+        window.addEventListener('identityChanged', function() {
+            const user = auth.currentUser;
+            if (user) {
+                loadAvatarFast(user);
+                initHeaderSync();
+            }
+        });
+    });
 
     function initHeaderSync() {
         const activeIdentity = window.getActiveIdentity();
         if (!activeIdentity) return;
 
-        // 🖼️ হেডারের ছবি ও মোড লেবেল আপডেট
-        updateHeaderAvatarAndBadge(activeIdentity);
-
-        // 🔔 ১. নোটিফিকেশন সিঙ্ক
         syncUnreadNotifications(activeIdentity);
-
-        // 💬 ২. মেসেজ সিঙ্ক
         syncUnreadMessages(activeIdentity.id);
     }
 
-    // 🖼️ হেডারের ছবি সরাসরি DOM-এ রেন্ডার করার ফাংশন
-    function updateHeaderAvatarAndBadge(activeIdentity) {
-        const headerProfileImg = document.querySelector('#profileImageWrapper img') || document.getElementById('profileImage');
-        const defaultProfileIcon = document.getElementById('defaultProfileIcon');
-
-        if (headerProfileImg) {
-            const currentAvatar = (activeIdentity && activeIdentity.avatar) ? activeIdentity.avatar : localStorage.getItem('activeAvatar');
-
-            if (currentAvatar && currentAvatar.trim() !== '') {
-                headerProfileImg.src = currentAvatar;
-                headerProfileImg.style.display = 'block';
-                if (defaultProfileIcon) defaultProfileIcon.style.display = 'none';
-            } else {
-                headerProfileImg.style.display = 'none';
-                if (defaultProfileIcon) defaultProfileIcon.style.display = 'block';
-            }
-        }
-
-        const modeLabel = document.getElementById('active-mode-label');
-        if (modeLabel && activeIdentity) {
-            modeLabel.textContent = activeIdentity.type === 'company' ? `🏢 ${activeIdentity.name}` : `👤 ${activeIdentity.name}`;
-        }
-    }
-
-    // 🔔 আনরিড নোটিফিকেশন লাইভ কাউন্ট
     function syncUnreadNotifications(activeIdentity) {
         const notifBadge = document.getElementById('notification-badge') || document.getElementById('notification-count');
         if (!notifBadge || !activeIdentity) return;
@@ -193,39 +173,24 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
                     if (!isCompanyMode) {
                         if (targetType === 'company') return;
                         if (notifUserId.startsWith('comp_')) return;
-                        if (data.type === 'chat' && data.companyId && data.companyId !== targetId) return;
                     }
 
                     if (isCompanyMode) {
                         if (targetType === 'user') return;
-                        if (!notifUserId.startsWith('comp_') && targetId.startsWith('comp_')) return;
                     }
 
                     if (data.senderId && String(data.senderId) === targetId) return;
 
                     const msgContent = (data.message || data.body || '').trim();
                     const notifType = data.type || 'general';
-                    
                     let uniqueKey = doc.id;
-                    if (data.chatId && msgContent) {
-                        uniqueKey = `${data.chatId}_${msgContent}_${notifType}`;
-                    } else if (msgContent) {
-                        uniqueKey = `${msgContent}_${notifType}`;
-                    }
+                    if (msgContent) uniqueKey = `${msgContent}_${notifType}`;
 
                     if (!uniqueKeys.has(uniqueKey)) {
                         uniqueKeys.add(uniqueKey);
                         validUnreadCount++;
                     }
                 });
-
-                try {
-                    if (window.AndroidBridge && typeof window.AndroidBridge.setPendingNotificationCount === 'function') {
-                        window.AndroidBridge.setPendingNotificationCount(validUnreadCount);
-                    }
-                } catch (e) {
-                    console.warn('Android badge sync unavailable:', e);
-                }
 
                 if (validUnreadCount > 0) {
                     notifBadge.textContent = validUnreadCount > 99 ? '99+' : validUnreadCount;
@@ -236,7 +201,6 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
             }, err => console.error("Notif badge error:", err));
     }
 
-    // 💬 আনরিড চ্যাট মেসেজ লাইভ কাউন্ট
     function syncUnreadMessages(activeId) {
         const msgBadge = document.getElementById('message-count');
         if (!msgBadge) return;
@@ -279,10 +243,7 @@ window.switchIdentity = function(type, companyId = null, name = '', avatar = '')
     }
 })();
 
-// =======================================================
-// 🚪 গ্লোবাল লগআউট ও অথ স্টেট হ্যান্ডলার
-// =======================================================
-
+// 🚪 লগআউট লজিক
 if (typeof firebase !== 'undefined' && firebase.auth) {
     firebase.auth().onAuthStateChanged((user) => {
         const loginBtn = document.getElementById('login-link-sidebar');
@@ -296,30 +257,4 @@ if (typeof firebase !== 'undefined' && firebase.auth) {
             if (logoutBtn) logoutBtn.style.display = 'none';
         }
     });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const logoutBtn = document.getElementById('logout-link-sidebar');
-    
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            if (confirm("আপনি কি নিশ্চিত যে লগআউট করতে চান?")) {
-                firebase.auth().signOut().then(() => {
-                    localStorage.removeItem('activeIdentityType');
-                    localStorage.removeItem('activeCompanyId');
-                    localStorage.removeItem('activeName');
-                    localStorage.removeItem('activeAvatar');
-                    sessionStorage.clear();
-
-                    alert("সফলভাবে লগআউট হয়েছে।");
-                    window.location.href = 'auth.html';
-                }).catch((error) => {
-                    console.error("লগআউট ত্রুটি:", error);
-                    alert("লগআউট হতে সমস্যা হয়েছে: " + error.message);
-                });
-            }
-        });
     }
-});
