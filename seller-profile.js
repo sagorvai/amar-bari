@@ -34,98 +34,89 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // =======================================================
-// 🏢 ১. কোম্পানি/পেজ প্রোফাইল লোড (ডিটেইলস পেইজের লজিক অনুযায়ী)
+// 🏢 ১. কোম্পানি/পেজ প্রোফাইল লোড ফাংশন (Fix Implemented)
 // =======================================================
 async function loadCompanyProfileData() {
     try {
-        if (!targetCompanyId) return;
+        let doc = null;
 
-        // ডিটেইলস পেইজের মতো প্রথমে ডকুমেন্ট ID দিয়ে চেক, না পাওয়া গেলে ফিল্ড কোয়েরি
-        const compRef = db.collection('companies').doc(targetCompanyId);
-        
-        compRef.onSnapshot(async (doc) => {
-            if (doc.exists) {
-                renderCompanyProfileDetails(doc.data(), doc.id);
-            } else {
-                // companyId, id, অথবা ownerUid দিয়ে সার্চ
-                try {
-                    let snap = await db.collection('companies').where('companyId', '==', targetCompanyId).limit(1).get();
-                    if (snap.empty) {
-                        snap = await db.collection('companies').where('id', '==', targetCompanyId).limit(1).get();
-                    }
-                    if (snap.empty) {
-                        snap = await db.collection('companies').where('ownerUid', '==', targetCompanyId).limit(1).get();
-                    }
+        // ১. আগে সরাসরি targetCompanyId (যেমন: ownerUid/user.uid) দিয়ে খুঁজবে
+        let docRef = await db.collection('companies').doc(targetCompanyId).get();
 
-                    if (!snap.empty) {
-                        renderCompanyProfileDetails(snap.docs[0].data(), snap.docs[0].id);
-                    } else {
-                        console.warn("কোম্পানি প্রোফাইল ডাটা পাওয়া যায়নি:", targetCompanyId);
-                    }
-                } catch (e) {
-                    console.error("কোম্পানি কোয়েরি ত্রুটি:", e);
-                }
+        if (docRef.exists) {
+            doc = docRef;
+        } else {
+            // ২. যদি আইডি না মেলে (যেমন URL-এ comp_xxx এসেছে), তবে companyId ফিল্ড থেকে খুঁজবে
+            const querySnap = await db.collection('companies')
+                                      .where('companyId', '==', targetCompanyId)
+                                      .limit(1)
+                                      .get();
+            if (!querySnap.empty) {
+                doc = querySnap.docs[0];
             }
-        });
+        }
 
+        if (doc && doc.exists) {
+            const cData = doc.data();
+
+            // নাম (Firestore-এ আপনার ফিল্ড হলো 'name')
+            document.getElementById('s-name').textContent = cData.name || cData.companyName || "অফিসিয়াল কোম্পানি";
+
+            // ইমেইল
+            document.getElementById('s-email').textContent = cData.email || "ইমেইল সরবরাহ করা হয়নি";
+
+            // কোম্পানি আইডি
+            const displayId = cData.companyId || doc.id;
+            document.getElementById('s-uid-text').textContent = displayId.length > 10 ? `...${displayId.substring(0, 8)}` : displayId;
+
+            // কোম্পানি বিবরণ/বায়ো (Firestore-এ আপনার ফিল্ড হলো 'bio')
+            if (cData.bio || cData.description) {
+                document.getElementById('s-bio').textContent = `"${cData.bio || cData.description}"`;
+            } else {
+                document.getElementById('s-bio').textContent = "";
+            }
+
+            // ধরন ও ঠিকানা
+            document.getElementById('s-profession').textContent = cData.businessType || cData.category || "আবাসন কোম্পানি";
+            
+            // লোকেশন / অফিস অ্যাড্রেস
+            let fullAddress = cData.officeAddress || cData.address || cData.location || "যুক্ত করা নেই";
+            document.getElementById('s-location').textContent = fullAddress;
+
+            // ফোন
+            let phone = cData.phone || cData.phoneNumber || "";
+            document.getElementById('s-phone').textContent = phone ? phone : "ফোন নম্বর সেট করা নেই";
+
+            // অফিস ঠিকানা আলাদা ফিল্ড
+            if (cData.officeAddress) {
+                document.getElementById('s-office').textContent = cData.officeAddress;
+                document.getElementById('s-office-item').style.display = 'flex';
+            } else {
+                document.getElementById('s-office-item').style.display = 'none';
+            }
+
+            // লোগো / প্রোফাইল পিকচার (Firestore-এ ফিল্ড হলো 'logo')
+            const logo = cData.logo || cData.companyLogo || cData.profilePic;
+            if (logo) {
+                document.getElementById('s-avatar').src = logo;
+            }
+
+            // ভেরিফাইড ব্যাজ
+            if (cData.isVerified === true) {
+                document.getElementById('badgeVerified').style.display = 'flex';
+            }
+
+            displayCalculatedRating(cData.ratingCount || 0, cData.ratingSum || 0);
+
+        } else {
+            document.getElementById('s-name').textContent = "অজানা কোম্পানি পেজ";
+            console.warn("কোম্পানি প্রোফাইল পাওয়া যায়নি targetCompanyId:", targetCompanyId);
+        }
     } catch (err) {
         console.error("কোম্পানি ডেটা লোড এরর:", err);
     }
-}
-
-// 🏢 কোম্পানির তথ্য ও নাম রেন্ডার
-function renderCompanyProfileDetails(cData, docId) {
-    if (!cData) return;
-
-    // ডিটেইলস পেইজে পোস্ট তৈরির সময় ব্যবহৃত সব ধরনের নেমিং ফিল্ড চেক
-    const companyName = cData.companyName || cData.name || cData.title || cData.authorName || cData.postedByName || "অফিসিয়াল কোম্পানি";
-    
-    const nameElem = document.getElementById('s-name');
-    if (nameElem) nameElem.textContent = companyName;
-
-    const emailElem = document.getElementById('s-email');
-    if (emailElem) emailElem.textContent = cData.email || cData.companyEmail || "ইমেইল সরবরাহ করা হয়নি";
-
-    const displayId = cData.companyId || docId;
-    const uidElem = document.getElementById('s-uid-text');
-    if (uidElem) {
-        uidElem.textContent = displayId.length > 10 ? `...${displayId.substring(0, 8)}` : displayId;
     }
 
-    const bioElem = document.getElementById('s-bio');
-    if (bioElem) {
-        bioElem.textContent = (cData.bio || cData.description || cData.about) ? `"${cData.bio || cData.description || cData.about}"` : "";
-    }
-
-    const profElem = document.getElementById('s-profession');
-    if (profElem) {
-        profElem.textContent = cData.businessType || cData.category || cData.profession || "আবাসন কোম্পানি";
-    }
-
-    const locElem = document.getElementById('s-location');
-    if (locElem) {
-        locElem.textContent = cData.officeAddress || cData.address || cData.location || "যুক্ত করা নেই";
-    }
-
-    const phoneElem = document.getElementById('s-phone');
-    if (phoneElem) {
-        phoneElem.textContent = cData.phone || cData.phoneNumber || cData.contact || "ফোন নম্বর সেট করা নেই";
-    }
-
-    const logo = cData.logo || cData.companyLogo || cData.profilePic || cData.photoURL;
-    const avatarElem = document.getElementById('s-avatar');
-    if (logo && avatarElem) {
-        avatarElem.src = logo;
-    }
-
-    const badgeVerified = document.getElementById('badgeVerified');
-    if (badgeVerified) {
-        badgeVerified.style.display = (cData.isVerified === true) ? 'flex' : 'none';
-    }
-
-    // রেটিং আপডেট
-    displayCalculatedRating(cData.ratingCount || 0, cData.ratingSum || 0);
-}
 
 // =======================================================
 // 👤 ২. ইউজার প্রোফাইল লোড
