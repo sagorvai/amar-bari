@@ -60,6 +60,32 @@ let isCompanyMode = localStorage.getItem('activeIdentityType') === 'company';
 let inactiveUnreadCount = 0; // ⚡ অফ থাকা মোডের আনরিড নোটিফিকেশন কাউন্ট
 let inactiveNotifUnsubscribe = null; // ⚡ ব্যাকগ্রাউন্ড লিসেনার
 
+// 🏢 কোম্পানি মোডাল খোলার গ্লোবাল ফাংশন
+window.openCompanyModal = function() {
+    const companyModal = document.getElementById('createCompanyModal');
+    const compNameInput = document.getElementById('comp-name');
+    const compBioInput = document.getElementById('comp-bio');
+    const compOfficeInput = document.getElementById('comp-office');
+    const compPhoneInput = document.getElementById('comp-phone');
+    const compLogoPreview = document.getElementById('company-logo-preview');
+    const modalTitle = document.querySelector('#createCompanyModal h3');
+    const saveBtn = document.getElementById('save-company-btn');
+
+    // মোডাল ফিল্ড রিসেট
+    if (compNameInput) compNameInput.value = "";
+    if (compBioInput) compBioInput.value = "";
+    if (compOfficeInput) compOfficeInput.value = "";
+    if (compPhoneInput) compPhoneInput.value = "";
+    if (compLogoPreview) compLogoPreview.src = "https://via.placeholder.com/90?text=Logo";
+    
+    if (modalTitle) modalTitle.textContent = "আবাসন ও ডেভেলপার পেজ খুলুন";
+    if (saveBtn) saveBtn.textContent = "পেজ তৈরি করুন";
+
+    if (companyModal) {
+        companyModal.style.display = 'block';
+    }
+};
+
 // 🎯 গ্লোবাল আইডেন্টিটি হেল্পার ফাংশন
 window.getActiveIdentity = function() {
     const isCompany = localStorage.getItem('activeIdentityType') === 'company';
@@ -114,13 +140,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeCompanyBtn = document.getElementById('close-company-modal-btn');
     const companyForm = document.getElementById('create-company-form');
     const companyLogoInput = document.getElementById('company-logo-file');
-    const companyLogoPreview = document.getElementById('company-logo-preview');
 
     const urlParams = new URLSearchParams(window.location.search);
     const shouldOpenEdit = urlParams.get('openEdit');
 
     if (shouldOpenEdit === 'true' && editModal) {
         editModal.style.display = 'block';
+    }
+
+    // কোম্পানি মোডাল ক্লোজ বাটন ইভেন্ট
+    if (closeCompanyBtn && companyModal) {
+        closeCompanyBtn.onclick = function() {
+            companyModal.style.display = 'none';
+        };
     }
 
     // ১. অথেনটিকেশন চেক ও ডাটা লোড
@@ -258,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // ⚡ অফ থাকা মোডের (ইউজার বা পেজের) অপঠিত নোটিফিকেশন রিয়েল-টাইম শো করানোর লিসেনার
+    // ⚡ অফ থাকা মোডের অপঠিত নোটিফিকেশন রিয়েল-টাইম শো করানোর লিসেনার
     function listenForInactiveModeNotifications() {
         if (inactiveNotifUnsubscribe) {
             inactiveNotifUnsubscribe();
@@ -282,12 +314,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // 🏢 ৪. কোম্পানি সুইচ কার্ড রেন্ডার (প্রোফাইল পিকের উপরে লাল ব্যাজসহ)
+    // 🏢 ৪. কোম্পানি সুইচ কার্ড রেন্ডার
     function renderCompanyWidget() {
         const widgetEl = document.getElementById('company-widget-content');
         if (!widgetEl) return;
 
-        // 🔴 পিকের ওপর বসানোর জন্য লাল ব্যাজের HTML
         const badgeHTML = inactiveUnreadCount > 0 
             ? `<span class="switch-badge-count" style="position: absolute; top: -5px; right: -5px; background: #e74c3c; color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10;">${inactiveUnreadCount > 99 ? '99+' : inactiveUnreadCount}</span>` 
             : '';
@@ -365,31 +396,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // ⚡ ⭐ অ্যাক্টিভ প্রোফাইল গ্লোবালি সুইচ করার লজিক (Fixed) ⭐
-window.switchMode = function(toCompany) {
-    isCompanyMode = toCompany;
+    // ⚡ ⭐ অ্যাক্টিভ প্রোফাইল গ্লোবালি সুইচ করার লজিক ⭐
+    window.switchMode = function(toCompany) {
+        isCompanyMode = toCompany;
 
-    if (toCompany && companyData) {
-        localStorage.setItem('activeIdentityType', 'company');
-        localStorage.setItem('activeCompanyId', companyData.companyId);
-        localStorage.setItem('activeName', companyData.name);
-        localStorage.setItem('activeAvatar', companyData.logo || '');
-    } else {
-        localStorage.setItem('activeIdentityType', 'user');
-        localStorage.removeItem('activeCompanyId');
-        
-        let userPhoto = currentUserData ? (currentUserData.profilePic || currentUserData.avatarUrl || '') : '';
-        if (!userPhoto && auth.currentUser) userPhoto = auth.currentUser.photoURL || '';
-        
-        localStorage.setItem('activeName', currentUserData ? (currentUserData.fullName || currentUserData.name || '') : '');
-        localStorage.setItem('activeAvatar', userPhoto);
-    }
+        if (toCompany && companyData) {
+            localStorage.setItem('activeIdentityType', 'company');
+            localStorage.setItem('activeCompanyId', companyData.companyId);
+            localStorage.setItem('activeName', companyData.name);
+            localStorage.setItem('activeAvatar', companyData.logo || '');
+        } else {
+            localStorage.setItem('activeIdentityType', 'user');
+            localStorage.removeItem('activeCompanyId');
+            
+            let userPhoto = currentUserData ? (currentUserData.profilePic || currentUserData.avatarUrl || '') : '';
+            if (!userPhoto && auth.currentUser) userPhoto = auth.currentUser.photoURL || '';
+            
+            localStorage.setItem('activeName', currentUserData ? (currentUserData.fullName || currentUserData.name || '') : '');
+            localStorage.setItem('activeAvatar', userPhoto);
+        }
 
-    renderProfileView();
-    
-    // গ্লোবাল হেডার সিঙ্ক ইভেন্ট ট্রিগার
-    window.dispatchEvent(new Event('identityChanged'));
-};
+        renderProfileView();
+        window.dispatchEvent(new Event('identityChanged'));
+    };
 
     // 🏢 ৬. কোম্পানি পেজ তৈরি/আপডেট সাবমিট
     if (companyForm) {
@@ -676,4 +705,4 @@ async function loadSavedProperties(userId) {
         console.error("Saved properties error:", error);
         savedListEl.innerHTML = '<p style="text-align:center; color:red; padding:20px;">বুকমার্ক লোড করতে সমস্যা হয়েছে।</p>';
     }
-                          }
+        }
