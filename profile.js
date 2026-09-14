@@ -63,27 +63,37 @@ let inactiveNotifUnsubscribe = null; // ⚡ ব্যাকগ্রাউন্
 // 🏢 কোম্পানি মোডাল খোলার গ্লোবাল ফাংশন
 window.openCompanyModal = function() {
     const companyModal = document.getElementById('createCompanyModal');
+    if (!companyModal) {
+        console.error("Company modal element '#createCompanyModal' found impossible!");
+        return;
+    }
+
     const compNameInput = document.getElementById('comp-name');
     const compBioInput = document.getElementById('comp-bio');
     const compOfficeInput = document.getElementById('comp-office');
     const compPhoneInput = document.getElementById('comp-phone');
     const compLogoPreview = document.getElementById('company-logo-preview');
-    const modalTitle = document.querySelector('#createCompanyModal h3');
+    const modalTitle = companyModal.querySelector('h3');
     const saveBtn = document.getElementById('save-company-btn');
 
-    // মোডাল ফিল্ড রিসেট
-    if (compNameInput) compNameInput.value = "";
-    if (compBioInput) compBioInput.value = "";
-    if (compOfficeInput) compOfficeInput.value = "";
-    if (compPhoneInput) compPhoneInput.value = "";
-    if (compLogoPreview) compLogoPreview.src = "https://via.placeholder.com/90?text=Logo";
+    // মোডাল ইনপুট ফিল্ড রিসেট/সেটআপ
+    if (compNameInput) compNameInput.value = companyData ? (companyData.name || "") : "";
+    if (compBioInput) compBioInput.value = companyData ? (companyData.bio || "") : "";
+    if (compOfficeInput) compOfficeInput.value = companyData ? (companyData.officeAddress || "") : "";
+    if (compPhoneInput) compPhoneInput.value = companyData ? (companyData.phone || "") : "";
     
-    if (modalTitle) modalTitle.textContent = "আবাসন ও ডেভেলপার পেজ খুলুন";
-    if (saveBtn) saveBtn.textContent = "পেজ তৈরি করুন";
-
-    if (companyModal) {
-        companyModal.style.display = 'block';
+    if (compLogoPreview) {
+        compLogoPreview.src = (companyData && companyData.logo) ? companyData.logo : "https://via.placeholder.com/90?text=Logo";
     }
+
+    if (modalTitle) {
+        modalTitle.textContent = companyData ? "কোম্পানি পেজ আপডেট করুন" : "আবাসন ও ডেভেলপার পেজ খুলুন";
+    }
+    if (saveBtn) {
+        saveBtn.textContent = companyData ? "তথ্য সেভ করুন" : "পেজ তৈরি করুন";
+    }
+
+    companyModal.style.display = 'block';
 };
 
 // 🎯 গ্লোবাল আইডেন্টিটি হেল্পার ফাংশন
@@ -140,6 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeCompanyBtn = document.getElementById('close-company-modal-btn');
     const companyForm = document.getElementById('create-company-form');
     const companyLogoInput = document.getElementById('company-logo-file');
+    const companyLogoPreview = document.getElementById('company-logo-preview');
 
     const urlParams = new URLSearchParams(window.location.search);
     const shouldOpenEdit = urlParams.get('openEdit');
@@ -153,6 +164,28 @@ document.addEventListener('DOMContentLoaded', function() {
         closeCompanyBtn.onclick = function() {
             companyModal.style.display = 'none';
         };
+    }
+
+    // মোডালের বাইরে ক্লিক করলে বন্ধ হওয়ার লজিক
+    window.onclick = function(event) {
+        if (event.target === companyModal) {
+            companyModal.style.display = 'none';
+        }
+        if (event.target === editModal) {
+            editModal.style.display = 'none';
+        }
+    };
+
+    // লোগো ছবি সিলেক্ট করলে প্রিভিউ দেখানোর ইভেন্ট
+    if (companyLogoInput && companyLogoPreview) {
+        companyLogoInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => companyLogoPreview.src = e.target.result;
+                reader.readAsDataURL(file);
+            }
+        });
     }
 
     // ১. অথেনটিকেশন চেক ও ডাটা লোড
@@ -362,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } else {
             widgetEl.innerHTML = `
-                <button class="btn-create-company" onclick="openCompanyModal()">
+                <button class="btn-create-company" onclick="window.openCompanyModal()">
                     <i class="material-icons">add_business</i> আবাসন ও ডেভেলপার পেজ তৈরি করুন
                 </button>
             `;
@@ -372,25 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 🎯 ৫. বাটন ক্লিক হ্যান্ডলার
     window.handleEditButtonClick = function() {
         if (isCompanyMode && companyData) {
-            const compNameInput = document.getElementById('comp-name');
-            const compBioInput = document.getElementById('comp-bio');
-            const compOfficeInput = document.getElementById('comp-office');
-            const compPhoneInput = document.getElementById('comp-phone');
-            const compLogoPreview = document.getElementById('company-logo-preview');
-
-            if(compNameInput) compNameInput.value = companyData.name || "";
-            if(compBioInput) compBioInput.value = companyData.bio || "";
-            if(compOfficeInput) compOfficeInput.value = companyData.officeAddress || "";
-            if(compPhoneInput) compPhoneInput.value = companyData.phone || "";
-            if(compLogoPreview && companyData.logo) compLogoPreview.src = companyData.logo;
-
-            const modalTitle = document.querySelector('#createCompanyModal h3');
-            const saveBtn = document.getElementById('save-company-btn');
-            
-            if(modalTitle) modalTitle.textContent = "কোম্পানি পেজ আপডেট করুন";
-            if(saveBtn) saveBtn.textContent = "তথ্য সেভ করুন";
-
-            if(companyModal) companyModal.style.display = 'block';
+            window.openCompanyModal();
         } else {
             if (editModal) editModal.style.display = 'block';
         }
@@ -705,4 +720,4 @@ async function loadSavedProperties(userId) {
         console.error("Saved properties error:", error);
         savedListEl.innerHTML = '<p style="text-align:center; color:red; padding:20px;">বুকমার্ক লোড করতে সমস্যা হয়েছে।</p>';
     }
-        }
+            }
