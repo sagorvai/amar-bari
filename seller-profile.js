@@ -40,32 +40,17 @@ async function loadCompanyProfileData() {
     try {
         if (!targetCompanyId) return;
 
-        // ১. রিয়েল-টাইম onSnapshot লিস্টেনার ব্যবহার করা হচ্ছে
+        // ১. সরাসরি Document ID দিয়ে Real-Time Snapshot Listener
         db.collection('companies').doc(targetCompanyId).onSnapshot(async (doc) => {
             if (doc.exists) {
                 renderCompanyProfileDetails(doc.data(), doc.id);
             } else {
-                // ২. যদি সরাসরি Document ID না পাওয়া যায়, তবে companyId/ownerUid ফিল্ড দিয়ে খোঁজ করা হবে
-                try {
-                    let snap = await db.collection('companies').where('companyId', '==', targetCompanyId).limit(1).get();
-                    if (snap.empty) {
-                        snap = await db.collection('companies').where('id', '==', targetCompanyId).limit(1).get();
-                    }
-                    if (snap.empty) {
-                        snap = await db.collection('companies').where('ownerUid', '==', targetCompanyId).limit(1).get();
-                    }
-
-                    if (!snap.empty) {
-                        renderCompanyProfileDetails(snap.docs[0].data(), snap.docs[0].id);
-                    } else {
-                        const nameElem = document.getElementById('s-name');
-                        if (nameElem) nameElem.textContent = "অজানা কোম্পানি পেজ";
-                        console.warn("কোম্পানি প্রোফাইল ডাটাবেজে পাওয়া যায়নি:", targetCompanyId);
-                    }
-                } catch (e) {
-                    console.error("কোম্পানি কোয়েরি ত্রুটি:", e);
-                }
+                // ২. যদি সরাসরি Document ID না পাওয়া যায়, তবে ফিল্ড অনুযায়ী কোয়েরি করা হবে
+                fetchCompanyByQuery(targetCompanyId);
             }
+        }, async (err) => {
+            console.warn("কোম্পানি ডাইরেক্ট Doc Listener ব্যর্থ, কোয়েরি চেষ্টা করা হচ্ছে:", err);
+            fetchCompanyByQuery(targetCompanyId);
         });
 
     } catch (err) {
@@ -73,12 +58,42 @@ async function loadCompanyProfileData() {
     }
 }
 
-// 🏢 কোম্পানির তথ্য রেন্ডার করার নিরাপদ হেল্পার
+// 🏢 কোম্পানি কোয়েরি ব্যাকআপ হেল্পার (id/companyId/ownerUid অনুযায়ী খোঁজা)
+async function fetchCompanyByQuery(companyId) {
+    try {
+        let snap = await db.collection('companies').where('companyId', '==', companyId).limit(1).get();
+        if (snap.empty) {
+            snap = await db.collection('companies').where('id', '==', companyId).limit(1).get();
+        }
+        if (snap.empty) {
+            snap = await db.collection('companies').where('ownerUid', '==', companyId).limit(1).get();
+        }
+
+        if (!snap.empty) {
+            const foundDoc = snap.docs[0];
+            renderCompanyProfileDetails(foundDoc.data(), foundDoc.id);
+        } else {
+            // ৩. কোম্পানি ফোল্ডারে না পাওয়া গেলে 'users' কালেকশনে পেজ ডাটা আছে কি না চেক
+            const userSnap = await db.collection('users').doc(companyId).get();
+            if (userSnap.exists) {
+                renderCompanyProfileDetails(userSnap.data(), userSnap.id);
+            } else {
+                const nameElem = document.getElementById('s-name');
+                if (nameElem) nameElem.textContent = "কোম্পানি পেজ";
+                console.warn("কোম্পানি প্রোফাইল ডাটাবেজে পাওয়া যায়নি:", companyId);
+            }
+        }
+    } catch (e) {
+        console.error("কোম্পানি কোয়েরি ত্রুটি:", e);
+    }
+}
+
+// 🏢 কোম্পানির তথ্য রেন্ডার করার হেল্পার
 function renderCompanyProfileDetails(cData, docId) {
     if (!cData) return;
 
-    // ১. নাম ফিল্টার: পোস্ট এবং কোম্পানির সকল সম্ভাব্য নাম চেকিং
-    const companyName = cData.companyName || cData.name || cData.title || cData.authorName || cData.postedByName || "অফিসিয়াল কোম্পানি";
+    // ১. নাম ফিল্টার: প্রথম কোডের (details.js) মতো কোম্পানির নামের সঠিক প্রায়োরিটি লজিক
+    const companyName = cData.companyName || cData.name || cData.fullName || cData.title || cData.postedByName || cData.authorName || "কোম্পানি পেজ";
     const nameElem = document.getElementById('s-name');
     if (nameElem) nameElem.textContent = companyName;
 
@@ -96,7 +111,8 @@ function renderCompanyProfileDetails(cData, docId) {
     // ৪. বায়ো
     const bioElem = document.getElementById('s-bio');
     if (bioElem) {
-        bioElem.textContent = (cData.bio || cData.description || cData.about) ? `"${cData.bio || cData.description || cData.about}"` : "";
+        const bioText = cData.bio || cData.description || cData.about || "";
+        bioElem.textContent = bioText.trim() !== "" ? `"${bioText}"` : "";
     }
 
     // ৫. ক্যাটাগরি/টাইপ
@@ -121,16 +137,17 @@ function renderCompanyProfileDetails(cData, docId) {
     const officeElem = document.getElementById('s-office');
     const officeItemElem = document.getElementById('s-office-item');
     if (officeElem && officeItemElem) {
-        if (cData.officeAddress) {
-            officeElem.textContent = cData.officeAddress;
+        const officeAddr = cData.officeAddress || cData.address;
+        if (officeAddr && officeAddr.trim() !== "") {
+            officeElem.textContent = officeAddr;
             officeItemElem.style.display = 'flex';
         } else {
             officeItemElem.style.display = 'none';
         }
     }
 
-    // ৯. লোগো
-    const logo = cData.logo || cData.companyLogo || cData.profilePic || cData.photoURL;
+    // ৯. লোগো / অবতার (সঠিক প্রায়োরিটি)
+    const logo = cData.logo || cData.companyLogo || cData.profilePic || cData.photoURL || cData.postedByAvatar;
     const avatarElem = document.getElementById('s-avatar');
     if (logo && avatarElem) {
         avatarElem.src = logo;
@@ -156,7 +173,7 @@ function loadSellerProfileData() {
         if (doc.exists) {
             const uData = doc.data();
 
-            const userName = uData.fullName || uData.name || uData.displayName || uData.authorName || "সম্মানিত বিক্রেতা";
+            const userName = uData.fullName || uData.name || uData.displayName || uData.authorName || uData.postedByName || "সম্মানিত বিক্রেতা";
             
             document.getElementById('s-name').textContent = userName;
             document.getElementById('s-email').textContent = uData.email || "ইমেইল সরবরাহ করা হয়নি";
@@ -181,8 +198,9 @@ function loadSellerProfileData() {
                 document.getElementById('s-bio').textContent = "";
             }
 
-            if (uData.profilePic || uData.photoURL) {
-                document.getElementById('s-avatar').src = uData.profilePic || uData.photoURL;
+            const avatar = uData.profilePic || uData.photoURL || uData.postedByAvatar;
+            if (avatar) {
+                document.getElementById('s-avatar').src = avatar;
             }
 
             if (uData.isVerified === true || uData.role === 'admin') {
@@ -217,6 +235,12 @@ async function loadCompanyProperties() {
                                  .get();
         }
 
+        if (snapshot.empty) {
+            snapshot = await db.collection('properties')
+                                 .where('userId', '==', targetCompanyId)
+                                 .get();
+        }
+
         renderPropertyList(snapshot, grid);
     } catch (error) {
         console.error("কোম্পানির পোস্ট তালিকা লোড করতে সমস্যা:", error);
@@ -239,6 +263,12 @@ async function loadSellerProperties() {
         if (snapshot.empty) {
             snapshot = await db.collection('properties')
                                  .where('uid', '==', targetUserId)
+                                 .get();
+        }
+
+        if (snapshot.empty) {
+            snapshot = await db.collection('properties')
+                                 .where('createdByUid', '==', targetUserId)
                                  .get();
         }
 
@@ -268,7 +298,7 @@ function renderPropertyList(snapshot, grid) {
         let priceVal = post.category === 'বিক্রয়' ? post.price : (post.monthlyRent || post.price);
         let unitVal = post.priceUnit || post.rentUnit || "";
         let thumbnail = (post.images && post.images[0]) ? (post.images[0].url || post.images[0]) : 'https://via.placeholder.com/150?text=No+Image';
-        let locationText = post.location ? `${post.location.village || ''}, ${post.location.thana || ''}` : 'ঠিকানা নেই';
+        let locationText = post.location ? `${post.location.village || ''}, ${post.location.thana || post.location.upazila || ''}` : 'ঠিকানা নেই';
 
         grid.innerHTML += `
             <div class="post-card" onclick="location.href='details.html?id=${doc.id}'">
@@ -333,7 +363,6 @@ function setupInteractiveProfileRating(targetType) {
             const docRef = db.collection(collectionName).doc(targetId);
 
             try {
-                // Transaction দিয়ে শুধুমাত্র রেটিং ফিল্ড আপডেট করা হচ্ছে
                 await db.runTransaction(async (transaction) => {
                     const doc = await transaction.get(docRef);
 
@@ -346,14 +375,13 @@ function setupInteractiveProfileRating(targetType) {
 
                         transaction.update(docRef, {
                             ratingCount: currentCount + 1,
-                            ratingSum: currentSum + chosenRating
+                            ratingSum: chosenRating + currentSum
                         });
                     }
                 });
 
                 localStorage.setItem(localStoreKey, chosenRating);
                 alert("সফলভাবে রেটিং দেওয়া হয়েছে! ধন্যবাদ।");
-                // location.reload() সরিয়ে ফেলা হয়েছে; onSnapshot স্বয়ংক্রিয়ভাবে লাইভ আপডেট দেখাবে।
 
             } catch (err) {
                 console.error("রেটিং আপডেট করতে সমস্যা:", err);
