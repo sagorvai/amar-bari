@@ -57,14 +57,14 @@ const compressImage = (file, maxWidth = 500, quality = 0.7) => {
 let currentUserData = null;
 let companyData = null;
 let isCompanyMode = localStorage.getItem('activeIdentityType') === 'company';
-let inactiveUnreadCount = 0; // ⚡ অফ থাকা মোডের আনরিড নোটিফিকেশন কাউন্ট
-let inactiveNotifUnsubscribe = null; // ⚡ ব্যাকগ্রাউন্ড লিসেনার
+let inactiveUnreadCount = 0; 
+let inactiveNotifUnsubscribe = null; 
 
 // 🏢 কোম্পানি মোডাল খোলার গ্লোবাল ফাংশন
 window.openCompanyModal = function() {
     const companyModal = document.getElementById('createCompanyModal');
     if (!companyModal) {
-        console.error("Company modal element '#createCompanyModal' found impossible!");
+        console.error("Company modal element '#createCompanyModal' not found!");
         return;
     }
 
@@ -76,7 +76,6 @@ window.openCompanyModal = function() {
     const modalTitle = companyModal.querySelector('h3');
     const saveBtn = document.getElementById('save-company-btn');
 
-    // মোডাল ইনপুট ফিল্ড রিসেট/সেটআপ
     if (compNameInput) compNameInput.value = companyData ? (companyData.name || "") : "";
     if (compBioInput) compBioInput.value = companyData ? (companyData.bio || "") : "";
     if (compOfficeInput) compOfficeInput.value = companyData ? (companyData.officeAddress || "") : "";
@@ -123,7 +122,6 @@ window.getActiveIdentity = function() {
 
 document.addEventListener('DOMContentLoaded', function() {
     
-    // UI Elements
     const displayNameEl = document.getElementById('display-name');
     const userBioEl = document.getElementById('user-bio');
     const userEmailEl = document.getElementById('user-email');
@@ -138,14 +136,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const myRatingScoreEl = document.getElementById('my-rating-score');
     const headerProfileImg = document.querySelector('#profileImageWrapper img');
     
-    // Modals
     const editModal = document.getElementById('editProfileModal');
     const closeEditBtn = document.getElementById('edit-profile-close-btn');
     const editForm = document.getElementById('edit-profile-form');
     const avatarPreview = document.getElementById('edit-avatar-preview');
     const fileInput = document.getElementById('edit-profile-picture');
 
-    // Company Modal Elements
     const companyModal = document.getElementById('createCompanyModal');
     const closeCompanyBtn = document.getElementById('close-company-modal-btn');
     const companyForm = document.getElementById('create-company-form');
@@ -159,14 +155,12 @@ document.addEventListener('DOMContentLoaded', function() {
         editModal.style.display = 'block';
     }
 
-    // কোম্পানি মোডাল ক্লোজ বাটন ইভেন্ট
     if (closeCompanyBtn && companyModal) {
         closeCompanyBtn.onclick = function() {
             companyModal.style.display = 'none';
         };
     }
 
-    // মোডালের বাইরে ক্লিক করলে বন্ধ হওয়ার লজিক
     window.onclick = function(event) {
         if (event.target === companyModal) {
             companyModal.style.display = 'none';
@@ -176,7 +170,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // লোগো ছবি সিলেক্ট করলে প্রিভিউ দেখানোর ইভেন্ট
     if (companyLogoInput && companyLogoPreview) {
         companyLogoInput.addEventListener('change', function() {
             const file = this.files[0];
@@ -210,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ২. প্রোফাইল ডাটাবেজ ও কোম্পানি ডাটা লোড করা
+    // ২. প্রোফাইল ও কোম্পানি ডাটা লোড
     async function loadUserProfile(user) {
         try {
             const doc = await db.collection('users').doc(user.uid).get();
@@ -241,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🏢 ৩. মূল ভিউ রেন্ডার লজিক
+    // 🏢 ৩. মূল ভিউ রেন্ডার লজিক (রেটিং ক্যালকুলেশন ফিক্সড)
     window.renderProfileView = function() {
         listenForInactiveModeNotifications(); 
         renderCompanyWidget();
@@ -249,8 +242,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const editBtnText = document.getElementById('edit-btn-text');
         const editBtnIcon = document.getElementById('edit-btn-icon');
 
+        let targetData = isCompanyMode && companyData ? companyData : currentUserData;
+
+        // ⚡ রেটিং প্রদর্শনের ফিক্সড লজিক (কোম্পানি এবং ইউজার উভয়ের জন্য)
+        if (myRatingScoreEl && targetData) {
+            if (targetData.ratingCount && targetData.ratingCount > 0) {
+                let avg = ((targetData.ratingSum || 0) / targetData.ratingCount).toFixed(1);
+                myRatingScoreEl.textContent = `⭐ ${avg} (${targetData.ratingCount})`;
+            } else {
+                myRatingScoreEl.textContent = `⭐ ০.০ (০)`;
+            }
+        }
+
         if (isCompanyMode && companyData) {
-            // ================== কোম্পানি পেজ মোড ==================
             if(displayNameEl) displayNameEl.textContent = companyData.name;
             if(userBioEl) userBioEl.textContent = companyData.bio || "আবাসন ও ডেভেলপার প্রতিষ্ঠান";
             if(userAvatar) userAvatar.src = companyData.logo || 'https://via.placeholder.com/150';
@@ -277,7 +281,6 @@ document.addEventListener('DOMContentLoaded', function() {
             loadCompanyProperties(companyData.companyId);
 
         } else {
-            // ================== পার্সোনাল প্রোফাইল মোড ==================
             if(currentUserData) {
                 if(displayNameEl) displayNameEl.textContent = currentUserData.fullName || currentUserData.name || "ইউজার প্রোফাইল";
                 if(userBioEl) userBioEl.textContent = currentUserData.bio || "আপনার সম্পর্কে কিছু বলুন...";
@@ -296,11 +299,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(pPic && userAvatar) userAvatar.src = pPic;
                 if(pPic && avatarPreview) avatarPreview.src = pPic;
                 if(pPic && headerProfileImg) headerProfileImg.src = pPic;
-
-                if (currentUserData.ratingCount && currentUserData.ratingCount > 0 && myRatingScoreEl) {
-                    let avg = ((currentUserData.ratingSum || 0) / currentUserData.ratingCount).toFixed(1);
-                    myRatingScoreEl.textContent = `⭐ ${avg}`;
-                }
 
                 if(document.getElementById('edit-full-name')) document.getElementById('edit-full-name').value = currentUserData.fullName || currentUserData.name || "";
                 if(document.getElementById('edit-bio')) document.getElementById('edit-bio').value = currentUserData.bio || "";
@@ -323,7 +321,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // ⚡ অফ থাকা মোডের অপঠিত নোটিফিকেশন রিয়েল-টাইম শো করানোর লিসেনার
     function listenForInactiveModeNotifications() {
         if (inactiveNotifUnsubscribe) {
             inactiveNotifUnsubscribe();
@@ -347,7 +344,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // 🏢 ৪. কোম্পানি সুইচ কার্ড রেন্ডার
     function renderCompanyWidget() {
         const widgetEl = document.getElementById('company-widget-content');
         if (!widgetEl) return;
@@ -402,7 +398,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🎯 ৫. বাটন ক্লিক হ্যান্ডলার
     window.handleEditButtonClick = function() {
         if (isCompanyMode && companyData) {
             window.openCompanyModal();
@@ -411,7 +406,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // ⚡ ⭐ অ্যাক্টিভ প্রোফাইল গ্লোবালি সুইচ করার লজিক ⭐
     window.switchMode = function(toCompany) {
         isCompanyMode = toCompany;
 
@@ -435,7 +429,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.dispatchEvent(new Event('identityChanged'));
     };
 
-    // 🏢 ৬. কোম্পানি পেজ তৈরি/আপডেট সাবমিট
     if (companyForm) {
         companyForm.onsubmit = async (e) => {
             e.preventDefault();
@@ -501,7 +494,6 @@ document.addEventListener('DOMContentLoaded', function() {
         directPostBtn.onclick = () => { window.location.href = 'post.html'; };
     }
     
-    // 🎯 ৭. পার্সোনাল প্রপার্টি লোড
     async function loadUserProperties(userId) {
         if(!propertiesList) return;
         propertiesList.innerHTML = '<p style="text-align:center; width:100%;">খোঁজা হচ্ছে...</p>';
@@ -530,7 +522,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🏢 ৮. কোম্পানির প্রপার্টি লোড
     async function loadCompanyProperties(companyId) {
         if(!propertiesList) return;
         propertiesList.innerHTML = '<p style="text-align:center; width:100%;">কোম্পানির পোস্ট খোঁজা হচ্ছে...</p>';
@@ -548,7 +539,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🎯 ৯. ফিল্টার করা প্রপার্টি কার্ড গ্রিড রেন্ডার
     function renderFilteredPropertiesGrid(docs) {
         propertiesList.innerHTML = '';
         if(totalPostsEl) totalPostsEl.textContent = docs.length;
@@ -603,7 +593,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 🎯 ১০. পার্সোনাল প্রোফাইল এডিট সাবমিট
     if (editForm) {
         editForm.onsubmit = async (e) => {
             e.preventDefault();
@@ -661,7 +650,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ১১. বুকমার্ক প্রপার্টি লোড
+// ⚡ ১১. ফিক্সড বুকমার্ক প্রপার্টি লোড (userId এবং uid দুটো ফোর্সেই কুয়েরি করে)
 async function loadSavedProperties(userId) {
     const savedListEl = document.getElementById('saved-posts');
     const savedCountEl = document.getElementById('saved-posts-count');
@@ -670,7 +659,14 @@ async function loadSavedProperties(userId) {
     savedListEl.innerHTML = '<p style="text-align:center; padding:20px;">বুকমার্ক খোঁজা হচ্ছে...</p>';
 
     try {
-        const savedSnapshot = await db.collection('saves').where('userId', '==', userId).get();
+        // ১. userId দিয়ে খোজা
+        let savedSnapshot = await db.collection('saves').where('userId', '==', userId).get();
+
+        // ২. না পাওয়া গেলে uid ফিল্ড দিয়ে খোজা
+        if (savedSnapshot.empty) {
+            savedSnapshot = await db.collection('saves').where('uid', '==', userId).get();
+        }
+
         if(savedCountEl) savedCountEl.textContent = savedSnapshot.size;
 
         if (savedSnapshot.empty) {
@@ -683,7 +679,7 @@ async function loadSavedProperties(userId) {
 
         for (const saveDoc of savedSnapshot.docs) {
             const saveData = saveDoc.data();
-            const postId = saveData.postId;
+            const postId = saveData.postId || saveData.propertyId;
 
             if (!postId) continue;
 
@@ -720,4 +716,4 @@ async function loadSavedProperties(userId) {
         console.error("Saved properties error:", error);
         savedListEl.innerHTML = '<p style="text-align:center; color:red; padding:20px;">বুকমার্ক লোড করতে সমস্যা হয়েছে।</p>';
     }
-        }
+                    }
