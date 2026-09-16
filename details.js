@@ -853,104 +853,104 @@ function setupLikeSystem(postData) {
    SAVE + SHARE
    ========================================================= */
 
-function setupSaveAndShareSystem(postData, sellerId) {
-    const saveBtn = document.getElementById('p-save');
-    const shareBtn = document.getElementById('p-share');
-    const currentUrl = window.location.href;
+function setupSaveAndShareSystem(postId) {
+    const saveBtn = document.getElementById('savePostBtn');
+    const shareBtn = document.getElementById('sharePostBtn');
+    const db = firebase.firestore();
 
-    if (saveBtn) {
-        const saveStorageKey = `saved_post_${postId}`;
-        let isSaved = localStorage.getItem(saveStorageKey) === 'true';
+    if (!saveBtn) return;
 
-        const updateSaveUI = (status) => {
-            const icon = saveBtn.querySelector('i');
-            if (icon) {
-                if (status) {
-                    icon.textContent = 'bookmark';
-                    saveBtn.style.color = '#27ae60';
-                    if (saveBtn.querySelector('span')) saveBtn.querySelector('span').textContent = 'সেভড';
-                } else {
-                    icon.textContent = 'bookmark_border';
-                    saveBtn.style.color = '#2c3e50';
-                    if (saveBtn.querySelector('span')) saveBtn.querySelector('span').textContent = 'সেভ';
-                }
-            }
-        };
+    const saveStorageKey = `amarBari_saved_${postId}`;
+    let isSaved = localStorage.getItem(saveStorageKey) === 'true';
 
-        updateSaveUI(isSaved);
+    // UI আপডেট করার অভ্যন্তরীণ হেলপার
+    const updateSaveUI = (saved) => {
+        const icon = saveBtn.querySelector('i');
+        const textSpan = saveBtn.querySelector('span') || saveBtn;
+        
+        if (saved) {
+            saveBtn.classList.add('text-primary', 'active');
+            if (icon) icon.className = 'fas fa-bookmark';
+            if (textSpan && textSpan !== saveBtn) textSpan.innerText = 'সেভ করা হয়েছে';
+        } else {
+            saveBtn.classList.remove('text-primary', 'active');
+            if (icon) icon.className = 'far fa-bookmark';
+            if (textSpan && textSpan !== saveBtn) textSpan.innerText = 'সেভ করুন';
+        }
+    };
 
-        saveBtn.onclick = async () => {
-    const currentUser = firebase.auth().currentUser;
-    if (!currentUser) {
-        alert("পোস্ট সেভ করতে প্রথমে লগইন করুন!");
-        return;
-    }
-
-    isSaved = !isSaved;
-    localStorage.setItem(saveStorageKey, isSaved);
+    // পেজ লোড হওয়ার সময় লোকাল UI স্টেট আপডেট
     updateSaveUI(isSaved);
 
-    const saveDocId = `${currentUser.uid}_${postId}`;
-    const saveRef = db.collection('saves').doc(saveDocId);
+    // বুকমার্ক/সেভ বাটনের ক্লিক হ্যান্ডলার
+    saveBtn.onclick = async () => {
+        const currentUser = firebase.auth().currentUser;
 
-    if (isSaved) {
-        // Firestore-এ বুকমার্ক ডাটা সেভ
-        await saveRef.set({
-            userId: currentUser.uid,
-            postId: postId,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        alert("পোস্টটি সফলভাবে সেভ করা হয়েছে!");
-    } else {
-        // Firestore থেকে বুকমার্ক রিমুভ
-        await saveRef.delete();
-        alert("সেভ তালিকা থেকে বাদ দেওয়া হয়েছে।");
-    }
-};
+        if (!currentUser) {
+            alert("পোস্টটি সেভ করতে আপনাকে অবশ্যই লগইন করতে হবে।");
+            return;
+        }
+
+        // টগল স্টেট
+        isSaved = !isSaved;
+        localStorage.setItem(saveStorageKey, isSaved);
+        updateSaveUI(isSaved);
+
+        // ডকুমেন্ট আইডি সেটআপ: userId_postId (সহজে খোঁজার জন্য)
+        const saveDocId = `${currentUser.uid}_${postId}`;
+        const saveRef = db.collection('saves').doc(saveDocId);
+
+        try {
             if (isSaved) {
-                const currentUser = firebase.auth().currentUser;
-                if (currentUser) {
-                    if (currentUser.uid !== sellerId) {
-                        writeNotificationToFirestore(
-                            sellerId,
-                            currentUser.uid,
-                            postId,
-                            "বুকমার্ক অ্যালার্ট! ❤️",
-                            `একজন সম্ভাব্য ক্রেতা আপনার '${postData.title}' প্রপার্টিটি বুকমার্ক করে সেভ রেখেছেন।`,
-                            "save"
-                        );
-                    }
-                } else {
-                    writeNotificationToLocalStorage(
-                        postId,
-                        "বিজ্ঞাপনটি সফলভাবে সেভ হয়েছে! 📌",
-                        `এই বাড়িটির মালিক যদি কখনো দাম কমান বা নতুন কোনো তথ্য আপডেট করেন, আমরা আপনাকে সরাসরি এখানে জানিয়ে দেব।`,
-                        "save"
-                    );
-                }
+                // ফায়ারস্টোর 'saves' কালেকশনে বুকমার্ক সেভ
+                await saveRef.set({
+                    userId: currentUser.uid,
+                    postId: postId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("পোস্টটি আপনার প্রোফাইলে সফলভাবে সেভ করা হয়েছে!");
+            } else {
+                // সেভ করা ডাটা ফায়ারস্টোর থেকে রিমুভ
+                await saveRef.delete();
+                alert("পোস্টটি সেভ তালিকা থেকে বাদ দেওয়া হয়েছে।");
             }
-        };
-    }
+        } catch (error) {
+            console.error("Firestore Save Error:", error);
+            // ডাটাবেজ ফেইল করলে UI রিলিজ ব্যাক করা
+            isSaved = !isSaved;
+            localStorage.setItem(saveStorageKey, isSaved);
+            updateSaveUI(isSaved);
+            alert("সেভ করার সময় একটি সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।");
+        }
+    };
 
+    // শেয়ার বাটনের ক্লিক হ্যান্ডলার
     if (shareBtn) {
         shareBtn.onclick = async () => {
+            const shareData = {
+                title: document.title || 'আমার বাড়ি - প্রোপার্টি ডিটেইলস',
+                text: 'আমার বাড়ি প্ল্যাটফর্মে এই প্রোপার্টিটি দেখুন!',
+                url: window.location.href
+            };
+
             if (navigator.share) {
                 try {
-                    await navigator.share({
-                        title: postData.title || "আমার বাড়ি প্ল্যাটফর্ম প্রপার্টি",
-                        text: `আমার বাড়ি প্ল্যাটফর্মে এই চমৎকার প্রপার্টিটি দেখুন: ${postData.title}`,
-                        url: currentUrl
-                    });
+                    await navigator.share(shareData);
                 } catch (err) {
-                    console.log("শেয়ার বাতিল বা ব্যর্থ হয়েছে:", err);
+                    console.log('Share canceled or failed:', err);
                 }
             } else {
-                const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
-                window.open(fbShareUrl, '_blank', 'width=600,height=400');
+                // ওয়েব শেয়ার এপিআই সাপোর্ট না করলে ক্লিপবোর্ডে কপি
+                try {
+                    await navigator.clipboard.writeText(window.location.href);
+                    alert("প্রোপার্টির লিংক ক্লিপবোর্ডে কপি করা হয়েছে!");
+                } catch (err) {
+                    alert("লিংক কপি করতে ব্যর্থ হয়েছে। ইউআরএল (URL) বার থেকে ম্যানুয়ালি কপি করুন।");
+                }
             }
         };
     }
-}
+                }
 
 
 /* =========================================================
