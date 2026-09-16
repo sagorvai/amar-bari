@@ -879,13 +879,34 @@ function setupSaveAndShareSystem(postData, sellerId) {
 
         updateSaveUI(isSaved);
 
-        saveBtn.onclick = () => {
-            isSaved = !isSaved;
-            localStorage.setItem(saveStorageKey, isSaved);
-            updateSaveUI(isSaved);
+        saveBtn.onclick = async () => {
+    const currentUser = firebase.auth().currentUser;
+    if (!currentUser) {
+        alert("পোস্ট সেভ করতে প্রথমে লগইন করুন!");
+        return;
+    }
 
-            alert(isSaved ? "পোস্টটি সফলভাবে সেভ করা হয়েছে!" : "সেভ তালিকা থেকে বাদ দেওয়া হয়েছে।");
+    isSaved = !isSaved;
+    localStorage.setItem(saveStorageKey, isSaved);
+    updateSaveUI(isSaved);
 
+    const saveDocId = `${currentUser.uid}_${postId}`;
+    const saveRef = db.collection('saves').doc(saveDocId);
+
+    if (isSaved) {
+        // Firestore-এ বুকমার্ক ডাটা সেভ
+        await saveRef.set({
+            userId: currentUser.uid,
+            postId: postId,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert("পোস্টটি সফলভাবে সেভ করা হয়েছে!");
+    } else {
+        // Firestore থেকে বুকমার্ক রিমুভ
+        await saveRef.delete();
+        alert("সেভ তালিকা থেকে বাদ দেওয়া হয়েছে।");
+    }
+};
             if (isSaved) {
                 const currentUser = firebase.auth().currentUser;
                 if (currentUser) {
