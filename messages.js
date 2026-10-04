@@ -1,4 +1,4 @@
-// messages.js - Optimized Dual-Mode Realtime Messaging Engine
+// messages.js - Highly Optimized Messaging Engine
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -11,26 +11,21 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// URL Parameters
 const urlParams = new URLSearchParams(window.location.search);
 let currentChatId = urlParams.get('chatId');
 let currentPostId = urlParams.get('postId');
 
-// Global States
 let currentUser = null;
-let activeSender = null; // { id: string, type: 'user'|'company', name: string, photo: string }
+let activeSender = null; 
 let activeChatListener = null;
 
-// 🚀 ১. বর্তমান ব্যবহারকারীর মোড ও সক্রিয় প্রেরক (Sender) আইডেন্টিটি নির্ধারণ
 firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) {
         window.location.href = "auth.html";
         return;
     }
-
     currentUser = user;
 
-    // header-sync.js এর গ্লোবাল এক্টিভ আইডেন্টিটি ব্যবহার করা হচ্ছে
     if (typeof window.getActiveIdentity === 'function') {
         const identity = window.getActiveIdentity();
         if (identity) {
@@ -43,7 +38,6 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
     }
 
-    // ব্যাকআপ fallback (যদি header-sync লোড না হয়)
     if (!activeSender) {
         const activeMode = localStorage.getItem('activeIdentityType') || 'user';
         if (activeMode === 'company') {
@@ -76,17 +70,13 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
     }
 
-    // হেডার প্রোফাইল ছবি আপডেট
     const headerProfileImg = document.getElementById('profileImage');
-    if (headerProfileImg && activeSender.photo) {
-        headerProfileImg.src = activeSender.photo;
-    }
+    if (headerProfileImg && activeSender.photo) headerProfileImg.src = activeSender.photo;
 
     renderIdentityBadge();
     initChatSystem();
 });
 
-// 📌 মোড নির্দেশক ব্যাজ
 function renderIdentityBadge() {
     const chatInputArea = document.querySelector('.chat-input-area') || document.getElementById('messageInputField')?.parentElement;
     if (!chatInputArea || !activeSender) return;
@@ -105,30 +95,28 @@ function renderIdentityBadge() {
 
 function initChatSystem() {
     loadChatList();
-
     if (currentChatId) {
         handleMobileLayout();
         openChatBox(currentChatId, currentPostId);
     }
 }
 
-// 💬 ২. ইনবক্স ফিল্টারিং
+// 💬 ২. ইনবক্স ফিল্টারিং - সরাসরি ActiveSender.id দিয়ে খোঁজা
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
-    if (!chatListContainer || !activeSender || !currentUser) return;
+    if (!chatListContainer || !activeSender) return;
 
+    // activeSender.id (User UID অথবা Company ID) দিয়ে সরাসরি ফিল্টার
     db.collection('chats')
-        .where('participants', 'array-contains', currentUser.uid)
+        .where('participants', 'array-contains', activeSender.id)
         .onSnapshot((snapshot) => {
             chatListContainer.innerHTML = "";
             let chatDocs = [];
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const isRelevantToActiveMode = (data.senderId === activeSender.id || data.receiverId === activeSender.id);
                 const isDeleted = data.deletedBy && data.deletedBy.includes(activeSender.id);
-
-                if (isRelevantToActiveMode && !isDeleted) {
+                if (!isDeleted) {
                     chatDocs.push({ id: doc.id, ...data });
                 }
             });
@@ -143,7 +131,10 @@ function loadChatList() {
             chatDocs.forEach((chatData) => {
                 const chatId = chatData.id;
                 const otherPartyId = (chatData.senderId === activeSender.id) ? chatData.receiverId : chatData.senderId;
-                const isUnread = chatData.isUnread && chatData.lastSenderId !== activeSender.id;
+                
+                // আনরিড মেসেজ চেক
+                const unreadCount = (chatData.unreadCount && chatData.unreadCount[activeSender.id]) || 0;
+                const isUnread = unreadCount > 0;
 
                 const chatItemDiv = document.createElement('div');
                 chatItemDiv.className = `chat-item ${chatId === currentChatId ? 'active' : ''}`;
@@ -181,10 +172,8 @@ function loadChatList() {
         });
 }
 
-// 👤/🏢 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার ফাংশন
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
-
     const nameElem = document.getElementById(nameElemId);
     const avatarElem = document.getElementById(avatarElemId);
 
@@ -205,32 +194,14 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        let compQueryById = await db.collection('companies').where('companyId', '==', targetId).limit(1).get();
-        if (!compQueryById.empty) {
-            const cData = compQueryById.docs[0].data();
-            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
-            if (avatarElem && avatarElemId) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
-            return;
-        }
-
-        let compQueryByOwner = await db.collection('companies').where('ownerUid', '==', targetId).limit(1).get();
-        if (!compQueryByOwner.empty) {
-            const cData = compQueryByOwner.docs[0].data();
-            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
-            if (avatarElem && avatarElemId) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
-            return;
-        }
-
         if (nameElem) nameElem.textContent = "বিজ্ঞাপনদাতা";
         if (avatarElem && avatarElemId) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
-
     } catch (err) {
         console.error("আইডেন্টিটি ফেচিং ত্রুটি:", err);
         if (nameElem) nameElem.textContent = "গ্রাহক";
     }
 }
 
-// 📖 ৪. চ্যাট বক্স ওপেন ও রিয়েলটাইম মেসেজ প্রদর্শন
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
 
@@ -244,14 +215,15 @@ async function openChatBox(chatId, postId) {
     document.getElementById(`item_${chatId}`)?.classList.add('active');
 
     const chatRef = db.collection('chats').doc(chatId);
-    let chatDoc = await chatRef.get();
+    
+    // ⚡ আনরিড কাউন্ট জিরো (0) করা
+    await chatRef.update({
+        [`unreadCount.${activeSender.id}`]: 0
+    }).catch(() => {});
 
+    let chatDoc = await chatRef.get();
     if (!chatDoc.exists) return;
     const cData = chatDoc.data();
-
-    if (cData.isUnread && cData.lastSenderId !== activeSender.id) {
-        await chatRef.update({ isUnread: false });
-    }
 
     const otherPartyId = (cData.senderId === activeSender.id) ? cData.receiverId : cData.senderId;
     fetchIdentityDetails(otherPartyId, 'activeChatUserName', null);
@@ -284,29 +256,33 @@ async function openChatBox(chatId, postId) {
         });
 }
 
-// ✉️ ৫. মেসেজ সেন্ড লজিক (ডুপ্লিকেট নোটিফিকেশন রিমুভড)
+// ✉️ ৫. মেসেজ সেন্ড লজিক (নিখুঁত Unread Count আপডেটসহ)
 async function sendMessage(text) {
     if (!text.trim() || !currentChatId || !activeSender) return;
-
     const cleanText = text.trim();
 
     try {
-        // ১. মেসেজ সাব-কালেকশনে যোগ করা
-        await db.collection('chats').doc(currentChatId).collection('messages').add({
+        const chatDocRef = db.collection('chats').doc(currentChatId);
+        const chatDoc = await chatDocRef.get();
+        if (!chatDoc.exists) return;
+
+        const cData = chatDoc.data();
+        const recipientId = (cData.senderId === activeSender.id) ? cData.receiverId : cData.senderId;
+
+        // ১. সাব-কালেকশনে বার্তা সেভ
+        await chatDocRef.collection('messages').add({
             senderId: activeSender.id,
             senderType: activeSender.type,
             text: cleanText,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // ২. চ্যাট ডকুমেন্টের লাস্ট মেসেজ আপডেট করা
-        // ⚡ (নোটিফিকেশন তৈরির বাকি পুরো কাজ ব্যাকএন্ডের Cloud Function সমাধান করবে)
-        const chatDocRef = db.collection('chats').doc(currentChatId);
+        // ২. চ্যাট ব্যাকএন্ড ডকুমেন্ট ও আনরিড কাউন্ট ১ বৃদ্ধি করা
         await chatDocRef.update({
             lastMessage: cleanText,
             lastSenderId: activeSender.id,
-            isUnread: true,
             deletedBy: [],
+            [`unreadCount.${recipientId}`]: firebase.firestore.FieldValue.increment(1),
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -315,7 +291,6 @@ async function sendMessage(text) {
     }
 }
 
-// 🏢 প্রপার্টি কার্ড ডিসপ্লে
 function loadPropertyContext(postId) {
     const card = document.getElementById('activePropertyCard');
     if (!card || !postId) { if (card) card.style.display = 'none'; return; }
@@ -340,7 +315,6 @@ function loadPropertyContext(postId) {
     }).catch(() => { if (card) card.style.display = 'none'; });
 }
 
-// 📱 মোবাইল লেআউট কন্ট্রোল
 function handleMobileLayout() {
     if (window.innerWidth <= 768) {
         document.getElementById('chatSidebar')?.classList.add('hidden');
@@ -383,7 +357,6 @@ document.addEventListener('click', () => {
     document.querySelectorAll('.chat-dropdown').forEach(d => d.classList.remove('show'));
 });
 
-// ⌨️ DOM Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
     const sendBtn = document.getElementById('sendMessageBtn');
     const input = document.getElementById('messageInputField');
