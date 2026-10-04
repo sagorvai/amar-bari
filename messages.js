@@ -1,4 +1,4 @@
-// messages.js - Highly Optimized Messaging Engine
+// messages.js - Fixed Incoming Notification, Page Identity & Quick Suggestions
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -50,8 +50,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
                         activeSender = {
                             id: compDoc.id,
                             type: 'company',
-                            name: cData.companyName || cData.name || "কোম্পানি পেজ",
-                            photo: cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page'
+                            name: cData.pageName || cData.companyName || cData.name || "কোম্পানি পেজ",
+                            photo: cData.logo || cData.companyLogo || cData.profilePic || cData.photoURL || 'https://via.placeholder.com/45?text=Page'
                         };
                     }
                 } catch (e) {
@@ -101,12 +101,10 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. ইনবক্স ফিল্টারিং - সরাসরি ActiveSender.id দিয়ে খোঁজা
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer || !activeSender) return;
 
-    // activeSender.id (User UID অথবা Company ID) দিয়ে সরাসরি ফিল্টার
     db.collection('chats')
         .where('participants', 'array-contains', activeSender.id)
         .onSnapshot((snapshot) => {
@@ -132,9 +130,9 @@ function loadChatList() {
                 const chatId = chatData.id;
                 const otherPartyId = (chatData.senderId === activeSender.id) ? chatData.receiverId : chatData.senderId;
                 
-                // আনরিড মেসেজ চেক
+                // ইনকামিং আনরিড মেসেজ চেক
                 const unreadCount = (chatData.unreadCount && chatData.unreadCount[activeSender.id]) || 0;
-                const isUnread = unreadCount > 0;
+                const isIncomingUnread = unreadCount > 0 && chatData.lastSenderId !== activeSender.id;
 
                 const chatItemDiv = document.createElement('div');
                 chatItemDiv.className = `chat-item ${chatId === currentChatId ? 'active' : ''}`;
@@ -144,7 +142,7 @@ function loadChatList() {
                     <img src="https://via.placeholder.com/45?text=..." id="avatar_${chatId}">
                     <div class="chat-item-info">
                         <h4 id="name_${chatId}">লোড হচ্ছে...</h4>
-                        <p style="${isUnread ? 'font-weight: bold; color: #0f172a;' : ''}">${chatData.lastMessage || "নতুন বার্তা..."}</p>
+                        <p style="${isIncomingUnread ? 'font-weight: bold; color: #0f172a;' : ''}">${chatData.lastMessage || "নতুন বার্তা..."}</p>
                     </div>
                     <button class="chat-item-menu-btn" onclick="toggleDropdown(event, '${chatId}')">
                         <i class="material-icons">more_vert</i>
@@ -172,25 +170,31 @@ function loadChatList() {
         });
 }
 
+// 📌 ২. সঠিক পেইজের নাম ও ছবি লোড করার লজিক
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
     const nameElem = document.getElementById(nameElemId);
     const avatarElem = document.getElementById(avatarElemId);
 
     try {
+        // ১. প্রথমে কোম্পানি/পেইজে চেক করা
+        let cDoc = await db.collection('companies').doc(targetId).get();
+        if (cDoc.exists) {
+            const cData = cDoc.data();
+            const pageName = cData.pageName || cData.companyName || cData.name || cData.title || "কোম্পানি পেজ";
+            const pageLogo = cData.logo || cData.companyLogo || cData.profilePic || cData.photoURL || 'https://via.placeholder.com/45?text=Page';
+            
+            if (nameElem) nameElem.textContent = pageName;
+            if (avatarElem && avatarElemId) avatarElem.src = pageLogo;
+            return;
+        }
+
+        // ২. ইউজারে চেক করা
         let uDoc = await db.collection('users').doc(targetId).get();
         if (uDoc.exists) {
             const uData = uDoc.data();
             if (nameElem) nameElem.textContent = uData.fullName || uData.name || uData.displayName || "গ্রাহক";
             if (avatarElem && avatarElemId) avatarElem.src = uData.profilePic || uData.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
-            return;
-        }
-
-        let cDoc = await db.collection('companies').doc(targetId).get();
-        if (cDoc.exists) {
-            const cData = cDoc.data();
-            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
-            if (avatarElem && avatarElemId) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
             return;
         }
 
@@ -216,7 +220,7 @@ async function openChatBox(chatId, postId) {
 
     const chatRef = db.collection('chats').doc(chatId);
     
-    // ⚡ আনরিড কাউন্ট জিরো (0) করা
+    // আনরিড কাউন্ট ০ করা
     await chatRef.update({
         [`unreadCount.${activeSender.id}`]: 0
     }).catch(() => {});
@@ -232,11 +236,21 @@ async function openChatBox(chatId, postId) {
     if (activeChatListener) activeChatListener();
 
     const messagesDisplay = document.getElementById('messagesDisplay');
+    const quickButtonsContainer = document.querySelector('.quick-buttons') || document.getElementById('quickQuestionsContainer');
+
     activeChatListener = db.collection('chats').doc(chatId).collection('messages')
         .orderBy('timestamp', 'asc')
         .onSnapshot((snapshot) => {
             if (!messagesDisplay) return;
             messagesDisplay.innerHTML = "";
+
+            // 📌 ৩. মেসেজ ১টি বা তার বেশি থাকলে ডিফল্ট কুইক মেসেজ বাটনগুলো হাইড হবে
+            if (!snapshot.empty && snapshot.size > 0) {
+                if (quickButtonsContainer) quickButtonsContainer.style.display = 'none';
+            } else {
+                if (quickButtonsContainer) quickButtonsContainer.style.display = 'flex';
+            }
+
             snapshot.forEach(doc => {
                 const msg = doc.data();
                 const isIncoming = msg.senderId !== activeSender.id;
@@ -256,7 +270,6 @@ async function openChatBox(chatId, postId) {
         });
 }
 
-// ✉️ ৫. মেসেজ সেন্ড লজিক (নিখুঁত Unread Count আপডেটসহ)
 async function sendMessage(text) {
     if (!text.trim() || !currentChatId || !activeSender) return;
     const cleanText = text.trim();
@@ -269,7 +282,6 @@ async function sendMessage(text) {
         const cData = chatDoc.data();
         const recipientId = (cData.senderId === activeSender.id) ? cData.receiverId : cData.senderId;
 
-        // ১. সাব-কালেকশনে বার্তা সেভ
         await chatDocRef.collection('messages').add({
             senderId: activeSender.id,
             senderType: activeSender.type,
@@ -277,7 +289,6 @@ async function sendMessage(text) {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // ২. চ্যাট ব্যাকএন্ড ডকুমেন্ট ও আনরিড কাউন্ট ১ বৃদ্ধি করা
         await chatDocRef.update({
             lastMessage: cleanText,
             lastSenderId: activeSender.id,
