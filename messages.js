@@ -50,8 +50,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
                         activeSender = {
                             id: compDoc.id,
                             type: 'company',
-                            name: cData.pageName || cData.companyName || cData.name || "কোম্পানি পেজ",
-                            photo: cData.logo || cData.companyLogo || cData.profilePic || cData.photoURL || 'https://via.placeholder.com/45?text=Page'
+                            fallbackName: data.companyName || data.pageName || data.postedByName || "",
+                    fallbackLogo: data.companyLogo || data.logo || data.postedByAvatar || ""
                         };
                     }
                 } catch (e) {
