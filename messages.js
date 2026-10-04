@@ -50,8 +50,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
                         activeSender = {
                             id: compDoc.id,
                             type: 'company',
-                            Name: data.companyName || data.pageName || data.postedByName || "",
-                            Logo: data.companyLogo || data.logo || data.postedByAvatar || ""
+                            Name: data.companyName || data.name || "page",
+                            Logo: data.companyLogo || data.logo ||  ""
                         };
                     }
                 } catch (e) {
