@@ -1,4 +1,4 @@
-// notifications.js - ইউজার ও পেজের নোটিফিকেশন ১০০% আলাদা রাখার সম্পূর্ণ ফিক্স
+// notifications.js - Optimized Pure Notification Engine
 const db = firebase.firestore();
 const auth = firebase.auth();
 const messaging = firebase.messaging(); 
@@ -16,7 +16,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const activeIdentity = getActiveIdentityData();
             if (activeIdentity) {
                 await syncGuestTokenToUser(auth.currentUser.uid, activeIdentity);
-                await ensureWelcomeNotification(activeIdentity);
             }
             loadNotificationsForActiveIdentity();
         }
@@ -65,7 +64,6 @@ function initGlobalNotificationSystem() {
             const activeIdentity = getActiveIdentityData();
             if (activeIdentity) {
                 await syncGuestTokenToUser(user.uid, activeIdentity);
-                await ensureWelcomeNotification(activeIdentity);
             }
             loadNotificationsForActiveIdentity();
         } else {
@@ -74,51 +72,12 @@ function initGlobalNotificationSystem() {
     });
 }
 
-async function ensureWelcomeNotification(activeIdentity) {
-    if (!activeIdentity || !activeIdentity.id || !auth.currentUser) return;
-
-    try {
-        const notifRef = db.collection("notifications");
-        const snapshot = await notifRef.where("userId", "==", activeIdentity.id).limit(1).get();
-
-        if (snapshot.empty) {
-            const isCompany = activeIdentity.type === 'company';
-            const targetName = activeIdentity.name || (isCompany ? "কোম্পানি" : "সম্মানিত গ্রাহক");
-
-            const titleText = isCompany 
-                ? `🏢 ${targetName}-এ আপনাকে স্বাগতম!`
-                : `👋 ${targetName}, আমার বাড়ি প্ল্যাটফর্মে আপনাকে স্বাগত!`;
-
-            const messageText = isCompany
-                ? `আপনার কোম্পানি/পেজ প্রোফাইলটি সফলভাবে সক্রিয় হয়েছে। কাস্টমারদের বার্তা ও আপডেট এখানে দেখতে পাবেন।`
-                : `আমাদের সাথে যুক্ত হওয়ার জন্য আপনাকে আন্তরিক ধন্যবাদ। সেরা প্রপার্টি ডিল এবং রিয়েল-টাইম আপডেট পেতে সাথে থাকুন।`;
-
-            await notifRef.add({
-                userId: activeIdentity.id,
-                ownerUid: auth.currentUser.uid,
-                targetType: isCompany ? 'company' : 'user', // ⚡ ফিল্টারিংয়ের সুবিধার্থে টাইপ যুক্ত করা হলো
-                title: titleText,
-                message: messageText,
-                type: "welcome",
-                senderName: targetName,
-                isRead: false,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-    } catch (error) {
-        console.error("স্বাগত নোটিফিকেশন তৈরিতে সমস্যা: ", error);
-    }
-}
-
 function loadNotificationsForActiveIdentity() {
     const activeIdentity = getActiveIdentityData();
     const container = document.getElementById('notifications-list');
 
     if (!activeIdentity || !activeIdentity.id) {
-        if (container) {
-            container.innerHTML = `<p style="text-align:center;color:#7f8c8d;padding:20px;">অ্যাকাউন্ট যাচাই হচ্ছে...</p>`;
-        }
+        if (container) container.innerHTML = `<p style="text-align:center;color:#7f8c8d;padding:20px;">অ্যাকাউন্ট যাচাই হচ্ছে...</p>`;
         return;
     }
 
@@ -146,7 +105,6 @@ function showGuestMessage() {
 async function syncGuestTokenToUser(uid, activeIdentity) {
     try {
         let currentToken = localStorage.getItem("my_fcm_token");
-
         if (!currentToken && Notification.permission === "granted") {
             currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
         }
@@ -155,11 +113,6 @@ async function syncGuestTokenToUser(uid, activeIdentity) {
             await saveTokenToFirestore("users", uid, currentToken);
             if (activeIdentity && activeIdentity.type === 'company' && activeIdentity.id) {
                 await saveTokenToFirestore("companies", activeIdentity.id, currentToken);
-            }
-
-            if (localStorage.getItem("my_fcm_token")) {
-                await db.collection("anonymous_tokens").doc(currentToken).delete().catch(()=>{});
-                localStorage.removeItem("my_fcm_token");
             }
         }
     } catch (error) {
@@ -174,12 +127,7 @@ async function saveTokenToFirestore(collectionName, id, token) {
     }, { merge: true });
 }
 
-function showErrorUI(container) {
-    if (!container) return;
-    container.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">নোটিফিকেশন লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে পেজটি রিফ্রেশ করুন।</p>`;
-}
-
-// 🎯 ৪. ইউজার ও পেজের নোটিফিকেশন ১০০% আলাদা রাখার স্ট্রং লিসেনার
+// 🎯 ১. সরাসরি activeIdentity.id দিয়ে নোটিফিকেশন লোড (Clean Logic)
 function listenForNotifications(activeIdentity) {
     const notificationContainer = document.getElementById("notifications-list");
 
@@ -189,100 +137,47 @@ function listenForNotifications(activeIdentity) {
     }
 
     const targetUserId = String(activeIdentity.id);
-    const isCompanyMode = activeIdentity.type === 'company';
 
-    const query = db.collection("notifications").where("userId", "==", targetUserId);
+    currentNotifUnsubscribe = db.collection("notifications")
+        .where("userId", "==", targetUserId)
+        .onSnapshot((snapshot) => {
+            if (notificationContainer) notificationContainer.innerHTML = "";
 
-    currentNotifUnsubscribe = query.onSnapshot((snapshot) => {
-        if (notificationContainer) notificationContainer.innerHTML = "";
-
-        if (snapshot.empty) {
-            if (notificationContainer) {
-                notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">কোনো নোটিফিকেশন নেই।</p>`;
-            }
-            updateNotificationHeaderBadge(0);
-            return;
-        }
-
-        const uniqueNotifsMap = new Map();
-
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            const notifUserId = String(data.userId || '');
-            const targetType = data.targetType || '';
-
-            // ⚡ ১. আইডি সরাসরি না মিললে বাদ
-            if (notifUserId !== targetUserId) return;
-
-            // ⚡ ২. ইউজার মোডে থাকলে পেজের বার্তা বা চ্যাট সম্পূর্ণ ফিল্টার
-            if (!isCompanyMode) {
-                if (targetType === 'company') return;
-                if (notifUserId.startsWith('comp_')) return;
-
-                // চ্যাট নোটিফিকেশন চেক: যদি নোটিফিকেশনটি কোনো কোম্পানির চ্যাটের হয়ে থাকে
-                if (data.type === 'chat' && data.companyId && data.companyId !== targetUserId) return;
+            if (snapshot.empty) {
+                if (notificationContainer) {
+                    notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">কোনো নোটিফিকেশন নেই।</p>`;
+                }
+                updateNotificationHeaderBadge(0);
+                return;
             }
 
-            // ⚡ ৩. পেজ মোডে থাকলে ইউজারের ব্যক্তিগত বার্তা ফিল্টার
-            if (isCompanyMode) {
-                if (targetType === 'user') return;
-                if (!notifUserId.startsWith('comp_') && targetUserId.startsWith('comp_')) return;
-            }
-
-            // ⚡ ৪. নিজের পাঠানো নোটিফিকেশন ফিল্টার
-            if (data.senderId && String(data.senderId) === targetUserId) return;
-
-            const msgContent = (data.message || data.body || '').trim();
-            const notifType = data.type || 'general';
-            
-            let uniqueKey = doc.id;
-            if (data.chatId && msgContent) {
-                uniqueKey = `${data.chatId}_${msgContent}_${notifType}`;
-            } else if (msgContent) {
-                uniqueKey = `${msgContent}_${notifType}`;
-            }
-
-            if (!uniqueNotifsMap.has(uniqueKey)) {
-                uniqueNotifsMap.set(uniqueKey, { id: doc.id, data: data });
-            }
-        });
-
-        let docsArray = Array.from(uniqueNotifsMap.values());
-
-        if (docsArray.length === 0) {
-            if (notificationContainer) {
-                notificationContainer.innerHTML = `<p style="text-align: center; color: #7f8c8d; padding: 20px;">কোনো নতুন নোটিফিকেশন নেই।</p>`;
-            }
-            updateNotificationHeaderBadge(0);
-            return;
-        }
-
-        docsArray.sort((a, b) => {
-            const getMillis = (d) => {
-                if (!d) return 0;
-                if (d.seconds) return d.seconds * 1000;
-                return new Date(d).getTime() || 0;
-            };
-            return getMillis(b.data.createdAt || b.data.timestamp) - getMillis(a.data.createdAt || a.data.timestamp);
-        });
-
-        if (notificationContainer) {
-            docsArray.forEach((item) => {
-                const notifItem = createNotificationCard(item.id, item.data);
-                notificationContainer.appendChild(notifItem);
+            let notifDocs = [];
+            snapshot.forEach((doc) => {
+                notifDocs.push({ id: doc.id, ...doc.data() });
             });
-        }
 
-        const unreadCount = docsArray.reduce((n, item) => n + (item.data.isRead === false ? 1 : 0), 0);
-        updateNotificationHeaderBadge(unreadCount);
+            // টাইমস্ট্যাম্প অনুযায়ী সর্টিং
+            notifDocs.sort((a, b) => {
+                const getTime = (d) => d?.seconds ? d.seconds * 1000 : (new Date(d).getTime() || 0);
+                return getTime(b.createdAt || b.timestamp) - getTime(a.createdAt || a.timestamp);
+            });
 
-    }, (error) => {
-        console.error("নোটিফিকেশন লোড এরর:", error);
-        if (notificationContainer) showErrorUI(notificationContainer);
-    });
-                    }
+            if (notificationContainer) {
+                notifDocs.forEach((item) => {
+                    const notifItem = createNotificationCard(item.id, item);
+                    notificationContainer.appendChild(notifItem);
+                });
+            }
 
-// 🎯 ৫. পেজ/ইউজার মোড অনুযায়ী মেসেজ আইকনে রিয়েল-টাইম আনরিড কাউন্ট প্রদর্শন
+            const unreadCount = notifDocs.reduce((n, item) => n + (item.isRead === false ? 1 : 0), 0);
+            updateNotificationHeaderBadge(unreadCount);
+
+        }, (error) => {
+            console.error("নোটিফিকেশন লোড এরর:", error);
+        });
+}
+
+// 🎯 ২. চ্যাট ব্যাজ ফিল্টারিং
 function listenForActiveChatBadge(activeIdentity) {
     if (currentChatUnsubscribe) {
         currentChatUnsubscribe();
@@ -294,47 +189,35 @@ function listenForActiveChatBadge(activeIdentity) {
     currentChatUnsubscribe = db.collection("chats")
         .where("participants", "array-contains", targetId)
         .onSnapshot((snapshot) => {
-            let unreadChatCount = 0;
+            let totalUnreadMessages = 0;
 
             snapshot.forEach((doc) => {
                 const chatData = doc.data();
-                if (chatData.unreadCount && chatData.lastSenderId && String(chatData.lastSenderId) !== String(targetId)) {
-                    const count = chatData.unreadCount[targetId] || 0;
-                    unreadChatCount += count;
+                if (chatData.unreadCount && chatData.unreadCount[targetId]) {
+                    totalUnreadMessages += chatData.unreadCount[targetId];
                 }
             });
 
-            updateMessageHeaderBadge(unreadChatCount);
-        }, (err) => {
-            console.warn("চ্যাট ব্যাজ লোড এরর:", err);
+            updateMessageHeaderBadge(totalUnreadMessages);
         });
 }
 
 function updateNotificationHeaderBadge(count) {
     const badge = document.getElementById("notification-badge") || document.getElementById("notification-count");
     if (badge) {
-        if (count > 0) {
-            badge.textContent = count > 99 ? '99+' : count;
-            badge.style.display = "inline-block";
-        } else {
-            badge.style.display = "none";
-        }
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.style.display = count > 0 ? "inline-block" : "none";
     }
 }
 
 function updateMessageHeaderBadge(count) {
-    const messageBadge = document.getElementById("message-badge") || document.getElementById("chat-badge") || document.getElementById("unread-messages-count");
+    const messageBadge = document.getElementById("message-badge") || document.getElementById("message-count") || document.getElementById("chat-badge");
     if (messageBadge) {
-        if (count > 0) {
-            messageBadge.textContent = count > 99 ? '99+' : count;
-            messageBadge.style.display = "inline-block";
-        } else {
-            messageBadge.style.display = "none";
-        }
+        messageBadge.textContent = count > 99 ? '99+' : count;
+        messageBadge.style.display = count > 0 ? "inline-block" : "none";
     }
 }
 
-// 🎯 ৬. নোটিফিকেশন কার্ড রেন্ডারিং
 function createNotificationCard(docId, notif) {
     const li = document.createElement("li");
     li.className = `notification-item ${notif.isRead ? 'read' : 'unread'}`;
@@ -353,16 +236,11 @@ function createNotificationCard(docId, notif) {
         }
     }
 
-    let displayName = notif.title || notif.senderName;
-    if (!displayName || displayName === "সম্মানিত গ্রাহক" || displayName === "আমার বাড়ি ব্যবহারকারী") {
-        displayName = notif.type === "chat" ? "নতুন বার্তা এসেছে" : "নোটিফিকেশন";
-    }
-
     li.innerHTML = `
         <i class="material-icons notification-icon-large">${iconName}</i>
         <div class="notif-content">
             <h4 style="margin: 0 0 5px 0; color: #2c3e50; font-size: 16px; font-weight: 600;">
-                ${displayName}
+                ${notif.title || notif.senderName || "নোটিফিকেশন"}
             </h4>
             <p class="notif-text">${notif.message || notif.body || ''}</p>
         </div>
@@ -370,22 +248,14 @@ function createNotificationCard(docId, notif) {
     `;
 
     li.addEventListener("click", async () => {
-        await markAsRead(docId);
+        await db.collection("notifications").doc(docId).update({ isRead: true }).catch(() => {});
         
         if ((notif.type === "chat" || notif.type === "message") && notif.chatId) {
-            window.location.href = `messages.html?chatId=${notif.chatId}&postId=${notif.postId || ''}&action=direct`;
+            window.location.href = `messages.html?chatId=${notif.chatId}&postId=${notif.postId || ''}`;
         } else if (notif.postId) {
             window.location.href = `details.html?id=${notif.postId}`;
         }
     });
 
     return li;
-}
-
-async function markAsRead(docId) {
-    try {
-        await db.collection("notifications").doc(docId).update({ isRead: true });
-    } catch (error) {
-        console.error("রিড স্ট্যাটাস এরর: ", error);
-    }
-    }
+                }
