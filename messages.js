@@ -181,7 +181,7 @@ function loadChatList() {
         });
 }
 
-// 👤/🏢 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার ফাংশন
+// 👤/🏢 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার আপডেট করা ফাংশন
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
@@ -189,38 +189,34 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     const avatarElem = document.getElementById(avatarElemId);
 
     try {
+        // ১. প্রথমে 'users' কালেকশনে খোঁজা
         let uDoc = await db.collection('users').doc(targetId).get();
         if (uDoc.exists) {
             const uData = uDoc.data();
-            if (nameElem) nameElem.textContent = uData.fullName || uData.name || uData.displayName || "গ্রাহক";
-            if (avatarElem && avatarElemId) avatarElem.src = uData.profilePic || uData.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
+            if (nameElem) nameElem.textContent = uData.fullName || uData.name || uData.displayName || "ইউজার";
+            if (avatarElem && avatarElemId) avatarElem.src = uData.profilePic || uData.photoURL || uData.avatar || 'https://www.w3schools.com/howto/img_avatar.png';
             return;
         }
 
+        // ২. সরাসরি 'companies' কালেকশন আইডি দিয়ে খোঁজা
         let cDoc = await db.collection('companies').doc(targetId).get();
         if (cDoc.exists) {
             const cData = cDoc.data();
-            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
-            if (avatarElem && avatarElemId) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
+            if (nameElem) nameElem.textContent = cData.companyName || cData.name || cData.pageName || cData.title || "কোম্পানি পেজ";
+            if (avatarElem && avatarElemId) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || cData.photoURL || 'https://via.placeholder.com/45?text=Page';
             return;
         }
 
-        let compQueryById = await db.collection('companies').where('companyId', '==', targetId).limit(1).get();
-        if (!compQueryById.empty) {
-            const cData = compQueryById.docs[0].data();
-            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
-            if (avatarElem && avatarElemId) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
-            return;
-        }
-
+        // ৩. যদি targetId টি ownerUid বা অন্য ফিল্ডের সাথে মিলে
         let compQueryByOwner = await db.collection('companies').where('ownerUid', '==', targetId).limit(1).get();
         if (!compQueryByOwner.empty) {
             const cData = compQueryByOwner.docs[0].data();
-            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
-            if (avatarElem && avatarElemId) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
+            if (nameElem) nameElem.textContent = cData.companyName || cData.name || cData.pageName || cData.title || "কোম্পানি পেজ";
+            if (avatarElem && avatarElemId) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || cData.photoURL || 'https://via.placeholder.com/45?text=Page';
             return;
         }
 
+        // ৪. যদি কিছু না পাওয়া যায়
         if (nameElem) nameElem.textContent = "বিজ্ঞাপনদাতা";
         if (avatarElem && avatarElemId) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
 
@@ -228,7 +224,7 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
         console.error("আইডেন্টিটি ফেচিং ত্রুটি:", err);
         if (nameElem) nameElem.textContent = "গ্রাহক";
     }
-}
+                                                   }
 
 // 📖 ৪. চ্যাট বক্স ওপেন ও রিয়েলটাইম মেসেজ প্রদর্শন
 async function openChatBox(chatId, postId) {
