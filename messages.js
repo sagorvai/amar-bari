@@ -1,4 +1,4 @@
-// messages.js - Fixed & Optimized Dual-Mode Realtime Messaging Engine
+// messages.js - Ultimate Fixed Dual-Mode Realtime Messaging Engine
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -112,7 +112,43 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. ইনবক্স ফিল্টারিং (সঠিক otherPartyId নির্নয় সহ)
+// 🧠 স্মার্ট হেলপার: অপর পক্ষের সঠিক ID খুঁজে বের করার জন্য
+function getOtherPartyId(chatData) {
+    if (!chatData) return null;
+
+    const myIds = [activeSender.id, currentUser.uid];
+
+    // ১. senderId / receiverId ফিল্টার
+    if (chatData.senderId && !myIds.includes(chatData.senderId)) {
+        return chatData.senderId;
+    }
+    if (chatData.receiverId && !myIds.includes(chatData.receiverId)) {
+        return chatData.receiverId;
+    }
+
+    // ২. companyId ফিল্টার
+    if (chatData.companyId && !myIds.includes(chatData.companyId)) {
+        return chatData.companyId;
+    }
+
+    // ৩. participants অ্যারে থেকে আমার আইডি বাদ দিয়ে অন্যটি নেওয়া
+    if (Array.isArray(chatData.participants)) {
+        const otherInParticipants = chatData.participants.find(id => !myIds.includes(id));
+        if (otherInParticipants) return otherInParticipants;
+    }
+
+    // ৪. User UID Fallback
+    if (chatData.senderUserUid && !myIds.includes(chatData.senderUserUid)) {
+        return chatData.senderUserUid;
+    }
+    if (chatData.receiverUserUid && !myIds.includes(chatData.receiverUserUid)) {
+        return chatData.receiverUserUid;
+    }
+
+    return null;
+}
+
+// 💬 ২. ইনবক্স ফিল্টারিং
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer || !activeSender || !currentUser) return;
@@ -125,7 +161,7 @@ function loadChatList() {
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const isRelevantToActiveMode = (data.senderId === activeSender.id || data.receiverId === activeSender.id || data.companyId === activeSender.id);
+                const isRelevantToActiveMode = (data.senderId === activeSender.id || data.receiverId === activeSender.id || data.companyId === activeSender.id || (Array.isArray(data.participants) && data.participants.includes(activeSender.id)));
                 const isDeleted = data.deletedBy && data.deletedBy.includes(activeSender.id);
 
                 if (isRelevantToActiveMode && !isDeleted) {
@@ -142,20 +178,7 @@ function loadChatList() {
 
             chatDocs.forEach((chatData) => {
                 const chatId = chatData.id;
-
-                // ⚡ নিজের আইডি ও সক্রিয় মোডের আইডি বাদ দিয়ে অপর পক্ষের আইডি নির্বাচন
-                const myIds = [activeSender.id, currentUser.uid];
-                let otherPartyId = null;
-
-                if (chatData.senderId && !myIds.includes(chatData.senderId)) {
-                    otherPartyId = chatData.senderId;
-                } else if (chatData.receiverId && !myIds.includes(chatData.receiverId)) {
-                    otherPartyId = chatData.receiverId;
-                } else if (chatData.companyId && !myIds.includes(chatData.companyId)) {
-                    otherPartyId = chatData.companyId;
-                } else {
-                    otherPartyId = (chatData.senderUserUid === currentUser.uid) ? chatData.receiverUserUid : chatData.senderUserUid;
-                }
+                const otherPartyId = getOtherPartyId(chatData);
 
                 const isUnread = chatData.isUnread && chatData.lastSenderId !== activeSender.id;
 
@@ -195,7 +218,7 @@ function loadChatList() {
         });
 }
 
-// 👤/🏢 ৩. সঠিক নাম ও ছবি আনার স্মার্ট ফাংশন
+// 👤/🏢 ৩. সঠিক নাম ও ছবি আনার উন্নত সমাধান (কোম্পানিকে অগ্রাধিকার দেওয়া হয়েছে)
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
@@ -203,7 +226,16 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     const avatarElem = avatarElemId ? document.getElementById(avatarElemId) : null;
 
     try {
-        // ১. ইউজার কালেকশনে Direct Check
+        // ১. আগে কোম্পানি কালেকশনে Direct Document Lookup
+        let cDoc = await db.collection('companies').doc(targetId).get();
+        if (cDoc.exists) {
+            const cData = cDoc.data();
+            if (nameElem) nameElem.textContent = cData.companyName || cData.name || cData.pageName || "কোম্পানি পেজ";
+            if (avatarElem) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
+            return;
+        }
+
+        // ২. ইউজার কালেকশনে Direct Lookup
         let uDoc = await db.collection('users').doc(targetId).get();
         if (uDoc.exists) {
             const uData = uDoc.data();
@@ -212,20 +244,11 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // ২. কোম্পানি কালেকশনে Direct Check
-        let cDoc = await db.collection('companies').doc(targetId).get();
-        if (cDoc.exists) {
-            const cData = cDoc.data();
-            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
-            if (avatarElem) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
-            return;
-        }
-
         // ৩. কোম্পানি কালেকশনে 'companyId' ফিল্ড দিয়ে Query
         let compQueryById = await db.collection('companies').where('companyId', '==', targetId).limit(1).get();
         if (!compQueryById.empty) {
             const cData = compQueryById.docs[0].data();
-            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
+            if (nameElem) nameElem.textContent = cData.companyName || cData.name || cData.pageName || "কোম্পানি পেজ";
             if (avatarElem) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
             return;
         }
@@ -234,7 +257,7 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
         let compQueryByOwner = await db.collection('companies').where('ownerUid', '==', targetId).limit(1).get();
         if (!compQueryByOwner.empty) {
             const cData = compQueryByOwner.docs[0].data();
-            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
+            if (nameElem) nameElem.textContent = cData.companyName || cData.name || cData.pageName || "কোম্পানি পেজ";
             if (avatarElem) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
             return;
         }
@@ -271,19 +294,7 @@ async function openChatBox(chatId, postId) {
         await chatRef.update({ isUnread: false });
     }
 
-    // ⚡ ফিল্টারিং: নিজের আইডি বাদ দিয়ে সঠিক অপর পক্ষের আইডি বের করা
-    const myIds = [activeSender.id, currentUser.uid];
-    let otherPartyId = null;
-
-    if (cData.senderId && !myIds.includes(cData.senderId)) {
-        otherPartyId = cData.senderId;
-    } else if (cData.receiverId && !myIds.includes(cData.receiverId)) {
-        otherPartyId = cData.receiverId;
-    } else if (cData.companyId && !myIds.includes(cData.companyId)) {
-        otherPartyId = cData.companyId;
-    } else {
-        otherPartyId = (cData.senderUserUid === currentUser.uid) ? cData.receiverUserUid : cData.senderUserUid;
-    }
+    const otherPartyId = getOtherPartyId(cData);
 
     fetchIdentityDetails(otherPartyId, 'activeChatUserName', 'activeChatUserAvatar');
     loadPropertyContext(postId || cData.postId);
