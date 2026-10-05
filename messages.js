@@ -112,7 +112,7 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. ইনবক্স ফিল্টারিং (লোগো আইডি সহ কল করা হয়েছে)
+// 💬 ২. ইনবক্স ফিল্টারিং
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer || !activeSender || !currentUser) return;
@@ -125,7 +125,7 @@ function loadChatList() {
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const isRelevantToActiveMode = (data.senderId === activeSender.id || data.receiverId === activeSender.id || data.companyId === activeSender.id);
+                const isRelevantToActiveMode = (data.senderId === activeSender.id || data.receiverId === activeSender.id);
                 const isDeleted = data.deletedBy && data.deletedBy.includes(activeSender.id);
 
                 if (isRelevantToActiveMode && !isDeleted) {
@@ -173,7 +173,6 @@ function loadChatList() {
                     openChatBox(chatId, chatData.postId);
                 };
 
-                // ⚡ ৩ নম্বর প্যারামিটারে `avatar_${chatId}` যুক্ত করা হয়েছে
                 fetchIdentityDetails(otherPartyId, `name_${chatId}`, `avatar_${chatId}`);
             });
         }, (error) => {
@@ -182,15 +181,15 @@ function loadChatList() {
         });
 }
 
-// 👤/🏢 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার সুনির্দিষ্ট ফাংশন
+// 👤/🏢 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার উন্নত ফাংশন
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
     const nameElem = document.getElementById(nameElemId);
-    const avatarElem = document.getElementById(avatarElemId);
+    const avatarElem = avatarElemId ? document.getElementById(avatarElemId) : null;
 
     try {
-        // ১. কোম্পানি কালেকশনে সরাসরি Check
+        // ১. কোম্পানি আইডিতে সরাসরি চেক
         let cDoc = await db.collection('companies').doc(targetId).get();
         if (cDoc.exists) {
             const cData = cDoc.data();
@@ -200,9 +199,9 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
         }
 
         // ২. কোম্পানি কালেকশনে companyId ফিল্ড দিয়ে Query
-        let compQuery = await db.collection('companies').where('companyId', '==', targetId).limit(1).get();
-        if (!compQuery.empty) {
-            const cData = compQuery.docs[0].data();
+        let compQueryById = await db.collection('companies').where('companyId', '==', targetId).limit(1).get();
+        if (!compQueryById.empty) {
+            const cData = compQueryById.docs[0].data();
             if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
             if (avatarElem) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
             return;
@@ -217,7 +216,15 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // ৪. ইউজার না পাওয়া গেলে Fallback
+        // ৪. ওনার UID দিয়ে কোম্পানির সার্চ
+        let compQueryByOwner = await db.collection('companies').where('ownerUid', '==', targetId).limit(1).get();
+        if (!compQueryByOwner.empty) {
+            const cData = compQueryByOwner.docs[0].data();
+            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
+            if (avatarElem) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
+            return;
+        }
+
         if (nameElem) nameElem.textContent = "বিজ্ঞাপনদাতা";
         if (avatarElem) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
 
@@ -225,9 +232,8 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
         console.error("আইডেন্টিটি ফেচিং ত্রুটি:", err);
         if (nameElem) nameElem.textContent = "গ্রাহক";
     }
-            }
+}
 
-        
 // 📖 ৪. চ্যাট বক্স ওপেন ও রিয়েলটাইম মেসেজ প্রদর্শন
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
@@ -252,7 +258,9 @@ async function openChatBox(chatId, postId) {
     }
 
     const otherPartyId = (cData.senderId === activeSender.id) ? cData.receiverId : cData.senderId;
-    fetchIdentityDetails(otherPartyId, 'activeChatUserName', null);
+    
+    // ⚡ সক্রিয় চ্যাট হেডারে নাম ও লোগো আপডেট করার জন্য আইডি যুক্ত করা হয়েছে
+    fetchIdentityDetails(otherPartyId, 'activeChatUserName', 'activeChatUserAvatar');
     loadPropertyContext(postId || cData.postId);
 
     if (activeChatListener) activeChatListener();
@@ -282,14 +290,13 @@ async function openChatBox(chatId, postId) {
         });
 }
 
-// ✉️ ৫. মেসেজ সেন্ড লজিক (ডুপ্লিকেট নোটিফিকেশন রিমুভড)
+// ✉️ ৫. মেসেজ সেন্ড লজিক
 async function sendMessage(text) {
     if (!text.trim() || !currentChatId || !activeSender) return;
 
     const cleanText = text.trim();
 
     try {
-        // ১. মেসেজ সাব-কালেকশনে যোগ করা
         await db.collection('chats').doc(currentChatId).collection('messages').add({
             senderId: activeSender.id,
             senderType: activeSender.type,
@@ -297,8 +304,6 @@ async function sendMessage(text) {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // ২. চ্যাট ডকুমেন্টের লাস্ট মেসেজ আপডেট করা
-        // ⚡ (নোটিফিকেশন তৈরির বাকি পুরো কাজ ব্যাকএন্ডের Cloud Function সমাধান করবে)
         const chatDocRef = db.collection('chats').doc(currentChatId);
         await chatDocRef.update({
             lastMessage: cleanText,
