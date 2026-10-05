@@ -181,7 +181,7 @@ function loadChatList() {
         });
 }
 
-// 👤/🏢 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার ফাংশন (index.js এর লজিক অনুযায়ী আপডেট করা)
+// 👤/🏢 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার ফাংশন (Firestore Schema অনুযায়ী নিখুঁত করা হয়েছে)
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
@@ -200,31 +200,44 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // ২. সরাসরি Document ID দিয়ে 'companies' কালেকশনে চেক করা
+        // ২. 'companies' কালেকশনে সরাসরি Document ID দিয়ে চেক করা
         let cDoc = await db.collection('companies').doc(targetId).get();
         if (cDoc.exists) {
             const cData = cDoc.data();
-            const compName = cData.companyName || cData.name || cData.pageName || cData.title || "কোম্পানি পেজ";
-            const compLogo = cData.logo || cData.companyLogo || cData.profilePic || cData.photoURL || cData.avatar || 'https://via.placeholder.com/45?text=Page';
+            // স্ক্রিনশটের Firestore Schema অনুযায়ী: name এবং logo
+            const compName = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
+            const compLogo = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
 
             if (nameElem) nameElem.textContent = compName;
             if (avatarElem && avatarElemId) avatarElem.src = compLogo;
             return;
         }
 
-        // ৩. যদি targetId টি মালিকের UID (ownerUid) বা অন্য ফিল্ড হয়
+        // ৩. 'companies' কালেকশনে companyId ফিল্ড দিয়ে কোয়েরি করা
+        let compQueryById = await db.collection('companies').where('companyId', '==', targetId).limit(1).get();
+        if (!compQueryById.empty) {
+            const cData = compQueryById.docs[0].data();
+            const compName = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
+            const compLogo = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
+
+            if (nameElem) nameElem.textContent = compName;
+            if (avatarElem && avatarElemId) avatarElem.src = compLogo;
+            return;
+        }
+
+        // ৪. 'companies' কালেকশনে ownerUid ফিল্ড দিয়ে কোয়েরি করা
         let compQueryByOwner = await db.collection('companies').where('ownerUid', '==', targetId).limit(1).get();
         if (!compQueryByOwner.empty) {
             const cData = compQueryByOwner.docs[0].data();
-            const compName = cData.companyName || cData.name || cData.pageName || cData.title || "কোম্পানি পেজ";
-            const compLogo = cData.logo || cData.companyLogo || cData.profilePic || cData.photoURL || cData.avatar || 'https://via.placeholder.com/45?text=Page';
+            const compName = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
+            const compLogo = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
 
             if (nameElem) nameElem.textContent = compName;
             if (avatarElem && avatarElemId) avatarElem.src = compLogo;
             return;
         }
 
-        // ৪. যদি কোনো ডাটা না পাওয়া যায়
+        // ৫. কোনো ম্যাচ না পাওয়া গেলে
         if (nameElem) nameElem.textContent = "বিজ্ঞাপনদাতা";
         if (avatarElem && avatarElemId) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
 
@@ -232,7 +245,7 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
         console.error("আইডেন্টিটি ফেচিং ত্রুটি:", err);
         if (nameElem) nameElem.textContent = "গ্রাহক";
     }
-}
+                }
 
 // 📖 ৪. চ্যাট বক্স ওপেন ও রিয়েলটাইম মেসেজ প্রদর্শন
 async function openChatBox(chatId, postId) {
