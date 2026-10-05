@@ -1,4 +1,4 @@
-// messages.js - Optimized Dual-Mode Realtime Messaging Engine
+// messages.js - Fixed & Optimized Dual-Mode Realtime Messaging Engine
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -30,7 +30,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
     currentUser = user;
 
-    // header-sync.js এর গ্লোবাল এক্টিভ আইডেন্টিটি ব্যবহার করা হচ্ছে
+    // header-sync.js এর গ্লোবাল এক্টিভ আইডেন্টিটি ব্যবহার
     if (typeof window.getActiveIdentity === 'function') {
         const identity = window.getActiveIdentity();
         if (identity) {
@@ -112,7 +112,7 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. ইনবক্স ফিল্টারিং (সঠিক otherPartyId ফিল্টারিং সহ)
+// 💬 ২. ইনবক্স ফিল্টারিং (সঠিক otherPartyId নির্নয় সহ)
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer || !activeSender || !currentUser) return;
@@ -143,13 +143,15 @@ function loadChatList() {
             chatDocs.forEach((chatData) => {
                 const chatId = chatData.id;
 
-                // ⚡ সুনির্দিষ্টভাবে অপর পক্ষের ID নির্ণয় (activeSender.id বাদ দিয়ে)
+                // ⚡ নিজের আইডি ও সক্রিয় মোডের আইডি বাদ দিয়ে অপর পক্ষের আইডি নির্বাচন
+                const myIds = [activeSender.id, currentUser.uid];
                 let otherPartyId = null;
-                if (chatData.senderId && chatData.senderId !== activeSender.id) {
+
+                if (chatData.senderId && !myIds.includes(chatData.senderId)) {
                     otherPartyId = chatData.senderId;
-                } else if (chatData.receiverId && chatData.receiverId !== activeSender.id) {
+                } else if (chatData.receiverId && !myIds.includes(chatData.receiverId)) {
                     otherPartyId = chatData.receiverId;
-                } else if (chatData.companyId && chatData.companyId !== activeSender.id) {
+                } else if (chatData.companyId && !myIds.includes(chatData.companyId)) {
                     otherPartyId = chatData.companyId;
                 } else {
                     otherPartyId = (chatData.senderUserUid === currentUser.uid) ? chatData.receiverUserUid : chatData.senderUserUid;
@@ -185,7 +187,6 @@ function loadChatList() {
                     openChatBox(chatId, chatData.postId);
                 };
 
-                // আইডেন্টিটি ফেচ
                 fetchIdentityDetails(otherPartyId, `name_${chatId}`, `avatar_${chatId}`);
             });
         }, (error) => {
@@ -194,7 +195,7 @@ function loadChatList() {
         });
 }
 
-// 👤/🏢 ৩. সঠিক নাম ও ছবি চেক করার ফাংশন (Smart Fallback)
+// 👤/🏢 ৩. সঠিক নাম ও ছবি আনার স্মার্ট ফাংশন
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
@@ -211,7 +212,7 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // ২. কোম্পানি কালেকশনে Direct Document Check
+        // ২. কোম্পানি কালেকশনে Direct Check
         let cDoc = await db.collection('companies').doc(targetId).get();
         if (cDoc.exists) {
             const cData = cDoc.data();
@@ -238,7 +239,6 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
             return;
         }
 
-        // ৫. কোনোটাই না মিললে ডিফল্ট ইউজার নাম
         if (nameElem) nameElem.textContent = "ব্যবহারকারী";
         if (avatarElem) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
 
@@ -246,7 +246,74 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
         console.error("আইডেন্টিটি ফেচিং ত্রুটি:", err);
         if (nameElem) nameElem.textContent = "গ্রাহক";
     }
-                           }
+}
+
+// 📖 ৪. চ্যাট বক্স ওপেন ও রিয়েলটাইম মেসেজ প্রদর্শন
+async function openChatBox(chatId, postId) {
+    currentChatId = chatId;
+
+    const emptyState = document.getElementById('emptyState');
+    const activeChatContent = document.getElementById('activeChatContent');
+
+    if (emptyState) emptyState.style.display = 'none';
+    if (activeChatContent) activeChatContent.style.display = 'flex';
+
+    document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+    document.getElementById(`item_${chatId}`)?.classList.add('active');
+
+    const chatRef = db.collection('chats').doc(chatId);
+    let chatDoc = await chatRef.get();
+
+    if (!chatDoc.exists) return;
+    const cData = chatDoc.data();
+
+    if (cData.isUnread && cData.lastSenderId !== activeSender.id) {
+        await chatRef.update({ isUnread: false });
+    }
+
+    // ⚡ ফিল্টারিং: নিজের আইডি বাদ দিয়ে সঠিক অপর পক্ষের আইডি বের করা
+    const myIds = [activeSender.id, currentUser.uid];
+    let otherPartyId = null;
+
+    if (cData.senderId && !myIds.includes(cData.senderId)) {
+        otherPartyId = cData.senderId;
+    } else if (cData.receiverId && !myIds.includes(cData.receiverId)) {
+        otherPartyId = cData.receiverId;
+    } else if (cData.companyId && !myIds.includes(cData.companyId)) {
+        otherPartyId = cData.companyId;
+    } else {
+        otherPartyId = (cData.senderUserUid === currentUser.uid) ? cData.receiverUserUid : cData.senderUserUid;
+    }
+
+    fetchIdentityDetails(otherPartyId, 'activeChatUserName', 'activeChatUserAvatar');
+    loadPropertyContext(postId || cData.postId);
+
+    if (activeChatListener) activeChatListener();
+
+    const messagesDisplay = document.getElementById('messagesDisplay');
+    activeChatListener = db.collection('chats').doc(chatId).collection('messages')
+        .orderBy('timestamp', 'asc')
+        .onSnapshot((snapshot) => {
+            if (!messagesDisplay) return;
+            messagesDisplay.innerHTML = "";
+            snapshot.forEach(doc => {
+                const msg = doc.data();
+                const isIncoming = msg.senderId !== activeSender.id && msg.senderId !== currentUser.uid;
+
+                const bubble = document.createElement('div');
+                bubble.className = `msg-bubble ${isIncoming ? 'incoming' : 'outgoing'}`;
+
+                let timeStr = "এইমাত্র";
+                if (msg.timestamp?.toDate) {
+                    timeStr = msg.timestamp.toDate().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+                }
+
+                bubble.innerHTML = `${msg.text} <span class="msg-time">${timeStr}</span>`;
+                messagesDisplay.appendChild(bubble);
+            });
+            messagesDisplay.scrollTop = messagesDisplay.scrollHeight;
+        });
+}
 
 // ✉️ ৫. মেসেজ সেন্ড লজিক
 async function sendMessage(text) {
