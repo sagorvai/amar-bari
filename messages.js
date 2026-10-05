@@ -112,7 +112,7 @@ function initChatSystem() {
     }
 }
 
-// 💬 ২. ইনবক্স ফিল্টারিং
+// 💬 ২. ইনবক্স ফিল্টারিং (লোগো আইডি সহ কল করা হয়েছে)
 function loadChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     if (!chatListContainer || !activeSender || !currentUser) return;
@@ -125,7 +125,7 @@ function loadChatList() {
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const isRelevantToActiveMode = (data.senderId === activeSender.id || data.receiverId === activeSender.id);
+                const isRelevantToActiveMode = (data.senderId === activeSender.id || data.receiverId === activeSender.id || data.companyId === activeSender.id);
                 const isDeleted = data.deletedBy && data.deletedBy.includes(activeSender.id);
 
                 if (isRelevantToActiveMode && !isDeleted) {
@@ -173,6 +173,7 @@ function loadChatList() {
                     openChatBox(chatId, chatData.postId);
                 };
 
+                // ⚡ ৩ নম্বর প্যারামিটারে `avatar_${chatId}` যুক্ত করা হয়েছে
                 fetchIdentityDetails(otherPartyId, `name_${chatId}`, `avatar_${chatId}`);
             });
         }, (error) => {
@@ -181,7 +182,7 @@ function loadChatList() {
         });
 }
 
-// 👤/🏢 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার ফাংশন (Firestore Schema অনুযায়ী নিখুঁত করা হয়েছে)
+// 👤/🏢 ৩. অপর পক্ষের সঠিক নাম ও ছবি আনার সুনির্দিষ্ট ফাংশন
 async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     if (!targetId) return;
 
@@ -189,64 +190,44 @@ async function fetchIdentityDetails(targetId, nameElemId, avatarElemId) {
     const avatarElem = document.getElementById(avatarElemId);
 
     try {
-        // ১. প্রথমে 'users' কালেকশনে চেক করা
-        let uDoc = await db.collection('users').doc(targetId).get();
-        if (uDoc.exists) {
-            const uData = uDoc.data();
-            if (nameElem) nameElem.textContent = uData.fullName || uData.name || uData.displayName || "ইউজার";
-            if (avatarElem && avatarElemId) {
-                avatarElem.src = uData.profilePic || uData.photoURL || uData.avatar || 'https://www.w3schools.com/howto/img_avatar.png';
-            }
-            return;
-        }
-
-        // ২. 'companies' কালেকশনে সরাসরি Document ID দিয়ে চেক করা
+        // ১. কোম্পানি কালেকশনে সরাসরি Check
         let cDoc = await db.collection('companies').doc(targetId).get();
         if (cDoc.exists) {
             const cData = cDoc.data();
-            // স্ক্রিনশটের Firestore Schema অনুযায়ী: name এবং logo
-            const compName = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
-            const compLogo = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
-
-            if (nameElem) nameElem.textContent = compName;
-            if (avatarElem && avatarElemId) avatarElem.src = compLogo;
+            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
+            if (avatarElem) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
             return;
         }
 
-        // ৩. 'companies' কালেকশনে companyId ফিল্ড দিয়ে কোয়েরি করা
-        let compQueryById = await db.collection('companies').where('companyId', '==', targetId).limit(1).get();
-        if (!compQueryById.empty) {
-            const cData = compQueryById.docs[0].data();
-            const compName = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
-            const compLogo = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
-
-            if (nameElem) nameElem.textContent = compName;
-            if (avatarElem && avatarElemId) avatarElem.src = compLogo;
+        // ২. কোম্পানি কালেকশনে companyId ফিল্ড দিয়ে Query
+        let compQuery = await db.collection('companies').where('companyId', '==', targetId).limit(1).get();
+        if (!compQuery.empty) {
+            const cData = compQuery.docs[0].data();
+            if (nameElem) nameElem.textContent = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
+            if (avatarElem) avatarElem.src = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
             return;
         }
 
-        // ৪. 'companies' কালেকশনে ownerUid ফিল্ড দিয়ে কোয়েরি করা
-        let compQueryByOwner = await db.collection('companies').where('ownerUid', '==', targetId).limit(1).get();
-        if (!compQueryByOwner.empty) {
-            const cData = compQueryByOwner.docs[0].data();
-            const compName = cData.name || cData.companyName || cData.pageName || "কোম্পানি পেজ";
-            const compLogo = cData.logo || cData.companyLogo || cData.profilePic || 'https://via.placeholder.com/45?text=Page';
-
-            if (nameElem) nameElem.textContent = compName;
-            if (avatarElem && avatarElemId) avatarElem.src = compLogo;
+        // ৩. ইউজার কালেকশনে Check
+        let uDoc = await db.collection('users').doc(targetId).get();
+        if (uDoc.exists) {
+            const uData = uDoc.data();
+            if (nameElem) nameElem.textContent = uData.fullName || uData.name || uData.displayName || "গ্রাহক";
+            if (avatarElem) avatarElem.src = uData.profilePic || uData.photoURL || 'https://www.w3schools.com/howto/img_avatar.png';
             return;
         }
 
-        // ৫. কোনো ম্যাচ না পাওয়া গেলে
+        // ৪. ইউজার না পাওয়া গেলে Fallback
         if (nameElem) nameElem.textContent = "বিজ্ঞাপনদাতা";
-        if (avatarElem && avatarElemId) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
+        if (avatarElem) avatarElem.src = 'https://www.w3schools.com/howto/img_avatar.png';
 
     } catch (err) {
         console.error("আইডেন্টিটি ফেচিং ত্রুটি:", err);
         if (nameElem) nameElem.textContent = "গ্রাহক";
     }
-                }
+            }
 
+        
 // 📖 ৪. চ্যাট বক্স ওপেন ও রিয়েলটাইম মেসেজ প্রদর্শন
 async function openChatBox(chatId, postId) {
     currentChatId = chatId;
