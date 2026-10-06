@@ -623,85 +623,87 @@ function renderDetails(data) {
         }
     });
 
-    // Message Button Logic
-    const msgBtn = document.getElementById('p-message');
-    if (msgBtn) {
-        msgBtn.onclick = async () => {
-            const currentUser = firebase.auth().currentUser;
-            if (!currentUser) {
-                alert("মেসেজ করতে প্রথমে লগইন করুন।");
-                window.location.href = "auth.html";
-                return;
+    // details.js - Message Button Logic (Fixed & Synced)
+const msgBtn = document.getElementById('p-message');
+if (msgBtn) {
+    msgBtn.onclick = async () => {
+        const currentUser = firebase.auth().currentUser;
+        if (!currentUser) {
+            alert("মেসেজ করতে প্রথমে লগইন করুন।");
+            window.location.href = "auth.html";
+            return;
+        }
+
+        const activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
+        const senderType = activeIdentityType;
+        let senderId = currentUser.uid;
+
+        if (senderType === 'company') {
+            const storedCompanyId = localStorage.getItem('activeCompanyId');
+            if (storedCompanyId) senderId = storedCompanyId;
+        }
+
+        const receiverType = isCompany ? 'company' : 'user';
+        const receiverId = isCompany ? companyId : userId;
+        const receiverOwnerUid = data.userId || data.createdByUid;
+
+        if (!receiverId || !postId) {
+            alert("প্রপার্টি বা বিক্রেতার তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।");
+            return;
+        }
+
+        if (senderId === receiverId || currentUser.uid === receiverOwnerUid) {
+            alert("আপনি নিজের প্রপার্টি পোস্টে মেসেজ পাঠাতে পারবেন না।");
+            return;
+        }
+
+        // চ্যাট আইডি তৈরি
+        const sortedIds = [senderId, receiverId].sort();
+        const chatId = `${sortedIds[0]}_${sortedIds[1]}`;
+
+        // Participants Array তৈরি (যাতে উভয় ইউজারই চ্যাট ফিল্টার করে দেখতে পারে)
+        const participantsSet = new Set([currentUser.uid, senderId, receiverId]);
+        if (receiverOwnerUid) participantsSet.add(receiverOwnerUid);
+        const participants = Array.from(participantsSet);
+
+        try {
+            const chatRef = db.collection('chats').doc(chatId);
+            const chatDoc = await chatRef.get();
+
+            if (!chatDoc.exists) {
+                await chatRef.set({
+                    chatId: chatId,
+                    participants: participants,
+                    senderId: senderId,
+                    senderType: senderType,
+                    senderUserUid: currentUser.uid,
+                    receiverId: receiverId,
+                    receiverType: receiverType,
+                    receiverUserUid: receiverOwnerUid || null,
+                    companyId: isCompany ? companyId : (senderType === 'company' ? senderId : null),
+                    postId: postId,
+                    postTitle: data.title || "প্রপার্টি চ্যাট",
+                    lastMessage: "চ্যাট শুরু হয়েছে...",
+                    lastSenderId: senderId,
+                    lastSenderType: senderType,
+                    isUnread: true,
+                    chatType: `${senderType}_to_${receiverType}`,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } else {
+                await chatRef.update({
+                    postId: postId,
+                    postTitle: data.title || "প্রপার্টি চ্যাট"
+                });
             }
 
-            const activeIdentityType = localStorage.getItem('activeIdentityType') || 'user';
-            const senderType = activeIdentityType;
-            let senderId = currentUser.uid;
-
-            if (senderType === 'company') {
-                const storedCompanyId = localStorage.getItem('activeCompanyId');
-                if (storedCompanyId) senderId = storedCompanyId;
-            }
-
-            const receiverType = isCompany ? 'company' : 'user';
-            const receiverId = isCompany ? companyId : userId;
-            const receiverOwnerUid = data.userId || data.createdByUid;
-
-            if (!receiverId || !postId) {
-                alert("প্রপার্টি বা বিক্রেতার তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।");
-                return;
-            }
-
-            if (senderId === receiverId || currentUser.uid === receiverOwnerUid) {
-                alert("আপনি নিজের প্রপার্টি পোস্টে মেসেজ পাঠাতে পারবেন না।");
-                return;
-            }
-
-            const sortedIds = [senderId, receiverId].sort();
-            const chatId = `${sortedIds[0]}_${sortedIds[1]}`;
-            const participantsSet = new Set([currentUser.uid, senderId, receiverId]);
-            if (receiverOwnerUid) participantsSet.add(receiverOwnerUid);
-
-            const participants = Array.from(participantsSet);
-
-            try {
-                const chatRef = db.collection('chats').doc(chatId);
-                const chatDoc = await chatRef.get();
-
-                if (!chatDoc.exists) {
-                    await chatRef.set({
-                        chatId: chatId,
-                        participants: participants,
-                        senderId: senderId,
-                        senderType: senderType,
-                        senderUserUid: currentUser.uid,
-                        receiverId: receiverId,
-                        receiverType: receiverType,
-                        receiverUserUid: receiverOwnerUid || null,
-                        companyId: isCompany ? companyId : (senderType === 'company' ? senderId : null),
-                        postId: postId,
-                        postTitle: data.title || "প্রপার্টি চ্যাট",
-                        lastMessage: "চ্যাট শুরু হয়েছে...",
-                        lastSenderId: senderId,
-                        isUnread: true,
-                        chatType: `${senderType}_to_${receiverType}`,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                } else {
-                    await chatRef.update({
-                        postId: postId,
-                        postTitle: data.title || "প্রপার্টি চ্যাট"
-                    });
-                }
-
-                window.location.href = `messages.html?chatId=${chatId}&postId=${postId}&action=direct`;
-            } catch (error) {
-                console.error("ফায়ারস্টোর চ্যাট এরর ডিটেইলস:", error);
-                alert("দুঃখিত, চ্যাট রুম তৈরি করা যায়নি।");
-            }
-        };
-    }
-
+            window.location.href = `messages.html?chatId=${chatId}&postId=${postId}&action=direct`;
+        } catch (error) {
+            console.error("ফায়ারস্টোর চ্যাট এরর ডিটেইলস:", error);
+            alert("দুঃখিত, চ্যাট রুম তৈরি করা যায়নি।");
+        }
+    };
+                    }
     // SEO
     const currentUrl = window.location.href;
     const village = data.location?.village || "";
