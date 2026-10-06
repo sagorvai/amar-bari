@@ -437,7 +437,7 @@ function initLazyLoading() {
 // কার্ড জেনারেটর (Lazy Loading Optimized)
 function createFbPostHTML(docId, data) {
     const title = data.title || 'শিরোনাম';
-    const description = data.description || 'কোন বিবরণ দেওয়া হয়নি।';
+    const description = data.description || '';
     
     const category = data.category || 'বিক্রয়';
     const type = data.type || 'জমি';
@@ -552,7 +552,7 @@ function createFbPostHTML(docId, data) {
 
             <div class="post-desc-container">
                 <div class="short-desc-text clamp-2">${description}</div>
-                ${description.length > 60 ? `<span class="read-more-btn" onclick="toggleDescReadMore(this)">(বিস্তারিত)</span>` : ''}
+                ${description.length > 60 ? `<span class="read-more-btn" onclick="toggleDescReadMore(this)">(আরো পরুন)</span>` : ''}
             </div>
 
             <div class="card-media-section" onclick="window.location.href='details.html?id=${docId}'">
