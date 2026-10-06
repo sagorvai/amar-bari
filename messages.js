@@ -1,4 +1,4 @@
-// messages.js - Exact Schema Based Messaging Engine
+// messages.js - Exact Schema Matching Messaging Engine
 const firebaseConfig = {
     apiKey: "AIzaSyBrGpbFoGmPhWv5i6Nzc4s1duDn7-uE4zA",
     authDomain: "amar-bari-website.firebaseapp.com",
@@ -112,40 +112,35 @@ function initChatSystem() {
     }
 }
 
-// 🎯 ২. ফায়ারস্টোর স্কিমা অনুযায়ী অপর পক্ষের টাইপ ও ID বের করা
+// 🎯 ২. senderId, senderType, receiverId, receiverType ধরে অপর পক্ষের নিখুঁত তথ্য বের করা
 function getOtherPartyDetails(chatData) {
-    if (!chatData) return null;
+    if (!chatData || !activeSender) return null;
 
     const myId = activeSender.id;
     const myUid = currentUser.uid;
 
-    // ১. প্রেরক যদি আমি নিজে না হই
-    if (chatData.senderId && chatData.senderId !== myId && chatData.senderId !== myUid) {
+    // ১. আমি যদি Sender হই ➔ অপর পক্ষ হচ্ছে Receiver
+    if (chatData.senderId === myId || chatData.senderId === myUid) {
         return {
-            id: chatData.senderId,
-            type: chatData.senderType || 'user'
-        };
-    }
-
-    // ২. প্রাপক যদি আমি নিজে না হই
-    if (chatData.receiverId && chatData.receiverId !== myId && chatData.receiverId !== myUid) {
-        return {
-            id: chatData.receiverId,
+            id: chatData.receiverId || chatData.receiverUserUid,
             type: chatData.receiverType || 'user'
         };
     }
 
-    // ৩. Fallback: senderUserUid / receiverUserUid
-    if (chatData.senderUserUid && chatData.senderUserUid !== myUid) {
-        return { id: chatData.senderUserUid, type: 'user' };
-    }
-    if (chatData.receiverUserUid && chatData.receiverUserUid !== myUid) {
-        return { id: chatData.receiverUserUid, type: 'user' };
+    // ২. আমি যদি Receiver হই ➔ অপর পক্ষ হচ্ছে Sender
+    if (chatData.receiverId === myId || chatData.receiverId === myUid || chatData.receiverUserUid === myUid) {
+        return {
+            id: chatData.senderId || chatData.senderUserUid,
+            type: chatData.senderType || 'user'
+        };
     }
 
-    // ৪. Fallback: companyId
-    if (chatData.companyId && chatData.companyId !== myId) {
-        return { id: chatData.companyId, type: 'company' };
+    // ৩. Fallback Safe Check (যদি কোনো ফিল্ডে অমিল থাকে)
+    if (chatData.senderId && chatData.senderId !== myId) {
+        return { id: chatData.senderId, type: chatData.senderType || 'user' };
+    }
+    if (chatData.receiverId && chatData.receiverId !== myId) {
+        return { id: chatData.receiverId, type: chatData.receiverType || 'user' };
     }
 
     return null;
@@ -213,7 +208,7 @@ function loadChatList() {
                     openChatBox(chatId, chatData.postId);
                 };
 
-                if (otherParty) {
+                if (otherParty && otherParty.id) {
                     fetchStrictIdentity(otherParty.id, otherParty.type, `name_${chatId}`, `avatar_${chatId}`);
                 }
             });
@@ -223,7 +218,7 @@ function loadChatList() {
         });
 }
 
-// 🔍 ৪. টাইপ অনুযায়ী নিখুঁত ডাটা ফেচ করা (No Company Priority)
+// 🔍 ৪. টাইপ (user / company) ধরে সুনির্দিষ্ট কালেকশন থেকে ডাটা ফেচ করা
 async function fetchStrictIdentity(targetId, targetType, nameElemId, avatarElemId) {
     if (!targetId) return;
 
@@ -231,7 +226,7 @@ async function fetchStrictIdentity(targetId, targetType, nameElemId, avatarElemI
     const avatarElem = avatarElemId ? document.getElementById(avatarElemId) : null;
 
     try {
-        // ১. টাইপ যদি কোম্পানি হয় ➔ শুধুমাত্র 'companies' কালেকশনে যাবে
+        // ১. টাইপ যদি কোম্পানি হয় ➔ শুধুমাত্র 'companies' কালেকশনে সার্চ করবে
         if (targetType === 'company') {
             const compDoc = await db.collection('companies').doc(targetId).get();
             if (compDoc.exists) {
@@ -242,7 +237,7 @@ async function fetchStrictIdentity(targetId, targetType, nameElemId, avatarElemI
             }
         }
 
-        // ২. টাইপ যদি ইউজার হয় ➔ শুধুমাত্র 'users' কালেকশনে যাবে
+        // ২. টাইপ যদি ইউজার হয় ➔ শুধুমাত্র 'users' কালেকশনে সার্চ করবে
         if (targetType === 'user') {
             const userDoc = await db.collection('users').doc(targetId).get();
             if (userDoc.exists) {
@@ -253,7 +248,7 @@ async function fetchStrictIdentity(targetId, targetType, nameElemId, avatarElemI
             }
         }
 
-        // ৩. ব্যাকআপ সনাক্তকরণ (যদি টাইপ ফিল্ড কোনো কারণে চ্যাটে না থাকে)
+        // ৩. যদি কোনো কারণে নির্দিষ্ট টাইপে না পাওয়া যায়, তবেই ব্যাকআপ ডাইরেক্ট চেক করবে
         const userDocFallback = await db.collection('users').doc(targetId).get();
         if (userDocFallback.exists) {
             const uData = userDocFallback.data();
@@ -302,8 +297,9 @@ async function openChatBox(chatId, postId) {
         await chatRef.update({ isUnread: false });
     }
 
+    // হেডার ও টপবারে অপর পক্ষের নাম ও ছবি সেট
     const otherParty = getOtherPartyDetails(cData);
-    if (otherParty) {
+    if (otherParty && otherParty.id) {
         fetchStrictIdentity(otherParty.id, otherParty.type, 'activeChatUserName', 'activeChatUserAvatar');
     }
 
